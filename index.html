@@ -545,6 +545,7 @@
               <div class="pc">
                 <h3><i class="dot green"></i>Facebook</h3>
                 <p>Ready and formatted.</p>
+                <button onclick="publishFacebook()">PUBLISH TO FACEBOOK</button>
               </div>
 
               <div class="pc">
@@ -748,6 +749,39 @@ function fixIG() {
   sl.className = 'dot green';
   log('Approved Instagram platform version');
 }
+
+    async function publishFacebook() {
+      const message = title.textContent || 'DJOMS Social Command Facebook test';
+
+      try {
+        const response = await fetch(
+          'https://djoms-meta-bridge.vercel.app/api/meta/publish',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              message: message
+            })
+          }
+        );
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          log('Published to Facebook · Post ID ' + data.postId);
+          alert('Published to Facebook successfully.');
+        } else {
+          console.error(data);
+          alert('Facebook publish failed. Check the Meta Bridge response.');
+        }
+      } catch (error) {
+        console.error(error);
+        alert('Could not reach the Meta Bridge.');
+      }
+    }
+
   </script>
 </body>
 </html>
