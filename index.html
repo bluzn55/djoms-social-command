@@ -671,11 +671,83 @@
       campaign.style.display = 'block';
     }
 
-    function protect(a) {
-      pending = a;
-      verifyTitle.textContent = 'Confirm ' + a;
-      verifyText.textContent =
-        'Signed in as JAY LOCKWOOD · Administrator. Re-enter your password/PIN to authorize this action.';
+  function protect(a) {
+  pending = a;
+  verifyTitle.textContent = 'Confirm ' + a;
+  verifyText.textContent =
+    'Signed in as JAY LOCKWOOD · Administrator. Re-enter your password/PIN to authorize this action.';
 
-      pin.value = '';
-      secure.class
+  pin.value = '';
+  secure.classList.add('show');
+  pin.focus();
+}
+
+function closeSecure() {
+  secure.classList.remove('show');
+  pending = '';
+}
+
+function log(a) {
+  let d = document.createElement('div');
+  d.textContent =
+    new Date().toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
+    }) + ' · JAY · ' + a;
+
+  history.prepend(d);
+}
+
+function confirmAction() {
+  if (!pin.value) {
+    alert('Enter your password / PIN.');
+    return;
+  }
+
+  let a = pending;
+  closeSecure();
+
+  if (a === 'APPROVE' && !ig) {
+    st.textContent = 'NEEDS REVIEW';
+    sl.className = 'dot red';
+    log('Approval blocked · Instagram still red');
+    return;
+  }
+
+  if (a === 'APPROVE') {
+    st.textContent = 'APPROVED';
+    sl.className = 'dot green';
+    log('Approved content');
+  } else if (a === 'PAUSE') {
+    st.textContent = 'PAUSED';
+    sl.className = 'dot red';
+    log('Paused content');
+  } else if (a === 'RETURN TO DRAFT') {
+    st.textContent = 'DRAFT';
+    sl.className = 'dot green';
+    log('Returned content to Draft');
+  } else if (a === 'SCHEDULE') {
+    if (!ig) {
+      log('Schedule blocked · platform readiness incomplete');
+      return;
+    }
+
+    st.textContent = 'SCHEDULED';
+    sl.className = 'dot green';
+    log('Scheduled post');
+  }
+}
+
+function fixIG() {
+  ig = true;
+
+  document.querySelectorAll('.pc')[1].innerHTML =
+    '<h3><i class="dot green"></i>Instagram</h3><p>Ready and formatted.</p>';
+
+  st.textContent = 'DRAFT';
+  sl.className = 'dot green';
+  log('Approved Instagram platform version');
+}
+  </script>
+</body>
+</html>
