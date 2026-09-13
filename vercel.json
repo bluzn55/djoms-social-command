@@ -1,0 +1,9 @@
+{
+  "rewrites": [{ "source": "/api/meta/:path*", "destination": "https://djoms-meta-bridge.vercel.app/api/meta/:path*" }],
+  "headers": [{ "source": "/(.*)", "headers": [
+    { "key": "X-Content-Type-Options", "value": "nosniff" },
+    { "key": "Referrer-Policy", "value": "no-referrer" },
+    { "key": "X-Frame-Options", "value": "DENY" },
+    { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'" }
+  ] }]
+}
