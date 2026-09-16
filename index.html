@@ -68,7 +68,9 @@
     </section>
   </main>
   <dialog id="loginDialog" aria-labelledby="loginTitle">
-    <form id="loginForm"><span class="label">DOC JAKS · OWNER ACCESS</span><h2 id="loginTitle">Welcome back, Jay.</h2><p>Sign in to manage your posts.</p><label>Command Center password<input id="password" type="password" autocomplete="current-password" required></label><p id="loginMessage" role="status">Checking the connection…</p><button class="approve" id="signInButton">Sign in</button></form>
+    <form id="loginForm"><span class="label">DOC JAKS · OWNER ACCESS</span><h2 id="loginTitle">Welcome back, Jay.</h2><p>Sign in to manage your posts.</p><label>Command Center password<input id="password" type="password" autocomplete="current-password" maxlength="256" required></label><p id="loginMessage" role="status">Checking the connection…</p><button class="approve" id="signInButton">Sign in</button><button type="button" id="forgotPassword" class="text-button">Forgot password?</button></form>
+    <form id="recoveryForm" hidden><span class="label">DOC JAKS · OWNER ACCESS</span><h2 id="recoveryTitle">Forgot your password?</h2><p>Send a reset link to the recovery email saved for this Command Center.</p><p id="recoveryMessage" role="status" aria-live="polite"></p><button class="approve" id="sendResetButton">Email me a reset link</button><button type="button" id="backToLogin" class="text-button">Back to sign in</button></form>
+    <form id="resetForm" hidden><span class="label">DOC JAKS · OWNER ACCESS</span><h2 id="resetTitle">Choose a new password</h2><p>Use at least 16 characters. A phrase of several words is fine.</p><label>New password<input id="newPassword" type="password" autocomplete="new-password" minlength="16" maxlength="256" required></label><label>Enter it again<input id="confirmPassword" type="password" autocomplete="new-password" minlength="16" maxlength="256" required></label><p id="resetMessage" role="status" aria-live="polite"></p><button class="approve" id="savePasswordButton">Save new password</button><button type="button" id="requestAnotherLink" class="text-button">Request a new link</button></form>
   </dialog>
 </body>
 </html>

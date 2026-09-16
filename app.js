@@ -9,7 +9,14 @@ const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 function date(value) { return value ? new Date(value).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : '—'; }
 function code(r) { return r.campaign + '-' + r.id.slice(-4).toUpperCase(); }
 function notice(message, bad = false) { $('notice').textContent = message; $('notice').hidden = !message; $('notice').className = bad ? 'bad-notice' : 'good-notice'; }
-function showLogin(message = '') { $('loginMessage').textContent = message; if (!$('loginDialog').open) $('loginDialog').showModal(); $('password').focus(); }
+let resetToken = '';
+function authScreen(screen) {
+  ['login','recovery','reset'].forEach(name => $(name + 'Form').hidden = name !== screen);
+  $('loginDialog').setAttribute('aria-labelledby', screen === 'login' ? 'loginTitle' : screen + 'Title');
+  if (!$('loginDialog').open) $('loginDialog').showModal();
+  $(screen === 'login' ? 'password' : screen === 'reset' ? 'newPassword' : 'sendResetButton').focus();
+}
+function showLogin(message = '') { $('loginMessage').textContent = message; authScreen('login'); }
 async function api(path, body, method) {
   const options = { method: method || (body ? 'POST' : 'GET'), credentials:'same-origin', headers:{}, signal:AbortSignal.timeout(150000) };
   if (options.method !== 'GET') { options.headers['Content-Type'] = 'application/json'; options.headers['X-DJOMS-CSRF'] = csrf; if (body) options.body = JSON.stringify(body); }
@@ -184,5 +191,34 @@ $('loginForm').addEventListener('submit',async e=>{
   catch(error) { $('loginMessage').textContent=error.message; notice(error.message,true); }
   finally { $('signInButton').disabled=false; }
 });
+$('forgotPassword').addEventListener('click', () => { $('password').value = ''; $('recoveryMessage').textContent = ''; authScreen('recovery'); });
+$('backToLogin').addEventListener('click', () => showLogin(''));
+$('requestAnotherLink').addEventListener('click', () => { resetToken = ''; $('newPassword').value = ''; $('confirmPassword').value = ''; $('recoveryMessage').textContent = ''; authScreen('recovery'); });
+$('recoveryForm').addEventListener('submit', async e => {
+  e.preventDefault(); $('sendResetButton').disabled = true; $('recoveryMessage').textContent = 'Sending your reset link…';
+  try { const result = await api('password', { action: 'request' }); $('recoveryMessage').textContent = result.message; }
+  catch (error) { $('recoveryMessage').textContent = error.message; }
+  finally { $('sendResetButton').disabled = false; }
+});
+$('resetForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if ($('newPassword').value !== $('confirmPassword').value) { $('resetMessage').textContent = 'The two new passwords do not match.'; $('confirmPassword').focus(); return; }
+  $('savePasswordButton').disabled = true; $('resetMessage').textContent = 'Saving your new password…';
+  try {
+    const result = await api('password', { action: 'reset', token: resetToken, password: $('newPassword').value, confirmPassword: $('confirmPassword').value });
+    resetToken = ''; csrf = ''; $('newPassword').value = ''; $('confirmPassword').value = ''; $('password').value = '';
+    showLogin(result.message);
+  } catch (error) { $('resetMessage').textContent = error.message; }
+  finally { $('savePasswordButton').disabled = false; }
+});
 window.addEventListener('beforeunload',e=>{ if(dirty){e.preventDefault();e.returnValue='';} });
-(async()=>{try{const s=await api('session'); if(s.authenticated) await signedIn(s); else showLogin('');}catch(e){$('live').textContent='Setup needed';showLogin(e.message);}})();
+(async()=>{
+  const fragment = new URLSearchParams(location.hash.slice(1));
+  if (fragment.has('reset-password')) {
+    resetToken = fragment.get('reset-password') || '';
+    history.replaceState({}, '', location.pathname + location.search);
+    if (/^[a-f0-9]{64}$/.test(resetToken)) { $('live').textContent = 'Password recovery'; authScreen('reset'); return; }
+    resetToken = ''; $('recoveryMessage').textContent = 'This reset link is incomplete. Request a new link.'; authScreen('recovery'); return;
+  }
+  try{const s=await api('session'); if(s.authenticated) await signedIn(s); else showLogin('');}catch(e){$('live').textContent='Setup needed';showLogin(e.message);}
+})();
