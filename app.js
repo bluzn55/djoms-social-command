@@ -187,7 +187,7 @@ $('editForm').addEventListener('submit', e => { e.preventDefault(); perform(save
 $('loginDialog').addEventListener('cancel',e=>e.preventDefault());
 $('loginForm').addEventListener('submit',async e=>{
   e.preventDefault(); $('signInButton').disabled=true; $('loginMessage').textContent='Signing in…';
-  try { await signedIn(await api('session',{password:$('password').value})); }
+  try { await signedIn(await api('session',{password:$('password').value, remember:$('rememberComputer').checked})); }
   catch(error) { $('loginMessage').textContent=error.message; notice(error.message,true); }
   finally { $('signInButton').disabled=false; }
 });
