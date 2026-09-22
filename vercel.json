@@ -7,6 +7,10 @@
     {
       "source": "/api/x/:path*",
       "destination": "https://djoms-meta-bridge.vercel.app/api/x/:path*"
+    },
+    {
+      "source": "/api/youtube/:path*",
+      "destination": "https://djoms-meta-bridge.vercel.app/api/youtube/:path*"
     }
   ],
   "headers": [
