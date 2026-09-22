@@ -1,7 +1,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const names = { facebook: 'Facebook', instagram: 'Instagram', x: 'X', youtube: 'YouTube' };
+const names = { facebook: 'Facebook', instagram: 'Instagram', x: 'X', youtube: 'YouTube', website: 'Website Community' };
 const labels = { draft:'Draft', approved:'Approved', scheduled:'Scheduled', queueing:'Confirming schedule', paused:'Paused', publishing:'Publishing', published:'Published', failed:'Needs attention', partial:'Partly published', uncertain:'Check result', processing:'Preparing photo', prepared:'Prepared' };
 let records = [], campaigns = [], mediaInbox = [], videoInbox = [], commentStream = [], commentWarnings = [], commentCheckedAt = null, commentPlatformFilter = 'all', commentStatusFilter = 'all', csrf = '', selected = null, connection = null, dirty = false, busy = false, activeView = 'Campaigns', campaignFilter = '', searchTerm = '', owner = '';
 let pollTimer;
@@ -39,10 +39,11 @@ async function loadVideoInbox() {
   return videoInbox;
 }
 async function loadComments() {
-  const [ytResult, metaResult, xResult] = await Promise.allSettled([
+  const [ytResult, metaResult, xResult, webResult] = await Promise.allSettled([
     platformApi('youtube','comments','YouTube'),
     api('comments?platforms=facebook,instagram'),
-    platformApi('x','mentions','X')
+    platformApi('x','mentions','X'),
+    platformApi('community','moderation','Website Community')
   ]);
   commentStream = [];
   commentWarnings = [];
@@ -60,6 +61,18 @@ async function loadComments() {
     commentStream.push(...(xResult.value.items || []));
     if (xResult.value.checkedAt) checked.push(xResult.value.checkedAt);
   } else commentWarnings.push('X: ' + xResult.reason.message);
+  if (webResult.status === 'fulfilled') {
+    const webItems=(webResult.value.items || []).map(x=>({
+      platform:'website', id:x.id, parentId:x.parentId || x.id, postId:x.id,
+      postTitle:'⚜ ' + (x.topic || 'Doc Jaks Community'),
+      author:x.displayName || 'Website visitor', text:x.text || '',
+      publishedAt:x.createdAt || null, handled:!!x.handled, handledAt:x.handledAt || null,
+      moderationStatus:x.status || 'pending', media:x.media || null,
+      reply:x.reply || null, openUrl:'https://www.docjaks.com/community'
+    }));
+    commentStream.push(...webItems);
+    if(webResult.value.checkedAt) checked.push(webResult.value.checkedAt);
+  } else commentWarnings.push('Website Community: ' + webResult.reason.message);
   commentStream.sort((a,b)=>Date.parse(b.publishedAt || 0)-Date.parse(a.publishedAt || 0));
   commentCheckedAt = checked.sort().at(-1) || new Date().toISOString();
   return commentStream;
@@ -178,7 +191,7 @@ function renderComments() {
   const unanswered = commentStream.filter(c=>!c.handled).length;
   const over24 = commentStream.filter(ageOver24).length;
   const handled = commentStream.filter(c=>c.handled).length;
-  const platformCounts = Object.fromEntries(['facebook','instagram','x','youtube'].map(p=>[p,commentStream.filter(c=>c.platform===p).length]));
+  const platformCounts = Object.fromEntries(['facebook','instagram','x','youtube','website'].map(p=>[p,commentStream.filter(c=>c.platform===p).length]));
   let visible = commentStream.filter(c=>commentPlatformFilter==='all' || c.platform===commentPlatformFilter);
   if(commentStatusFilter==='unanswered') visible=visible.filter(c=>!c.handled);
   else if(commentStatusFilter==='handled') visible=visible.filter(c=>c.handled);
@@ -192,9 +205,12 @@ function renderComments() {
       </div>
       <div class="comment-author">${esc(c.author || platformLabel(c.platform) + ' user')}</div>
       <p class="comment-text">${esc(c.text || '')}</p>
+      ${c.platform==='website' && c.media ? `<div class="website-media">${c.media.type==='image' ? `<img src="${esc(c.media.url)}" alt="Website submission">` : `<video src="${esc(c.media.url)}" controls preload="metadata"></video>`}</div>` : ''}
+      ${c.platform==='website' ? `<div class="website-moderation-status ${esc(c.moderationStatus || 'pending')}">⚜ Website Community · ${esc(c.moderationStatus || 'pending')}</div>` : ''}
       <div class="comment-actions">
         <textarea data-comment-reply="${esc(c.id)}" rows="2" maxlength="10000" placeholder="Reply to this comment…"></textarea>
         <div>
+          ${c.platform==='website' && c.moderationStatus==='pending' ? `<button class="approve website-approve" data-action="moderateWebsite" data-community-action="approve" data-comment-id="${esc(c.id)}">Approve</button><button class="website-reject" data-action="moderateWebsite" data-community-action="reject" data-comment-id="${esc(c.id)}">Reject</button>` : ''}
           <button class="approve" data-action="replyComment" data-comment-platform="${esc(c.platform)}" data-comment-id="${esc(c.id)}" data-comment-parent="${esc(c.parentId || c.id)}">Reply</button>
           <a class="button" href="${esc(c.openUrl)}" target="_blank" rel="noopener">Open on ${esc(platformLabel(c.platform))}</a>
           <button data-action="toggleCommentHandled" data-comment-platform="${esc(c.platform)}" data-comment-id="${esc(c.id)}" data-comment-handled="${c.handled ? '1':'0'}">${c.handled ? 'Mark unanswered' : 'Mark handled'}</button>
@@ -217,6 +233,7 @@ function renderComments() {
         ${tab('instagram','Instagram',platformCounts.instagram)}
         ${tab('x','X',platformCounts.x)}
         ${tab('youtube','YouTube',platformCounts.youtube)}
+        ${tab('website','⚜ Website Community',platformCounts.website)}
       </div>
       <div class="comment-filter-row">
         ${statusTab('all','All status',commentStream.length)}
@@ -638,7 +655,10 @@ document.addEventListener('click', event => {
     if(!text) { notice('Write a reply first.',true); return; }
     return perform(async()=>{
       if(platform === 'youtube') await youtubePost('comment-reply',{parentId,text});
-      else if(platform === 'x') {
+      else if(platform === 'website') {
+        const response=await fetch('/api/community/moderation',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-DJOMS-CSRF':csrf},body:JSON.stringify({action:'reply',itemId:commentId,reply:text})});
+        const data=await response.json(); if(!response.ok) throw new Error(data.error || 'Website Community could not save the reply.');
+      } else if(platform === 'x') {
         const response=await fetch('/api/x/mention-reply',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-DJOMS-CSRF':csrf},body:JSON.stringify({tweetId:commentId,text})});
         const data=await response.json(); if(!response.ok) throw new Error(data.error || 'X could not send the reply.');
       } else await api('comments',{action:'reply',platform,commentId,message:text});
@@ -653,13 +673,25 @@ document.addEventListener('click', event => {
     const handled=b.dataset.commentHandled !== '1';
     return perform(async()=>{
       if(platform === 'youtube') await youtubePost('comment-handled',{commentId,handled});
-      else if(platform === 'x') {
+      else if(platform === 'website') {
+        const response=await fetch('/api/community/moderation',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-DJOMS-CSRF':csrf},body:JSON.stringify({action:'handled',itemId:commentId,handled})});
+        const data=await response.json(); if(!response.ok) throw new Error(data.error || 'Website Community could not update this post.');
+      } else if(platform === 'x') {
         const response=await fetch('/api/x/mention-handled',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-DJOMS-CSRF':csrf},body:JSON.stringify({tweetId:commentId,handled})});
         const data=await response.json(); if(!response.ok) throw new Error(data.error || 'X could not update this mention.');
       } else await api('comments',{action:'handled',platform,commentId,handled});
       await loadComments();
       renderComments();
       notice(handled ? 'Comment marked handled.' : 'Comment marked unanswered.');
+    });
+  }
+  if (action === 'moderateWebsite') {
+    const itemId=b.dataset.commentId;
+    const moderationAction=b.dataset.communityAction;
+    return perform(async()=>{
+      const response=await fetch('/api/community/moderation',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-DJOMS-CSRF':csrf},body:JSON.stringify({action:moderationAction,itemId})});
+      const data=await response.json(); if(!response.ok) throw new Error(data.error || 'Website Community moderation failed.');
+      await loadComments(); renderComments(); notice(moderationAction==='approve' ? 'Website post approved.' : 'Website post rejected.');
     });
   }
   if (action === 'saveVideoInbox') {
