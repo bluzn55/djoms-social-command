@@ -3,7 +3,7 @@ const $ = id => document.getElementById(id);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const names = { facebook: 'Facebook', instagram: 'Instagram', x: 'X', youtube: 'YouTube' };
 const labels = { draft:'Draft', approved:'Approved', scheduled:'Scheduled', queueing:'Confirming schedule', paused:'Paused', publishing:'Publishing', published:'Published', failed:'Needs attention', partial:'Partly published', uncertain:'Check result', processing:'Preparing photo', prepared:'Prepared' };
-let records = [], campaigns = [], mediaInbox = [], csrf = '', selected = null, connection = null, dirty = false, busy = false, activeView = 'Campaigns', campaignFilter = '', searchTerm = '', owner = '';
+let records = [], campaigns = [], mediaInbox = [], videoInbox = [], csrf = '', selected = null, connection = null, dirty = false, busy = false, activeView = 'Campaigns', campaignFilter = '', searchTerm = '', owner = '';
 let pollTimer;
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 function date(value) { return value ? new Date(value).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : '—'; }
@@ -33,10 +33,27 @@ async function loadMediaInbox() {
   mediaInbox = data.items || [];
   return mediaInbox;
 }
+async function loadVideoInbox() {
+  const data = await platformApi('youtube','video-list','YouTube');
+  videoInbox = data.items || [];
+  return videoInbox;
+}
 async function platformApi(prefix, path, label) {
   const response = await fetch('/api/' + prefix + '/' + path, { credentials:'same-origin', signal:AbortSignal.timeout(30000) });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || label + ' could not be checked.');
+  return data;
+}
+async function youtubePost(path, body) {
+  const response = await fetch('/api/youtube/' + path, {
+    method:'POST',
+    credentials:'same-origin',
+    headers:{'Content-Type':'application/json','X-DJOMS-CSRF':csrf},
+    body:JSON.stringify(body || {}),
+    signal:AbortSignal.timeout(30000)
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'YouTube could not complete the request.');
   return data;
 }
 async function refreshConnection() {
@@ -75,6 +92,102 @@ function localInputValue(value) {
   if (!value) return '';
   const d = new Date(value), pad = n => String(n).padStart(2,'0');
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function videoInfo(file) {
+  return new Promise(resolve => {
+    const url=URL.createObjectURL(file);
+    const video=document.createElement('video');
+    video.preload='metadata';
+    video.onloadedmetadata=()=> {
+      const result={width:video.videoWidth||null,height:video.videoHeight||null,duration:Number.isFinite(video.duration)?video.duration:null};
+      URL.revokeObjectURL(url); resolve(result);
+    };
+    video.onerror=()=> { URL.revokeObjectURL(url); resolve({width:null,height:null,duration:null}); };
+    video.src=url;
+  });
+}
+async function uploadPrivateYouTubeVideo(file) {
+  const meta=await videoInfo(file);
+  const start=await youtubePost('video-init',{filename:file.name,mimeType:file.type || 'video/mp4',size:file.size});
+  let response;
+  try {
+    response=await fetch(start.uploadUrl,{method:'PUT',headers:{'Content-Type':file.type || 'video/mp4'},body:file});
+  } catch {
+    throw new Error('The upload of ' + file.name + ' was interrupted. Try that video again.');
+  }
+  const data=await response.json().catch(()=>null);
+  if(!response.ok || !data?.id) throw new Error(data?.error?.message || 'YouTube did not finish uploading ' + file.name + '.');
+  const registered=await youtubePost('video-register',{
+    youtubeId:data.id,filename:file.name,title:file.name.replace(/\.[^.]+$/,''),
+    width:meta.width,height:meta.height,duration:meta.duration
+  });
+  return registered.item;
+}
+function renderVideoInbox() {
+  const campaignOptions = campaigns.map(c => `<option value="${esc(c.id)}">${esc(c.title)}</option>`).join('');
+  const categoryOptions = [
+    ['22','People & Blogs'],['10','Music'],['24','Entertainment'],['26','Howto & Style']
+  ].map(([id,name])=>`<option value="${id}">${name}</option>`).join('');
+  const cards=videoInbox.length ? videoInbox.map(item => {
+    const isVertical=item.width && item.height && item.height > item.width;
+    const shortReady=isVertical && item.duration && item.duration <= 180;
+    return `
+      <article class="video-inbox-card" data-video-card="${esc(item.id)}">
+        <div class="video-file-tile">
+          <span class="video-icon">▶</span>
+          <strong>${esc(item.filename)}</strong>
+          <small>${item.width && item.height ? esc(item.width+'×'+item.height) : 'Video'}${item.duration ? ' · '+esc(Math.round(item.duration))+' sec' : ''}</small>
+          <span class="video-private">PRIVATE ON YOUTUBE</span>
+          ${shortReady ? '<span class="short-ready">Shorts-ready</span>' : ''}
+        </div>
+        <div class="video-fields">
+          <label>Campaign<select data-video-campaign="${esc(item.id)}">${campaignOptions}</select></label>
+          <label>Video title<input data-video-title="${esc(item.id)}" maxlength="100" value="${esc(item.title || item.filename.replace(/\.[^.]+$/,''))}"></label>
+          <label>Description<textarea data-video-description="${esc(item.id)}" rows="6" maxlength="5000" placeholder="What should viewers know about this video?">${esc(item.description || '')}</textarea></label>
+          <label>Link <small>(optional)</small><input data-video-link="${esc(item.id)}" type="url" value="${esc(item.link || '')}" placeholder="https://docjaks.com"></label>
+          <label>YouTube category<select data-video-category="${esc(item.id)}">${categoryOptions}</select></label>
+          <fieldset><legend>Prepare this video for</legend>
+            <label class="check"><input type="checkbox" data-video-platform="${esc(item.id)}" value="youtube" checked> YouTube</label>
+            <label class="check"><input type="checkbox" data-video-platform="${esc(item.id)}" value="facebook"> Facebook</label>
+            <label class="check"><input type="checkbox" data-video-platform="${esc(item.id)}" value="instagram"> Instagram</label>
+            <label class="check"><input type="checkbox" data-video-platform="${esc(item.id)}" value="x"> X</label>
+          </fieldset>
+          <p class="locknote">The master video is safely stored as a private YouTube upload. Saving updates its YouTube title and description. Facebook, Instagram and X are marked here for later reuse; direct cross-platform video delivery is not enabled yet.</p>
+          <div class="video-actions">
+            <button class="approve" data-action="saveVideoInbox" data-video-id="${esc(item.id)}">Save video info</button>
+            <button data-action="deleteVideoInbox" data-video-id="${esc(item.id)}">Delete video</button>
+          </div>
+        </div>
+      </article>`;
+  }).join('') : '<div class="empty"><h3>Your Video Inbox is empty.</h3><p>Load several videos at once. They are uploaded privately to your YouTube channel so you can come back and fill in the campaign information later.</p></div>';
+  $('content').innerHTML=`
+    <div class="box video-toolbar">
+      <div><strong>Video Inbox / Batch Upload</strong><p>Load videos first. They stay private. Come back later to assign the campaign, title, description, link and where you plan to use them.</p></div>
+      <label class="upload-button video-upload">Load videos<input id="batchVideoFiles" type="file" accept="video/mp4,video/quicktime,video/webm,video/*" multiple hidden></label>
+      <span>${videoInbox.length} video${videoInbox.length===1?'':'s'} waiting</span>
+    </div>
+    <div class="video-inbox-grid">${cards}</div>`;
+  videoInbox.forEach(item=>{
+    const c=document.querySelector('[data-video-campaign="'+CSS.escape(item.id)+'"]'); if(c) c.value=item.campaign || 'BBQ';
+    const cat=document.querySelector('[data-video-category="'+CSS.escape(item.id)+'"]'); if(cat) cat.value=item.categoryId || '22';
+    document.querySelectorAll('[data-video-platform="'+CSS.escape(item.id)+'"]').forEach(cb=>cb.checked=(item.targets||['youtube']).includes(cb.value));
+  });
+  $('batchVideoFiles')?.addEventListener('change', async e=>{
+    const files=[...e.target.files]; e.target.value='';
+    if(!files.length) return;
+    await perform(async()=>{
+      let done=0;
+      for(const file of files) {
+        if(!String(file.type).startsWith('video/')) { notice('Skipped '+file.name+': choose a video file.',true); continue; }
+        notice('Uploading video '+(done+1)+' of '+files.length+' privately to YouTube…');
+        const item=await uploadPrivateYouTubeVideo(file);
+        videoInbox.unshift(item);
+        done++;
+      }
+      renderVideoInbox();
+      notice(done+' video'+(done===1?'':'s')+' loaded into Video Inbox. Nothing was published.');
+    });
+  });
 }
 function renderMediaInbox() {
   const campaignOptions = campaigns.map(c => `<option value="${esc(c.id)}">${esc(c.title)}</option>`).join('');
@@ -208,6 +321,11 @@ function render() {
     const list = records.filter(r => r.campaign === c.id), needs = list.filter(attention).length;
     return `<button class="card ${campaignFilter === c.id ? 'selected-card':''}" data-campaign="${esc(c.id)}"><i class="light ${needs ? 'red' : list.some(r => r.status === 'published') ? 'green' : 'neutral'}"></i><span class="id">${esc(c.id)}</span><h3>${esc(c.title)}</h3><small>${list.length} posts${needs ? ' · ' + needs + ' need attention' : ''}</small></button>`;
   }).join('');
+  if (activeView === 'Video Inbox') {
+    $('content').innerHTML = '<div class="empty"><h3>Loading Video Inbox…</h3></div>';
+    loadVideoInbox().then(() => { if(activeView === 'Video Inbox') renderVideoInbox(); }).catch(e=>notice(e.message,true));
+    return;
+  }
   if (activeView === 'Media Inbox') {
     $('content').innerHTML = '<div class="empty"><h3>Loading Media Inbox…</h3></div>';
     loadMediaInbox().then(() => { if (activeView === 'Media Inbox') renderMediaInbox(); }).catch(e => notice(e.message,true));
@@ -381,6 +499,29 @@ document.addEventListener('click', event => {
   if (action === 'back') { if (!dirty || confirm('Leave without saving your changes?')) render(); return; }
   if (action === 'allCampaigns') { campaignFilter=''; return render(); }
   if (action === 'removeImage') { if ($('imageFile').disabled) return; selected.imageId=null; selected.imageUrl=null; selected.imageVariantIds={}; selected.imageVariants={}; dirty=true; updatePreview(); buttons(); return; }
+  if (action === 'saveVideoInbox') {
+    const itemId=b.dataset.videoId;
+    return perform(async()=>{
+      const title=document.querySelector('[data-video-title="'+CSS.escape(itemId)+'"]')?.value || '';
+      const description=document.querySelector('[data-video-description="'+CSS.escape(itemId)+'"]')?.value || '';
+      const link=document.querySelector('[data-video-link="'+CSS.escape(itemId)+'"]')?.value || '';
+      const campaign=document.querySelector('[data-video-campaign="'+CSS.escape(itemId)+'"]')?.value || 'BBQ';
+      const categoryId=document.querySelector('[data-video-category="'+CSS.escape(itemId)+'"]')?.value || '22';
+      const targets=[...document.querySelectorAll('[data-video-platform="'+CSS.escape(itemId)+'"]:checked')].map(x=>x.value);
+      const saved=await youtubePost('video-save',{itemId,title,description,link,campaign,categoryId,targets});
+      const i=videoInbox.findIndex(x=>x.id===itemId); if(i>=0) videoInbox[i]=saved.item;
+      renderVideoInbox(); notice('Video information saved. The YouTube copy remains private.');
+    });
+  }
+  if (action === 'deleteVideoInbox') {
+    const itemId=b.dataset.videoId;
+    if(!confirm('Delete this private YouTube video and remove it from Video Inbox?')) return;
+    return perform(async()=>{
+      await youtubePost('video-delete',{itemId});
+      videoInbox=videoInbox.filter(x=>x.id!==itemId);
+      renderVideoInbox(); notice('Video deleted.');
+    });
+  }
   if (action === 'removeInbox') {
     const itemId=b.dataset.inboxId;
     if (!confirm('Remove this picture from Media Inbox?')) return;
