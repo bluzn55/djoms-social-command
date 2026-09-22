@@ -11,6 +11,10 @@
     {
       "source": "/api/youtube/:path*",
       "destination": "https://djoms-meta-bridge.vercel.app/api/youtube/:path*"
+    },
+    {
+      "source": "/api/community/:path*",
+      "destination": "https://djoms-meta-bridge.vercel.app/api/community/:path*"
     }
   ],
   "headers": [
