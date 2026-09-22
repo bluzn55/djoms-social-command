@@ -1,7 +1,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const names = { facebook: 'Facebook', instagram: 'Instagram', x: 'X' };
+const names = { facebook: 'Facebook', instagram: 'Instagram', x: 'X', youtube: 'YouTube' };
 const labels = { draft:'Draft', approved:'Approved', scheduled:'Scheduled', queueing:'Confirming schedule', paused:'Paused', publishing:'Publishing', published:'Published', failed:'Needs attention', partial:'Partly published', uncertain:'Check result', processing:'Preparing photo' };
 let records = [], campaigns = [], csrf = '', selected = null, connection = null, dirty = false, busy = false, activeView = 'Campaigns', campaignFilter = '', searchTerm = '', owner = '';
 let pollTimer;
@@ -28,17 +28,19 @@ async function api(path, body, method) {
 }
 function updateRecord(r) { const index = records.findIndex(x => x.id === r.id); if (index >= 0) records[index] = r; else records.unshift(r); selected = r; }
 async function loadRecords() { const data = await api('records'); records = data.records; campaigns = data.campaigns; if (data.limited) notice('Showing the latest 500 posts.'); }
-async function xApi(path) {
-  const response = await fetch('/api/x/' + path, { credentials:'same-origin', signal:AbortSignal.timeout(30000) });
+async function platformApi(prefix, path, label) {
+  const response = await fetch('/api/' + prefix + '/' + path, { credentials:'same-origin', signal:AbortSignal.timeout(30000) });
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error || 'X could not be checked.');
+  if (!response.ok) throw new Error(data.error || label + ' could not be checked.');
   return data;
 }
 async function refreshConnection() {
   try { connection = await api('status?refresh=1'); }
   catch (e) { connection = { facebook:{message:e.message}, instagram:{message:e.message}, scheduler:false }; }
-  try { connection.x = await xApi('status?refresh=1'); }
+  try { connection.x = await platformApi('x','status?refresh=1','X'); }
   catch (e) { connection.x = { connected:false, canPublish:false, message:e.message }; }
+  try { connection.youtube = await platformApi('youtube','status?refresh=1','YouTube'); }
+  catch (e) { connection.youtube = { connected:false, canPublish:false, message:e.message }; }
   const strip = $('connectionStrip'); strip.hidden = false;
   strip.innerHTML = Object.entries(names).map(([p,n]) => `<span><i class="dot ${connection[p]?.canPublish ? 'green' : 'red'}"></i>${n}: ${esc(connection[p]?.name || (connection[p]?.connected ? 'Check permissions' : 'Needs connection'))}</span>`).join('') + '<button data-view="Platforms">Manage connections</button>';
 }
@@ -49,8 +51,10 @@ async function signedIn(s) {
   const params = new URLSearchParams(location.search);
   const result = params.get('connection');
   const xresult = params.get('xconnection');
-  if (result || xresult) {
-    if (xresult) notice(xresult === 'saved' ? 'X authorization saved. Check the account status below.' : 'X connection was cancelled.');
+  const youtubeResult = params.get('youtubeconnection');
+  if (result || xresult || youtubeResult) {
+    if (youtubeResult) notice(youtubeResult === 'saved' ? 'YouTube authorization saved. Check the channel status below.' : 'YouTube connection was cancelled.');
+    else if (xresult) notice(xresult === 'saved' ? 'X authorization saved. Check the account status below.' : 'X connection was cancelled.');
     else notice(result === 'saved' ? 'Facebook authorization saved. Check each account’s status below.' : 'Facebook connection was cancelled.');
     history.replaceState({},'',location.pathname);
     setView('Platforms');
@@ -72,7 +76,7 @@ function render() {
     return `<button class="card ${campaignFilter === c.id ? 'selected-card':''}" data-campaign="${esc(c.id)}"><i class="light ${needs ? 'red' : list.some(r => r.status === 'published') ? 'green' : 'neutral'}"></i><span class="id">${esc(c.id)}</span><h3>${esc(c.title)}</h3><small>${list.length} posts${needs ? ' · ' + needs + ' need attention' : ''}</small></button>`;
   }).join('');
   if (activeView === 'Platforms') {
-    $('content').innerHTML = `<div class="platforms connection-panels">${Object.entries(names).map(([p,n]) => `<div class="box"><h2>${n}</h2><p><i class="dot ${connection?.[p]?.canPublish ? 'green':'red'}"></i>${esc(connection?.[p]?.name || 'Account not verified')}</p><p>${esc(connection?.[p]?.message || 'Check the account connection.')}</p></div>`).join('')}</div><div class="box connection-actions"><a class="button approve" href="/api/meta/connect">Connect / reconnect Facebook & Instagram</a><button data-action="checkConnection">Check connections</button><p>Choose the Doc Jaks Facebook Page and its linked professional Instagram account when Meta asks.</p><p>Scheduling: ${connection?.scheduler ? 'Configured · confirmed separately when you schedule a post.' : 'One-time scheduler setup still needed.'}</p><a class="button approve" href="/api/x/connect">Connect / reconnect X</a><p>Connect the Doc Jaks X account and approve read/write access when X asks.</p></div>`;
+    $('content').innerHTML = `<div class="platforms connection-panels">${Object.entries(names).map(([p,n]) => `<div class="box"><h2>${n}</h2><p><i class="dot ${connection?.[p]?.canPublish ? 'green':'red'}"></i>${esc(connection?.[p]?.name || 'Account not verified')}</p><p>${esc(connection?.[p]?.message || 'Check the account connection.')}</p></div>`).join('')}</div><div class="box connection-actions"><a class="button approve" href="/api/meta/connect">Connect / reconnect Facebook & Instagram</a><button data-action="checkConnection">Check connections</button><p>Choose the Doc Jaks Facebook Page and its linked professional Instagram account when Meta asks.</p><p>Scheduling: ${connection?.scheduler ? 'Configured · confirmed separately when you schedule a post.' : 'One-time scheduler setup still needed.'}</p><a class="button approve" href="/api/x/connect">Connect / reconnect X</a><p>Connect the Doc Jaks X account and approve read/write access when X asks.</p><a class="button approve" href="/api/youtube/connect">Connect / reconnect YouTube</a><p>Connect the Doc Jaks YouTube channel now so it is ready when video publishing begins.</p></div>`;
     return;
   }
   if (activeView === 'Analytics') {
