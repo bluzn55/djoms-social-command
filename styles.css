@@ -537,3 +537,29 @@ dialog label,dialog input,dialog button,dialog p { font-size:16px; }
 @media(max-width:720px) {
   .format-previews,.platform-copy { grid-template-columns:1fr; }
 }
+
+/* Batch Scheduler */
+.batch-tools { margin-bottom:14px; }
+.batch-tools>div:first-child p { margin:4px 0 12px; color:#766747; }
+.batch-fill {
+  display:grid;
+  grid-template-columns:minmax(220px,1fr) minmax(160px,220px) auto auto;
+  gap:10px;
+  align-items:end;
+}
+.batch-fill label { margin:0; }
+.batch-fill input,.batch-fill select { margin:5px 0 0; }
+.batch-fill button { margin-bottom:0; white-space:nowrap; }
+.batch-table input[type=datetime-local] { margin:0; min-width:205px; }
+.batch-table .batch-check { width:20px; height:20px; }
+.batch-table td:first-child { width:55px; text-align:center; }
+.batch-table td:nth-child(2) { width:70px; }
+.batch-table td:nth-child(5) { min-width:235px; }
+.batch-subhead { font:22px Georgia; margin:25px 0 10px; }
+@media(max-width:1000px) {
+  .batch-fill { grid-template-columns:1fr 1fr; }
+}
+@media(max-width:720px) {
+  .batch-fill { grid-template-columns:1fr; }
+  .batch-fill button { width:100%; }
+}
