@@ -3,7 +3,7 @@ const $ = id => document.getElementById(id);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const names = { facebook: 'Facebook', instagram: 'Instagram', x: 'X', youtube: 'YouTube' };
 const labels = { draft:'Draft', approved:'Approved', scheduled:'Scheduled', queueing:'Confirming schedule', paused:'Paused', publishing:'Publishing', published:'Published', failed:'Needs attention', partial:'Partly published', uncertain:'Check result', processing:'Preparing photo', prepared:'Prepared' };
-let records = [], campaigns = [], csrf = '', selected = null, connection = null, dirty = false, busy = false, activeView = 'Campaigns', campaignFilter = '', searchTerm = '', owner = '';
+let records = [], campaigns = [], mediaInbox = [], csrf = '', selected = null, connection = null, dirty = false, busy = false, activeView = 'Campaigns', campaignFilter = '', searchTerm = '', owner = '';
 let pollTimer;
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 function date(value) { return value ? new Date(value).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : '—'; }
@@ -28,6 +28,11 @@ async function api(path, body, method) {
 }
 function updateRecord(r) { const index = records.findIndex(x => x.id === r.id); if (index >= 0) records[index] = r; else records.unshift(r); selected = r; }
 async function loadRecords() { const data = await api('records'); records = data.records; campaigns = data.campaigns; if (data.limited) notice('Showing the latest 500 posts.'); }
+async function loadMediaInbox() {
+  const data = await api('records',{ action:'mediaInboxList' });
+  mediaInbox = data.items || [];
+  return mediaInbox;
+}
 async function platformApi(prefix, path, label) {
   const response = await fetch('/api/' + prefix + '/' + path, { credentials:'same-origin', signal:AbortSignal.timeout(30000) });
   const data = await response.json();
@@ -70,6 +75,85 @@ function localInputValue(value) {
   if (!value) return '';
   const d = new Date(value), pad = n => String(n).padStart(2,'0');
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function renderMediaInbox() {
+  const campaignOptions = campaigns.map(c => `<option value="${esc(c.id)}">${esc(c.title)}</option>`).join('');
+  const cards = mediaInbox.length ? mediaInbox.map((item,index) => `
+    <article class="inbox-card" data-inbox-card="${esc(item.id)}">
+      <div class="inbox-image"><img src="${esc(item.imageUrl)}" alt=""></div>
+      <div class="inbox-fields">
+        <label class="check inbox-use"><input class="inbox-check" type="checkbox" data-inbox-id="${esc(item.id)}" checked> Use this picture</label>
+        <label>Campaign<select data-inbox-campaign="${esc(item.id)}">${campaignOptions}</select></label>
+        <label>Post title<input data-inbox-title="${esc(item.id)}" maxlength="120" value="${esc(item.filename.replace(/\.[^.]+$/,''))}"></label>
+        <label>Caption<textarea data-inbox-caption="${esc(item.id)}" rows="5" maxlength="10000" placeholder="What do you want people to hear?"></textarea></label>
+        <label>Link <small>(optional)</small><input data-inbox-link="${esc(item.id)}" type="url" placeholder="https://docjaks.com"></label>
+        <fieldset><legend>Prepare for</legend>
+          <label class="check"><input type="checkbox" data-inbox-platform="${esc(item.id)}" value="facebook" checked> Facebook</label>
+          <label class="check"><input type="checkbox" data-inbox-platform="${esc(item.id)}" value="instagram" checked> Instagram</label>
+          <label class="check"><input type="checkbox" data-inbox-platform="${esc(item.id)}" value="x" checked> X</label>
+          <label class="check"><input type="checkbox" data-inbox-platform="${esc(item.id)}" value="youtube"> YouTube</label>
+        </fieldset>
+        <div class="inbox-actions"><button data-action="removeInbox" data-inbox-id="${esc(item.id)}">Remove</button></div>
+      </div>
+    </article>`).join('') : '<div class="empty"><h3>Your Media Inbox is empty.</h3><p>Drop in a whole campaign of pictures at once. Fill out the information whenever you are ready.</p></div>';
+  $('content').innerHTML = `
+    <div class="box inbox-toolbar">
+      <div><strong>Media Inbox / Batch Upload</strong><p>Load all your campaign pictures first. Assign campaign, title, caption, link and platforms afterward.</p></div>
+      <label class="upload-button inbox-upload">Load pictures<input id="batchImageFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden></label>
+      <button class="approve" data-action="createInboxDrafts">Create drafts from selected</button>
+      <span id="inboxCount">${mediaInbox.length} picture${mediaInbox.length===1?'':'s'} waiting</span>
+    </div>
+    <div class="inbox-grid">${cards}</div>`;
+  $('batchImageFiles')?.addEventListener('change', async e => {
+    const files=[...e.target.files]; e.target.value='';
+    if(!files.length) return;
+    await perform(async()=> {
+      let done=0;
+      for(const file of files) {
+        if (file.size > 20000000 || !['image/jpeg','image/png','image/webp'].includes(file.type)) { notice('Skipped ' + file.name + ': use JPG, PNG or WebP under 20 MB.', true); continue; }
+        notice('Loading picture ' + (done+1) + ' of ' + files.length + '…');
+        const bitmap=await createImageBitmap(file);
+        const master=await uploadVariant(bitmap,1080,1080);
+        bitmap.close();
+        const added=await api('records',{action:'mediaInboxAdd',filename:file.name,imageId:master.imageId});
+        mediaInbox.unshift(added.item);
+        done++;
+      }
+      renderMediaInbox();
+      notice(done + ' picture' + (done===1?'':'s') + ' loaded into Media Inbox.');
+    });
+  });
+}
+async function buildInboxDraft(itemId) {
+  const item=mediaInbox.find(x=>x.id===itemId);
+  if(!item) throw new Error('That Media Inbox picture is missing.');
+  const title=document.querySelector('[data-inbox-title="' + CSS.escape(itemId) + '"]')?.value.trim() || 'New post';
+  const campaign=document.querySelector('[data-inbox-campaign="' + CSS.escape(itemId) + '"]')?.value || 'BBQ';
+  const caption=document.querySelector('[data-inbox-caption="' + CSS.escape(itemId) + '"]')?.value || '';
+  const link=document.querySelector('[data-inbox-link="' + CSS.escape(itemId) + '"]')?.value || '';
+  const targets=[...document.querySelectorAll('[data-inbox-platform="' + CSS.escape(itemId) + '"]:checked')].map(x=>x.value);
+  if(!targets.length) throw new Error('Choose at least one platform for ' + title + '.');
+  const response=await fetch(item.imageUrl,{credentials:'same-origin'});
+  if(!response.ok) throw new Error('Could not read ' + item.filename + ' for formatting.');
+  const blob=await response.blob();
+  const bitmap=await createImageBitmap(blob);
+  const formats={
+    facebook:await uploadVariant(bitmap,1200,1500),
+    instagram:await uploadVariant(bitmap,1080,1350),
+    x:await uploadVariant(bitmap,1600,900),
+    youtube:await uploadVariant(bitmap,1280,720),
+    shorts:await uploadVariant(bitmap,1080,1920)
+  };
+  bitmap.close();
+  const created=await api('records',{action:'create',campaign,title});
+  const saved=await api('records',{
+    action:'save',id:created.record.id,revision:created.record.revision,title,campaign,caption,link,
+    imageId:item.imageId,
+    imageVariants:Object.fromEntries(Object.entries(formats).map(([k,v])=>[k,v.imageId])),
+    targets
+  });
+  await api('records',{action:'mediaInboxDelete',itemId});
+  return saved.record;
 }
 function renderBatchSchedule() {
   const approved = records.filter(r => r.status === 'approved').sort((a,b) => Date.parse(a.createdAt || a.updatedAt)-Date.parse(b.createdAt || b.updatedAt));
@@ -124,6 +208,11 @@ function render() {
     const list = records.filter(r => r.campaign === c.id), needs = list.filter(attention).length;
     return `<button class="card ${campaignFilter === c.id ? 'selected-card':''}" data-campaign="${esc(c.id)}"><i class="light ${needs ? 'red' : list.some(r => r.status === 'published') ? 'green' : 'neutral'}"></i><span class="id">${esc(c.id)}</span><h3>${esc(c.title)}</h3><small>${list.length} posts${needs ? ' · ' + needs + ' need attention' : ''}</small></button>`;
   }).join('');
+  if (activeView === 'Media Inbox') {
+    $('content').innerHTML = '<div class="empty"><h3>Loading Media Inbox…</h3></div>';
+    loadMediaInbox().then(() => { if (activeView === 'Media Inbox') renderMediaInbox(); }).catch(e => notice(e.message,true));
+    return;
+  }
   if (activeView === 'Platforms') {
     $('content').innerHTML = `<div class="platforms connection-panels">${Object.entries(names).map(([p,n]) => `<div class="box"><h2>${n}</h2><p><i class="dot ${connection?.[p]?.canPublish ? 'green':'red'}"></i>${esc(connection?.[p]?.name || 'Account not verified')}</p><p>${esc(connection?.[p]?.message || 'Check the account connection.')}</p></div>`).join('')}</div><div class="box connection-actions"><a class="button approve" href="/api/meta/connect">Connect / reconnect Facebook & Instagram</a><button data-action="checkConnection">Check connections</button><p>Choose the Doc Jaks Facebook Page and its linked professional Instagram account when Meta asks.</p><p>Scheduling: ${connection?.scheduler ? 'Configured · confirmed separately when you schedule a post.' : 'One-time scheduler setup still needed.'}</p><a class="button approve" href="/api/x/connect">Connect / reconnect X</a><p>Connect the Doc Jaks X account and approve read/write access when X asks.</p><a class="button approve" href="/api/youtube/connect">Connect / reconnect YouTube</a><p>Connect the Doc Jaks YouTube channel now so it is ready when video publishing begins.</p></div>`;
     return;
@@ -292,6 +381,34 @@ document.addEventListener('click', event => {
   if (action === 'back') { if (!dirty || confirm('Leave without saving your changes?')) render(); return; }
   if (action === 'allCampaigns') { campaignFilter=''; return render(); }
   if (action === 'removeImage') { if ($('imageFile').disabled) return; selected.imageId=null; selected.imageUrl=null; selected.imageVariantIds={}; selected.imageVariants={}; dirty=true; updatePreview(); buttons(); return; }
+  if (action === 'removeInbox') {
+    const itemId=b.dataset.inboxId;
+    if (!confirm('Remove this picture from Media Inbox?')) return;
+    return perform(async()=> {
+      await api('records',{action:'mediaInboxDelete',itemId});
+      mediaInbox=mediaInbox.filter(x=>x.id!==itemId);
+      renderMediaInbox();
+      notice('Picture removed from Media Inbox.');
+    });
+  }
+  if (action === 'createInboxDrafts') {
+    return perform(async()=> {
+      const selectedIds=[...document.querySelectorAll('.inbox-check:checked')].map(x=>x.dataset.inboxId);
+      if(!selectedIds.length) throw new Error('Select at least one picture.');
+      if(!confirm('Create ' + selectedIds.length + ' draft post' + (selectedIds.length===1?'':'s') + ' from these pictures?')) return;
+      let done=0;
+      for(const itemId of selectedIds) {
+        notice('Building draft ' + (done+1) + ' of ' + selectedIds.length + ' and formatting its platform images…');
+        const record=await buildInboxDraft(itemId);
+        updateRecord(record);
+        mediaInbox=mediaInbox.filter(x=>x.id!==itemId);
+        done++;
+      }
+      await loadRecords();
+      renderMediaInbox();
+      notice(done + ' draft post' + (done===1?'':'s') + ' created. They are ready for review and approval.');
+    });
+  }
   if (action === 'fillBatchTimes') {
     const startValue = $('batchStart')?.value;
     if (!startValue) { notice('Choose the first posting date and time.', true); return; }
