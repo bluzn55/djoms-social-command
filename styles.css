@@ -660,3 +660,26 @@ dialog label,dialog input,dialog button,dialog p { font-size:16px; }
   .video-toolbar { grid-template-columns:1fr; }
   .video-inbox-card { grid-template-columns:1fr; }
 }
+
+/* Drag & Drop */
+.drop-zone {
+  border:2px dashed #b99d68;
+  background:#fff8e8;
+  border-radius:10px;
+  min-height:120px;
+  margin:0 0 14px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:22px;
+  transition:background .15s ease,border-color .15s ease,transform .15s ease;
+}
+.drop-zone strong { font-size:18px; color:#4b3922; }
+.drop-zone span { margin-top:6px; color:#766747; font-size:13px; }
+.drop-zone.dragging {
+  background:#e8f0df;
+  border-color:#315b38;
+  transform:scale(1.01);
+}
