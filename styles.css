@@ -725,3 +725,14 @@ dialog label,dialog input,dialog button,dialog p { font-size:16px; }
   .comments-summary { grid-template-columns:1fr; }
   .comment-head { align-items:flex-start; }
 }
+
+.comment-warnings { margin:0 0 12px; }
+.comment-warnings p {
+  margin:5px 0;
+  padding:9px 11px;
+  border:1px solid #d2a16f;
+  border-radius:7px;
+  background:#fff1df;
+  color:#784b25;
+  font-size:13px;
+}
