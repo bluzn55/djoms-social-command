@@ -683,3 +683,45 @@ dialog label,dialog input,dialog button,dialog p { font-size:16px; }
   border-color:#315b38;
   transform:scale(1.01);
 }
+
+/* Comments Center */
+.comments-summary {
+  display:grid;
+  grid-template-columns:1fr auto auto;
+  gap:16px;
+  align-items:center;
+  margin-bottom:12px;
+}
+.comments-summary p { margin:4px 0 0; color:#766747; }
+.comment-metrics { display:flex; gap:14px; flex-wrap:wrap; }
+.comment-metrics span { background:#fffef9; border:1px solid #d7c8a9; border-radius:7px; padding:8px 10px; font-size:12px; }
+.comments-platform-note { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.comments-platform-note small { color:#766747; margin-left:4px; }
+.platform-pill { display:inline-block; border-radius:999px; padding:4px 8px; font-size:11px; font-weight:700; border:1px solid #b8aa8d; background:#f3ead8; }
+.platform-pill.youtube { background:#fbe4df; border-color:#d39a8c; }
+.platform-pill.facebook { background:#e5ecf7; border-color:#9fb1cf; }
+.platform-pill.instagram { background:#f3e4ef; border-color:#c7a2bc; }
+.platform-pill.x { background:#ececec; border-color:#b8b8b8; }
+.comment-stream { display:grid; gap:12px; }
+.comment-card {
+  border:1px solid #d7c8a9;
+  border-left-width:6px;
+  border-radius:9px;
+  background:#fffaf0;
+  padding:14px 16px;
+}
+.comment-card.green { border-left-color:#3e914e; }
+.comment-card.yellow { border-left-color:#c69b47; }
+.comment-card.red { border-left-color:#b7463d; }
+.comment-head { display:flex; justify-content:space-between; gap:12px; align-items:center; }
+.comment-head>div { display:flex; gap:8px; align-items:center; min-width:0; }
+.comment-head strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.comment-age { font-size:12px; color:#766747; white-space:nowrap; }
+.comment-author { font-weight:700; margin-top:10px; }
+.comment-text { white-space:pre-wrap; margin:5px 0 12px; }
+.comment-actions textarea { margin:0 0 8px; min-height:70px; }
+.comment-actions>div { display:flex; gap:8px; flex-wrap:wrap; }
+@media(max-width:850px) {
+  .comments-summary { grid-template-columns:1fr; }
+  .comment-head { align-items:flex-start; }
+}
