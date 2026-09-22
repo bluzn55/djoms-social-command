@@ -66,6 +66,55 @@ function rowsHtml(list) {
   return '<div class="table-wrap"><table><thead><tr><th>Photo</th><th>Post</th><th>Platforms</th><th>Status</th><th>Posting time</th><th></th></tr></thead><tbody>' + list.map(r => `<tr><td>${r.imageUrl ? `<img class="row-photo" src="${esc(r.imageUrl)}" alt="">` : '<span class="thumb">PHOTO</span>'}</td><td><small class="id">${esc(code(r))}</small><strong>${esc(r.title)}</strong></td><td>${r.targets.map(t => esc(names[t])).join('<br>') || 'Choose platforms'}</td><td>${badge(r.status)}</td><td>${esc(date(r.scheduledAt))}</td><td><button data-open="${esc(r.id)}" aria-label="Open ${esc(r.title)}">Open ›</button></td></tr>`).join('') + '</tbody></table></div>';
 }
 function attention(r) { return ['failed','partial','uncertain','queueing','processing','publishing'].includes(r.status); }
+function localInputValue(value) {
+  if (!value) return '';
+  const d = new Date(value), pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function renderBatchSchedule() {
+  const approved = records.filter(r => r.status === 'approved').sort((a,b) => Date.parse(a.createdAt || a.updatedAt)-Date.parse(b.createdAt || b.updatedAt));
+  const scheduled = records.filter(r => r.status === 'scheduled').sort((a,b) => Date.parse(a.scheduledAt)-Date.parse(b.scheduledAt));
+  const approvedRows = approved.length ? approved.map(r => `
+    <tr>
+      <td><input class="batch-check" type="checkbox" data-batch-id="${esc(r.id)}" checked aria-label="Select ${esc(r.title)}"></td>
+      <td>${r.imageUrl ? `<img class="row-photo" src="${esc(r.imageUrl)}" alt="">` : '<span class="thumb">PHOTO</span>'}</td>
+      <td><small class="id">${esc(code(r))}</small><strong>${esc(r.title)}</strong><small>${esc(campaigns.find(c=>c.id===r.campaign)?.title || r.campaign)}</small></td>
+      <td>${r.targets.map(t=>esc(names[t])).join('<br>')}</td>
+      <td><input class="batch-time" type="datetime-local" data-batch-time="${esc(r.id)}" aria-label="Posting time for ${esc(r.title)}"></td>
+      <td><button data-open="${esc(r.id)}">Open ›</button></td>
+    </tr>`).join('') : '<tr><td colspan="6"><div class="empty"><h3>No approved posts waiting.</h3><p>Build each post, save it, then approve it. Approved posts appear here automatically.</p></div></td></tr>';
+  const scheduledRows = scheduled.length ? `
+    <h3 class="batch-subhead">Already scheduled</h3>
+    ${rowsHtml(scheduled)}
+  ` : '';
+  $('content').innerHTML = `
+    <div class="box batch-tools">
+      <div>
+        <strong>Campaign Batch Scheduler</strong>
+        <p>Set the posting times for several approved posts without opening them one by one.</p>
+      </div>
+      <div class="batch-fill">
+        <label>First post<input id="batchStart" type="datetime-local"></label>
+        <label>Spacing
+          <select id="batchSpacing">
+            <option value="24">1 day apart</option>
+            <option value="48">2 days apart</option>
+            <option value="72">3 days apart</option>
+            <option value="12">12 hours apart</option>
+            <option value="6">6 hours apart</option>
+          </select>
+        </label>
+        <button data-action="fillBatchTimes">Fill selected times</button>
+        <button class="approve" data-action="scheduleBatch">Schedule selected</button>
+      </div>
+      <p class="locknote">Only approved posts can be batch scheduled. The current scheduler allows dates up to seven days ahead.</p>
+    </div>
+    <div class="table-wrap batch-table"><table>
+      <thead><tr><th>Use</th><th>Photo</th><th>Post</th><th>Platforms</th><th>Posting date & time</th><th></th></tr></thead>
+      <tbody>${approvedRows}</tbody>
+    </table></div>
+    ${scheduledRows}`;
+}
 function render() {
   $('workspace').hidden = false; $('editor').hidden = true; selected = null; dirty = false;
   $('viewTitle').textContent = activeView;
@@ -77,6 +126,10 @@ function render() {
   }).join('');
   if (activeView === 'Platforms') {
     $('content').innerHTML = `<div class="platforms connection-panels">${Object.entries(names).map(([p,n]) => `<div class="box"><h2>${n}</h2><p><i class="dot ${connection?.[p]?.canPublish ? 'green':'red'}"></i>${esc(connection?.[p]?.name || 'Account not verified')}</p><p>${esc(connection?.[p]?.message || 'Check the account connection.')}</p></div>`).join('')}</div><div class="box connection-actions"><a class="button approve" href="/api/meta/connect">Connect / reconnect Facebook & Instagram</a><button data-action="checkConnection">Check connections</button><p>Choose the Doc Jaks Facebook Page and its linked professional Instagram account when Meta asks.</p><p>Scheduling: ${connection?.scheduler ? 'Configured · confirmed separately when you schedule a post.' : 'One-time scheduler setup still needed.'}</p><a class="button approve" href="/api/x/connect">Connect / reconnect X</a><p>Connect the Doc Jaks X account and approve read/write access when X asks.</p><a class="button approve" href="/api/youtube/connect">Connect / reconnect YouTube</a><p>Connect the Doc Jaks YouTube channel now so it is ready when video publishing begins.</p></div>`;
+    return;
+  }
+  if (activeView === 'Batch Schedule') {
+    renderBatchSchedule();
     return;
   }
   if (activeView === 'Analytics') {
@@ -239,6 +292,44 @@ document.addEventListener('click', event => {
   if (action === 'back') { if (!dirty || confirm('Leave without saving your changes?')) render(); return; }
   if (action === 'allCampaigns') { campaignFilter=''; return render(); }
   if (action === 'removeImage') { if ($('imageFile').disabled) return; selected.imageId=null; selected.imageUrl=null; selected.imageVariantIds={}; selected.imageVariants={}; dirty=true; updatePreview(); buttons(); return; }
+  if (action === 'fillBatchTimes') {
+    const startValue = $('batchStart')?.value;
+    if (!startValue) { notice('Choose the first posting date and time.', true); return; }
+    const start = new Date(startValue);
+    if (!Number.isFinite(start.getTime())) { notice('Choose a valid first posting time.', true); return; }
+    const spacingHours = Number($('batchSpacing')?.value || 24);
+    const chosen = [...document.querySelectorAll('.batch-check:checked')];
+    if (!chosen.length) { notice('Select at least one approved post.', true); return; }
+    chosen.forEach((check,index) => {
+      const input = document.querySelector('[data-batch-time="' + CSS.escape(check.dataset.batchId) + '"]');
+      if (input) input.value = localInputValue(new Date(start.getTime() + index * spacingHours * 3600000));
+    });
+    notice('Posting times filled. Review them, then click Schedule selected.');
+    return;
+  }
+  if (action === 'scheduleBatch') {
+    return perform(async () => {
+      const chosen = [...document.querySelectorAll('.batch-check:checked')];
+      if (!chosen.length) throw new Error('Select at least one approved post.');
+      const jobs = chosen.map(check => {
+        const r = records.find(x => x.id === check.dataset.batchId);
+        const input = document.querySelector('[data-batch-time="' + CSS.escape(check.dataset.batchId) + '"]');
+        if (!r || !input?.value) throw new Error('Choose a date and time for every selected post.');
+        return { r, when:new Date(input.value) };
+      });
+      if (jobs.some(j => !Number.isFinite(j.when.getTime()))) throw new Error('One of the posting times is not valid.');
+      if (!confirm('Schedule ' + jobs.length + ' selected post' + (jobs.length === 1 ? '' : 's') + '?')) return;
+      let completed = 0;
+      for (const job of jobs) {
+        const d = await api('records',{ action:'schedule', id:job.r.id, revision:job.r.revision, scheduledAt:job.when.toISOString(), timeZone:timezone });
+        updateRecord(d.record);
+        completed++;
+      }
+      await loadRecords();
+      render();
+      notice(completed + ' post' + (completed === 1 ? '' : 's') + ' scheduled.');
+    });
+  }
   perform(async () => {
     if (action === 'logout') { if (dirty && !confirm('Sign out without saving changes?')) return; await api('session',null,'DELETE'); location.reload(); }
     else if (action === 'new') { const d=await api('records',{action:'create',campaign:campaignFilter || 'BBQ'}); updateRecord(d.record); openRecord(d.record); }
