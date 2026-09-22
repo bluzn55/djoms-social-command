@@ -563,3 +563,49 @@ dialog label,dialog input,dialog button,dialog p { font-size:16px; }
   .batch-fill { grid-template-columns:1fr; }
   .batch-fill button { width:100%; }
 }
+
+/* Media Inbox / Batch Upload */
+.inbox-toolbar {
+  display:grid;
+  grid-template-columns:1fr auto auto auto;
+  gap:12px;
+  align-items:center;
+  margin-bottom:14px;
+}
+.inbox-toolbar p { margin:4px 0 0; color:#766747; }
+.inbox-upload { margin:0; white-space:nowrap; }
+.inbox-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+.inbox-card {
+  display:grid;
+  grid-template-columns:minmax(150px,220px) 1fr;
+  gap:14px;
+  background:#fffaf0;
+  border:1px solid #d7c8a9;
+  border-radius:10px;
+  padding:14px;
+}
+.inbox-image {
+  background:#eee4d1;
+  border-radius:7px;
+  overflow:hidden;
+  aspect-ratio:1/1;
+  align-self:start;
+}
+.inbox-image img { width:100%; height:100%; object-fit:contain; display:block; }
+.inbox-fields textarea { min-height:105px; }
+.inbox-fields fieldset { margin-bottom:10px; }
+.inbox-use { margin-bottom:10px; }
+.inbox-actions { display:flex; justify-content:flex-end; }
+#inboxCount { color:#766747; font-size:13px; white-space:nowrap; }
+@media(max-width:1200px) {
+  .inbox-grid { grid-template-columns:1fr; }
+}
+@media(max-width:850px) {
+  .inbox-toolbar { grid-template-columns:1fr; }
+  .inbox-card { grid-template-columns:1fr; }
+  .inbox-image { max-width:320px; }
+}
