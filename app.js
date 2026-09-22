@@ -3,7 +3,7 @@ const $ = id => document.getElementById(id);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const names = { facebook: 'Facebook', instagram: 'Instagram', x: 'X', youtube: 'YouTube' };
 const labels = { draft:'Draft', approved:'Approved', scheduled:'Scheduled', queueing:'Confirming schedule', paused:'Paused', publishing:'Publishing', published:'Published', failed:'Needs attention', partial:'Partly published', uncertain:'Check result', processing:'Preparing photo', prepared:'Prepared' };
-let records = [], campaigns = [], mediaInbox = [], videoInbox = [], csrf = '', selected = null, connection = null, dirty = false, busy = false, activeView = 'Campaigns', campaignFilter = '', searchTerm = '', owner = '';
+let records = [], campaigns = [], mediaInbox = [], videoInbox = [], commentStream = [], commentCheckedAt = null, csrf = '', selected = null, connection = null, dirty = false, busy = false, activeView = 'Campaigns', campaignFilter = '', searchTerm = '', owner = '';
 let pollTimer;
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 function date(value) { return value ? new Date(value).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : '—'; }
@@ -37,6 +37,12 @@ async function loadVideoInbox() {
   const data = await platformApi('youtube','video-list','YouTube');
   videoInbox = data.items || [];
   return videoInbox;
+}
+async function loadComments() {
+  const data = await platformApi('youtube','comments','YouTube');
+  commentStream = data.items || [];
+  commentCheckedAt = data.checkedAt || new Date().toISOString();
+  return commentStream;
 }
 async function platformApi(prefix, path, label) {
   const response = await fetch('/api/' + prefix + '/' + path, { credentials:'same-origin', signal:AbortSignal.timeout(30000) });
@@ -141,6 +147,45 @@ async function handleVideoFiles(files) {
     renderVideoInbox();
     notice(done+' video'+(done===1?'':'s')+' loaded into Video Inbox. Nothing was published.');
   });
+}
+function commentAgeState(comment) {
+  if (comment.handled) return 'green';
+  const age = Date.now() - Date.parse(comment.publishedAt || 0);
+  return age >= 24*60*60*1000 ? 'red' : 'yellow';
+}
+function renderComments() {
+  const unanswered = commentStream.filter(c=>!c.handled).length;
+  const rows = commentStream.length ? commentStream.map(c=>`
+    <article class="comment-card ${commentAgeState(c)}">
+      <div class="comment-head">
+        <div><span class="platform-pill youtube">YouTube</span><strong>${esc(c.postTitle || 'YouTube video')}</strong></div>
+        <span class="comment-age">${esc(date(c.publishedAt))}</span>
+      </div>
+      <div class="comment-author">${esc(c.author || 'YouTube user')}</div>
+      <p class="comment-text">${esc(c.text || '')}</p>
+      <div class="comment-actions">
+        <textarea data-comment-reply="${esc(c.id)}" rows="2" maxlength="10000" placeholder="Reply to this comment…"></textarea>
+        <div>
+          <button class="approve" data-action="replyComment" data-comment-id="${esc(c.id)}" data-comment-parent="${esc(c.parentId || c.id)}">Reply</button>
+          <a class="button" href="${esc(c.openUrl)}" target="_blank" rel="noopener">Open on YouTube</a>
+          <button data-action="toggleCommentHandled" data-comment-id="${esc(c.id)}" data-comment-handled="${c.handled ? '1':'0'}">${c.handled ? 'Mark unanswered' : 'Mark handled'}</button>
+        </div>
+      </div>
+    </article>`).join('') : '<div class="empty"><h3>No YouTube comments found yet.</h3><p>When comments arrive, they will show up here.</p></div>';
+  $('content').innerHTML=`
+    <div class="box comments-summary">
+      <div><strong>Comments / Replies Center</strong><p>Newest first. Green = handled, yellow = under 24 hours, red = over 24 hours waiting.</p></div>
+      <div class="comment-metrics"><span><b>${commentStream.length}</b> loaded</span><span><b>${unanswered}</b> unanswered</span><span><b>${commentCheckedAt ? esc(date(commentCheckedAt)) : '—'}</b> last checked</span></div>
+      <button data-action="refreshComments">Refresh now</button>
+    </div>
+    <div class="comments-platform-note">
+      <span class="platform-pill facebook">Facebook</span>
+      <span class="platform-pill instagram">Instagram</span>
+      <span class="platform-pill x">X</span>
+      <span class="platform-pill youtube">YouTube live</span>
+      <small>Facebook, Instagram and X comment APIs will be connected into this same stream next.</small>
+    </div>
+    <div class="comment-stream">${rows}</div>`;
 }
 function renderVideoInbox() {
   const campaignOptions = campaigns.map(c => `<option value="${esc(c.id)}">${esc(c.title)}</option>`).join('');
@@ -355,6 +400,11 @@ function render() {
     const list = records.filter(r => r.campaign === c.id), needs = list.filter(attention).length;
     return `<button class="card ${campaignFilter === c.id ? 'selected-card':''}" data-campaign="${esc(c.id)}"><i class="light ${needs ? 'red' : list.some(r => r.status === 'published') ? 'green' : 'neutral'}"></i><span class="id">${esc(c.id)}</span><h3>${esc(c.title)}</h3><small>${list.length} posts${needs ? ' · ' + needs + ' need attention' : ''}</small></button>`;
   }).join('');
+  if (activeView === 'Comments') {
+    $('content').innerHTML = '<div class="empty"><h3>Loading comments…</h3></div>';
+    loadComments().then(()=>{ if(activeView==='Comments') renderComments(); }).catch(e=>notice(e.message,true));
+    return;
+  }
   if (activeView === 'Video Inbox') {
     $('content').innerHTML = '<div class="empty"><h3>Loading Video Inbox…</h3></div>';
     loadVideoInbox().then(() => { if(activeView === 'Video Inbox') renderVideoInbox(); }).catch(e=>notice(e.message,true));
@@ -533,6 +583,32 @@ document.addEventListener('click', event => {
   if (action === 'back') { if (!dirty || confirm('Leave without saving your changes?')) render(); return; }
   if (action === 'allCampaigns') { campaignFilter=''; return render(); }
   if (action === 'removeImage') { if ($('imageFile').disabled) return; selected.imageId=null; selected.imageUrl=null; selected.imageVariantIds={}; selected.imageVariants={}; dirty=true; updatePreview(); buttons(); return; }
+  if (action === 'refreshComments') {
+    return perform(async()=>{ await loadComments(); renderComments(); notice('Comments updated.'); });
+  }
+  if (action === 'replyComment') {
+    const commentId=b.dataset.commentId;
+    const parentId=b.dataset.commentParent;
+    const box=document.querySelector('[data-comment-reply="'+CSS.escape(commentId)+'"]');
+    const text=box?.value.trim() || '';
+    if(!text) { notice('Write a reply first.',true); return; }
+    return perform(async()=>{
+      await youtubePost('comment-reply',{parentId,text});
+      await loadComments();
+      renderComments();
+      notice('Reply sent and comment marked handled.');
+    });
+  }
+  if (action === 'toggleCommentHandled') {
+    const commentId=b.dataset.commentId;
+    const handled=b.dataset.commentHandled !== '1';
+    return perform(async()=>{
+      await youtubePost('comment-handled',{commentId,handled});
+      await loadComments();
+      renderComments();
+      notice(handled ? 'Comment marked handled.' : 'Comment marked unanswered.');
+    });
+  }
   if (action === 'saveVideoInbox') {
     const itemId=b.dataset.videoId;
     return perform(async()=>{
