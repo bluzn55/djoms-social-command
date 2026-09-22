@@ -92,14 +92,45 @@ function render() {
   $('content').innerHTML = `<div class="filterbar"><label>Find a post<input id="searchPosts" type="search" value="${esc(searchTerm)}" placeholder="Title or caption"></label>${campaignFilter ? '<button data-action="allCampaigns">Show all campaigns</button>':''}<span>${list.length} posts</span></div>` + rowsHtml(list);
 }
 function setView(view) { if (dirty && !confirm('Leave without saving your changes?')) return; activeView = view; campaignFilter = ''; searchTerm = ''; render(); }
+function platformText() {
+  const caption = $('postCaption').value.trim();
+  const link = $('postLink').value.trim();
+  const full = caption + (link ? (caption ? '\n\n' : '') + link : '');
+  const ig = full.length > 2200 ? full.slice(0,2197) + '…' : full;
+  const reserve = link ? link.length + 2 : 0;
+  const maxCaption = Math.max(0, 280 - reserve);
+  const xCaption = caption.length > maxCaption ? caption.slice(0, Math.max(0,maxCaption-1)).trimEnd() + '…' : caption;
+  const x = xCaption + (link ? (xCaption ? '\n\n' : '') + link : '');
+  const ytTitle = $('postTitle').value.trim().slice(0,100);
+  const ytDescription = full;
+  return { facebook:full, instagram:ig, x, youtubeTitle:ytTitle, youtubeDescription:ytDescription };
+}
+function renderFormats() {
+  const t = platformText();
+  const variants = selected?.imageVariants || {};
+  const specs = [
+    ['Facebook','facebook','4:5 · 1200×1500'],
+    ['Instagram','instagram','4:5 · 1080×1350'],
+    ['X','x','16:9 · 1600×900'],
+    ['YouTube','youtube','16:9 thumbnail · 1280×720'],
+    ['Shorts','shorts','9:16 cover · 1080×1920']
+  ];
+  $('formatPreviews').innerHTML = specs.map(([label,key,spec]) => `<div class="format-card"><div class="format-image ${key}">${variants[key] ? `<img src="${esc(variants[key])}" alt="${esc(label)} formatted artwork">` : '<span>Upload photo</span>'}</div><strong>${esc(label)}</strong><small>${esc(spec)}</small></div>`).join('');
+  $('platformCopy').innerHTML = `
+    <div class="copy-card"><strong>Facebook</strong><small>${t.facebook.length} characters</small><p>${esc(t.facebook || 'Add your master message.')}</p></div>
+    <div class="copy-card"><strong>Instagram</strong><small>${t.instagram.length}/2200</small><p>${esc(t.instagram || 'Add your master message.')}</p></div>
+    <div class="copy-card"><strong>X</strong><small>${t.x.length}/280</small><p>${esc(t.x || 'Add your master message.')}</p></div>
+    <div class="copy-card"><strong>YouTube</strong><small>Title ${t.youtubeTitle.length}/100</small><p><b>${esc(t.youtubeTitle || 'Campaign title')}</b><br>${esc(t.youtubeDescription || 'Add your master message.')}</p></div>`;
+}
 function updatePreview() {
   $('captionPreview').textContent = $('postCaption').value + ($('postLink').value ? '\n\n' + $('postLink').value : '');
   $('photoPreview').innerHTML = selected?.imageUrl ? `<img src="${esc(selected.imageUrl)}" alt="Post artwork">` : 'Add your photo';
+  renderFormats();
 }
 function buttons() {
   if (!selected) return;
   const r = selected, locked = ['scheduled','queueing','publishing','published','partial','uncertain'].includes(r.status);
-  ['postTitle','postCampaign','postCaption','postLink','targetFacebook','targetInstagram','imageFile'].forEach(x => $(x).disabled = locked || busy);
+  ['postTitle','postCampaign','postCaption','postLink','targetFacebook','targetInstagram','targetX','targetYouTube','imageFile'].forEach(x => $(x).disabled = locked || busy);
   $('saveButton').disabled = locked || busy;
   $('approveButton').disabled = busy || dirty || !['draft','paused','failed','approved'].includes(r.status);
   const interrupted = r.status === 'publishing' && Date.now() - Date.parse(r.updatedAt) > 180000;
@@ -119,7 +150,7 @@ function openRecord(r) {
   $('recordStatus').textContent = labels[r.status] || r.status; $('recordStatus').className = 'status state-' + r.status;
   $('postTitle').value = r.title; $('postCaption').value = r.caption; $('postLink').value = r.link;
   $('postCampaign').innerHTML = campaigns.map(c => `<option value="${esc(c.id)}">${esc(c.title)}</option>`).join(''); $('postCampaign').value = r.campaign;
-  $('targetFacebook').checked = r.targets.includes('facebook'); $('targetInstagram').checked = r.targets.includes('instagram');
+  $('targetFacebook').checked = r.targets.includes('facebook'); $('targetInstagram').checked = r.targets.includes('instagram'); $('targetX').checked = r.targets.includes('x'); $('targetYouTube').checked = r.targets.includes('youtube');
   $('timeZone').textContent = 'Your time: ' + timezone;
   if (r.scheduledAt) {
     const when = new Date(r.scheduledAt);
@@ -131,7 +162,7 @@ function openRecord(r) {
   updatePreview(); buttons();
 }
 async function saveDraft() {
-  const d = await api('records',{ action:'save', id:selected.id, revision:selected.revision, title:$('postTitle').value, campaign:$('postCampaign').value, caption:$('postCaption').value, link:$('postLink').value, imageId:selected.imageId, targets:[$('targetFacebook').checked && 'facebook',$('targetInstagram').checked && 'instagram'].filter(Boolean) });
+  const d = await api('records',{ action:'save', id:selected.id, revision:selected.revision, title:$('postTitle').value, campaign:$('postCampaign').value, caption:$('postCaption').value, link:$('postLink').value, imageId:selected.imageId, imageVariants:selected.imageVariantIds || {}, targets:[$('targetFacebook').checked && 'facebook',$('targetInstagram').checked && 'instagram',$('targetX').checked && 'x',$('targetYouTube').checked && 'youtube'].filter(Boolean) });
   updateRecord(d.record); openRecord(d.record); notice('Draft saved.');
 }
 async function recordAction(action, extra = {}) {
@@ -145,18 +176,40 @@ async function publish() {
   const processing = Object.values(d.record.results || {}).some(r => r.status === 'processing');
   notice(d.success ? 'Published successfully to the selected platforms.' : processing ? 'Instagram is preparing the photo. Use Finish Instagram post in a few seconds.' : 'Check the result shown for each platform.', !d.success && !processing);
 }
+async function jpegVariant(bitmap, width, height) {
+  const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fffaf0'; ctx.fillRect(0,0,width,height);
+  const scale = Math.min(width/bitmap.width,height/bitmap.height);
+  const w=bitmap.width*scale,h=bitmap.height*scale;
+  ctx.drawImage(bitmap,(width-w)/2,(height-h)/2,w,h);
+  let quality=.86, data=canvas.toDataURL('image/jpeg',quality).split(',')[1];
+  while (data.length > 2400000 && quality > .5) { quality -= .08; data=canvas.toDataURL('image/jpeg',quality).split(',')[1]; }
+  return data;
+}
+async function uploadVariant(bitmap, width, height) {
+  return api('media',{ base64:await jpegVariant(bitmap,width,height) });
+}
 async function upload(file) {
   if (!file) return;
   if (file.size > 20000000 || !['image/jpeg','image/png','image/webp'].includes(file.type)) throw new Error('Choose a JPG, PNG, or WebP photo smaller than 20 MB.');
   const bitmap = await createImageBitmap(file);
-  const canvas = document.createElement('canvas'); canvas.width = canvas.height = 1080;
-  const ctx = canvas.getContext('2d'); ctx.fillStyle = '#fffaf0'; ctx.fillRect(0,0,1080,1080);
-  const scale = Math.min(1080/bitmap.width,1080/bitmap.height); const w=bitmap.width*scale,h=bitmap.height*scale;
-  ctx.drawImage(bitmap,(1080-w)/2,(1080-h)/2,w,h); bitmap.close();
-  let data = canvas.toDataURL('image/jpeg',.86).split(',')[1];
-  if (data.length > 1400000) data = canvas.toDataURL('image/jpeg',.65).split(',')[1];
-  const result = await api('media',{ base64:data });
-  selected.imageId = result.imageId; selected.imageUrl = result.imageUrl; dirty = true; updatePreview(); buttons(); notice('Photo uploaded. Save the draft to attach it to this post.');
+  notice('Building Facebook, Instagram, X, YouTube and Shorts image formats…');
+  const master = await uploadVariant(bitmap,1080,1080);
+  const formats = {
+    facebook: await uploadVariant(bitmap,1200,1500),
+    instagram: await uploadVariant(bitmap,1080,1350),
+    x: await uploadVariant(bitmap,1600,900),
+    youtube: await uploadVariant(bitmap,1280,720),
+    shorts: await uploadVariant(bitmap,1080,1920)
+  };
+  bitmap.close();
+  selected.imageId = master.imageId;
+  selected.imageUrl = master.imageUrl;
+  selected.imageVariantIds = Object.fromEntries(Object.entries(formats).map(([k,v])=>[k,v.imageId]));
+  selected.imageVariants = Object.fromEntries(Object.entries(formats).map(([k,v])=>[k,v.imageUrl]));
+  dirty = true; updatePreview(); buttons();
+  notice('Campaign photo formatted for Facebook, Instagram, X, YouTube and Shorts. Save the draft to keep all versions.');
 }
 async function perform(work) {
   if (busy) return; busy = true; buttons();
@@ -185,7 +238,7 @@ document.addEventListener('click', event => {
   const action = b.dataset.action; if (!action) return;
   if (action === 'back') { if (!dirty || confirm('Leave without saving your changes?')) render(); return; }
   if (action === 'allCampaigns') { campaignFilter=''; return render(); }
-  if (action === 'removeImage') { if ($('imageFile').disabled) return; selected.imageId=null; selected.imageUrl=null; dirty=true; updatePreview(); buttons(); return; }
+  if (action === 'removeImage') { if ($('imageFile').disabled) return; selected.imageId=null; selected.imageUrl=null; selected.imageVariantIds={}; selected.imageVariants={}; dirty=true; updatePreview(); buttons(); return; }
   perform(async () => {
     if (action === 'logout') { if (dirty && !confirm('Sign out without saving changes?')) return; await api('session',null,'DELETE'); location.reload(); }
     else if (action === 'new') { const d=await api('records',{action:'create',campaign:campaignFilter || 'BBQ'}); updateRecord(d.record); openRecord(d.record); }
