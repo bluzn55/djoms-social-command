@@ -39,12 +39,13 @@
         <div class="top"><div><p class="label" id="recordCode"></p><h2 id="recordTitle"></h2></div><span id="recordStatus" class="status"></span></div>
         <div class="grid">
           <div class="box preview-box">
-            <span class="label">POST PREVIEW</span>
+            <span class="label">MASTER CAMPAIGN IMAGE</span>
             <div class="master" id="photoPreview">Add your photo</div>
             <p id="captionPreview" class="caption-preview"></p>
-            <label class="upload-button">Upload / replace photo<input id="imageFile" type="file" accept="image/jpeg,image/png,image/webp" hidden></label>
+            <label class="upload-button">Upload / replace campaign photo<input id="imageFile" type="file" accept="image/jpeg,image/png,image/webp" hidden></label>
             <button data-action="removeImage">Remove photo</button>
-            <p class="locknote">Your photo is fitted into a square without cropping, ready for both platforms.</p>
+            <p class="locknote">One photo is automatically fitted into platform-ready versions without cropping.</p>
+            <div id="formatPreviews" class="format-previews"></div>
             <div id="results"></div>
           </div>
           <div class="box">
@@ -53,8 +54,14 @@
               <label>Campaign<select id="postCampaign"></select></label>
               <label>Caption<textarea id="postCaption" rows="7" maxlength="10000" placeholder="What do you want your audience to hear?"></textarea></label>
               <label>Link <small>(optional)</small><input id="postLink" type="url" placeholder="https://docjaks.com"></label>
-              <fieldset><legend>Where to post</legend><label class="check"><input id="targetFacebook" type="checkbox" value="facebook"> Facebook</label><label class="check"><input id="targetInstagram" type="checkbox" value="instagram"> Instagram</label></fieldset>
-              <p class="locknote">Instagram needs a photo. Its caption and link can total up to 2,200 characters; caption links are not clickable on Instagram.</p>
+              <fieldset><legend>Prepare for</legend>
+                <label class="check"><input id="targetFacebook" type="checkbox" value="facebook"> Facebook</label>
+                <label class="check"><input id="targetInstagram" type="checkbox" value="instagram"> Instagram</label>
+                <label class="check"><input id="targetX" type="checkbox" value="x"> X</label>
+                <label class="check"><input id="targetYouTube" type="checkbox" value="youtube"> YouTube</label>
+              </fieldset>
+              <div class="platform-copy" id="platformCopy"></div>
+              <p class="locknote">Facebook and Instagram can publish from this screen now. X is prepared here while image publishing is finished. YouTube gets a thumbnail/Shorts cover and copy for the later video workflow.</p>
               <p id="savedState"></p>
               <div class="actions"><button type="submit" id="saveButton">Save draft</button><button type="button" class="approve" data-action="approve" id="approveButton">Approve</button><button type="button" class="approve" data-action="publish" id="publishButton">Publish now</button></div>
             </form>
