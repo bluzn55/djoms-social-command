@@ -3,7 +3,7 @@ const $ = id => document.getElementById(id);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const names = { facebook: 'Facebook', instagram: 'Instagram', x: 'X', youtube: 'YouTube' };
 const labels = { draft:'Draft', approved:'Approved', scheduled:'Scheduled', queueing:'Confirming schedule', paused:'Paused', publishing:'Publishing', published:'Published', failed:'Needs attention', partial:'Partly published', uncertain:'Check result', processing:'Preparing photo', prepared:'Prepared' };
-let records = [], campaigns = [], mediaInbox = [], videoInbox = [], commentStream = [], commentWarnings = [], commentCheckedAt = null, csrf = '', selected = null, connection = null, dirty = false, busy = false, activeView = 'Campaigns', campaignFilter = '', searchTerm = '', owner = '';
+let records = [], campaigns = [], mediaInbox = [], videoInbox = [], commentStream = [], commentWarnings = [], commentCheckedAt = null, commentPlatformFilter = 'all', commentStatusFilter = 'all', csrf = '', selected = null, connection = null, dirty = false, busy = false, activeView = 'Campaigns', campaignFilter = '', searchTerm = '', owner = '';
 let pollTimer;
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 function date(value) { return value ? new Date(value).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : '—'; }
@@ -39,9 +39,10 @@ async function loadVideoInbox() {
   return videoInbox;
 }
 async function loadComments() {
-  const [ytResult, metaResult] = await Promise.allSettled([
+  const [ytResult, metaResult, xResult] = await Promise.allSettled([
     platformApi('youtube','comments','YouTube'),
-    api('comments?platforms=facebook,instagram')
+    api('comments?platforms=facebook,instagram'),
+    platformApi('x','mentions','X')
   ]);
   commentStream = [];
   commentWarnings = [];
@@ -55,6 +56,10 @@ async function loadComments() {
     commentWarnings.push(...(metaResult.value.warnings || []));
     if (metaResult.value.checkedAt) checked.push(metaResult.value.checkedAt);
   } else commentWarnings.push('Facebook / Instagram: ' + metaResult.reason.message);
+  if (xResult.status === 'fulfilled') {
+    commentStream.push(...(xResult.value.items || []));
+    if (xResult.value.checkedAt) checked.push(xResult.value.checkedAt);
+  } else commentWarnings.push('X: ' + xResult.reason.message);
   commentStream.sort((a,b)=>Date.parse(b.publishedAt || 0)-Date.parse(a.publishedAt || 0));
   commentCheckedAt = checked.sort().at(-1) || new Date().toISOString();
   return commentStream;
@@ -169,9 +174,17 @@ function commentAgeState(comment) {
   return age >= 24*60*60*1000 ? 'red' : 'yellow';
 }
 function renderComments() {
+  const ageOver24 = c => !c.handled && Date.now() - Date.parse(c.publishedAt || 0) >= 24*60*60*1000;
   const unanswered = commentStream.filter(c=>!c.handled).length;
+  const over24 = commentStream.filter(ageOver24).length;
+  const handled = commentStream.filter(c=>c.handled).length;
+  const platformCounts = Object.fromEntries(['facebook','instagram','x','youtube'].map(p=>[p,commentStream.filter(c=>c.platform===p).length]));
+  let visible = commentStream.filter(c=>commentPlatformFilter==='all' || c.platform===commentPlatformFilter);
+  if(commentStatusFilter==='unanswered') visible=visible.filter(c=>!c.handled);
+  else if(commentStatusFilter==='handled') visible=visible.filter(c=>c.handled);
+  else if(commentStatusFilter==='over24') visible=visible.filter(ageOver24);
   const platformLabel = p => names[p] || p;
-  const rows = commentStream.length ? commentStream.map(c=>`
+  const rows = visible.length ? visible.map(c=>`
     <article class="comment-card ${commentAgeState(c)}">
       <div class="comment-head">
         <div><span class="platform-pill ${esc(c.platform)}">${esc(platformLabel(c.platform))}</span><strong>${esc(c.postTitle || platformLabel(c.platform) + ' post')}</strong></div>
@@ -187,20 +200,30 @@ function renderComments() {
           <button data-action="toggleCommentHandled" data-comment-platform="${esc(c.platform)}" data-comment-id="${esc(c.id)}" data-comment-handled="${c.handled ? '1':'0'}">${c.handled ? 'Mark unanswered' : 'Mark handled'}</button>
         </div>
       </div>
-    </article>`).join('') : '<div class="empty"><h3>No comments found yet.</h3><p>When comments arrive on connected platforms, they will show up here.</p></div>';
+    </article>`).join('') : '<div class="empty"><h3>No comments in this view.</h3><p>Try another filter or refresh the stream.</p></div>';
   const warnings = commentWarnings.length ? `<div class="comment-warnings">${commentWarnings.map(w=>`<p>${esc(w)}</p>`).join('')}</div>` : '';
+  const tab = (key,label,count) => `<button class="comment-filter ${commentPlatformFilter===key?'active':''}" data-comment-platform-filter="${key}">${label} <span>${count}</span></button>`;
+  const statusTab = (key,label,count) => `<button class="comment-filter secondary ${commentStatusFilter===key?'active':''}" data-comment-status-filter="${key}">${label} <span>${count}</span></button>`;
   $('content').innerHTML=`
     <div class="box comments-summary">
       <div><strong>Comments / Replies Center</strong><p>Newest first. Green = handled, yellow = under 24 hours, red = over 24 hours waiting.</p></div>
-      <div class="comment-metrics"><span><b>${commentStream.length}</b> loaded</span><span><b>${unanswered}</b> unanswered</span><span><b>${commentCheckedAt ? esc(date(commentCheckedAt)) : '—'}</b> last checked</span></div>
+      <div class="comment-metrics"><span><b>${commentStream.length}</b> loaded</span><span><b>${unanswered}</b> unanswered</span><span><b>${over24}</b> over 24 hrs</span><span><b>${commentCheckedAt ? esc(date(commentCheckedAt)) : '—'}</b> last checked</span></div>
       <button data-action="refreshComments">Refresh now</button>
     </div>
-    <div class="comments-platform-note">
-      <span class="platform-pill facebook">Facebook</span>
-      <span class="platform-pill instagram">Instagram</span>
-      <span class="platform-pill x">X next</span>
-      <span class="platform-pill youtube">YouTube</span>
-      <small>Facebook, Instagram and YouTube feed this same response stream. X is the remaining lane.</small>
+    <div class="comment-filterbar">
+      <div class="comment-filter-row">
+        ${tab('all','All',commentStream.length)}
+        ${tab('facebook','Facebook',platformCounts.facebook)}
+        ${tab('instagram','Instagram',platformCounts.instagram)}
+        ${tab('x','X',platformCounts.x)}
+        ${tab('youtube','YouTube',platformCounts.youtube)}
+      </div>
+      <div class="comment-filter-row">
+        ${statusTab('all','All status',commentStream.length)}
+        ${statusTab('unanswered','Unanswered',unanswered)}
+        ${statusTab('over24','Over 24 hrs',over24)}
+        ${statusTab('handled','Handled',handled)}
+      </div>
     </div>
     ${warnings}
     <div class="comment-stream">${rows}</div>`;
@@ -597,6 +620,8 @@ document.addEventListener('click', event => {
     else { extra.confirmed = confirm('Have you checked the live account and confirmed that this post was NOT published?'); if (!extra.confirmed) return; }
     await recordAction('resolve',extra);
   });
+  if (b.dataset.commentPlatformFilter) { commentPlatformFilter=b.dataset.commentPlatformFilter; renderComments(); return; }
+  if (b.dataset.commentStatusFilter) { commentStatusFilter=b.dataset.commentStatusFilter; renderComments(); return; }
   const action = b.dataset.action; if (!action) return;
   if (action === 'back') { if (!dirty || confirm('Leave without saving your changes?')) render(); return; }
   if (action === 'allCampaigns') { campaignFilter=''; return render(); }
@@ -613,7 +638,10 @@ document.addEventListener('click', event => {
     if(!text) { notice('Write a reply first.',true); return; }
     return perform(async()=>{
       if(platform === 'youtube') await youtubePost('comment-reply',{parentId,text});
-      else await api('comments',{action:'reply',platform,commentId,message:text});
+      else if(platform === 'x') {
+        const response=await fetch('/api/x/mention-reply',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-DJOMS-CSRF':csrf},body:JSON.stringify({tweetId:commentId,text})});
+        const data=await response.json(); if(!response.ok) throw new Error(data.error || 'X could not send the reply.');
+      } else await api('comments',{action:'reply',platform,commentId,message:text});
       await loadComments();
       renderComments();
       notice('Reply sent and comment marked handled.');
@@ -625,7 +653,10 @@ document.addEventListener('click', event => {
     const handled=b.dataset.commentHandled !== '1';
     return perform(async()=>{
       if(platform === 'youtube') await youtubePost('comment-handled',{commentId,handled});
-      else await api('comments',{action:'handled',platform,commentId,handled});
+      else if(platform === 'x') {
+        const response=await fetch('/api/x/mention-handled',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-DJOMS-CSRF':csrf},body:JSON.stringify({tweetId:commentId,handled})});
+        const data=await response.json(); if(!response.ok) throw new Error(data.error || 'X could not update this mention.');
+      } else await api('comments',{action:'handled',platform,commentId,handled});
       await loadComments();
       renderComments();
       notice(handled ? 'Comment marked handled.' : 'Comment marked unanswered.');
