@@ -736,3 +736,31 @@ dialog label,dialog input,dialog button,dialog p { font-size:16px; }
   color:#784b25;
   font-size:13px;
 }
+
+.comment-filterbar { margin:0 0 12px; display:grid; gap:8px; }
+.comment-filter-row { display:flex; gap:7px; flex-wrap:wrap; }
+.comment-filter {
+  min-height:36px;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#fffaf0;
+}
+.comment-filter span {
+  display:inline-block;
+  min-width:20px;
+  margin-left:5px;
+  padding:1px 5px;
+  border-radius:999px;
+  background:#eadfc8;
+  font-size:11px;
+}
+.comment-filter.active {
+  background:#2d251a;
+  color:#fff;
+  border-color:#2d251a;
+}
+.comment-filter.secondary.active {
+  background:#315b38;
+  border-color:#315b38;
+}
+.comment-filter.active span { background:#ffffff26; }
