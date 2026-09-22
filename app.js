@@ -123,6 +123,25 @@ async function uploadPrivateYouTubeVideo(file) {
   });
   return registered.item;
 }
+async function handleVideoFiles(files) {
+  const list=[...files];
+  if(!list.length) return;
+  await perform(async()=>{
+    let done=0;
+    for(const file of list) {
+      if(!String(file.type).startsWith('video/')) {
+        notice('Skipped '+file.name+': choose a video file.',true);
+        continue;
+      }
+      notice('Uploading video '+(done+1)+' of '+list.length+' privately to YouTube…');
+      const item=await uploadPrivateYouTubeVideo(file);
+      videoInbox.unshift(item);
+      done++;
+    }
+    renderVideoInbox();
+    notice(done+' video'+(done===1?'':'s')+' loaded into Video Inbox. Nothing was published.');
+  });
+}
 function renderVideoInbox() {
   const campaignOptions = campaigns.map(c => `<option value="${esc(c.id)}">${esc(c.title)}</option>`).join('');
   const categoryOptions = [
@@ -166,27 +185,55 @@ function renderVideoInbox() {
       <label class="upload-button video-upload">Load videos<input id="batchVideoFiles" type="file" accept="video/mp4,video/quicktime,video/webm,video/*" multiple hidden></label>
       <span>${videoInbox.length} video${videoInbox.length===1?'':'s'} waiting</span>
     </div>
+    <div id="videoDropZone" class="drop-zone"><strong>Drag & drop videos here</strong><span>MP4, MOV, WebM and other browser-supported video files · multiple files welcome</span></div>
     <div class="video-inbox-grid">${cards}</div>`;
   videoInbox.forEach(item=>{
     const c=document.querySelector('[data-video-campaign="'+CSS.escape(item.id)+'"]'); if(c) c.value=item.campaign || 'BBQ';
     const cat=document.querySelector('[data-video-category="'+CSS.escape(item.id)+'"]'); if(cat) cat.value=item.categoryId || '22';
     document.querySelectorAll('[data-video-platform="'+CSS.escape(item.id)+'"]').forEach(cb=>cb.checked=(item.targets||['youtube']).includes(cb.value));
   });
-  $('batchVideoFiles')?.addEventListener('change', async e=>{
+  $('batchVideoFiles')?.addEventListener('change', e=>{
     const files=[...e.target.files]; e.target.value='';
-    if(!files.length) return;
-    await perform(async()=>{
-      let done=0;
-      for(const file of files) {
-        if(!String(file.type).startsWith('video/')) { notice('Skipped '+file.name+': choose a video file.',true); continue; }
-        notice('Uploading video '+(done+1)+' of '+files.length+' privately to YouTube…');
-        const item=await uploadPrivateYouTubeVideo(file);
-        videoInbox.unshift(item);
-        done++;
+    handleVideoFiles(files);
+  });
+  wireDropZone('videoDropZone',handleVideoFiles,'videos');
+}
+async function handlePictureFiles(files) {
+  const list=[...files];
+  if(!list.length) return;
+  await perform(async()=> {
+    let done=0;
+    for(const file of list) {
+      if (file.size > 20000000 || !['image/jpeg','image/png','image/webp'].includes(file.type)) {
+        notice('Skipped ' + file.name + ': use JPG, PNG or WebP under 20 MB.', true);
+        continue;
       }
-      renderVideoInbox();
-      notice(done+' video'+(done===1?'':'s')+' loaded into Video Inbox. Nothing was published.');
-    });
+      notice('Loading picture ' + (done+1) + ' of ' + list.length + '…');
+      const bitmap=await createImageBitmap(file);
+      const master=await uploadVariant(bitmap,1080,1080);
+      bitmap.close();
+      const added=await api('records',{action:'mediaInboxAdd',filename:file.name,imageId:master.imageId});
+      mediaInbox.unshift(added.item);
+      done++;
+    }
+    renderMediaInbox();
+    notice(done + ' picture' + (done===1?'':'s') + ' loaded into Media Inbox.');
+  });
+}
+function wireDropZone(zoneId, handler, label) {
+  const zone=$(zoneId);
+  if(!zone) return;
+  ['dragenter','dragover'].forEach(type=>zone.addEventListener(type,e=>{
+    e.preventDefault(); e.stopPropagation(); zone.classList.add('dragging');
+    if(e.dataTransfer) e.dataTransfer.dropEffect='copy';
+  }));
+  ['dragleave','drop'].forEach(type=>zone.addEventListener(type,e=>{
+    e.preventDefault(); e.stopPropagation(); zone.classList.remove('dragging');
+  }));
+  zone.addEventListener('drop',e=>{
+    const files=[...(e.dataTransfer?.files || [])];
+    if(!files.length) return;
+    handler(files).catch(err=>notice(err.message || ('Could not load ' + label + '.'),true));
   });
 }
 function renderMediaInbox() {
@@ -216,26 +263,13 @@ function renderMediaInbox() {
       <button class="approve" data-action="createInboxDrafts">Create drafts from selected</button>
       <span id="inboxCount">${mediaInbox.length} picture${mediaInbox.length===1?'':'s'} waiting</span>
     </div>
+    <div id="mediaDropZone" class="drop-zone"><strong>Drag & drop pictures here</strong><span>JPG, PNG or WebP · multiple files welcome</span></div>
     <div class="inbox-grid">${cards}</div>`;
-  $('batchImageFiles')?.addEventListener('change', async e => {
+  $('batchImageFiles')?.addEventListener('change', e => {
     const files=[...e.target.files]; e.target.value='';
-    if(!files.length) return;
-    await perform(async()=> {
-      let done=0;
-      for(const file of files) {
-        if (file.size > 20000000 || !['image/jpeg','image/png','image/webp'].includes(file.type)) { notice('Skipped ' + file.name + ': use JPG, PNG or WebP under 20 MB.', true); continue; }
-        notice('Loading picture ' + (done+1) + ' of ' + files.length + '…');
-        const bitmap=await createImageBitmap(file);
-        const master=await uploadVariant(bitmap,1080,1080);
-        bitmap.close();
-        const added=await api('records',{action:'mediaInboxAdd',filename:file.name,imageId:master.imageId});
-        mediaInbox.unshift(added.item);
-        done++;
-      }
-      renderMediaInbox();
-      notice(done + ' picture' + (done===1?'':'s') + ' loaded into Media Inbox.');
-    });
+    handlePictureFiles(files);
   });
+  wireDropZone('mediaDropZone',handlePictureFiles,'pictures');
 }
 async function buildInboxDraft(itemId) {
   const item=mediaInbox.find(x=>x.id===itemId);
