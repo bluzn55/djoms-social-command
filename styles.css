@@ -812,3 +812,104 @@ dialog label,dialog input,dialog button,dialog p { font-size:16px; }
   color:#f2d79b;
   border-color:#b88736;
 }
+
+
+/* Locked Social Media Command Center platform GYR row */
+.yellow { background:#d3a126; }
+
+.connection-strip {
+  display:block;
+  padding:16px 0 18px;
+}
+
+.platform-status-grid {
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+}
+
+.connection-strip .platform-status-card {
+  margin:0;
+  min-height:126px;
+  padding:16px;
+  text-align:left;
+  background:#fffaf0;
+  border:1px solid #d7c8a9;
+  border-radius:10px;
+  color:#2d251a;
+  box-shadow:0 2px 8px #2d251a12;
+}
+
+.connection-strip .platform-status-card:hover {
+  border-color:#9c742e;
+  background:#fff4dc;
+}
+
+.platform-status-top,
+.platform-detail-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+}
+
+.platform-status-name {
+  font:22px Georgia,serif;
+  font-weight:700;
+}
+
+.gyr-light {
+  display:inline-block;
+  flex:0 0 auto;
+  width:30px;
+  height:30px;
+  border-radius:50%;
+  border:3px solid #fffaf0;
+  box-shadow:0 0 0 1px #8f8067, inset 0 0 0 1px #0000001a;
+}
+
+.platform-status-card strong {
+  display:block;
+  margin-top:15px;
+  font-size:13px;
+  letter-spacing:.25px;
+}
+
+.platform-status-card small {
+  display:block;
+  margin-top:6px;
+  font-size:12px;
+  color:#766a59;
+  overflow-wrap:anywhere;
+}
+
+.platform-detail .gyr-light {
+  width:26px;
+  height:26px;
+}
+
+.platform-detail h2 {
+  margin:0;
+}
+
+@media(max-width:760px) {
+  .platform-status-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+  }
+
+  .connection-strip .platform-status-card {
+    min-height:116px;
+    padding:14px;
+  }
+
+  .platform-status-name {
+    font-size:19px;
+  }
+
+  .gyr-light {
+    width:28px;
+    height:28px;
+  }
+}
