@@ -112,11 +112,7 @@ function compactMetric(value) {
   return new Intl.NumberFormat('en-US').format(number);
 }
 function platformMetricData(info = {}, platform) {
-  const aliases = {
-    today:['today','1d','day'],
-    '7d':['7d','7','week'],
-    '30d':['30d','30','month']
-  };
+  const aliases = { today:['today','1d','day'], '7d':['7d','7','week'], '30d':['30d','30','month'] };
   const bases = [info.analytics, info.insights, info.metrics].filter(Boolean);
   let source = {};
   for (const base of bases) {
@@ -124,19 +120,48 @@ function platformMetricData(info = {}, platform) {
     if (key) { source = base[key]; break; }
     if (['likes','comments','replies','clicks','shares','reposts','reach','views','impressions'].some(k => base?.[k] !== undefined)) { source = base; break; }
   }
+  const top = source.topPost ?? source.bestPost ?? source.topContent ?? info.topPost ?? null;
   return {
     audience: info.followers ?? info.subscribers ?? info.audience ?? source.followers ?? source.subscribers ?? source.audience ?? source.followersCount ?? source.subscriberCount,
+    audienceChange: source.audienceChange ?? source.followersChange ?? source.netFollowers ?? source.subscriberGain ?? source.subscribersGained ?? info.audienceChange,
     likes: source.likes ?? source.likeCount ?? info.likes,
     replies: source.replies ?? source.comments ?? source.replyCount ?? source.commentCount ?? info.replies ?? info.comments,
     clicks: source.clicks ?? source.linkClicks ?? source.clickCount ?? info.clicks ?? info.linkClicks,
     shares: source.shares ?? source.reposts ?? source.forwards ?? source.shareCount ?? source.repostCount ?? info.shares ?? info.reposts,
-    reach: source.reach ?? source.views ?? source.impressions ?? source.viewCount ?? source.reachCount ?? info.reach ?? info.views
+    reach: source.reach ?? source.views ?? source.impressions ?? source.viewCount ?? source.reachCount ?? info.reach ?? info.views,
+    reactions: source.reactions ?? source.reactionCount ?? info.reactions,
+    saves: source.saves ?? source.saveCount ?? info.saves,
+    bookmarks: source.bookmarks ?? source.bookmarkCount ?? info.bookmarks,
+    watchTime: source.watchTimeHours !== undefined ? compactMetric(source.watchTimeHours) + ' hr' : source.watchTimeMinutes !== undefined ? compactMetric(source.watchTimeMinutes) + ' min' : source.watchTime ?? info.watchTime,
+    subscriberGain: source.subscriberGain ?? source.subscribersGained ?? source.netSubscribers ?? info.subscriberGain,
+    topPostTitle: typeof top === 'string' ? top : top?.title ?? top?.caption ?? top?.name,
+    topPostValue: typeof top === 'object' && top ? (top.engagement ?? top.views ?? top.clicks ?? top.likes) : null
   };
+}
+function audienceChangeHtml(value) {
+  if (value === null || value === undefined || value === '') return '<span class="audience-change neutral-change">—</span>';
+  const number = Number(value);
+  if (!Number.isFinite(number)) return '<span class="audience-change neutral-change">' + esc(value) + '</span>';
+  if (number > 0) return '<span class="audience-change positive">▲ +' + esc(compactMetric(number)) + '</span>';
+  if (number < 0) return '<span class="audience-change negative">▼ ' + esc(compactMetric(number)) + '</span>';
+  return '<span class="audience-change neutral-change">0</span>';
+}
+function platformExtraMetrics(platform, metrics) {
+  if (platform === 'facebook') return [['Reactions',metrics.reactions]];
+  if (platform === 'instagram') return [['Saves',metrics.saves]];
+  if (platform === 'x') return [['Bookmarks',metrics.bookmarks],['Reposts',metrics.shares]];
+  if (platform === 'youtube') return [['Watch time',metrics.watchTime],['Subscriber gain',metrics.subscriberGain]];
+  return [];
 }
 function renderConnectionStrip() {
   const strip = $('connectionStrip');
   strip.hidden = false;
   const rangeLabels = { today:'Today', '7d':'Last 7 Days', '30d':'Last 30 Days' };
+  const unanswered = commentCheckedAt ? commentStream.filter(x => !x.handled).length : '—';
+  const scheduled = records.filter(r => r.status === 'scheduled').length;
+  const failed = records.filter(r => ['failed','partial','uncertain'].includes(r.status)).length;
+  const platformIssues = statusPlatforms.filter(p => connectionHealth(connection?.[p] || {}).color !== 'green').length;
+  const needs = records.filter(attention).length + platformIssues;
   strip.innerHTML = `
     <div class="platform-status-toolbar">
       <div><strong>Platform health & engagement</strong><small>${esc(rangeLabels[platformMetricRange] || 'Last 7 Days')}</small></div>
@@ -150,55 +175,42 @@ function renderConnectionStrip() {
       const account = info.name || (info.connected ? 'Connected account' : 'Connection needs attention');
       const metrics = platformMetricData(info,p);
       const audienceLabel = p === 'youtube' ? 'Subscribers' : 'Followers';
-      const cells = [
-        ['Likes',metrics.likes],
-        ['Replies',metrics.replies],
-        ['Clicks',metrics.clicks],
-        ['Shares',metrics.shares],
-        ['Reach',metrics.reach]
-      ];
+      const cells = [['Likes',metrics.likes],['Replies',metrics.replies],['Clicks',metrics.clicks],['Shares',metrics.shares],['Reach',metrics.reach]];
       return `<button class="platform-status-card" data-platform-detail="${esc(p)}" aria-label="${esc(names[p])}: ${esc(health.text)}. Open details below.">
         <span class="platform-status-top"><span class="platform-status-name">${esc(names[p])}</span><i class="gyr-light ${health.color}" aria-hidden="true"></i></span>
         <strong>${esc(health.label)} · ${esc(health.text)}</strong>
         <small>${esc(account)}</small>
-        <span class="platform-audience-row"><span>${esc(audienceLabel)}</span><b>${esc(compactMetric(metrics.audience))}</b></span>
+        <span class="platform-audience-row"><span>${esc(audienceLabel)}</span><span class="platform-audience-value"><b>${esc(compactMetric(metrics.audience))}</b>${audienceChangeHtml(metrics.audienceChange)}</span></span>
         <span class="platform-engagement-grid">${cells.map(([label,value]) => `<span class="platform-engagement-metric"><span>${esc(label)}</span><b>${esc(compactMetric(value))}</b></span>`).join('')}</span>
+        <span class="platform-updated">Status checked when this page refreshed</span>
       </button>`;
     }).join('')}</div>
-    
+    <div class="social-action-strip">
+      <button type="button" data-action="openUnansweredComments" class="${Number(unanswered) > 0 ? 'yellow-action' : 'green-action'}"><span>💬 Unanswered</span><b>${esc(unanswered)}</b><small>Comments</small></button>
+      <button type="button" data-view="Calendar" class="green-action"><span>📅 Scheduled</span><b>${esc(scheduled)}</b><small>Posts</small></button>
+      <button type="button" data-view="Needs Attention" class="${failed ? 'red-action' : 'green-action'}"><span>🔴 Failed</span><b>${esc(failed)}</b><small>Posting issues</small></button>
+      <button type="button" data-view="Needs Attention" class="${needs ? 'red-action' : 'green-action'}"><span>⚠ Needs Attention</span><b>${esc(needs)}</b><small>All issues</small></button>
+    </div>
     ${selectedStatusPlatform ? (() => {
       const p = selectedStatusPlatform;
       const info = connection?.[p] || {};
       const health = connectionHealth(info);
       const metrics = platformMetricData(info,p);
       const audienceLabel = p === 'youtube' ? 'Subscribers' : 'Followers';
+      const extras = platformExtraMetrics(p,metrics);
       const connectHref = p === 'facebook' || p === 'instagram' ? '/api/meta/connect' : p === 'x' ? '/api/x/connect' : '/api/youtube/connect';
       const connectLabel = p === 'facebook' || p === 'instagram' ? 'Connect / reconnect Facebook & Instagram' : 'Connect / reconnect ' + names[p];
       return `<div class="platform-inline-detail">
-        <div class="platform-inline-detail-head">
-          <div>
-            <small>PLATFORM DRILL-DOWN</small>
-            <h3>${esc(names[p])}</h3>
-          </div>
-          <div class="platform-inline-detail-actions">
-            <i class="gyr-light ${health.color}" aria-hidden="true"></i>
-            <button type="button" data-action="closePlatformDetail">Close</button>
-          </div>
-        </div>
+        <div class="platform-inline-detail-head"><div><small>PLATFORM DRILL-DOWN</small><h3>${esc(names[p])}</h3></div><div class="platform-inline-detail-actions"><i class="gyr-light ${health.color}" aria-hidden="true"></i><button type="button" data-action="closePlatformDetail">Close</button></div></div>
         <div class="platform-inline-status"><strong>${esc(health.label)} · ${esc(health.text)}</strong><span>${esc(info.name || 'Account not verified')}</span></div>
         <div class="platform-inline-metrics">
-          <div><span>${esc(audienceLabel)}</span><b>${esc(compactMetric(metrics.audience))}</b></div>
-          <div><span>Likes</span><b>${esc(compactMetric(metrics.likes))}</b></div>
-          <div><span>Replies</span><b>${esc(compactMetric(metrics.replies))}</b></div>
-          <div><span>Clicks</span><b>${esc(compactMetric(metrics.clicks))}</b></div>
-          <div><span>Shares</span><b>${esc(compactMetric(metrics.shares))}</b></div>
-          <div><span>Reach / Views</span><b>${esc(compactMetric(metrics.reach))}</b></div>
+          <div><span>${esc(audienceLabel)}</span><b>${esc(compactMetric(metrics.audience))}</b><small>${audienceChangeHtml(metrics.audienceChange)}</small></div>
+          <div><span>Likes</span><b>${esc(compactMetric(metrics.likes))}</b></div><div><span>Replies</span><b>${esc(compactMetric(metrics.replies))}</b></div><div><span>Clicks</span><b>${esc(compactMetric(metrics.clicks))}</b></div><div><span>Shares</span><b>${esc(compactMetric(metrics.shares))}</b></div><div><span>Reach / Views</span><b>${esc(compactMetric(metrics.reach))}</b></div>
+          ${extras.map(([label,value]) => `<div><span>${esc(label)}</span><b>${esc(compactMetric(value))}</b></div>`).join('')}
         </div>
+        <div class="top-performing-post"><span>TOP PERFORMING POST</span><strong>${esc(metrics.topPostTitle || 'Analytics not connected yet')}</strong>${metrics.topPostValue !== null && metrics.topPostValue !== undefined ? `<b>${esc(compactMetric(metrics.topPostValue))}</b>` : ''}</div>
         <p>${esc(info.message || 'Connection and posting permissions checked.')}</p>
-        <div class="platform-inline-links">
-          <a class="button approve" href="${connectHref}">${esc(connectLabel)}</a>
-          <button type="button" data-action="openFullPlatforms">Full platform settings</button>
-        </div>
+        <div class="platform-inline-links"><a class="button approve" href="${connectHref}">${esc(connectLabel)}</a><button type="button" data-action="openFullPlatforms">Full platform settings</button></div>
       </div>`;
     })() : ''}
     <small class="platform-analytics-note">A dash means that metric is not connected from that platform yet.</small>`;
@@ -752,6 +764,7 @@ document.addEventListener('click', event => {
   if (b.dataset.commentPlatformFilter) { commentPlatformFilter=b.dataset.commentPlatformFilter; renderComments(); return; }
   if (b.dataset.commentStatusFilter) { commentStatusFilter=b.dataset.commentStatusFilter; renderComments(); return; }
   const action = b.dataset.action; if (!action) return;
+  if (action === 'openUnansweredComments') { commentStatusFilter = 'unanswered'; setView('Comments'); return; }
   if (action === 'closePlatformDetail') { selectedStatusPlatform = null; renderConnectionStrip(); return; }
   if (action === 'openFullPlatforms') { selectedStatusPlatform = null; setView('Platforms'); return; }
   if (action === 'back') { if (!dirty || confirm('Leave without saving your changes?')) render(); return; }
