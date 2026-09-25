@@ -6,6 +6,7 @@ const statusPlatforms = ['facebook','instagram','x','youtube'];
 const labels = { draft:'Draft', approved:'Approved', scheduled:'Scheduled', queueing:'Confirming schedule', paused:'Paused', publishing:'Publishing', published:'Published', failed:'Needs attention', partial:'Partly published', uncertain:'Check result', processing:'Preparing photo', prepared:'Prepared' };
 let records = [], campaigns = [], mediaInbox = [], videoInbox = [], commentStream = [], commentWarnings = [], commentCheckedAt = null, commentPlatformFilter = 'all', commentStatusFilter = 'all', csrf = '', selected = null, connection = null, dirty = false, busy = false, activeView = 'Campaigns', campaignFilter = '', searchTerm = '', owner = '';
 let pollTimer;
+let platformMetricRange = '7d';
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 function date(value) { return value ? new Date(value).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : '—'; }
 function code(r) { return r.campaign + '-' + r.id.slice(-4).toUpperCase(); }
@@ -101,19 +102,69 @@ function connectionHealth(info = {}) {
   if (info.connected) return { color:'yellow', label:'YELLOW', text:'Needs attention' };
   return { color:'red', label:'RED', text:'Disconnected / needs attention' };
 }
+function compactMetric(value) {
+  if (value === null || value === undefined || value === '') return '—';
+  if (typeof value === 'string' && !/^[-+]?\d+(\.\d+)?$/.test(value.trim())) return value;
+  const number = Number(value);
+  if (!Number.isFinite(number)) return '—';
+  if (Math.abs(number) >= 10000) return new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:1}).format(number);
+  return new Intl.NumberFormat('en-US').format(number);
+}
+function platformMetricData(info = {}, platform) {
+  const aliases = {
+    today:['today','1d','day'],
+    '7d':['7d','7','week'],
+    '30d':['30d','30','month']
+  };
+  const bases = [info.analytics, info.insights, info.metrics].filter(Boolean);
+  let source = {};
+  for (const base of bases) {
+    const key = (aliases[platformMetricRange] || [platformMetricRange]).find(k => base && typeof base[k] === 'object');
+    if (key) { source = base[key]; break; }
+    if (['likes','comments','replies','clicks','shares','reposts','reach','views','impressions'].some(k => base?.[k] !== undefined)) { source = base; break; }
+  }
+  return {
+    audience: info.followers ?? info.subscribers ?? info.audience ?? source.followers ?? source.subscribers ?? source.audience ?? source.followersCount ?? source.subscriberCount,
+    likes: source.likes ?? source.likeCount ?? info.likes,
+    replies: source.replies ?? source.comments ?? source.replyCount ?? source.commentCount ?? info.replies ?? info.comments,
+    clicks: source.clicks ?? source.linkClicks ?? source.clickCount ?? info.clicks ?? info.linkClicks,
+    shares: source.shares ?? source.reposts ?? source.forwards ?? source.shareCount ?? source.repostCount ?? info.shares ?? info.reposts,
+    reach: source.reach ?? source.views ?? source.impressions ?? source.viewCount ?? source.reachCount ?? info.reach ?? info.views
+  };
+}
 function renderConnectionStrip() {
   const strip = $('connectionStrip');
   strip.hidden = false;
-  strip.innerHTML = `<div class="platform-status-grid">${statusPlatforms.map(p => {
-    const info = connection?.[p] || {};
-    const health = connectionHealth(info);
-    const account = info.name || (info.connected ? 'Connected account' : 'Connection needs attention');
-    return `<button class="platform-status-card" data-view="Platforms" aria-label="${esc(names[p])}: ${esc(health.text)}. Open connection details.">
-      <span class="platform-status-top"><span class="platform-status-name">${esc(names[p])}</span><i class="gyr-light ${health.color}" aria-hidden="true"></i></span>
-      <strong>${esc(health.label)} · ${esc(health.text)}</strong>
-      <small>${esc(account)}</small>
-    </button>`;
-  }).join('')}</div>`;
+  const rangeLabels = { today:'Today', '7d':'Last 7 Days', '30d':'Last 30 Days' };
+  strip.innerHTML = `
+    <div class="platform-status-toolbar">
+      <div><strong>Platform health & engagement</strong><small>${esc(rangeLabels[platformMetricRange] || 'Last 7 Days')}</small></div>
+      <div class="platform-range-switch" role="group" aria-label="Engagement time range">
+        ${[['today','Today'],['7d','7 Days'],['30d','30 Days']].map(([key,label]) => `<button type="button" data-metric-range="${key}" class="${platformMetricRange === key ? 'active' : ''}" aria-pressed="${platformMetricRange === key}">${label}</button>`).join('')}
+      </div>
+    </div>
+    <div class="platform-status-grid">${statusPlatforms.map(p => {
+      const info = connection?.[p] || {};
+      const health = connectionHealth(info);
+      const account = info.name || (info.connected ? 'Connected account' : 'Connection needs attention');
+      const metrics = platformMetricData(info,p);
+      const audienceLabel = p === 'youtube' ? 'Subscribers' : 'Followers';
+      const cells = [
+        ['Likes',metrics.likes],
+        ['Replies',metrics.replies],
+        ['Clicks',metrics.clicks],
+        ['Shares',metrics.shares],
+        ['Reach',metrics.reach]
+      ];
+      return `<button class="platform-status-card" data-view="Platforms" aria-label="${esc(names[p])}: ${esc(health.text)}. Open connection details.">
+        <span class="platform-status-top"><span class="platform-status-name">${esc(names[p])}</span><i class="gyr-light ${health.color}" aria-hidden="true"></i></span>
+        <strong>${esc(health.label)} · ${esc(health.text)}</strong>
+        <small>${esc(account)}</small>
+        <span class="platform-audience-row"><span>${esc(audienceLabel)}</span><b>${esc(compactMetric(metrics.audience))}</b></span>
+        <span class="platform-engagement-grid">${cells.map(([label,value]) => `<span class="platform-engagement-metric"><span>${esc(label)}</span><b>${esc(compactMetric(value))}</b></span>`).join('')}</span>
+      </button>`;
+    }).join('')}</div>
+    <small class="platform-analytics-note">A dash means that metric is not connected from that platform yet.</small>`;
 }
 async function refreshConnection() {
   try { connection = await api('status?refresh=1'); }
@@ -650,6 +701,7 @@ async function perform(work) {
 }
 document.addEventListener('click', event => {
   const b = event.target.closest('button,a'); if (!b || b.disabled || busy) return;
+  if (b.dataset.metricRange) { platformMetricRange = b.dataset.metricRange; renderConnectionStrip(); return; }
   if (b.dataset.view) return setView(b.dataset.view);
   if (b.dataset.open) return openRecord(records.find(r => r.id === b.dataset.open));
   if (b.dataset.campaign) { campaignFilter = campaignFilter === b.dataset.campaign ? '' : b.dataset.campaign; return render(); }
