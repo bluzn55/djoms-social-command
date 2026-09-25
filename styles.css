@@ -1044,3 +1044,108 @@ dialog label,dialog input,dialog button,dialog p { font-size:16px; }
     font-size:16px;
   }
 }
+
+
+/* Inline platform drill-down */
+.platform-inline-detail {
+  margin-top:14px;
+  padding:16px;
+  border:1px solid #c9b17e;
+  border-radius:10px;
+  background:#fff8e8;
+}
+.platform-inline-detail-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+}
+.platform-inline-detail-head small {
+  display:block;
+  color:#766a59;
+  font-size:10px;
+  letter-spacing:1px;
+  font-weight:700;
+}
+.platform-inline-detail-head h3 {
+  margin:3px 0 0;
+  font:24px Georgia,serif;
+}
+.platform-inline-detail-actions {
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.platform-inline-detail-actions button,
+.platform-inline-links button {
+  min-height:36px;
+}
+.platform-inline-status {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 18px;
+  margin-top:12px;
+  padding-top:11px;
+  border-top:1px solid #e2d7c2;
+  font-size:13px;
+}
+.platform-inline-status span {
+  color:#766a59;
+}
+.platform-inline-metrics {
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:8px;
+  margin-top:12px;
+}
+.platform-inline-metrics>div {
+  padding:10px 8px;
+  text-align:center;
+  border:1px solid #e2d7c2;
+  border-radius:7px;
+  background:#fffef9;
+}
+.platform-inline-metrics span {
+  display:block;
+  color:#766a59;
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.45px;
+}
+.platform-inline-metrics b {
+  display:block;
+  margin-top:5px;
+  font-size:17px;
+}
+.platform-inline-links {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:12px;
+}
+@media(max-width:900px) {
+  .platform-inline-metrics {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+@media(max-width:560px) {
+  .platform-inline-detail-head {
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .platform-inline-detail-actions {
+    width:100%;
+    justify-content:space-between;
+  }
+  .platform-inline-metrics {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .platform-inline-links {
+    flex-direction:column;
+  }
+  .platform-inline-links .button,
+  .platform-inline-links button {
+    width:100%;
+    text-align:center;
+  }
+}
