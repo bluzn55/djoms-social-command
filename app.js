@@ -2,6 +2,7 @@
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const names = { facebook: 'Facebook', instagram: 'Instagram', x: 'X', youtube: 'YouTube', website: 'Website Community' };
+const statusPlatforms = ['facebook','instagram','x','youtube'];
 const labels = { draft:'Draft', approved:'Approved', scheduled:'Scheduled', queueing:'Confirming schedule', paused:'Paused', publishing:'Publishing', published:'Published', failed:'Needs attention', partial:'Partly published', uncertain:'Check result', processing:'Preparing photo', prepared:'Prepared' };
 let records = [], campaigns = [], mediaInbox = [], videoInbox = [], commentStream = [], commentWarnings = [], commentCheckedAt = null, commentPlatformFilter = 'all', commentStatusFilter = 'all', csrf = '', selected = null, connection = null, dirty = false, busy = false, activeView = 'Campaigns', campaignFilter = '', searchTerm = '', owner = '';
 let pollTimer;
@@ -95,6 +96,25 @@ async function youtubePost(path, body) {
   if (!response.ok) throw new Error(data.error || 'YouTube could not complete the request.');
   return data;
 }
+function connectionHealth(info = {}) {
+  if (info.canPublish) return { color:'green', label:'GREEN', text:'Connected & working' };
+  if (info.connected) return { color:'yellow', label:'YELLOW', text:'Needs attention' };
+  return { color:'red', label:'RED', text:'Disconnected / needs attention' };
+}
+function renderConnectionStrip() {
+  const strip = $('connectionStrip');
+  strip.hidden = false;
+  strip.innerHTML = `<div class="platform-status-grid">${statusPlatforms.map(p => {
+    const info = connection?.[p] || {};
+    const health = connectionHealth(info);
+    const account = info.name || (info.connected ? 'Connected account' : 'Connection needs attention');
+    return `<button class="platform-status-card" data-view="Platforms" aria-label="${esc(names[p])}: ${esc(health.text)}. Open connection details.">
+      <span class="platform-status-top"><span class="platform-status-name">${esc(names[p])}</span><i class="gyr-light ${health.color}" aria-hidden="true"></i></span>
+      <strong>${esc(health.label)} · ${esc(health.text)}</strong>
+      <small>${esc(account)}</small>
+    </button>`;
+  }).join('')}</div>`;
+}
 async function refreshConnection() {
   try { connection = await api('status?refresh=1'); }
   catch (e) { connection = { facebook:{message:e.message}, instagram:{message:e.message}, scheduler:false }; }
@@ -102,8 +122,7 @@ async function refreshConnection() {
   catch (e) { connection.x = { connected:false, canPublish:false, message:e.message }; }
   try { connection.youtube = await platformApi('youtube','status?refresh=1','YouTube'); }
   catch (e) { connection.youtube = { connected:false, canPublish:false, message:e.message }; }
-  const strip = $('connectionStrip'); strip.hidden = false;
-  strip.innerHTML = Object.entries(names).map(([p,n]) => `<span><i class="dot ${connection[p]?.canPublish ? 'green' : 'red'}"></i>${n}: ${esc(connection[p]?.name || (connection[p]?.connected ? 'Check permissions' : 'Needs connection'))}</span>`).join('') + '<button data-view="Platforms">Manage connections</button>';
+  renderConnectionStrip();
 }
 async function signedIn(s) {
   owner = s.user; csrf = s.csrf; $('loginDialog').close(); $('password').value = '';
@@ -474,7 +493,10 @@ function render() {
     return;
   }
   if (activeView === 'Platforms') {
-    $('content').innerHTML = `<div class="platforms connection-panels">${Object.entries(names).map(([p,n]) => `<div class="box"><h2>${n}</h2><p><i class="dot ${connection?.[p]?.canPublish ? 'green':'red'}"></i>${esc(connection?.[p]?.name || 'Account not verified')}</p><p>${esc(connection?.[p]?.message || 'Check the account connection.')}</p></div>`).join('')}</div><div class="box connection-actions"><a class="button approve" href="/api/meta/connect">Connect / reconnect Facebook & Instagram</a><button data-action="checkConnection">Check connections</button><p>Choose the Doc Jaks Facebook Page and its linked professional Instagram account when Meta asks.</p><p>Scheduling: ${connection?.scheduler ? 'Configured · confirmed separately when you schedule a post.' : 'One-time scheduler setup still needed.'}</p><a class="button approve" href="/api/x/connect">Connect / reconnect X</a><p>Connect the Doc Jaks X account and approve read/write access when X asks.</p><a class="button approve" href="/api/youtube/connect">Connect / reconnect YouTube</a><p>Connect the Doc Jaks YouTube channel now so it is ready when video publishing begins.</p></div>`;
+    $('content').innerHTML = `<div class="platforms connection-panels">${statusPlatforms.map(p => {
+      const n = names[p], info = connection?.[p] || {}, health = connectionHealth(info);
+      return `<div class="box platform-detail"><div class="platform-detail-head"><h2>${esc(n)}</h2><i class="gyr-light ${health.color}" aria-hidden="true"></i></div><p><strong>${esc(health.label)} · ${esc(health.text)}</strong></p><p>${esc(info.name || 'Account not verified')}</p><p>${esc(info.message || 'Connection and posting permissions checked.')}</p></div>`;
+    }).join('')}</div><div class="box connection-actions"><a class="button approve" href="/api/meta/connect">Connect / reconnect Facebook & Instagram</a><button data-action="checkConnection">Check connections</button><p>Choose the Doc Jaks Facebook Page and its linked professional Instagram account when Meta asks.</p><p>Scheduling: ${connection?.scheduler ? 'Configured · confirmed separately when you schedule a post.' : 'One-time scheduler setup still needed.'}</p><a class="button approve" href="/api/x/connect">Connect / reconnect X</a><p>Connect the Doc Jaks X account and approve read/write access when X asks.</p><a class="button approve" href="/api/youtube/connect">Connect / reconnect YouTube</a><p>Connect the Doc Jaks YouTube channel now so it is ready when video publishing begins.</p></div>`;
     return;
   }
   if (activeView === 'Batch Schedule') {
