@@ -8,6 +8,7 @@ let records = [], campaigns = [], mediaInbox = [], videoInbox = [], commentStrea
 let pollTimer;
 let platformMetricRange = '7d';
 let selectedStatusPlatform = null;
+let connectionCheckedAt = null;
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 function date(value) { return value ? new Date(value).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : '—'; }
 function code(r) { return r.campaign + '-' + r.id.slice(-4).toUpperCase(); }
@@ -146,6 +147,17 @@ function audienceChangeHtml(value) {
   if (number < 0) return '<span class="audience-change negative">▼ ' + esc(compactMetric(number)) + '</span>';
   return '<span class="audience-change neutral-change">0</span>';
 }
+function updatedText(value) {
+  if (!value) return 'not yet';
+  const time = Date.parse(value);
+  if (!Number.isFinite(time)) return String(value);
+  const minutes = Math.max(0,Math.round((Date.now()-time)/60000));
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return minutes + ' min ago';
+  const hours = Math.round(minutes/60);
+  if (hours < 24) return hours + ' hr ago';
+  return date(value);
+}
 function platformExtraMetrics(platform, metrics) {
   if (platform === 'facebook') return [['Reactions',metrics.reactions]];
   if (platform === 'instagram') return [['Saves',metrics.saves]];
@@ -182,7 +194,7 @@ function renderConnectionStrip() {
         <small>${esc(account)}</small>
         <span class="platform-audience-row"><span>${esc(audienceLabel)}</span><span class="platform-audience-value"><b>${esc(compactMetric(metrics.audience))}</b>${audienceChangeHtml(metrics.audienceChange)}</span></span>
         <span class="platform-engagement-grid">${cells.map(([label,value]) => `<span class="platform-engagement-metric"><span>${esc(label)}</span><b>${esc(compactMetric(value))}</b></span>`).join('')}</span>
-        <span class="platform-updated">Status checked when this page refreshed</span>
+        <span class="platform-updated">Updated: ${esc(updatedText(connectionCheckedAt))}</span>
       </button>`;
     }).join('')}</div>
     <div class="social-action-strip">
@@ -222,12 +234,14 @@ async function refreshConnection() {
   catch (e) { connection.x = { connected:false, canPublish:false, message:e.message }; }
   try { connection.youtube = await platformApi('youtube','status?refresh=1','YouTube'); }
   catch (e) { connection.youtube = { connected:false, canPublish:false, message:e.message }; }
+  connectionCheckedAt = new Date().toISOString();
   renderConnectionStrip();
 }
 async function signedIn(s) {
   owner = s.user; csrf = s.csrf; $('loginDialog').close(); $('password').value = '';
   $('owner').textContent = owner.toUpperCase(); $('identity').textContent = 'Owner · Signed in'; $('live').textContent = '● Owner access'; $('logout').hidden = false;
   await api('records', { action:'initialize' }); await loadRecords(); await refreshConnection(); render();
+  loadComments().then(() => renderConnectionStrip()).catch(() => {});
   const params = new URLSearchParams(location.search);
   const result = params.get('connection');
   const xresult = params.get('xconnection');
@@ -913,7 +927,7 @@ document.addEventListener('click', event => {
   perform(async () => {
     if (action === 'logout') { if (dirty && !confirm('Sign out without saving changes?')) return; await api('session',null,'DELETE'); location.reload(); }
     else if (action === 'new') { const d=await api('records',{action:'create',campaign:campaignFilter || 'BBQ'}); updateRecord(d.record); openRecord(d.record); }
-    else if (action === 'refresh') { await loadRecords(); await refreshConnection(); render(); notice('Updated.'); }
+    else if (action === 'refresh') { await loadRecords(); await refreshConnection(); await loadComments(); render(); renderConnectionStrip(); notice('Updated.'); }
     else if (action === 'refreshRecord') { if (dirty && !confirm('Refresh and discard unsaved changes?')) return; const currentId=selected.id; await loadRecords(); openRecord(records.find(r=>r.id===currentId)); notice('Showing the latest saved result.'); }
     else if (action === 'checkConnection') { await refreshConnection(); render(); notice('Account checks completed.'); }
     else if (action === 'publish') await publish();
