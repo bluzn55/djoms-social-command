@@ -7,6 +7,7 @@ const labels = { draft:'Draft', approved:'Approved', scheduled:'Scheduled', queu
 let records = [], campaigns = [], mediaInbox = [], videoInbox = [], commentStream = [], commentWarnings = [], commentCheckedAt = null, commentPlatformFilter = 'all', commentStatusFilter = 'all', csrf = '', selected = null, connection = null, dirty = false, busy = false, activeView = 'Campaigns', campaignFilter = '', searchTerm = '', owner = '';
 let pollTimer;
 let platformMetricRange = '7d';
+let selectedStatusPlatform = null;
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 function date(value) { return value ? new Date(value).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : '—'; }
 function code(r) { return r.campaign + '-' + r.id.slice(-4).toUpperCase(); }
@@ -156,7 +157,7 @@ function renderConnectionStrip() {
         ['Shares',metrics.shares],
         ['Reach',metrics.reach]
       ];
-      return `<button class="platform-status-card" data-view="Platforms" aria-label="${esc(names[p])}: ${esc(health.text)}. Open connection details.">
+      return `<button class="platform-status-card" data-platform-detail="${esc(p)}" aria-label="${esc(names[p])}: ${esc(health.text)}. Open details below.">
         <span class="platform-status-top"><span class="platform-status-name">${esc(names[p])}</span><i class="gyr-light ${health.color}" aria-hidden="true"></i></span>
         <strong>${esc(health.label)} · ${esc(health.text)}</strong>
         <small>${esc(account)}</small>
@@ -164,6 +165,42 @@ function renderConnectionStrip() {
         <span class="platform-engagement-grid">${cells.map(([label,value]) => `<span class="platform-engagement-metric"><span>${esc(label)}</span><b>${esc(compactMetric(value))}</b></span>`).join('')}</span>
       </button>`;
     }).join('')}</div>
+    
+    ${selectedStatusPlatform ? (() => {
+      const p = selectedStatusPlatform;
+      const info = connection?.[p] || {};
+      const health = connectionHealth(info);
+      const metrics = platformMetricData(info,p);
+      const audienceLabel = p === 'youtube' ? 'Subscribers' : 'Followers';
+      const connectHref = p === 'facebook' || p === 'instagram' ? '/api/meta/connect' : p === 'x' ? '/api/x/connect' : '/api/youtube/connect';
+      const connectLabel = p === 'facebook' || p === 'instagram' ? 'Connect / reconnect Facebook & Instagram' : 'Connect / reconnect ' + names[p];
+      return `<div class="platform-inline-detail">
+        <div class="platform-inline-detail-head">
+          <div>
+            <small>PLATFORM DRILL-DOWN</small>
+            <h3>${esc(names[p])}</h3>
+          </div>
+          <div class="platform-inline-detail-actions">
+            <i class="gyr-light ${health.color}" aria-hidden="true"></i>
+            <button type="button" data-action="closePlatformDetail">Close</button>
+          </div>
+        </div>
+        <div class="platform-inline-status"><strong>${esc(health.label)} · ${esc(health.text)}</strong><span>${esc(info.name || 'Account not verified')}</span></div>
+        <div class="platform-inline-metrics">
+          <div><span>${esc(audienceLabel)}</span><b>${esc(compactMetric(metrics.audience))}</b></div>
+          <div><span>Likes</span><b>${esc(compactMetric(metrics.likes))}</b></div>
+          <div><span>Replies</span><b>${esc(compactMetric(metrics.replies))}</b></div>
+          <div><span>Clicks</span><b>${esc(compactMetric(metrics.clicks))}</b></div>
+          <div><span>Shares</span><b>${esc(compactMetric(metrics.shares))}</b></div>
+          <div><span>Reach / Views</span><b>${esc(compactMetric(metrics.reach))}</b></div>
+        </div>
+        <p>${esc(info.message || 'Connection and posting permissions checked.')}</p>
+        <div class="platform-inline-links">
+          <a class="button approve" href="${connectHref}">${esc(connectLabel)}</a>
+          <button type="button" data-action="openFullPlatforms">Full platform settings</button>
+        </div>
+      </div>`;
+    })() : ''}
     <small class="platform-analytics-note">A dash means that metric is not connected from that platform yet.</small>`;
 }
 async function refreshConnection() {
@@ -702,6 +739,7 @@ async function perform(work) {
 document.addEventListener('click', event => {
   const b = event.target.closest('button,a'); if (!b || b.disabled || busy) return;
   if (b.dataset.metricRange) { platformMetricRange = b.dataset.metricRange; renderConnectionStrip(); return; }
+  if (b.dataset.platformDetail) { selectedStatusPlatform = selectedStatusPlatform === b.dataset.platformDetail ? null : b.dataset.platformDetail; renderConnectionStrip(); return; }
   if (b.dataset.view) return setView(b.dataset.view);
   if (b.dataset.open) return openRecord(records.find(r => r.id === b.dataset.open));
   if (b.dataset.campaign) { campaignFilter = campaignFilter === b.dataset.campaign ? '' : b.dataset.campaign; return render(); }
@@ -714,6 +752,8 @@ document.addEventListener('click', event => {
   if (b.dataset.commentPlatformFilter) { commentPlatformFilter=b.dataset.commentPlatformFilter; renderComments(); return; }
   if (b.dataset.commentStatusFilter) { commentStatusFilter=b.dataset.commentStatusFilter; renderComments(); return; }
   const action = b.dataset.action; if (!action) return;
+  if (action === 'closePlatformDetail') { selectedStatusPlatform = null; renderConnectionStrip(); return; }
+  if (action === 'openFullPlatforms') { selectedStatusPlatform = null; setView('Platforms'); return; }
   if (action === 'back') { if (!dirty || confirm('Leave without saving your changes?')) render(); return; }
   if (action === 'allCampaigns') { campaignFilter=''; return render(); }
   if (action === 'removeImage') { if ($('imageFile').disabled) return; selected.imageId=null; selected.imageUrl=null; selected.imageVariantIds={}; selected.imageVariants={}; dirty=true; updatePreview(); buttons(); return; }
