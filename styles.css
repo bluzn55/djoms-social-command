@@ -1149,3 +1149,114 @@ dialog label,dialog input,dialog button,dialog p { font-size:16px; }
     text-align:center;
   }
 }
+
+
+/* Locked Social Command action strip and drill-down intelligence */
+.platform-audience-value {
+  display:flex;
+  align-items:baseline;
+  justify-content:flex-end;
+  gap:7px;
+  min-width:0;
+}
+.audience-change {
+  font:700 11px/1.2 Arial,sans-serif;
+  white-space:nowrap;
+}
+.audience-change.positive { color:#2f6034; }
+.audience-change.negative { color:#9a3c2d; }
+.audience-change.neutral-change { color:#766a59; }
+.platform-updated {
+  display:block;
+  margin-top:9px;
+  padding-top:8px;
+  border-top:1px dashed #e2d7c2;
+  color:#877961;
+  font-size:10px;
+  text-align:right;
+}
+.social-action-strip {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  margin-top:12px;
+}
+.connection-strip .social-action-strip button {
+  margin:0;
+  min-height:82px;
+  padding:11px 12px;
+  border-radius:8px;
+  text-align:left;
+  background:#fffaf0;
+  color:#2d251a;
+  border:1px solid #d7c8a9;
+}
+.social-action-strip button span,
+.social-action-strip button small {
+  display:block;
+}
+.social-action-strip button span {
+  font-size:12px;
+  font-weight:700;
+}
+.social-action-strip button b {
+  display:block;
+  margin:4px 0 2px;
+  font:25px Georgia,serif;
+}
+.social-action-strip button small {
+  font-size:10px;
+  color:#766a59;
+}
+.social-action-strip button.green-action { border-left:5px solid #4c8a4f; }
+.social-action-strip button.yellow-action { border-left:5px solid #d3a126; }
+.social-action-strip button.red-action { border-left:5px solid #b94332; }
+.social-action-strip button:hover {
+  border-color:#9c742e;
+  background:#fff4dc;
+}
+.platform-inline-metrics small {
+  display:block;
+  margin-top:5px;
+}
+.top-performing-post {
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  margin-top:12px;
+  padding:12px 14px;
+  border:1px solid #e2d7c2;
+  border-radius:7px;
+  background:#fffef9;
+}
+.top-performing-post>span {
+  color:#766a59;
+  font-size:10px;
+  letter-spacing:.65px;
+  font-weight:700;
+}
+.top-performing-post>strong {
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+.top-performing-post>b {
+  font:19px Georgia,serif;
+}
+@media(max-width:900px) {
+  .social-action-strip {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:560px) {
+  .social-action-strip {
+    grid-template-columns:1fr 1fr;
+  }
+  .connection-strip .social-action-strip button {
+    min-height:88px;
+  }
+  .top-performing-post {
+    grid-template-columns:1fr;
+    gap:5px;
+  }
+}
