@@ -112,6 +112,38 @@ function compactMetric(value) {
   if (Math.abs(number) >= 10000) return new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:1}).format(number);
   return new Intl.NumberFormat('en-US').format(number);
 }
+function metricSeries(source = {}, keys = []) {
+  const directContainers = [source.trends, source.trend, source.series, source.daily, source.history].filter(Boolean);
+  for (const container of directContainers) {
+    for (const key of keys) {
+      const value = container?.[key];
+      if (Array.isArray(value)) {
+        const numbers = value.map(v => Number(typeof v === 'object' && v ? (v.value ?? v.count ?? v.total) : v)).filter(Number.isFinite);
+        if (numbers.length >= 2) return numbers.slice(-14);
+      }
+    }
+    if (Array.isArray(container)) {
+      for (const key of keys) {
+        const numbers = container.map(row => Number(row?.[key])).filter(Number.isFinite);
+        if (numbers.length >= 2) return numbers.slice(-14);
+      }
+    }
+  }
+  for (const key of keys) {
+    const value = source[key + 'Trend'] ?? source[key + 'History'] ?? source[key + 'Series'];
+    if (Array.isArray(value)) {
+      const numbers = value.map(v => Number(typeof v === 'object' && v ? (v.value ?? v.count ?? v.total) : v)).filter(Number.isFinite);
+      if (numbers.length >= 2) return numbers.slice(-14);
+    }
+  }
+  return [];
+}
+function trendBars(values = []) {
+  const nums = values.map(Number).filter(Number.isFinite);
+  if (nums.length < 2) return '<span class="mini-trend-empty">Trend appears when daily data is available</span>';
+  const max = Math.max(...nums, 1);
+  return '<span class="mini-trend" aria-label="Recent trend">' + nums.map(value => '<i style="height:' + Math.max(8, Math.round(value / max * 100)) + '%"></i>').join('') + '</span>';
+}
 function platformMetricData(info = {}, platform) {
   const aliases = { today:['today','1d','day'], '7d':['7d','7','week'], '30d':['30d','30','month'] };
   const bases = [info.analytics, info.insights, info.metrics].filter(Boolean);
@@ -136,7 +168,13 @@ function platformMetricData(info = {}, platform) {
     watchTime: source.watchTimeHours !== undefined ? compactMetric(source.watchTimeHours) + ' hr' : source.watchTimeMinutes !== undefined ? compactMetric(source.watchTimeMinutes) + ' min' : source.watchTime ?? info.watchTime,
     subscriberGain: source.subscriberGain ?? source.subscribersGained ?? source.netSubscribers ?? info.subscriberGain,
     topPostTitle: typeof top === 'string' ? top : top?.title ?? top?.caption ?? top?.name,
-    topPostValue: typeof top === 'object' && top ? (top.engagement ?? top.views ?? top.clicks ?? top.likes) : null
+    topPostValue: typeof top === 'object' && top ? (top.engagement ?? top.views ?? top.clicks ?? top.likes) : null,
+    trends: {
+      engagement: metricSeries(source,['engagementRate','engagement']),
+      clicks: metricSeries(source,['clicks','linkClicks']),
+      shares: metricSeries(source,['shares','reposts','forwards']),
+      reach: metricSeries(source,['reach','views','impressions'])
+    }
   };
 }
 function audienceChangeHtml(value) {
@@ -196,7 +234,12 @@ function renderConnectionStrip() {
       const account = info.name || (info.connected ? 'Connected account' : 'Connection needs attention');
       const metrics = platformMetricData(info,p);
       const audienceLabel = p === 'youtube' ? 'Subscribers' : 'Followers';
-      const cells = [['Engagement',engagementRate(metrics)],['Website clicks',metrics.clicks],['Shares',metrics.shares],['Reach / views',metrics.reach]];
+      const cells = [
+        ['Engagement',engagementRate(metrics),metrics.trends?.engagement],
+        ['Website clicks',metrics.clicks,metrics.trends?.clicks],
+        ['Shares',metrics.shares,metrics.trends?.shares],
+        ['Reach / views',metrics.reach,metrics.trends?.reach]
+      ];
       const purpose = { facebook:'BUILD COMMUNITY', instagram:'GET DISCOVERED', x:'BE HEARD', youtube:'TELL THE STORY' }[p];
       const cue = {
         facebook:'💬  Posts · comments · community',
@@ -213,7 +256,7 @@ function renderConnectionStrip() {
         <span class="platform-app-cue">${esc(cue)}</span>
         <span class="platform-audience-row"><span>${esc(audienceLabel)}</span><span class="platform-audience-value"><b>${esc(compactMetric(metrics.audience))}</b>${audienceChangeHtml(metrics.audienceChange)}</span></span>
         <span class="platform-quick-label">QUICK GLANCE</span>
-        <span class="platform-engagement-grid">${cells.map(([label,value]) => `<span class="platform-engagement-metric"><span>${esc(label)}</span><b>${esc(compactMetric(value))}</b></span>`).join('')}</span>
+        <span class="platform-engagement-grid">${cells.map(([label,value,trend]) => `<span class="platform-engagement-metric"><span>${esc(label)}</span><b>${esc(compactMetric(value))}</b>${trendBars(trend)}</span>`).join('')}</span>
         <span class="platform-updated">Updated: ${esc(updatedText(connectionCheckedAt))}</span>
       </button>`;
     }).join('')}</div>
