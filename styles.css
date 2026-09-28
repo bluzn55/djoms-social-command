@@ -1972,3 +1972,42 @@ textarea { line-height:1.65 !important; }
   .platform-driver-row { grid-template-columns:28px 1fr; }
   .platform-driver-stats { grid-column:2; grid-template-columns:repeat(3,1fr); }
 }
+
+
+/* REVIEWS & LOCAL CONNECTION CONTROLS */
+.reviews-local-action {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:42px;
+  margin-top:12px;
+  padding:8px 12px;
+  border:1px solid #9c742e;
+  border-radius:7px;
+  background:#f8efdc;
+  color:#3e2d18;
+  font-size:15px;
+  font-weight:800;
+  text-decoration:none;
+}
+.reviews-local-action:hover { background:#fff3d8; }
+.reviews-setup-note {
+  display:block;
+  margin-top:12px;
+  padding:8px 10px;
+  border-radius:6px;
+  background:#f4eee3;
+  color:#786a57;
+  font-size:13px;
+  font-weight:700;
+}
+.reviews-location-picker {
+  display:block;
+  margin-top:12px;
+  font-size:14px !important;
+  font-weight:800 !important;
+}
+.reviews-location-picker select {
+  margin:6px 0 0;
+  font-size:15px !important;
+}
