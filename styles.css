@@ -1305,3 +1305,69 @@ textarea { line-height:1.65 !important; }
   .card small { font-size:14px !important; }
   button,.button,.upload-button,input:not([type=checkbox]),textarea,select,label { font-size:17px !important; }
 }
+
+
+/* PLATFORM APP-STYLE CARDS */
+.platform-status-card {
+  position:relative;
+  overflow:hidden;
+}
+.platform-brand-bar {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin:-16px -16px 14px;
+  padding:10px 12px;
+  border-bottom:1px solid #00000022;
+}
+.platform-brand-icon {
+  display:inline-grid;
+  place-items:center;
+  width:34px;
+  height:34px;
+  border-radius:9px;
+  font-size:22px;
+  font-weight:800;
+  line-height:1;
+}
+.platform-purpose {
+  font-size:13px;
+  font-weight:800;
+  letter-spacing:.7px;
+  text-transform:uppercase;
+}
+.platform-app-cue {
+  display:block;
+  margin-top:12px;
+  padding:9px 10px;
+  border-radius:7px;
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:.1px;
+}
+.platform-facebook { border-top:5px solid #1877f2 !important; }
+.platform-facebook .platform-brand-bar { background:#eaf2ff; color:#123d7a; }
+.platform-facebook .platform-brand-icon { background:#1877f2; color:#fff; border-radius:50%; }
+.platform-facebook .platform-app-cue { background:#f2f6fc; border:1px solid #cbd9ee; color:#24476f; }
+
+.platform-instagram { border-top:5px solid #c13584 !important; }
+.platform-instagram .platform-brand-bar { background:linear-gradient(100deg,#fff0f6,#f5efff,#fff3e7); color:#7d285f; }
+.platform-instagram .platform-brand-icon { background:linear-gradient(135deg,#f9ce34,#ee2a7b,#6228d7); color:#fff; }
+.platform-instagram .platform-app-cue { background:linear-gradient(100deg,#fff8fb,#faf7ff); border:1px solid #e5cfe0; color:#6d3158; }
+
+.platform-x { border-top:5px solid #111 !important; }
+.platform-x .platform-brand-bar { background:#161616; color:#fff; }
+.platform-x .platform-brand-icon { background:#000; color:#fff; border:1px solid #444; }
+.platform-x .platform-app-cue { background:#f2f2f2; border:1px solid #d2d2d2; color:#1f1f1f; }
+
+.platform-youtube { border-top:5px solid #ff0000 !important; }
+.platform-youtube .platform-brand-bar { background:#fff0f0; color:#8f1111; }
+.platform-youtube .platform-brand-icon { width:40px; border-radius:9px; background:#ff0000; color:#fff; }
+.platform-youtube .platform-app-cue { background:#fff7f7; border:1px solid #efcccc; color:#7d2424; }
+
+@media(max-width:760px) {
+  .platform-brand-bar { margin:-14px -14px 12px; }
+  .platform-purpose { font-size:12px; }
+  .platform-app-cue { font-size:13px; }
+}
