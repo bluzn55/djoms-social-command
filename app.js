@@ -249,6 +249,8 @@ function renderConnectionStrip() {
       const account = info.name || (info.connected ? 'Connected account' : 'Connection needs attention');
       const metrics = platformMetricData(info,p);
       const audienceLabel = p === 'youtube' ? 'Subscribers' : 'Followers';
+      const unansweredPlatform = commentCheckedAt ? commentStream.filter(item => item.platform === p && !item.handled).length : '—';
+      const failedPlatform = records.filter(r => ['failed','partial','uncertain'].includes(r.status) && r.targets?.includes(p)).length;
       const cells = [
         ['Engagement',engagementRate(metrics),metrics.trends?.engagement],
         ['Website clicks',metrics.clicks,metrics.trends?.clicks],
@@ -277,6 +279,20 @@ function renderConnectionStrip() {
           <span class="platform-quick-label">QUICK GLANCE</span>
           <span class="platform-engagement-grid">${cells.map(([label,value]) => `<span class="platform-engagement-metric compact-kpi"><span>${esc(label)}</span><b>${esc(compactMetric(value))}</b></span>`).join('')}</span>
           <span class="platform-chart-grid">${cells.map(([label,value,trend]) => `<span class="platform-chart-card"><span class="platform-chart-title">${esc(label)} trend</span>${trendChart(trend,label)}</span>`).join('')}</span>
+          <span class="platform-operational-strip">
+            <span class="platform-operational-item platform-top-post">
+              <small>TOP POST</small>
+              <b>${esc(metrics.topPostTitle || 'Waiting for analytics')}</b>
+            </span>
+            <span class="platform-operational-item">
+              <small>UNANSWERED</small>
+              <b>${esc(unansweredPlatform)}</b>
+            </span>
+            <span class="platform-operational-item ${failedPlatform ? 'has-problem' : ''}">
+              <small>POSTING ISSUES</small>
+              <b>${esc(failedPlatform)}</b>
+            </span>
+          </span>
         </span>
       </button>`;
     }).join('')}</div>
