@@ -308,7 +308,29 @@ function renderConnectionStrip() {
         <div class="platform-inline-links"><a class="button approve" href="${connectHref}">${esc(connectLabel)}</a><button type="button" data-action="openFullPlatforms">Full platform settings</button></div>
       </div>`;
     })() : ''}
-    <small class="platform-analytics-note">A dash means that metric is not connected from that platform yet.</small>`;
+    <small class="platform-analytics-note">A dash means that metric is not connected from that platform yet.</small>
+    <section class="reviews-local-section" aria-label="Reviews and local">
+      <div class="reviews-local-head">
+        <div><strong>REVIEWS &amp; LOCAL</strong><small>Reputation and local presence</small></div>
+      </div>
+      <div class="reviews-local-grid">
+        ${[
+          ['Google','Google Business Profile'],
+          ['Tripadvisor','Tripadvisor'],
+          ['Yelp','Yelp'],
+          ['Facebook','Facebook Reviews']
+        ].map(([short,name]) => `<div class="reviews-local-card">
+          <span class="reviews-local-top"><span class="reviews-local-name">${esc(name)}</span><i class="gyr-light neutral" aria-hidden="true"></i></span>
+          <span class="reviews-local-status">Not connected yet</span>
+          <span class="reviews-local-metrics">
+            <span><small>Rating</small><b>—</b></span>
+            <span><small>Reviews</small><b>—</b></span>
+            <span><small>New</small><b>—</b></span>
+            <span><small>Unanswered</small><b>—</b></span>
+          </span>
+        </div>`).join('')}
+      </div>
+    </section>`;
 }
 async function refreshConnection() {
   try { connection = await api('status?refresh=1'); }
@@ -669,7 +691,7 @@ function render() {
   $('workspace').hidden = false; $('editor').hidden = true; selected = null; dirty = false;
   if (activeView === 'Mission Control') renderConnectionStrip();
   else $('connectionStrip').hidden = true;
-  $('viewTitle').textContent = activeView;
+  $('viewTitle').textContent = activeView === 'Mission Control' ? 'Campaigns' : activeView;
   document.querySelectorAll('nav [data-view]').forEach(b => b.classList.toggle('active',b.dataset.view === activeView));
   $('campaignCards').hidden = !['Campaigns','Mission Control'].includes(activeView);
   $('campaignCards').innerHTML = campaigns.map(c => {
