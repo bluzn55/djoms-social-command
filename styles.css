@@ -1748,3 +1748,54 @@ textarea { line-height:1.65 !important; }
 @media(max-width:760px) {
   .reviews-local-grid { grid-template-columns:1fr; }
 }
+
+
+/* MISSION CONTROL OPERATIONAL SUMMARY */
+.platform-operational-strip {
+  display:grid;
+  grid-template-columns:minmax(0,2fr) minmax(110px,.7fr) minmax(130px,.8fr);
+  gap:10px;
+  margin-top:12px;
+}
+.platform-operational-item {
+  display:block;
+  min-width:0;
+  padding:10px 12px;
+  border:1px solid #e2d7c2;
+  border-radius:8px;
+  background:#fffaf0;
+}
+.platform-operational-item small {
+  display:block;
+  font-size:12px !important;
+  font-weight:800 !important;
+  letter-spacing:.45px;
+  color:#766a59;
+}
+.platform-operational-item b {
+  display:block;
+  margin-top:4px;
+  font-size:16px;
+  color:#2d251a;
+  overflow-wrap:anywhere;
+}
+.platform-operational-item.has-problem {
+  border-left:5px solid #b94332;
+  background:#fff5f2;
+}
+@media(max-width:900px) {
+  .platform-operational-strip {
+    grid-template-columns:1fr 1fr;
+  }
+  .platform-top-post {
+    grid-column:1 / -1;
+  }
+}
+@media(max-width:560px) {
+  .platform-operational-strip {
+    grid-template-columns:1fr;
+  }
+  .platform-top-post {
+    grid-column:auto;
+  }
+}
