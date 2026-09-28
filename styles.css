@@ -981,7 +981,7 @@ dialog label,dialog input,dialog button,dialog p { font-size:16px; }
 }
 .platform-engagement-grid {
   display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr));
+  grid-template-columns:repeat(4,minmax(0,1fr));
   gap:5px;
   margin-top:11px;
 }
@@ -1370,4 +1370,34 @@ textarea { line-height:1.65 !important; }
   .platform-brand-bar { margin:-14px -14px 12px; }
   .platform-purpose { font-size:12px; }
   .platform-app-cue { font-size:13px; }
+}
+
+
+/* QUICK-GLANCE ANALYTICS */
+.platform-quick-label {
+  display:block;
+  margin-top:13px;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.9px;
+  color:#6f604b;
+}
+.platform-engagement-grid {
+  grid-template-columns:repeat(4,minmax(0,1fr));
+}
+.platform-engagement-metric {
+  min-height:64px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.platform-engagement-metric>span {
+  font-size:12px !important;
+  font-weight:700 !important;
+}
+.platform-engagement-metric>b {
+  font-size:17px !important;
+}
+@media(max-width:760px) {
+  .platform-engagement-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
