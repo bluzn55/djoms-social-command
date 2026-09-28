@@ -4,7 +4,7 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;',
 const names = { facebook: 'Facebook', instagram: 'Instagram', x: 'X', youtube: 'YouTube', website: 'Website Community' };
 const statusPlatforms = ['facebook','instagram','x','youtube'];
 const labels = { draft:'Draft', approved:'Approved', scheduled:'Scheduled', queueing:'Confirming schedule', paused:'Paused', publishing:'Publishing', published:'Published', failed:'Needs attention', partial:'Partly published', uncertain:'Check result', processing:'Preparing photo', prepared:'Prepared' };
-let records = [], campaigns = [], mediaInbox = [], videoInbox = [], commentStream = [], commentWarnings = [], commentCheckedAt = null, commentPlatformFilter = 'all', commentStatusFilter = 'all', csrf = '', selected = null, connection = null, dirty = false, busy = false, activeView = 'Campaigns', campaignFilter = '', searchTerm = '', owner = '';
+let records = [], campaigns = [], mediaInbox = [], videoInbox = [], commentStream = [], commentWarnings = [], commentCheckedAt = null, commentPlatformFilter = 'all', commentStatusFilter = 'all', csrf = '', selected = null, connection = null, analyticsData = { platforms:{}, posts:[], history:[] }, dirty = false, busy = false, activeView = 'Campaigns', campaignFilter = '', searchTerm = '', owner = '';
 let pollTimer;
 let platformMetricRange = '7d';
 let selectedStatusPlatform = null;
@@ -32,6 +32,14 @@ async function api(path, body, method) {
 }
 function updateRecord(r) { const index = records.findIndex(x => x.id === r.id); if (index >= 0) records[index] = r; else records.unshift(r); selected = r; }
 async function loadRecords() { const data = await api('records'); records = data.records; campaigns = data.campaigns; if (data.limited) notice('Showing the latest 500 posts.'); }
+async function loadAnalytics(refresh = false) {
+  try {
+    analyticsData = await api('analytics?range=' + encodeURIComponent(platformMetricRange) + (refresh ? '&refresh=1' : ''));
+  } catch {
+    analyticsData = { platforms:{}, posts:[], history:[] };
+  }
+  return analyticsData;
+}
 async function loadMediaInbox() {
   const data = await api('records',{ action:'mediaInboxList' });
   mediaInbox = data.items || [];
@@ -165,15 +173,17 @@ function platformMetricData(info = {}, platform) {
     if (key) { source = base[key]; break; }
     if (['likes','comments','replies','clicks','shares','reposts','reach','views','impressions'].some(k => base?.[k] !== undefined)) { source = base; break; }
   }
-  const top = source.topPost ?? source.bestPost ?? source.topContent ?? info.topPost ?? null;
+  const actual = analyticsData?.platforms?.[platform] || {};
+  const top = actual.topPost ?? source.topPost ?? source.bestPost ?? source.topContent ?? info.topPost ?? null;
+  const actualHistory = (analyticsData?.history || []).map(row => ({ date:row.date, ...(row.platforms?.[platform] || {}) }));
   return {
     audience: info.followers ?? info.subscribers ?? info.audience ?? source.followers ?? source.subscribers ?? source.audience ?? source.followersCount ?? source.subscriberCount,
     audienceChange: source.audienceChange ?? source.followersChange ?? source.netFollowers ?? source.subscriberGain ?? source.subscribersGained ?? info.audienceChange,
     likes: source.likes ?? source.likeCount ?? info.likes,
     replies: source.replies ?? source.comments ?? source.replyCount ?? source.commentCount ?? info.replies ?? info.comments,
-    clicks: source.clicks ?? source.linkClicks ?? source.clickCount ?? info.clicks ?? info.linkClicks,
-    shares: source.shares ?? source.reposts ?? source.forwards ?? source.shareCount ?? source.repostCount ?? info.shares ?? info.reposts,
-    reach: source.reach ?? source.views ?? source.impressions ?? source.viewCount ?? source.reachCount ?? info.reach ?? info.views,
+    clicks: actual.clicks ?? source.clicks ?? source.linkClicks ?? source.clickCount ?? info.clicks ?? info.linkClicks,
+    shares: actual.shares ?? source.shares ?? source.reposts ?? source.forwards ?? source.shareCount ?? source.repostCount ?? info.shares ?? info.reposts,
+    reach: actual.reach ?? source.reach ?? source.views ?? source.impressions ?? source.viewCount ?? source.reachCount ?? info.reach ?? info.views,
     reactions: source.reactions ?? source.reactionCount ?? info.reactions,
     saves: source.saves ?? source.saveCount ?? info.saves,
     bookmarks: source.bookmarks ?? source.bookmarkCount ?? info.bookmarks,
@@ -182,10 +192,10 @@ function platformMetricData(info = {}, platform) {
     topPostTitle: typeof top === 'string' ? top : top?.title ?? top?.caption ?? top?.name,
     topPostValue: typeof top === 'object' && top ? (top.engagement ?? top.views ?? top.clicks ?? top.likes) : null,
     trends: {
-      engagement: metricSeries(source,['engagementRate','engagement']),
-      clicks: metricSeries(source,['clicks','linkClicks']),
-      shares: metricSeries(source,['shares','reposts','forwards']),
-      reach: metricSeries(source,['reach','views','impressions'])
+      engagement: actualHistory.map(x => x.engagementRate).filter(v => Number.isFinite(Number(v))).map(Number).length >= 2 ? actualHistory.map(x => Number(x.engagementRate)).filter(Number.isFinite) : metricSeries(source,['engagementRate','engagement']),
+      clicks: actualHistory.map(x => x.clicks).filter(v => Number.isFinite(Number(v))).map(Number).length >= 2 ? actualHistory.map(x => Number(x.clicks)).filter(Number.isFinite) : metricSeries(source,['clicks','linkClicks']),
+      shares: actualHistory.map(x => x.shares).filter(v => Number.isFinite(Number(v))).map(Number).length >= 2 ? actualHistory.map(x => Number(x.shares)).filter(Number.isFinite) : metricSeries(source,['shares','reposts','forwards']),
+      reach: actualHistory.map(x => x.reach).filter(v => Number.isFinite(Number(v))).map(Number).length >= 2 ? actualHistory.map(x => Number(x.reach)).filter(Number.isFinite) : metricSeries(source,['reach','views','impressions'])
     }
   };
 }
@@ -382,7 +392,7 @@ async function refreshConnection() {
 async function signedIn(s) {
   owner = s.user; csrf = s.csrf; $('loginDialog').close(); $('password').value = '';
   $('owner').textContent = owner.toUpperCase(); $('identity').textContent = 'Owner · Signed in'; $('live').textContent = '● Owner access'; $('logout').hidden = false;
-  await api('records', { action:'initialize' }); await loadRecords(); await refreshConnection(); render();
+  await api('records', { action:'initialize' }); await loadRecords(); await loadAnalytics(true); await refreshConnection(); render();
   loadComments().then(() => renderConnectionStrip()).catch(() => {});
   const params = new URLSearchParams(location.search);
   const result = params.get('connection');
@@ -912,7 +922,7 @@ async function perform(work) {
 }
 document.addEventListener('click', event => {
   const b = event.target.closest('button,a'); if (!b || b.disabled || busy) return;
-  if (b.dataset.metricRange) { platformMetricRange = b.dataset.metricRange; renderConnectionStrip(); return; }
+  if (b.dataset.metricRange) { platformMetricRange = b.dataset.metricRange; return perform(async()=>{ await loadAnalytics(true); renderConnectionStrip(); }); }
   if (b.dataset.platformDetail) { selectedStatusPlatform = selectedStatusPlatform === b.dataset.platformDetail ? null : b.dataset.platformDetail; renderConnectionStrip(); return; }
   if (b.dataset.view) return setView(b.dataset.view);
   if (b.dataset.open) return openRecord(records.find(r => r.id === b.dataset.open));
@@ -1075,7 +1085,7 @@ document.addEventListener('click', event => {
   perform(async () => {
     if (action === 'logout') { if (dirty && !confirm('Sign out without saving changes?')) return; await api('session',null,'DELETE'); location.reload(); }
     else if (action === 'new') { const d=await api('records',{action:'create',campaign:campaignFilter || 'BBQ'}); updateRecord(d.record); openRecord(d.record); }
-    else if (action === 'refresh') { await loadRecords(); await refreshConnection(); await loadComments(); render(); renderConnectionStrip(); notice('Updated.'); }
+    else if (action === 'refresh') { await loadRecords(); await loadAnalytics(true); await refreshConnection(); await loadComments(); render(); renderConnectionStrip(); notice('Updated.'); }
     else if (action === 'refreshRecord') { if (dirty && !confirm('Refresh and discard unsaved changes?')) return; const currentId=selected.id; await loadRecords(); openRecord(records.find(r=>r.id===currentId)); notice('Showing the latest saved result.'); }
     else if (action === 'checkConnection') { await refreshConnection(); render(); notice('Account checks completed.'); }
     else if (action === 'publish') await publish();
