@@ -222,9 +222,9 @@ function metricTrendStatus(values = []) {
   const first = nums[0], last = nums[nums.length - 1];
   const base = Math.max(Math.abs(first), 1);
   const pct = (last - first) / base * 100;
-  if (pct >= 5) return { color:'green', label:'GREEN', arrow:'▲' };
-  if (pct <= -5) return { color:'red', label:'RED', arrow:'▼' };
-  return { color:'yellow', label:'YELLOW', arrow:'→' };
+  if (pct >= 5) return { color:'blue', label:'UP', arrow:'▲' };
+  if (pct <= -5) return { color:'red', label:'DOWN', arrow:'▼' };
+  return { color:'yellow', label:'STABLE', arrow:'→' };
 }
 function updatedText(value) {
   if (!value) return 'not yet';
@@ -272,6 +272,10 @@ function renderConnectionStrip() {
       const audienceLabel = p === 'youtube' ? 'Subscribers' : 'Followers';
       const unansweredPlatform = commentCheckedAt ? commentStream.filter(item => item.platform === p && !item.handled).length : '—';
       const failedPlatform = records.filter(r => ['failed','partial','uncertain'].includes(r.status) && r.targets?.includes(p)).length;
+      const driverPosts = (analyticsData?.posts || []).filter(post => post.platform === p).sort((a,b) => {
+        const score = item => Number(item.clicks || 0) * 4 + Number(item.shares || 0) * 3 + Number(item.comments || 0) * 2 + Number(item.reactions || 0) + Number(item.reach || item.views || 0) * .01;
+        return score(b) - score(a);
+      }).slice(0,3);
       const cells = [
         ['Engagement',engagementRate(metrics),metrics.trends?.engagement],
         ['Website clicks',metrics.clicks,metrics.trends?.clicks],
@@ -323,6 +327,18 @@ function renderConnectionStrip() {
               <small>POSTING ISSUES</small>
               <b>${esc(failedPlatform)}</b>
             </span>
+          </span>
+          <span class="platform-drivers">
+            <span class="platform-drivers-title">WHAT DROVE THIS?</span>
+            ${driverPosts.length ? driverPosts.map((post,index) => `<span class="platform-driver-row">
+              <span class="platform-driver-rank">${index+1}</span>
+              <span class="platform-driver-copy"><b>${esc(post.title || 'Untitled post')}</b><small>${esc(post.campaign || '')}</small></span>
+              <span class="platform-driver-stats">
+                <span>${esc(compactMetric(post.reach || post.views))}<small>Reach</small></span>
+                <span>${esc(compactMetric(post.clicks))}<small>Clicks</small></span>
+                <span>${esc(compactMetric(post.shares))}<small>Shares</small></span>
+              </span>
+            </span>`).join('') : '<span class="platform-drivers-empty">Post attribution will appear as published-post analytics arrive.</span>'}
           </span>
         </span>
       </button>`;
