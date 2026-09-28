@@ -4,7 +4,7 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;',
 const names = { facebook: 'Facebook', instagram: 'Instagram', x: 'X', youtube: 'YouTube', website: 'Website Community' };
 const statusPlatforms = ['facebook','instagram','x','youtube'];
 const labels = { draft:'Draft', approved:'Approved', scheduled:'Scheduled', queueing:'Confirming schedule', paused:'Paused', publishing:'Publishing', published:'Published', failed:'Needs attention', partial:'Partly published', uncertain:'Check result', processing:'Preparing photo', prepared:'Prepared' };
-let records = [], campaigns = [], mediaInbox = [], videoInbox = [], commentStream = [], commentWarnings = [], commentCheckedAt = null, commentPlatformFilter = 'all', commentStatusFilter = 'all', csrf = '', selected = null, connection = null, analyticsData = { platforms:{}, posts:[], history:[] }, dirty = false, busy = false, activeView = 'Campaigns', campaignFilter = '', searchTerm = '', owner = '';
+let records = [], campaigns = [], mediaInbox = [], videoInbox = [], commentStream = [], commentWarnings = [], commentCheckedAt = null, commentPlatformFilter = 'all', commentStatusFilter = 'all', csrf = '', selected = null, connection = null, analyticsData = { platforms:{}, posts:[], history:[] }, localData = { google:{}, yelp:{}, tripadvisor:{}, facebook:{} }, dirty = false, busy = false, activeView = 'Campaigns', campaignFilter = '', searchTerm = '', owner = '';
 let pollTimer;
 let platformMetricRange = '7d';
 let selectedStatusPlatform = null;
@@ -39,6 +39,38 @@ async function loadAnalytics(refresh = false) {
     analyticsData = { platforms:{}, posts:[], history:[] };
   }
   return analyticsData;
+}
+async function loadLocalStatus() {
+  try { localData = await api('local-status'); }
+  catch { localData = { google:{connected:false,message:'Could not check Google.'}, yelp:{connected:false,message:'Could not check Yelp.'}, tripadvisor:{connected:false,message:'Could not check Tripadvisor.'}, facebook:{connected:false,message:'Not connected.'} }; }
+  return localData;
+}
+function localCard(key, name) {
+  const info = localData?.[key] || {};
+  const connected = !!info.connected;
+  const needs = connected && (info.needsLocation || Number(info.unanswered || 0) > 0);
+  const color = connected ? (needs ? 'yellow' : 'green') : 'red';
+  const rating = info.rating == null ? '—' : Number(info.rating).toFixed(1);
+  const total = info.totalReviewCount == null ? '—' : compactMetric(info.totalReviewCount);
+  const reviews = Array.isArray(info.reviews) ? info.reviews : [];
+  const recentCutoff = Date.now() - 7*86400000;
+  const newCount = reviews.filter(r => Date.parse(r.createTime || r.updateTime || 0) >= recentCutoff).length;
+  const unanswered = info.unanswered == null ? reviews.filter(r => !r.reply).length : info.unanswered;
+  let action = '';
+  if (key === 'google' && !connected) action = '<a class="reviews-local-action" href="/api/meta/local-google-connect">Connect Google</a>';
+  else if (key === 'google' && info.needsLocation && Array.isArray(info.locations) && info.locations.length) {
+    action = '<label class="reviews-location-picker">Choose location<select data-local-google-location><option value="">Select…</option>' + info.locations.map(x => '<option value="'+esc(x.accountName)+'|'+esc(x.locationName)+'">'+esc(x.title)+'</option>').join('') + '</select></label><button type="button" class="reviews-local-action" data-action="saveGoogleLocation">Use this location</button>';
+  } else if (!connected && info.setup) action = '<span class="reviews-setup-note">Setup needed</span>';
+  return '<div class="reviews-local-card reviews-'+esc(key)+'">'+
+    '<span class="reviews-local-top"><span class="reviews-local-name">'+esc(name)+'</span><i class="gyr-light '+color+'" aria-hidden="true"></i></span>'+
+    '<span class="reviews-local-status">'+esc(info.message || (connected ? 'Connected' : 'Not connected yet'))+'</span>'+
+    '<span class="reviews-local-metrics">'+
+      '<span><small>Rating</small><b>'+esc(rating)+'</b></span>'+
+      '<span><small>Reviews</small><b>'+esc(total)+'</b></span>'+
+      '<span><small>New 7d</small><b>'+esc(newCount)+'</b></span>'+
+      '<span><small>Unanswered</small><b>'+esc(compactMetric(unanswered))+'</b></span>'+
+    '</span>'+action+
+  '</div>';
 }
 async function loadMediaInbox() {
   const data = await api('records',{ action:'mediaInboxList' });
@@ -377,21 +409,10 @@ function renderConnectionStrip() {
         <div><strong>REVIEWS &amp; LOCAL</strong><small>Reputation and local presence</small></div>
       </div>
       <div class="reviews-local-grid">
-        ${[
-          ['Google','Google Business Profile'],
-          ['Tripadvisor','Tripadvisor'],
-          ['Yelp','Yelp'],
-          ['Facebook','Facebook Reviews']
-        ].map(([short,name]) => `<div class="reviews-local-card">
-          <span class="reviews-local-top"><span class="reviews-local-name">${esc(name)}</span><i class="gyr-light neutral" aria-hidden="true"></i></span>
-          <span class="reviews-local-status">Not connected yet</span>
-          <span class="reviews-local-metrics">
-            <span><small>Rating</small><b>—</b></span>
-            <span><small>Reviews</small><b>—</b></span>
-            <span><small>New</small><b>—</b></span>
-            <span><small>Unanswered</small><b>—</b></span>
-          </span>
-        </div>`).join('')}
+        ${localCard('google','Google Business Profile')}
+        ${localCard('tripadvisor','Tripadvisor')}
+        ${localCard('yelp','Yelp')}
+        ${localCard('facebook','Facebook Reviews')}
       </div>
     </section>`;
 }
@@ -408,14 +429,16 @@ async function refreshConnection() {
 async function signedIn(s) {
   owner = s.user; csrf = s.csrf; $('loginDialog').close(); $('password').value = '';
   $('owner').textContent = owner.toUpperCase(); $('identity').textContent = 'Owner · Signed in'; $('live').textContent = '● Owner access'; $('logout').hidden = false;
-  await api('records', { action:'initialize' }); await loadRecords(); await loadAnalytics(true); await refreshConnection(); render();
+  await api('records', { action:'initialize' }); await loadRecords(); await loadAnalytics(true); await loadLocalStatus(); await refreshConnection(); render();
   loadComments().then(() => renderConnectionStrip()).catch(() => {});
   const params = new URLSearchParams(location.search);
   const result = params.get('connection');
   const xresult = params.get('xconnection');
   const youtubeResult = params.get('youtubeconnection');
-  if (result || xresult || youtubeResult) {
-    if (youtubeResult) notice(youtubeResult === 'saved' ? 'YouTube authorization saved. Check the channel status below.' : 'YouTube connection was cancelled.');
+  const localGoogleResult = params.get('localgoogle');
+  if (result || xresult || youtubeResult || localGoogleResult) {
+    if (localGoogleResult) { await loadLocalStatus(); notice(localGoogleResult === 'saved' ? 'Google Business Profile connected.' : 'Google Business Profile connection was cancelled.'); }
+    else if (youtubeResult) notice(youtubeResult === 'saved' ? 'YouTube authorization saved. Check the channel status below.' : 'YouTube connection was cancelled.');
     else if (xresult) notice(xresult === 'saved' ? 'X authorization saved. Check the account status below.' : 'X connection was cancelled.');
     else notice(result === 'saved' ? 'Facebook authorization saved. Check each account’s status below.' : 'Facebook connection was cancelled.');
     history.replaceState({},'',location.pathname);
@@ -955,6 +978,12 @@ document.addEventListener('click', event => {
   if (action === 'openUnansweredComments') { commentStatusFilter = 'unanswered'; setView('Comments'); return; }
   if (action === 'closePlatformDetail') { selectedStatusPlatform = null; renderConnectionStrip(); return; }
   if (action === 'openFullPlatforms') { selectedStatusPlatform = null; setView('Platforms'); return; }
+  if (action === 'saveGoogleLocation') {
+    const select=document.querySelector('[data-local-google-location]');
+    if(!select?.value){ notice('Choose the Google Business Profile location first.',true); return; }
+    const split=select.value.split('|');
+    return perform(async()=>{ await api('local-google-select',{accountName:split[0],locationName:split.slice(1).join('|')}); await loadLocalStatus(); renderConnectionStrip(); notice('Google Business Profile location saved.'); });
+  }
   if (action === 'back') { if (!dirty || confirm('Leave without saving your changes?')) render(); return; }
   if (action === 'allCampaigns') { campaignFilter=''; return render(); }
   if (action === 'removeImage') { if ($('imageFile').disabled) return; selected.imageId=null; selected.imageUrl=null; selected.imageVariantIds={}; selected.imageVariants={}; dirty=true; updatePreview(); buttons(); return; }
@@ -1101,7 +1130,7 @@ document.addEventListener('click', event => {
   perform(async () => {
     if (action === 'logout') { if (dirty && !confirm('Sign out without saving changes?')) return; await api('session',null,'DELETE'); location.reload(); }
     else if (action === 'new') { const d=await api('records',{action:'create',campaign:campaignFilter || 'BBQ'}); updateRecord(d.record); openRecord(d.record); }
-    else if (action === 'refresh') { await loadRecords(); await loadAnalytics(true); await refreshConnection(); await loadComments(); render(); renderConnectionStrip(); notice('Updated.'); }
+    else if (action === 'refresh') { await loadRecords(); await loadAnalytics(true); await loadLocalStatus(); await refreshConnection(); await loadComments(); render(); renderConnectionStrip(); notice('Updated.'); }
     else if (action === 'refreshRecord') { if (dirty && !confirm('Refresh and discard unsaved changes?')) return; const currentId=selected.id; await loadRecords(); openRecord(records.find(r=>r.id===currentId)); notice('Showing the latest saved result.'); }
     else if (action === 'checkConnection') { await refreshConnection(); render(); notice('Account checks completed.'); }
     else if (action === 'publish') await publish();
