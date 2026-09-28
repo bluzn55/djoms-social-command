@@ -1874,3 +1874,101 @@ textarea { line-height:1.65 !important; }
     justify-self:start;
   }
 }
+
+
+/* POST ATTRIBUTION + BLUE/YELLOW/RED TRENDS */
+.platform-chart-card.trend-blue { border-left:5px solid #2f6fed; }
+.platform-chart-card.trend-blue .platform-chart-current { color:#2459bf; }
+.platform-chart-status.status-blue { background:#eaf1ff; color:#2459bf; border:1px solid #9db7ef; }
+.platform-chart-card.trend-blue .trend-chart { color:#2f6fed !important; }
+.platform-chart-card.trend-yellow .trend-chart { color:#d3a126 !important; }
+.platform-chart-card.trend-red .trend-chart { color:#b94332 !important; }
+
+.platform-drivers {
+  display:block;
+  margin-top:12px;
+  padding:12px;
+  border:1px solid #e2d7c2;
+  border-radius:8px;
+  background:#fffaf0;
+}
+.platform-drivers-title {
+  display:block;
+  margin-bottom:8px;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.55px;
+  color:#5e513f;
+}
+.platform-driver-row {
+  display:grid;
+  grid-template-columns:28px minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  padding:8px 0;
+  border-top:1px solid #eadfcd;
+}
+.platform-driver-row:first-of-type { border-top:0; }
+.platform-driver-rank {
+  display:grid;
+  place-items:center;
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  background:#efe5d3;
+  font-size:12px;
+  font-weight:900;
+  color:#5e513f;
+}
+.platform-driver-copy {
+  min-width:0;
+}
+.platform-driver-copy b,
+.platform-driver-copy small {
+  display:block;
+}
+.platform-driver-copy b {
+  font-size:14px;
+  color:#2d251a;
+  overflow-wrap:anywhere;
+}
+.platform-driver-copy small {
+  margin-top:2px;
+  font-size:11px !important;
+  color:#766a59;
+}
+.platform-driver-stats {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(58px,auto));
+  gap:6px;
+}
+.platform-driver-stats>span {
+  display:block;
+  min-width:58px;
+  padding:6px 7px;
+  text-align:right;
+  border-radius:6px;
+  background:#fffef9;
+  border:1px solid #e8dfd0;
+  font-size:14px;
+  font-weight:800;
+  color:#2d251a;
+}
+.platform-driver-stats small {
+  display:block;
+  margin-top:1px;
+  font-size:9px !important;
+  font-weight:700 !important;
+  color:#766a59;
+}
+.platform-drivers-empty {
+  display:block;
+  padding:8px 0 2px;
+  font-size:13px;
+  font-weight:700;
+  color:#766a59;
+}
+@media(max-width:760px) {
+  .platform-driver-row { grid-template-columns:28px 1fr; }
+  .platform-driver-stats { grid-column:2; grid-template-columns:repeat(3,1fr); }
+}
