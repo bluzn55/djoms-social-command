@@ -1799,3 +1799,78 @@ textarea { line-height:1.65 !important; }
     grid-column:auto;
   }
 }
+
+
+/* COMBINED KPI + TREND STATUS */
+.platform-row-right .platform-engagement-grid {
+  display:none !important;
+}
+.platform-chart-grid {
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+}
+.platform-chart-card {
+  min-height:205px !important;
+  padding:12px 13px 11px !important;
+}
+.platform-chart-card.trend-green { border-left:5px solid #4c8a4f; }
+.platform-chart-card.trend-yellow { border-left:5px solid #d3a126; }
+.platform-chart-card.trend-red { border-left:5px solid #b94332; }
+.platform-chart-card.trend-neutral { border-left:5px solid #a69a86; }
+
+.platform-chart-head {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  align-items:center;
+  gap:10px;
+}
+.platform-chart-title {
+  margin:0 !important;
+  font-size:14px !important;
+  font-weight:800 !important;
+  color:#514532 !important;
+}
+.platform-chart-current {
+  font-size:23px;
+  font-weight:800;
+  color:#2d251a;
+  white-space:nowrap;
+}
+.platform-chart-status {
+  display:inline-block;
+  min-width:82px;
+  padding:5px 7px;
+  border-radius:6px;
+  text-align:center;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.35px;
+  white-space:nowrap;
+}
+.platform-chart-status.status-green { background:#e7f4e8; color:#276334; border:1px solid #9ac7a1; }
+.platform-chart-status.status-yellow { background:#fff5d9; color:#7a5a00; border:1px solid #dfc46f; }
+.platform-chart-status.status-red { background:#fde9e5; color:#8b2f22; border:1px solid #d99a8f; }
+.platform-chart-status.status-neutral { background:#f1ede6; color:#6d6252; border:1px solid #cfc5b5; }
+
+.platform-chart-subtitle {
+  display:block;
+  margin-top:5px;
+  font-size:12px;
+  font-weight:700;
+  color:#7b6d57;
+}
+.platform-chart-card.trend-red .platform-chart-current { color:#8b2f22; }
+.platform-chart-card.trend-yellow .platform-chart-current { color:#7a5a00; }
+.platform-chart-card.trend-green .platform-chart-current { color:#276334; }
+
+@media(max-width:900px) {
+  .platform-chart-grid { grid-template-columns:1fr !important; }
+}
+@media(max-width:560px) {
+  .platform-chart-head {
+    grid-template-columns:1fr auto;
+  }
+  .platform-chart-status {
+    grid-column:1 / -1;
+    justify-self:start;
+  }
+}
