@@ -138,23 +138,25 @@ function metricSeries(source = {}, keys = []) {
   }
   return [];
 }
-function trendLine(values = []) {
+function trendChart(values = [], metric = '') {
   const nums = values.map(Number).filter(Number.isFinite);
-  if (nums.length < 2) return '<span class="mini-trend-empty">Trend appears when daily data is available</span>';
-  const width = 220, height = 62, pad = 6;
-  const min = Math.min(...nums), max = Math.max(...nums), spread = Math.max(1, max - min);
-  const step = (width - pad * 2) / Math.max(1, nums.length - 1);
-  const pts = nums.map((value,index) => {
-    const x = pad + index * step;
-    const y = height - pad - ((value - min) / spread) * (height - pad * 2);
-    return [x,y];
-  });
-  const points = pts.map(([x,y]) => x.toFixed(1) + ',' + y.toFixed(1)).join(' ');
-  const dots = pts.map(([x,y]) => '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="2.5"></circle>').join('');
-  return '<span class="mini-trend mini-line-trend" aria-label="Recent trend"><svg viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="' + (height*.33) + '" x2="' + width + '" y2="' + (height*.33) + '" class="trend-gridline"></line><line x1="0" y1="' + (height*.66) + '" x2="' + width + '" y2="' + (height*.66) + '" class="trend-gridline"></line><polyline points="' + points + '" class="trend-polyline"></polyline>' + dots + '</svg></span>';
+  if (nums.length < 2) return '<span class="trend-chart trend-chart-empty"><span>Trend appears when daily data is available</span></span>';
+  const width = 300, height = 108, left = 8, right = 46, top = 8, bottom = 24;
+  const maxValue = Math.max(...nums,1);
+  const step = (width-left-right) / Math.max(1,nums.length-1);
+  const y = value => top + (1 - Math.max(0,value) / maxValue) * (height-top-bottom);
+  const pts = nums.map((value,index)=>[left + index*step,y(value)]);
+  const points = pts.map(([xv,yv])=>xv.toFixed(1)+','+yv.toFixed(1)).join(' ');
+  const dots = pts.map(([xv,yv])=>'<circle cx="'+xv.toFixed(1)+'" cy="'+yv.toFixed(1)+'" r="3"></circle>').join('');
+  const ref = [maxValue, maxValue/2, 0];
+  const refY = [top, top+(height-top-bottom)/2, height-bottom];
+  const grid = refY.map((yv,i)=>'<line x1="'+left+'" y1="'+yv+'" x2="'+(width-right)+'" y2="'+yv+'" class="trend-gridline"></line><text x="'+(width-right+6)+'" y="'+(yv+4)+'" class="trend-axis">'+compactMetric(ref[i])+'</text>').join('');
+  const rangeText = platformMetricRange === 'today' ? '1 DAY' : platformMetricRange === '7d' ? 'WEEK' : platformMetricRange === '30d' ? 'MONTH' : 'YEAR';
+  const labels = '<text x="'+left+'" y="'+(height-5)+'" class="trend-axis">START</text><text text-anchor="middle" x="'+((width-right+left)/2)+'" y="'+(height-5)+'" class="trend-axis">'+rangeText+'</text><text text-anchor="end" x="'+(width-right)+'" y="'+(height-5)+'" class="trend-axis">NOW</text>';
+  return '<span class="trend-chart" aria-label="'+esc(metric)+' recent trend"><svg viewBox="0 0 '+width+' '+height+'" preserveAspectRatio="none" aria-hidden="true">'+grid+'<polyline points="'+points+'" class="trend-polyline"></polyline>'+dots+labels+'</svg></span>';
 }
 function platformMetricData(info = {}, platform) {
-  const aliases = { today:['today','1d','day'], '7d':['7d','7','week'], '30d':['30d','30','month'] };
+  const aliases = { today:['today','1d','day'], '7d':['7d','7','week'], '30d':['30d','30','month'], '365d':['365d','365','year','12m'] };
   const bases = [info.analytics, info.insights, info.metrics].filter(Boolean);
   let source = {};
   for (const base of bases) {
@@ -228,7 +230,7 @@ function renderConnectionStrip() {
     return;
   }
   strip.hidden = false;
-  const rangeLabels = { today:'Today', '7d':'Last 7 Days', '30d':'Last 30 Days' };
+  const rangeLabels = { today:'Last 1 Day', '7d':'Last 7 Days', '30d':'Last 30 Days', '365d':'Last Year' };
   const unanswered = commentCheckedAt ? commentStream.filter(x => !x.handled).length : '—';
   const scheduled = records.filter(r => r.status === 'scheduled').length;
   const failed = records.filter(r => ['failed','partial','uncertain'].includes(r.status)).length;
@@ -238,7 +240,7 @@ function renderConnectionStrip() {
     <div class="platform-status-toolbar">
       <div><strong>Platform health & engagement</strong><small>${esc(rangeLabels[platformMetricRange] || 'Last 7 Days')}</small></div>
       <div class="platform-range-switch" role="group" aria-label="Engagement time range">
-        ${[['today','Today'],['7d','7 Days'],['30d','30 Days']].map(([key,label]) => `<button type="button" data-metric-range="${key}" class="${platformMetricRange === key ? 'active' : ''}" aria-pressed="${platformMetricRange === key}">${label}</button>`).join('')}
+        ${[['today','1 Day'],['7d','Week'],['30d','Month'],['365d','Year']].map(([key,label]) => `<button type="button" data-metric-range="${key}" class="${platformMetricRange === key ? 'active' : ''}" aria-pressed="${platformMetricRange === key}">${label}</button>`).join('')}
       </div>
     </div>
     <div class="platform-status-grid">${statusPlatforms.map(p => {
@@ -273,7 +275,8 @@ function renderConnectionStrip() {
         </span>
         <span class="platform-row-right">
           <span class="platform-quick-label">QUICK GLANCE</span>
-          <span class="platform-engagement-grid">${cells.map(([label,value,trend]) => `<span class="platform-engagement-metric"><span>${esc(label)}</span><b>${esc(compactMetric(value))}</b>${trendLine(trend)}</span>`).join('')}</span>
+          <span class="platform-engagement-grid">${cells.map(([label,value]) => `<span class="platform-engagement-metric compact-kpi"><span>${esc(label)}</span><b>${esc(compactMetric(value))}</b></span>`).join('')}</span>
+          <span class="platform-chart-grid">${cells.map(([label,value,trend]) => `<span class="platform-chart-card"><span class="platform-chart-title">${esc(label)} trend</span>${trendChart(trend,label)}</span>`).join('')}</span>
         </span>
       </button>`;
     }).join('')}</div>
