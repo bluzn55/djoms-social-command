@@ -206,6 +206,16 @@ function engagementRate(metrics = {}) {
   }, 0);
   return (total / reach * 100).toFixed(total && total / reach * 100 < 10 ? 1 : 0) + '%';
 }
+function metricTrendStatus(values = []) {
+  const nums = values.map(Number).filter(Number.isFinite);
+  if (nums.length < 2) return { color:'neutral', label:'WAITING', arrow:'•' };
+  const first = nums[0], last = nums[nums.length - 1];
+  const base = Math.max(Math.abs(first), 1);
+  const pct = (last - first) / base * 100;
+  if (pct >= 5) return { color:'green', label:'GREEN', arrow:'▲' };
+  if (pct <= -5) return { color:'red', label:'RED', arrow:'▼' };
+  return { color:'yellow', label:'YELLOW', arrow:'→' };
+}
 function updatedText(value) {
   if (!value) return 'not yet';
   const time = Date.parse(value);
@@ -278,8 +288,18 @@ function renderConnectionStrip() {
         </span>
         <span class="platform-row-right">
           <span class="platform-quick-label">QUICK GLANCE</span>
-          <span class="platform-engagement-grid">${cells.map(([label,value]) => `<span class="platform-engagement-metric compact-kpi"><span>${esc(label)}</span><b>${esc(compactMetric(value))}</b></span>`).join('')}</span>
-          <span class="platform-chart-grid">${cells.map(([label,value,trend]) => `<span class="platform-chart-card"><span class="platform-chart-title">${esc(label)} trend</span>${trendChart(trend,label)}</span>`).join('')}</span>
+          <span class="platform-chart-grid">${cells.map(([label,value,trend]) => {
+            const trendStatus = metricTrendStatus(trend);
+            return `<span class="platform-chart-card trend-${trendStatus.color}">
+              <span class="platform-chart-head">
+                <span class="platform-chart-title">${esc(label)}</span>
+                <span class="platform-chart-current">${esc(compactMetric(value))}</span>
+                <span class="platform-chart-status status-${trendStatus.color}">${trendStatus.arrow} ${trendStatus.label}</span>
+              </span>
+              <span class="platform-chart-subtitle">${esc(label)} trend</span>
+              ${trendChart(trend,label)}
+            </span>`;
+          }).join('')}</span>
           <span class="platform-operational-strip">
             <span class="platform-operational-item platform-top-post">
               <small>TOP POST</small>
