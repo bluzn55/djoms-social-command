@@ -147,6 +147,15 @@ function audienceChangeHtml(value) {
   if (number < 0) return '<span class="audience-change negative">▼ ' + esc(compactMetric(number)) + '</span>';
   return '<span class="audience-change neutral-change">0</span>';
 }
+function engagementRate(metrics = {}) {
+  const reach = Number(metrics.reach);
+  if (!Number.isFinite(reach) || reach <= 0) return '—';
+  const total = [metrics.likes, metrics.replies, metrics.shares].reduce((sum,value) => {
+    const number = Number(value);
+    return sum + (Number.isFinite(number) ? number : 0);
+  }, 0);
+  return (total / reach * 100).toFixed(total && total / reach * 100 < 10 ? 1 : 0) + '%';
+}
 function updatedText(value) {
   if (!value) return 'not yet';
   const time = Date.parse(value);
@@ -187,7 +196,7 @@ function renderConnectionStrip() {
       const account = info.name || (info.connected ? 'Connected account' : 'Connection needs attention');
       const metrics = platformMetricData(info,p);
       const audienceLabel = p === 'youtube' ? 'Subscribers' : 'Followers';
-      const cells = [['Likes',metrics.likes],['Replies',metrics.replies],['Clicks',metrics.clicks],['Shares',metrics.shares],['Reach',metrics.reach]];
+      const cells = [['Engagement',engagementRate(metrics)],['Website clicks',metrics.clicks],['Shares',metrics.shares],['Reach / views',metrics.reach]];
       const purpose = { facebook:'BUILD COMMUNITY', instagram:'GET DISCOVERED', x:'BE HEARD', youtube:'TELL THE STORY' }[p];
       const cue = {
         facebook:'💬  Posts · comments · community',
@@ -203,6 +212,7 @@ function renderConnectionStrip() {
         <small>${esc(account)}</small>
         <span class="platform-app-cue">${esc(cue)}</span>
         <span class="platform-audience-row"><span>${esc(audienceLabel)}</span><span class="platform-audience-value"><b>${esc(compactMetric(metrics.audience))}</b>${audienceChangeHtml(metrics.audienceChange)}</span></span>
+        <span class="platform-quick-label">QUICK GLANCE</span>
         <span class="platform-engagement-grid">${cells.map(([label,value]) => `<span class="platform-engagement-metric"><span>${esc(label)}</span><b>${esc(compactMetric(value))}</b></span>`).join('')}</span>
         <span class="platform-updated">Updated: ${esc(updatedText(connectionCheckedAt))}</span>
       </button>`;
