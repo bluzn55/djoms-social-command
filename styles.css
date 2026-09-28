@@ -1260,3 +1260,48 @@ dialog label,dialog input,dialog button,dialog p { font-size:16px; }
     gap:5px;
   }
 }
+
+
+/* ACCESSIBILITY: larger, bolder text for Social Command */
+html { font-size:18px; }
+body { font-size:18px !important; font-weight:600; line-height:1.55; }
+p,span,div,td,th,label,legend,small,strong,a,button,input,textarea,select { font-weight:600; }
+button,.button,.upload-button,input:not([type=checkbox]),textarea,select { font-size:17px !important; }
+label { font-size:17px !important; font-weight:700 !important; }
+label small, small { font-size:14px !important; font-weight:600 !important; }
+aside button { font-size:17px !important; font-weight:700 !important; }
+aside .user strong { font-size:16px !important; }
+aside .user small { font-size:14px !important; }
+.ey,.label { font-size:13px !important; font-weight:700 !important; }
+.live { font-size:15px !important; font-weight:700 !important; }
+.top h2 { font-size:30px !important; font-weight:700 !important; }
+.card h3 { font-size:21px !important; font-weight:700 !important; }
+.card small { font-size:15px !important; }
+.connection-strip { font-size:16px !important; }
+.connection-strip button { font-size:15px !important; font-weight:700 !important; }
+th { font-size:14px !important; font-weight:700 !important; }
+td { font-size:16px !important; }
+td small { font-size:13px !important; }
+.status { font-size:14px !important; font-weight:700 !important; }
+.check { font-size:17px !important; font-weight:700 !important; }
+.actions button { font-size:16px !important; font-weight:700 !important; }
+.locknote,#savedState,.schedule small,.history small,.result-item,.result-item button { font-size:14px !important; }
+.history div { font-size:16px !important; }
+.copy-card p { font-size:15px !important; }
+.format-card strong,.copy-card strong { font-size:16px !important; }
+.format-card small,.copy-card small { font-size:14px !important; }
+.platform-status-card,.platform-inline-detail,.social-action-strip button { font-weight:700 !important; }
+.platform-status-card small,.platform-status-toolbar small,.social-action-strip button small { font-size:14px !important; }
+.platform-engagement-metric span,.platform-audience-row span,.platform-updated { font-size:13px !important; font-weight:700 !important; }
+.social-action-strip button span { font-size:14px !important; }
+.social-action-strip button b { font-size:18px !important; }
+textarea { line-height:1.65 !important; }
+@media(max-width:720px) {
+  body { font-size:18px !important; }
+  aside nav button { font-size:16px !important; }
+  h1 { font-size:32px !important; }
+  .top h2 { font-size:27px !important; }
+  .card h3 { font-size:19px !important; }
+  .card small { font-size:14px !important; }
+  button,.button,.upload-button,input:not([type=checkbox]),textarea,select,label { font-size:17px !important; }
+}
