@@ -1401,3 +1401,53 @@ textarea { line-height:1.65 !important; }
 @media(max-width:760px) {
   .platform-engagement-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
+
+
+/* MINI ANALYTICS TRENDS */
+.platform-engagement-metric {
+  min-height:118px !important;
+  padding:10px 6px 9px !important;
+}
+.mini-trend {
+  height:42px;
+  display:flex;
+  align-items:flex-end;
+  gap:3px;
+  margin-top:10px;
+  padding:4px 3px 0;
+  border-top:1px solid #e5dccb;
+}
+.mini-trend i {
+  display:block;
+  flex:1 1 0;
+  min-width:2px;
+  max-width:12px;
+  border-radius:2px 2px 0 0;
+  background:currentColor;
+  opacity:.45;
+}
+.platform-facebook .mini-trend { color:#1877f2; }
+.platform-instagram .mini-trend { color:#c13584; }
+.platform-x .mini-trend { color:#111; }
+.platform-youtube .mini-trend { color:#ff0000; }
+.mini-trend-empty {
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-top:10px;
+  padding:5px 4px 0;
+  border-top:1px solid #e5dccb;
+  color:#8a7c66;
+  font-size:11px !important;
+  line-height:1.2;
+  font-weight:600 !important;
+}
+.connection-strip .platform-status-card {
+  min-height:360px;
+}
+@media(max-width:760px) {
+  .platform-engagement-metric { min-height:110px !important; }
+  .mini-trend { height:38px; }
+  .mini-trend-empty { min-height:38px; font-size:12px !important; }
+}
