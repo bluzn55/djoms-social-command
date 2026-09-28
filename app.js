@@ -188,10 +188,20 @@ function renderConnectionStrip() {
       const metrics = platformMetricData(info,p);
       const audienceLabel = p === 'youtube' ? 'Subscribers' : 'Followers';
       const cells = [['Likes',metrics.likes],['Replies',metrics.replies],['Clicks',metrics.clicks],['Shares',metrics.shares],['Reach',metrics.reach]];
-      return `<button class="platform-status-card" data-platform-detail="${esc(p)}" aria-label="${esc(names[p])}: ${esc(health.text)}. Open details below.">
+      const purpose = { facebook:'BUILD COMMUNITY', instagram:'GET DISCOVERED', x:'BE HEARD', youtube:'TELL THE STORY' }[p];
+      const cue = {
+        facebook:'💬  Posts · comments · community',
+        instagram:'▦  Photos · Reels · discovery',
+        x:'✦  Voice · replies · conversation',
+        youtube:'▶  Video · watch · return'
+      }[p];
+      const icon = { facebook:'f', instagram:'◎', x:'𝕏', youtube:'▶' }[p];
+      return `<button class="platform-status-card platform-${esc(p)}" data-platform-detail="${esc(p)}" aria-label="${esc(names[p])}: ${esc(health.text)}. Open details below.">
+        <span class="platform-brand-bar"><span class="platform-brand-icon" aria-hidden="true">${icon}</span><span class="platform-purpose">${esc(purpose)}</span></span>
         <span class="platform-status-top"><span class="platform-status-name">${esc(names[p])}</span><i class="gyr-light ${health.color}" aria-hidden="true"></i></span>
         <strong>${esc(health.label)} · ${esc(health.text)}</strong>
         <small>${esc(account)}</small>
+        <span class="platform-app-cue">${esc(cue)}</span>
         <span class="platform-audience-row"><span>${esc(audienceLabel)}</span><span class="platform-audience-value"><b>${esc(compactMetric(metrics.audience))}</b>${audienceChangeHtml(metrics.audienceChange)}</span></span>
         <span class="platform-engagement-grid">${cells.map(([label,value]) => `<span class="platform-engagement-metric"><span>${esc(label)}</span><b>${esc(compactMetric(value))}</b></span>`).join('')}</span>
         <span class="platform-updated">Updated: ${esc(updatedText(connectionCheckedAt))}</span>
