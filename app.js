@@ -141,7 +141,7 @@ function metricSeries(source = {}, keys = []) {
 function trendChart(values = [], metric = '') {
   const nums = values.map(Number).filter(Number.isFinite);
   if (nums.length < 2) return '<span class="trend-chart trend-chart-empty"><span>Trend appears when daily data is available</span></span>';
-  const width = 300, height = 108, left = 8, right = 46, top = 8, bottom = 24;
+  const width = 300, height = 108, left = 8, right = 34, top = 8, bottom = 24;
   const maxValue = Math.max(...nums,1);
   const step = (width-left-right) / Math.max(1,nums.length-1);
   const y = value => top + (1 - Math.max(0,value) / maxValue) * (height-top-bottom);
@@ -150,7 +150,8 @@ function trendChart(values = [], metric = '') {
   const dots = pts.map(([xv,yv])=>'<circle cx="'+xv.toFixed(1)+'" cy="'+yv.toFixed(1)+'" r="3"></circle>').join('');
   const ref = [maxValue, maxValue/2, 0];
   const refY = [top, top+(height-top-bottom)/2, height-bottom];
-  const grid = refY.map((yv,i)=>'<line x1="'+left+'" y1="'+yv+'" x2="'+(width-right)+'" y2="'+yv+'" class="trend-gridline"></line><text x="'+(width-right+6)+'" y="'+(yv+4)+'" class="trend-axis">'+compactMetric(ref[i])+'</text>').join('');
+  const plotRight = width-right;
+  const grid = refY.map((yv,i)=>'<line x1="'+left+'" y1="'+yv+'" x2="'+plotRight+'" y2="'+yv+'" class="trend-gridline"></line><text x="'+(plotRight+3)+'" y="'+(yv+4)+'" class="trend-axis">'+compactMetric(ref[i])+'</text>').join('');
   const rangeText = platformMetricRange === 'today' ? '1 DAY' : platformMetricRange === '7d' ? 'WEEK' : platformMetricRange === '30d' ? 'MONTH' : 'YEAR';
   const labels = '<text x="'+left+'" y="'+(height-5)+'" class="trend-axis">START</text><text text-anchor="middle" x="'+((width-right+left)/2)+'" y="'+(height-5)+'" class="trend-axis">'+rangeText+'</text><text text-anchor="end" x="'+(width-right)+'" y="'+(height-5)+'" class="trend-axis">NOW</text>';
   return '<span class="trend-chart" aria-label="'+esc(metric)+' recent trend"><svg viewBox="0 0 '+width+' '+height+'" preserveAspectRatio="none" aria-hidden="true">'+grid+'<polyline points="'+points+'" class="trend-polyline"></polyline>'+dots+labels+'</svg></span>';
