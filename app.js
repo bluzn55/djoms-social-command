@@ -138,11 +138,20 @@ function metricSeries(source = {}, keys = []) {
   }
   return [];
 }
-function trendBars(values = []) {
+function trendLine(values = []) {
   const nums = values.map(Number).filter(Number.isFinite);
   if (nums.length < 2) return '<span class="mini-trend-empty">Trend appears when daily data is available</span>';
-  const max = Math.max(...nums, 1);
-  return '<span class="mini-trend" aria-label="Recent trend">' + nums.map(value => '<i style="height:' + Math.max(8, Math.round(value / max * 100)) + '%"></i>').join('') + '</span>';
+  const width = 220, height = 62, pad = 6;
+  const min = Math.min(...nums), max = Math.max(...nums), spread = Math.max(1, max - min);
+  const step = (width - pad * 2) / Math.max(1, nums.length - 1);
+  const pts = nums.map((value,index) => {
+    const x = pad + index * step;
+    const y = height - pad - ((value - min) / spread) * (height - pad * 2);
+    return [x,y];
+  });
+  const points = pts.map(([x,y]) => x.toFixed(1) + ',' + y.toFixed(1)).join(' ');
+  const dots = pts.map(([x,y]) => '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="2.5"></circle>').join('');
+  return '<span class="mini-trend mini-line-trend" aria-label="Recent trend"><svg viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="' + (height*.33) + '" x2="' + width + '" y2="' + (height*.33) + '" class="trend-gridline"></line><line x1="0" y1="' + (height*.66) + '" x2="' + width + '" y2="' + (height*.66) + '" class="trend-gridline"></line><polyline points="' + points + '" class="trend-polyline"></polyline>' + dots + '</svg></span>';
 }
 function platformMetricData(info = {}, platform) {
   const aliases = { today:['today','1d','day'], '7d':['7d','7','week'], '30d':['30d','30','month'] };
@@ -253,15 +262,19 @@ function renderConnectionStrip() {
       }[p];
       const icon = { facebook:'f', instagram:'◎', x:'𝕏', youtube:'▶' }[p];
       return `<button class="platform-status-card platform-${esc(p)}" data-platform-detail="${esc(p)}" aria-label="${esc(names[p])}: ${esc(health.text)}. Open details below.">
-        <span class="platform-brand-bar"><span class="platform-brand-icon" aria-hidden="true">${icon}</span><span class="platform-purpose">${esc(purpose)}</span></span>
-        <span class="platform-status-top"><span class="platform-status-name">${esc(names[p])}</span><i class="gyr-light ${health.color}" aria-hidden="true"></i></span>
-        <strong>${esc(health.label)} · ${esc(health.text)}</strong>
-        <small>${esc(account)}</small>
-        <span class="platform-app-cue">${esc(cue)}</span>
-        <span class="platform-audience-row"><span>${esc(audienceLabel)}</span><span class="platform-audience-value"><b>${esc(compactMetric(metrics.audience))}</b>${audienceChangeHtml(metrics.audienceChange)}</span></span>
-        <span class="platform-quick-label">QUICK GLANCE</span>
-        <span class="platform-engagement-grid">${cells.map(([label,value,trend]) => `<span class="platform-engagement-metric"><span>${esc(label)}</span><b>${esc(compactMetric(value))}</b>${trendBars(trend)}</span>`).join('')}</span>
-        <span class="platform-updated">Updated: ${esc(updatedText(connectionCheckedAt))}</span>
+        <span class="platform-row-left">
+          <span class="platform-brand-bar"><span class="platform-brand-icon" aria-hidden="true">${icon}</span><span class="platform-purpose">${esc(purpose)}</span></span>
+          <span class="platform-status-top"><span class="platform-status-name">${esc(names[p])}</span><i class="gyr-light ${health.color}" aria-hidden="true"></i></span>
+          <strong>${esc(health.label)} · ${esc(health.text)}</strong>
+          <small>${esc(account)}</small>
+          <span class="platform-app-cue">${esc(cue)}</span>
+          <span class="platform-audience-row"><span>${esc(audienceLabel)}</span><span class="platform-audience-value"><b>${esc(compactMetric(metrics.audience))}</b>${audienceChangeHtml(metrics.audienceChange)}</span></span>
+          <span class="platform-updated">Updated: ${esc(updatedText(connectionCheckedAt))}</span>
+        </span>
+        <span class="platform-row-right">
+          <span class="platform-quick-label">QUICK GLANCE</span>
+          <span class="platform-engagement-grid">${cells.map(([label,value,trend]) => `<span class="platform-engagement-metric"><span>${esc(label)}</span><b>${esc(compactMetric(value))}</b>${trendLine(trend)}</span>`).join('')}</span>
+        </span>
       </button>`;
     }).join('')}</div>
     <div class="social-action-strip">
