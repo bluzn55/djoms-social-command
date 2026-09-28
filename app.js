@@ -676,6 +676,10 @@ function render() {
     const list = records.filter(r => r.campaign === c.id), needs = list.filter(attention).length;
     return `<button class="card ${campaignFilter === c.id ? 'selected-card':''}" data-campaign="${esc(c.id)}"><i class="light ${needs ? 'red' : list.some(r => r.status === 'published') ? 'green' : 'neutral'}"></i><span class="id">${esc(c.id)}</span><h3>${esc(c.title)}</h3><small>${list.length} posts${needs ? ' · ' + needs + ' need attention' : ''}</small></button>`;
   }).join('');
+  if (activeView === 'Mission Control') {
+    $('content').innerHTML = '';
+    return;
+  }
   if (activeView === 'Comments') {
     $('content').innerHTML = '<div class="empty"><h3>Loading comments…</h3></div>';
     loadComments().then(()=>{ if(activeView==='Comments') renderComments(); }).catch(e=>notice(e.message,true));
