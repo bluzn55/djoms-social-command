@@ -1560,3 +1560,103 @@ textarea { line-height:1.65 !important; }
     grid-template-columns:1fr 1fr !important;
   }
 }
+
+
+/* COMPACT KPI ROW + CHARTS BELOW */
+.platform-row-right .platform-engagement-grid {
+  grid-template-columns:repeat(4,minmax(120px,1fr)) !important;
+  gap:10px !important;
+}
+.platform-row-right .platform-engagement-metric.compact-kpi {
+  min-height:74px !important;
+  padding:10px 12px !important;
+  display:flex !important;
+  flex-direction:column;
+  justify-content:center;
+  text-align:left !important;
+}
+.platform-row-right .platform-engagement-metric.compact-kpi>b {
+  font-size:24px !important;
+  margin-top:4px !important;
+}
+.platform-chart-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  margin-top:14px;
+}
+.platform-chart-card {
+  display:block;
+  min-width:0;
+  min-height:178px;
+  padding:12px;
+  border:1px solid #e2d7c2;
+  border-radius:8px;
+  background:#fffef9;
+}
+.platform-chart-title {
+  display:block;
+  margin-bottom:6px;
+  font-size:13px;
+  font-weight:800;
+  color:#6d604d;
+  text-transform:uppercase;
+  letter-spacing:.4px;
+}
+.trend-chart {
+  display:block;
+  height:126px;
+}
+.trend-chart svg {
+  width:100%;
+  height:126px;
+  overflow:visible;
+}
+.trend-chart .trend-gridline {
+  stroke:#d9d0c1;
+  stroke-width:1;
+}
+.trend-chart .trend-polyline {
+  fill:none;
+  stroke:currentColor;
+  stroke-width:3;
+  vector-effect:non-scaling-stroke;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.trend-chart circle { fill:currentColor; }
+.trend-axis {
+  fill:#7b6d57;
+  font-size:9px;
+  font-weight:700;
+}
+.trend-chart-empty {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:126px;
+  color:#8a7c66;
+  font-size:13px;
+  font-weight:700;
+  text-align:center;
+  border-top:1px solid #e5dccb;
+}
+.platform-facebook .trend-chart { color:#1877f2; }
+.platform-instagram .trend-chart { color:#c13584; }
+.platform-x .trend-chart { color:#111; }
+.platform-youtube .trend-chart { color:#ff0000; }
+
+@media(max-width:1100px) {
+  .platform-row-right .platform-engagement-grid {
+    grid-template-columns:repeat(2,minmax(120px,1fr)) !important;
+  }
+  .platform-chart-grid {
+    grid-template-columns:1fr;
+  }
+}
+@media(max-width:760px) {
+  .platform-row-right .platform-engagement-grid {
+    grid-template-columns:1fr 1fr !important;
+  }
+  .platform-chart-grid { grid-template-columns:1fr; }
+}
