@@ -214,6 +214,10 @@ function platformExtraMetrics(platform, metrics) {
 }
 function renderConnectionStrip() {
   const strip = $('connectionStrip');
+  if (activeView !== 'Mission Control') {
+    strip.hidden = true;
+    return;
+  }
   strip.hidden = false;
   const rangeLabels = { today:'Today', '7d':'Last 7 Days', '30d':'Last 30 Days' };
   const unanswered = commentCheckedAt ? commentStream.filter(x => !x.handled).length : '—';
@@ -647,6 +651,8 @@ function renderBatchSchedule() {
 }
 function render() {
   $('workspace').hidden = false; $('editor').hidden = true; selected = null; dirty = false;
+  if (activeView === 'Mission Control') renderConnectionStrip();
+  else $('connectionStrip').hidden = true;
   $('viewTitle').textContent = activeView;
   document.querySelectorAll('nav [data-view]').forEach(b => b.classList.toggle('active',b.dataset.view === activeView));
   $('campaignCards').hidden = !['Campaigns','Mission Control'].includes(activeView);
