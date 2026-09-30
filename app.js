@@ -149,7 +149,7 @@ async function youtubePost(path, body) {
   return data;
 }
 async function wixBlogPost(body) {
-  const response = await fetch('/api/wix/blog-comments', {
+  const response = await fetch('/api/meta/wix-blog-comments', {
     method:'POST',
     credentials:'same-origin',
     headers:{'Content-Type':'application/json','X-DJOMS-CSRF':csrf},
