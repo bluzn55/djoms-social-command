@@ -2141,3 +2141,41 @@ textarea { line-height:1.65 !important; }
   .mission-glance-card { min-height:210px; }
   .mission-glance-light { width:76px; height:76px; }
 }
+
+
+/* MISSION CONTROL — NUMBERS ONLY, NO CHARTS */
+.mission-glance-card {
+  min-height:330px;
+}
+.mission-glance-metrics {
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  margin-top:4px;
+}
+.mission-glance-metrics>span {
+  display:block;
+  min-width:0;
+  padding:9px 7px;
+  border:1px solid #e2d7c2;
+  border-radius:7px;
+  background:#fffef9;
+}
+.mission-glance-metrics small {
+  display:block;
+  color:#746754;
+  font-size:11px !important;
+  font-weight:800 !important;
+  line-height:1.15;
+}
+.mission-glance-metrics b {
+  display:block;
+  margin-top:4px;
+  color:#2d251a;
+  font-size:19px;
+}
+@media(max-width:560px) {
+  .mission-glance-card { min-height:300px; }
+  .mission-glance-metrics { grid-template-columns:1fr 1fr; }
+}
