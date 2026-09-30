@@ -83,10 +83,11 @@ async function loadVideoInbox() {
   return videoInbox;
 }
 async function loadComments() {
-  const [ytResult, metaResult, xResult, webResult] = await Promise.allSettled([
+  const [ytResult, metaResult, xResult, blogResult, webResult] = await Promise.allSettled([
     platformApi('youtube','comments','YouTube'),
     api('comments?platforms=facebook,instagram'),
     platformApi('x','mentions','X'),
+    platformApi('wix','blog-comments','From Doc\'s Porch'),
     platformApi('community','moderation','Website Community')
   ]);
   commentStream = [];
@@ -105,6 +106,14 @@ async function loadComments() {
     commentStream.push(...(xResult.value.items || []));
     if (xResult.value.checkedAt) checked.push(xResult.value.checkedAt);
   } else commentWarnings.push('X: ' + xResult.reason.message);
+  if (blogResult.status === 'fulfilled') {
+    if (blogResult.value.connected) {
+      commentStream.push(...(blogResult.value.items || []));
+    } else {
+      commentWarnings.push('Blog: ' + (blogResult.value.message || 'Connect Wix Blog.'));
+    }
+    if (blogResult.value.checkedAt) checked.push(blogResult.value.checkedAt);
+  } else commentWarnings.push('Blog: ' + blogResult.reason.message);
   if (webResult.status === 'fulfilled') {
     const webItems=(webResult.value.items || []).map(x=>({
       platform:'website', id:x.id, parentId:x.parentId || x.id, postId:x.id,
@@ -137,6 +146,18 @@ async function youtubePost(path, body) {
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || 'YouTube could not complete the request.');
+  return data;
+}
+async function wixBlogPost(body) {
+  const response = await fetch('/api/wix/blog-comments', {
+    method:'POST',
+    credentials:'same-origin',
+    headers:{'Content-Type':'application/json','X-DJOMS-CSRF':csrf},
+    body:JSON.stringify(body || {}),
+    signal:AbortSignal.timeout(30000)
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Wix Blog could not complete the request.');
   return data;
 }
 function connectionHealth(info = {}) {
@@ -364,7 +385,7 @@ function renderConnectionStrip() {
           const blogColor = !blogLinked ? 'yellow' : blogOver24 > 0 ? 'red' : blogUnanswered > 0 ? 'yellow' : 'green';
           const blogLabel = !blogLinked ? 'SETUP' : blogColor.toUpperCase();
           const latest = blogItems.slice().sort((a,b) => Date.parse(b.publishedAt||0)-Date.parse(a.publishedAt||0))[0];
-          return `<button type="button" class="mission-blog-card" data-action="openBlogComments">
+          return `<button type="button" class="mission-blog-card" data-action="${blogLinked ? 'openBlogComments' : 'connectBlog'}">
             <span class="mission-blog-copy">
               <small>BLOG</small>
               <strong>FROM DOC'S PORCH</strong>
@@ -670,7 +691,7 @@ function renderComments() {
         <textarea data-comment-reply="${esc(c.id)}" rows="2" maxlength="10000" placeholder="Reply to this comment…"></textarea>
         <div>
           ${c.platform==='website' && c.moderationStatus==='pending' ? `<button class="approve website-approve" data-action="moderateWebsite" data-community-action="approve" data-comment-id="${esc(c.id)}">Approve</button><button class="website-reject" data-action="moderateWebsite" data-community-action="reject" data-comment-id="${esc(c.id)}">Reject</button>` : ''}
-          <button class="approve" data-action="replyComment" data-comment-platform="${esc(c.platform)}" data-comment-id="${esc(c.id)}" data-comment-parent="${esc(c.parentId || c.id)}">Reply</button>
+          <button class="approve" data-action="replyComment" data-comment-platform="${esc(c.platform)}" data-comment-id="${esc(c.id)}" data-comment-parent="${esc(c.parentId || c.id)}" data-comment-reference="${esc(c.referenceId || '')}">Reply</button>
           <a class="button" href="${esc(c.openUrl)}" target="_blank" rel="noopener">Open on ${esc(platformLabel(c.platform))}</a>
           <button data-action="toggleCommentHandled" data-comment-platform="${esc(c.platform)}" data-comment-id="${esc(c.id)}" data-comment-handled="${c.handled ? '1':'0'}">${c.handled ? 'Mark unanswered' : 'Mark handled'}</button>
         </div>
@@ -692,6 +713,7 @@ function renderComments() {
         ${tab('instagram','Instagram',platformCounts.instagram)}
         ${tab('x','X',platformCounts.x)}
         ${tab('youtube','YouTube',platformCounts.youtube)}
+        ${tab('blog',"From Doc's Porch",platformCounts.blog)}
         ${tab('website','⚜ Website Community',platformCounts.website)}
       </div>
       <div class="comment-filter-row">
@@ -1112,6 +1134,17 @@ document.addEventListener('click', event => {
   const action = b.dataset.action; if (!action) return;
   if (action === 'openUnansweredComments') { commentStatusFilter = 'unanswered'; setView('Comments'); return; }
   if (action === 'openBlogComments') { commentPlatformFilter = 'blog'; commentStatusFilter = 'all'; setView('Comments'); return; }
+  if (action === 'connectBlog') {
+    const apiKey = prompt('Paste the Wix API key for Doc Jaks. It needs Read Blog, Read Comments, and Manage Comments permissions.');
+    if (!apiKey) return;
+    return perform(async()=> {
+      notice('Connecting From Doc\'s Porch…');
+      await wixBlogPost({ action:'configure', apiKey });
+      await loadComments();
+      renderConnectionStrip();
+      notice('From Doc\'s Porch is connected.');
+    });
+  }
   if (action === 'closePlatformDetail') { selectedStatusPlatform = null; renderConnectionStrip(); return; }
   if (action === 'openFullPlatforms') { selectedStatusPlatform = null; setView('Platforms'); return; }
   if (action === 'saveGoogleLocation') {
@@ -1135,6 +1168,7 @@ document.addEventListener('click', event => {
     if(!text) { notice('Write a reply first.',true); return; }
     return perform(async()=>{
       if(platform === 'youtube') await youtubePost('comment-reply',{parentId,text});
+      else if(platform === 'blog') await wixBlogPost({ action:'reply', commentId, parentId, referenceId:b.dataset.commentReference || '', message:text });
       else if(platform === 'website') {
         const response=await fetch('/api/community/moderation',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-DJOMS-CSRF':csrf},body:JSON.stringify({action:'reply',itemId:commentId,reply:text})});
         const data=await response.json(); if(!response.ok) throw new Error(data.error || 'Website Community could not save the reply.');
@@ -1153,6 +1187,7 @@ document.addEventListener('click', event => {
     const handled=b.dataset.commentHandled !== '1';
     return perform(async()=>{
       if(platform === 'youtube') await youtubePost('comment-handled',{commentId,handled});
+      else if(platform === 'blog') await wixBlogPost({ action:'handled', commentId, handled });
       else if(platform === 'website') {
         const response=await fetch('/api/community/moderation',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-DJOMS-CSRF':csrf},body:JSON.stringify({action:'handled',itemId:commentId,handled})});
         const data=await response.json(); if(!response.ok) throw new Error(data.error || 'Website Community could not update this post.');
