@@ -1,7 +1,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const names = { facebook: 'Facebook', instagram: 'Instagram', x: 'X', youtube: 'YouTube', website: 'Website Community' };
+const names = { facebook: 'Facebook', instagram: 'Instagram', x: 'X', youtube: 'YouTube', website: 'Website Community', blog: "From Doc's Porch" };
 const statusPlatforms = ['facebook','instagram','x','youtube'];
 const labels = { draft:'Draft', approved:'Approved', scheduled:'Scheduled', queueing:'Confirming schedule', paused:'Paused', publishing:'Publishing', published:'Published', failed:'Needs attention', partial:'Partly published', uncertain:'Check result', processing:'Preparing photo', prepared:'Prepared' };
 let records = [], campaigns = [], mediaInbox = [], videoInbox = [], commentStream = [], commentWarnings = [], commentCheckedAt = null, commentPlatformFilter = 'all', commentStatusFilter = 'all', csrf = '', selected = null, connection = null, analyticsData = { platforms:{}, posts:[], history:[] }, localData = { google:{}, yelp:{}, tripadvisor:{}, facebook:{} }, dirty = false, busy = false, activeView = 'Mission Control', campaignFilter = '', searchTerm = '', owner = '';
@@ -355,6 +355,35 @@ function renderConnectionStrip() {
         <button type="button" data-view="Needs Attention" class="${needsTotal ? 'yellow-action' : 'green-action'}"><span>⚠ Needs Attention</span><b>${esc(needsTotal)}</b><small>All issues</small></button>
       </div>
 
+      <section class="mission-blog-section" aria-label="From Doc's Porch blog status">
+        ${(() => {
+          const blogItems = commentStream.filter(c => c.platform === 'blog');
+          const blogUnanswered = blogItems.filter(c => !c.handled).length;
+          const blogOver24 = blogItems.filter(ageOver24).length;
+          const blogLinked = blogItems.length > 0 || commentWarnings.every(w => !/^Blog:/i.test(w));
+          const blogColor = !blogLinked ? 'yellow' : blogOver24 > 0 ? 'red' : blogUnanswered > 0 ? 'yellow' : 'green';
+          const blogLabel = !blogLinked ? 'SETUP' : blogColor.toUpperCase();
+          const latest = blogItems.slice().sort((a,b) => Date.parse(b.publishedAt||0)-Date.parse(a.publishedAt||0))[0];
+          return `<button type="button" class="mission-blog-card" data-action="openBlogComments">
+            <span class="mission-blog-copy">
+              <small>BLOG</small>
+              <strong>FROM DOC'S PORCH</strong>
+              <span>Behind-the-scenes updates from Doc Jaks &amp; Emberhold</span>
+            </span>
+            <span class="mission-blog-status">
+              <i class="mission-glance-light ${blogColor}" aria-hidden="true"></i>
+              <b>${blogLabel}</b>
+            </span>
+            <span class="mission-blog-metrics">
+              <span><small>Unanswered</small><b>${blogLinked ? blogUnanswered : '—'}</b></span>
+              <span><small>Over 24h</small><b>${blogLinked ? blogOver24 : '—'}</b></span>
+              <span><small>Latest activity</small><b>${latest ? esc(updatedText(latest.publishedAt)) : blogLinked ? 'None waiting' : 'Connect blog'}</b></span>
+            </span>
+            <span class="mission-attention-arrow">›</span>
+          </button>`;
+        })()}
+      </section>
+
       <section class="reviews-local-section" aria-label="Reviews and local">
         <div class="reviews-local-head">
           <div><strong>REVIEWS &amp; LOCAL</strong><small>Reputation and local presence</small></div>
@@ -621,7 +650,7 @@ function renderComments() {
   const unanswered = commentStream.filter(c=>!c.handled).length;
   const over24 = commentStream.filter(ageOver24).length;
   const handled = commentStream.filter(c=>c.handled).length;
-  const platformCounts = Object.fromEntries(['facebook','instagram','x','youtube','website'].map(p=>[p,commentStream.filter(c=>c.platform===p).length]));
+  const platformCounts = Object.fromEntries(['facebook','instagram','x','youtube','blog','website'].map(p=>[p,commentStream.filter(c=>c.platform===p).length]));
   let visible = commentStream.filter(c=>commentPlatformFilter==='all' || c.platform===commentPlatformFilter);
   if(commentStatusFilter==='unanswered') visible=visible.filter(c=>!c.handled);
   else if(commentStatusFilter==='handled') visible=visible.filter(c=>c.handled);
@@ -1082,6 +1111,7 @@ document.addEventListener('click', event => {
   if (b.dataset.commentStatusFilter) { commentStatusFilter=b.dataset.commentStatusFilter; renderComments(); return; }
   const action = b.dataset.action; if (!action) return;
   if (action === 'openUnansweredComments') { commentStatusFilter = 'unanswered'; setView('Comments'); return; }
+  if (action === 'openBlogComments') { commentPlatformFilter = 'blog'; commentStatusFilter = 'all'; setView('Comments'); return; }
   if (action === 'closePlatformDetail') { selectedStatusPlatform = null; renderConnectionStrip(); return; }
   if (action === 'openFullPlatforms') { selectedStatusPlatform = null; setView('Platforms'); return; }
   if (action === 'saveGoogleLocation') {
