@@ -4,7 +4,7 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;',
 const names = { facebook: 'Facebook', instagram: 'Instagram', x: 'X', youtube: 'YouTube', website: 'Website Community' };
 const statusPlatforms = ['facebook','instagram','x','youtube'];
 const labels = { draft:'Draft', approved:'Approved', scheduled:'Scheduled', queueing:'Confirming schedule', paused:'Paused', publishing:'Publishing', published:'Published', failed:'Needs attention', partial:'Partly published', uncertain:'Check result', processing:'Preparing photo', prepared:'Prepared' };
-let records = [], campaigns = [], mediaInbox = [], videoInbox = [], commentStream = [], commentWarnings = [], commentCheckedAt = null, commentPlatformFilter = 'all', commentStatusFilter = 'all', csrf = '', selected = null, connection = null, analyticsData = { platforms:{}, posts:[], history:[] }, localData = { google:{}, yelp:{}, tripadvisor:{}, facebook:{} }, dirty = false, busy = false, activeView = 'Campaigns', campaignFilter = '', searchTerm = '', owner = '';
+let records = [], campaigns = [], mediaInbox = [], videoInbox = [], commentStream = [], commentWarnings = [], commentCheckedAt = null, commentPlatformFilter = 'all', commentStatusFilter = 'all', csrf = '', selected = null, connection = null, analyticsData = { platforms:{}, posts:[], history:[] }, localData = { google:{}, yelp:{}, tripadvisor:{}, facebook:{} }, dirty = false, busy = false, activeView = 'Mission Control', campaignFilter = '', searchTerm = '', owner = '';
 let pollTimer;
 let platformMetricRange = '7d';
 let selectedStatusPlatform = null;
@@ -278,7 +278,55 @@ function platformExtraMetrics(platform, metrics) {
 }
 function renderConnectionStrip() {
   const strip = $('connectionStrip');
-  if (activeView !== 'Mission Control') {
+
+  if (activeView === 'Mission Control') {
+    strip.hidden = false;
+    const ageOver24 = c => !c.handled && Date.now() - Date.parse(c.publishedAt || 0) >= 24*60*60*1000;
+    const platformState = p => {
+      const health = connectionHealth(connection?.[p] || {});
+      const unanswered = commentCheckedAt ? commentStream.filter(c => c.platform === p && !c.handled).length : 0;
+      const overdue = commentCheckedAt ? commentStream.filter(c => c.platform === p && ageOver24(c)).length : 0;
+      if (health.color === 'red' || overdue > 0) return { color:'red', label:'RED' };
+      if (health.color === 'yellow' || unanswered > 0) return { color:'yellow', label:'YELLOW' };
+      return { color:'green', label:'GREEN' };
+    };
+    const purposes = { facebook:'BUILD COMMUNITY', instagram:'GET DISCOVERED', x:'BE HEARD', youtube:'TELL THE STORY' };
+    const icons = { facebook:'f', instagram:'◎', x:'𝕏', youtube:'▶' };
+    const unanswered = commentCheckedAt ? commentStream.filter(c => !c.handled).length : 0;
+    const overdue = commentCheckedAt ? commentStream.filter(ageOver24).length : 0;
+    const postingIssues = records.filter(r => ['failed','partial','uncertain'].includes(r.status)).length;
+    const platformIssues = statusPlatforms.filter(p => connectionHealth(connection?.[p] || {}).color !== 'green').length;
+    const attentionTotal = unanswered + postingIssues + platformIssues;
+
+    strip.innerHTML = `
+      <div class="mission-glance-head">
+        <div>
+          <strong>PLATFORM STATUS</strong>
+          <small>Green: keep going. Yellow or Red: inspect it.</small>
+        </div>
+        <button type="button" data-view="Platform Details">Open full details ›</button>
+      </div>
+      <div class="mission-glance-grid">
+        ${statusPlatforms.map(p => {
+          const state = platformState(p);
+          return `<button class="mission-glance-card platform-${esc(p)}" data-platform-detail="${esc(p)}" aria-label="${esc(names[p])} ${state.label}. Open platform details.">
+            <span class="mission-glance-brand"><span class="platform-brand-icon" aria-hidden="true">${icons[p]}</span><b>${esc(names[p])}</b></span>
+            <i class="mission-glance-light ${state.color}" aria-hidden="true"></i>
+            <strong class="mission-glance-state">${state.label}</strong>
+            <small>${esc(purposes[p])}</small>
+          </button>`;
+        }).join('')}
+      </div>
+      <button type="button" class="mission-attention ${overdue || postingIssues || platformIssues ? 'has-red' : unanswered ? 'has-yellow' : 'all-green'}" data-view="Needs Attention">
+        <span><b>NEEDS ATTENTION</b><small>${overdue ? overdue + ' overdue · ' : ''}${unanswered} unanswered · ${postingIssues} posting issues</small></span>
+        <strong>${attentionTotal}</strong>
+        <span class="mission-attention-arrow">›</span>
+      </button>
+    `;
+    return;
+  }
+
+  if (activeView !== 'Platform Details') {
     strip.hidden = true;
     return;
   }
@@ -775,16 +823,16 @@ function renderBatchSchedule() {
 }
 function render() {
   $('workspace').hidden = false; $('editor').hidden = true; selected = null; dirty = false;
-  if (activeView === 'Mission Control') renderConnectionStrip();
+  if (['Mission Control','Platform Details'].includes(activeView)) renderConnectionStrip();
   else $('connectionStrip').hidden = true;
-  $('viewTitle').textContent = activeView === 'Mission Control' ? 'Campaigns' : activeView;
+  $('viewTitle').textContent = activeView === 'Mission Control' ? 'Social Command' : activeView;
   document.querySelectorAll('nav [data-view]').forEach(b => b.classList.toggle('active',b.dataset.view === activeView));
-  $('campaignCards').hidden = !['Campaigns','Mission Control'].includes(activeView);
+  $('campaignCards').hidden = activeView !== 'Campaigns';
   $('campaignCards').innerHTML = campaigns.map(c => {
     const list = records.filter(r => r.campaign === c.id), needs = list.filter(attention).length;
     return `<button class="card ${campaignFilter === c.id ? 'selected-card':''}" data-campaign="${esc(c.id)}"><i class="light ${needs ? 'red' : list.some(r => r.status === 'published') ? 'green' : 'neutral'}"></i><span class="id">${esc(c.id)}</span><h3>${esc(c.title)}</h3><small>${list.length} posts${needs ? ' · ' + needs + ' need attention' : ''}</small></button>`;
   }).join('');
-  if (activeView === 'Mission Control') {
+  if (activeView === 'Mission Control' || activeView === 'Platform Details') {
     $('content').innerHTML = '';
     return;
   }
@@ -962,7 +1010,7 @@ async function perform(work) {
 document.addEventListener('click', event => {
   const b = event.target.closest('button,a'); if (!b || b.disabled || busy) return;
   if (b.dataset.metricRange) { platformMetricRange = b.dataset.metricRange; return perform(async()=>{ await loadAnalytics(true); renderConnectionStrip(); }); }
-  if (b.dataset.platformDetail) { selectedStatusPlatform = selectedStatusPlatform === b.dataset.platformDetail ? null : b.dataset.platformDetail; renderConnectionStrip(); return; }
+  if (b.dataset.platformDetail) { if (activeView === 'Mission Control') { selectedStatusPlatform = b.dataset.platformDetail; activeView = 'Platform Details'; render(); return; } selectedStatusPlatform = selectedStatusPlatform === b.dataset.platformDetail ? null : b.dataset.platformDetail; renderConnectionStrip(); return; }
   if (b.dataset.view) return setView(b.dataset.view);
   if (b.dataset.open) return openRecord(records.find(r => r.id === b.dataset.open));
   if (b.dataset.campaign) { campaignFilter = campaignFilter === b.dataset.campaign ? '' : b.dataset.campaign; return render(); }
