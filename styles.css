@@ -2279,3 +2279,104 @@ textarea { line-height:1.65 !important; }
   }
   .mission-campaigns-grid { grid-template-columns:1fr; }
 }
+
+
+/* FROM DOC'S PORCH BLOG STATUS */
+.mission-blog-section {
+  margin-top:18px;
+}
+.mission-blog-card {
+  width:100%;
+  display:grid;
+  grid-template-columns:minmax(250px,1.35fr) 150px minmax(300px,1fr) 28px;
+  align-items:center;
+  gap:18px;
+  padding:16px 18px;
+  border:1px solid #d7c8a9;
+  border-left:7px solid #9c742e;
+  border-radius:10px;
+  background:#fffaf0;
+  text-align:left;
+}
+.mission-blog-copy small,
+.mission-blog-copy strong,
+.mission-blog-copy span {
+  display:block;
+}
+.mission-blog-copy small {
+  font-size:11px !important;
+  font-weight:900 !important;
+  letter-spacing:1px;
+  color:#8c744b;
+}
+.mission-blog-copy strong {
+  margin-top:2px;
+  font:800 21px Georgia,serif;
+  color:#2d251a;
+}
+.mission-blog-copy span {
+  margin-top:4px;
+  font-size:14px;
+  font-weight:700;
+  color:#746754;
+}
+.mission-blog-status {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+.mission-blog-status .mission-glance-light {
+  width:42px;
+  height:42px;
+  border-width:5px;
+}
+.mission-blog-status b {
+  font-size:15px;
+  letter-spacing:.7px;
+}
+.mission-blog-metrics {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.mission-blog-metrics>span {
+  display:block;
+  padding:8px 9px;
+  border:1px solid #e2d7c2;
+  border-radius:7px;
+  background:#fffef9;
+}
+.mission-blog-metrics small {
+  display:block;
+  font-size:11px !important;
+  font-weight:800 !important;
+  color:#766a59;
+}
+.mission-blog-metrics b {
+  display:block;
+  margin-top:3px;
+  font-size:16px;
+  color:#2d251a;
+}
+@media(max-width:900px) {
+  .mission-blog-card {
+    grid-template-columns:1fr auto;
+  }
+  .mission-blog-metrics {
+    grid-column:1 / -1;
+  }
+}
+@media(max-width:560px) {
+  .mission-blog-card {
+    grid-template-columns:1fr;
+  }
+  .mission-blog-status {
+    justify-content:flex-start;
+  }
+  .mission-blog-metrics {
+    grid-column:auto;
+    grid-template-columns:1fr;
+  }
+  .mission-blog-card>.mission-attention-arrow { display:none; }
+}
