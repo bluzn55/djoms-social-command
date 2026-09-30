@@ -87,7 +87,7 @@ async function loadComments() {
     platformApi('youtube','comments','YouTube'),
     api('comments?platforms=facebook,instagram'),
     platformApi('x','mentions','X'),
-    platformApi('wix','blog-comments','From Doc\'s Porch'),
+    platformApi('meta','wix-blog-comments','From Doc\'s Porch'),
     platformApi('community','moderation','Website Community')
   ]);
   commentStream = [];
