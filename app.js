@@ -1135,11 +1135,13 @@ document.addEventListener('click', event => {
   if (action === 'openUnansweredComments') { commentStatusFilter = 'unanswered'; setView('Comments'); return; }
   if (action === 'openBlogComments') { commentPlatformFilter = 'blog'; commentStatusFilter = 'all'; setView('Comments'); return; }
   if (action === 'connectBlog') {
-    const apiKey = prompt('Paste the Wix API key for Doc Jaks. It needs Read Blog, Read Comments, and Manage Comments permissions.');
-    if (!apiKey) return;
+    const clientId = prompt('Paste the Wix Headless Client ID for DJOMS Blog Bridge.');
+    if (!clientId) return;
+    const clientSecret = prompt('Paste the Wix Headless Client Secret. This stays in the encrypted backend connection and is not shown on the dashboard.');
+    if (!clientSecret) return;
     return perform(async()=> {
       notice('Connecting From Doc\'s Porch…');
-      await wixBlogPost({ action:'configure', apiKey });
+      await wixBlogPost({ action:'configure', clientId, clientSecret });
       await loadComments();
       renderConnectionStrip();
       notice('From Doc\'s Porch is connected.');
