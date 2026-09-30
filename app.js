@@ -309,11 +309,21 @@ function renderConnectionStrip() {
       <div class="mission-glance-grid">
         ${statusPlatforms.map(p => {
           const state = platformState(p);
+          const metrics = platformMetricData(connection?.[p] || {},p);
+          const quick = [
+            ['Engagement',engagementRate(metrics)],
+            ['Website clicks',metrics.clicks],
+            ['Shares',metrics.shares],
+            ['Reach / views',metrics.reach]
+          ];
           return `<button class="mission-glance-card platform-${esc(p)}" data-platform-detail="${esc(p)}" aria-label="${esc(names[p])} ${state.label}. Open platform details.">
             <span class="mission-glance-brand"><span class="platform-brand-icon" aria-hidden="true">${icons[p]}</span><b>${esc(names[p])}</b></span>
             <i class="mission-glance-light ${state.color}" aria-hidden="true"></i>
             <strong class="mission-glance-state">${state.label}</strong>
             <small>${esc(purposes[p])}</small>
+            <span class="mission-glance-metrics" aria-label="Quick metrics">
+              ${quick.map(([label,value]) => `<span><small>${esc(label)}</small><b>${esc(compactMetric(value))}</b></span>`).join('')}
+            </span>
           </button>`;
         }).join('')}
       </div>
