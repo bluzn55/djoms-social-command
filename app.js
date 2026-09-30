@@ -292,13 +292,32 @@ function renderConnectionStrip() {
     };
     const purposes = { facebook:'BUILD COMMUNITY', instagram:'GET DISCOVERED', x:'BE HEARD', youtube:'TELL THE STORY' };
     const icons = { facebook:'f', instagram:'◎', x:'𝕏', youtube:'▶' };
+
     const unanswered = commentCheckedAt ? commentStream.filter(c => !c.handled).length : 0;
     const overdue = commentCheckedAt ? commentStream.filter(ageOver24).length : 0;
-    const postingIssues = records.filter(r => ['failed','partial','uncertain'].includes(r.status)).length;
+    const scheduled = records.filter(r => r.status === 'scheduled').length;
+    const failed = records.filter(r => ['failed','partial','uncertain'].includes(r.status)).length;
     const platformIssues = statusPlatforms.filter(p => connectionHealth(connection?.[p] || {}).color !== 'green').length;
-    const attentionTotal = unanswered + postingIssues + platformIssues;
+    const needsTotal = records.filter(attention).length + platformIssues + unanswered;
+
+    const attentionColor = overdue || failed || platformIssues ? 'red' : unanswered || needsTotal ? 'yellow' : 'green';
+    const campaignState = campaign => {
+      const list = records.filter(r => r.campaign === campaign.id);
+      if (list.some(r => ['failed','partial','uncertain'].includes(r.status))) return 'red';
+      if (list.some(r => attention(r) || r.status === 'draft' || r.status === 'paused')) return 'yellow';
+      return 'green';
+    };
 
     strip.innerHTML = `
+      <button type="button" class="mission-top-attention ${attentionColor}" data-view="Needs Attention">
+        <span>
+          <b>NEEDS ATTENTION</b>
+          <small>${overdue ? overdue + ' overdue · ' : ''}${unanswered} unanswered · ${failed} failed · ${platformIssues} platform issues</small>
+        </span>
+        <strong>${needsTotal}</strong>
+        <span class="mission-attention-arrow">›</span>
+      </button>
+
       <div class="mission-glance-head">
         <div>
           <strong>PLATFORM STATUS</strong>
@@ -306,6 +325,7 @@ function renderConnectionStrip() {
         </div>
         <button type="button" data-view="Platform Details">Open full details ›</button>
       </div>
+
       <div class="mission-glance-grid">
         ${statusPlatforms.map(p => {
           const state = platformState(p);
@@ -327,11 +347,39 @@ function renderConnectionStrip() {
           </button>`;
         }).join('')}
       </div>
-      <button type="button" class="mission-attention ${overdue || postingIssues || platformIssues ? 'has-red' : unanswered ? 'has-yellow' : 'all-green'}" data-view="Needs Attention">
-        <span><b>NEEDS ATTENTION</b><small>${overdue ? overdue + ' overdue · ' : ''}${unanswered} unanswered · ${postingIssues} posting issues</small></span>
-        <strong>${attentionTotal}</strong>
-        <span class="mission-attention-arrow">›</span>
-      </button>
+
+      <div class="social-action-strip mission-action-strip">
+        <button type="button" data-action="openUnansweredComments" class="${unanswered > 0 ? 'yellow-action' : 'green-action'}"><span>💬 Unanswered</span><b>${esc(unanswered)}</b><small>Comments / replies</small></button>
+        <button type="button" data-view="Calendar" class="green-action"><span>📅 Scheduled</span><b>${esc(scheduled)}</b><small>Posts</small></button>
+        <button type="button" data-view="Needs Attention" class="${failed ? 'red-action' : 'green-action'}"><span>🔴 Failed</span><b>${esc(failed)}</b><small>Posting issues</small></button>
+        <button type="button" data-view="Needs Attention" class="${needsTotal ? 'yellow-action' : 'green-action'}"><span>⚠ Needs Attention</span><b>${esc(needsTotal)}</b><small>All issues</small></button>
+      </div>
+
+      <section class="reviews-local-section" aria-label="Reviews and local">
+        <div class="reviews-local-head">
+          <div><strong>REVIEWS &amp; LOCAL</strong><small>Reputation and local presence</small></div>
+          <button type="button" data-view="Platform Details">Open details ›</button>
+        </div>
+        <div class="reviews-local-grid">
+          ${localCard('google','Google Business Profile')}
+          ${localCard('tripadvisor','Tripadvisor')}
+          ${localCard('yelp','Yelp')}
+          ${localCard('facebook','Facebook Reviews')}
+        </div>
+      </section>
+
+      <section class="mission-campaigns-section" aria-label="Campaign status">
+        <div class="mission-campaigns-head">
+          <div><strong>CAMPAIGNS</strong><small>GYR status only. Open Campaigns for the working details.</small></div>
+          <button type="button" data-view="Campaigns">Open campaigns ›</button>
+        </div>
+        <div class="mission-campaigns-grid">
+          ${campaigns.map(c => `<button type="button" class="mission-campaign-card" data-view="Campaigns" aria-label="${esc(c.title)} campaign status ${campaignState(c)}">
+            <i class="gyr-light ${campaignState(c)}" aria-hidden="true"></i>
+            <b>${esc(c.title)}</b>
+          </button>`).join('')}
+        </div>
+      </section>
     `;
     return;
   }
