@@ -2011,3 +2011,133 @@ textarea { line-height:1.65 !important; }
   margin:6px 0 0;
   font-size:15px !important;
 }
+
+
+/* =========================================================
+   SOCIAL COMMAND FRONT PAGE — KISS / GYR ONLY
+   Full metrics remain under Platform Details.
+   ========================================================= */
+.mission-glance-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  margin-bottom:18px;
+}
+.mission-glance-head strong {
+  display:block;
+  font:800 26px Georgia,serif;
+  color:#2d251a;
+  letter-spacing:.4px;
+}
+.mission-glance-head small {
+  display:block;
+  margin-top:4px;
+  color:#746754;
+  font-size:15px !important;
+  font-weight:700 !important;
+}
+.mission-glance-head button {
+  white-space:nowrap;
+  font-weight:800 !important;
+}
+.mission-glance-grid {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:16px;
+}
+.mission-glance-card {
+  min-height:255px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:20px 14px;
+  border:1px solid #d7c8a9;
+  border-radius:12px;
+  background:#fffaf0;
+  color:#2d251a;
+  text-align:center;
+  cursor:pointer;
+}
+.mission-glance-card:hover {
+  transform:translateY(-2px);
+  box-shadow:0 8px 22px #00000012;
+}
+.mission-glance-brand {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  font-size:21px;
+}
+.mission-glance-light {
+  display:block;
+  width:86px;
+  height:86px;
+  border-radius:50%;
+  border:8px solid #2b241b;
+  box-shadow:inset 0 0 0 4px #ffffff66,0 5px 15px #00000025;
+}
+.mission-glance-light.green { background:#42a456; }
+.mission-glance-light.yellow { background:#e0af27; }
+.mission-glance-light.red { background:#c34635; }
+.mission-glance-state {
+  font-size:22px;
+  letter-spacing:1px;
+}
+.mission-glance-card>small {
+  min-height:18px;
+  color:#746754;
+  font-size:13px !important;
+  font-weight:900 !important;
+  letter-spacing:.7px;
+}
+.mission-attention {
+  width:100%;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto 28px;
+  align-items:center;
+  gap:16px;
+  margin-top:18px;
+  padding:15px 18px;
+  border:1px solid #cfc0a2;
+  border-radius:10px;
+  text-align:left;
+  background:#fffaf0;
+}
+.mission-attention>span:first-child b,
+.mission-attention>span:first-child small {
+  display:block;
+}
+.mission-attention>span:first-child b {
+  font-size:17px;
+}
+.mission-attention>span:first-child small {
+  margin-top:3px;
+  font-size:14px !important;
+  color:#70634f;
+}
+.mission-attention>strong {
+  font-size:30px;
+}
+.mission-attention-arrow {
+  font-size:30px;
+}
+.mission-attention.all-green { border-left:8px solid #42a456; }
+.mission-attention.has-yellow { border-left:8px solid #e0af27; }
+.mission-attention.has-red { border-left:8px solid #c34635; }
+
+@media(max-width:980px) {
+  .mission-glance-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(max-width:560px) {
+  .mission-glance-head {
+    align-items:stretch;
+    flex-direction:column;
+  }
+  .mission-glance-grid { grid-template-columns:1fr; }
+  .mission-glance-card { min-height:210px; }
+  .mission-glance-light { width:76px; height:76px; }
+}
