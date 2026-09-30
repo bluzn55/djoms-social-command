@@ -15,6 +15,10 @@
     {
       "source": "/api/community/:path*",
       "destination": "https://djoms-meta-bridge.vercel.app/api/community/:path*"
+    },
+    {
+      "source": "/api/wix/:path*",
+      "destination": "https://djoms-meta-bridge.vercel.app/api/wix/:path*"
     }
   ],
   "headers": [
