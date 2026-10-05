@@ -2380,3 +2380,104 @@ textarea { line-height:1.65 !important; }
   }
   .mission-blog-card>.mission-attention-arrow { display:none; }
 }
+
+
+/* Mission Control · Wix website glance */
+.mission-website-section{
+  margin:12px 0 18px;
+  padding:0;
+}
+.mission-website-card{
+  display:grid;
+  grid-template-columns:minmax(220px,1.25fr) auto minmax(460px,2.5fr) minmax(150px,.8fr);
+  gap:14px;
+  align-items:center;
+  background:#fffaf0;
+  border:1px solid #d7c8a9;
+  border-left:5px solid #9c742e;
+  border-radius:9px;
+  padding:14px 16px;
+}
+.mission-website-copy small,
+.mission-website-top small{
+  display:block;
+  font-size:9px;
+  letter-spacing:1.2px;
+  color:#927331;
+  font-weight:bold;
+}
+.mission-website-copy strong{
+  display:block;
+  margin:3px 0 4px;
+  font:700 18px Georgia,serif;
+  color:#2d251a;
+}
+.mission-website-copy span{
+  display:block;
+  font-size:11px;
+  color:#766a59;
+}
+.mission-website-status{
+  min-width:86px;
+  text-align:center;
+}
+.mission-website-status .mission-glance-light{
+  position:static;
+  display:block;
+  margin:0 auto 4px;
+}
+.mission-website-status b{
+  display:block;
+  font-size:11px;
+}
+.mission-website-status small{
+  display:block;
+  margin-top:4px;
+  font-size:8px;
+  color:#8d806c;
+  white-space:nowrap;
+}
+.mission-website-metrics{
+  display:grid;
+  grid-template-columns:repeat(6,minmax(72px,1fr));
+  gap:7px;
+}
+.mission-website-metrics>span{
+  min-height:55px;
+  padding:8px;
+  border:1px solid #e1d5bd;
+  border-radius:6px;
+  background:#fffdf7;
+}
+.mission-website-metrics small{
+  display:block;
+  font-size:8px;
+  color:#8d806c;
+  margin-bottom:4px;
+}
+.mission-website-metrics b{
+  font-size:14px;
+  color:#2d251a;
+}
+.mission-website-top{
+  min-width:0;
+  padding-left:12px;
+  border-left:1px solid #dfd0b4;
+}
+.mission-website-top b{
+  display:block;
+  margin:4px 0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:12px;
+}
+.mission-website-top span{
+  font-size:9px;
+  color:#766a59;
+}
+@media (max-width:1100px){
+  .mission-website-card{grid-template-columns:1fr auto;}
+  .mission-website-metrics{grid-column:1/-1;grid-template-columns:repeat(3,1fr);}
+  .mission-website-top{grid-column:1/-1;border-left:0;border-top:1px solid #dfd0b4;padding:10px 0 0;}
+}
