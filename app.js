@@ -339,6 +339,43 @@ function renderConnectionStrip() {
         <span class="mission-attention-arrow">›</span>
       </button>
 
+      <section class="mission-website-section" aria-label="Doc Jaks website status">
+        ${(() => {
+          const site=localData?.website || {};
+          const connected=!!site.connected;
+          const websiteColor=connected ? (site.partial ? 'yellow' : 'green') : 'red';
+          const websiteLabel=connected ? (site.partial ? 'YELLOW' : 'GREEN') : 'RED';
+          const leads=Number(site.contactClicks||0)+Number(site.formsSubmitted||0);
+          const sales=Number(site.sales);
+          const salesText=Number.isFinite(sales) ? new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2}).format(sales) : '—';
+          return `<div class="mission-website-card">
+            <span class="mission-website-copy">
+              <small>WEBSITE · WIX</small>
+              <strong>DOCJAKS.COM</strong>
+              <span>${esc(site.message || 'Website analytics not connected')}</span>
+            </span>
+            <span class="mission-website-status">
+              <i class="mission-glance-light ${websiteColor}" aria-hidden="true"></i>
+              <b>${websiteLabel}</b>
+              <small>Updated ${esc(updatedText(site.checkedAt || localData?.checkedAt))}</small>
+            </span>
+            <span class="mission-website-metrics">
+              <span><small>Sessions</small><b>${esc(compactMetric(site.sessions))}</b></span>
+              <span><small>Visitors</small><b>${esc(compactMetric(site.visitors))}</b></span>
+              <span><small>Page views</small><b>${esc(compactMetric(site.pageViews))}</b></span>
+              <span><small>Orders</small><b>${esc(compactMetric(site.orders))}</b></span>
+              <span><small>Sales</small><b>${esc(salesText)}</b></span>
+              <span><small>Leads</small><b>${esc(compactMetric(leads))}</b></span>
+            </span>
+            <span class="mission-website-top">
+              <small>TOP PAGE</small>
+              <b>${site.topPage ? esc(site.topPage) : '—'}</b>
+              <span>${site.topPageViews == null ? '' : esc(compactMetric(site.topPageViews)) + ' views'}</span>
+            </span>
+          </div>`;
+        })()}
+      </section>
+
       <div class="mission-glance-head">
         <div>
           <strong>PLATFORM STATUS</strong>
