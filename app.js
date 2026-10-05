@@ -367,6 +367,7 @@ function renderConnectionStrip() {
               <span><small>Sales</small><b>${esc(salesText)}</b></span>
               <span><small>Leads</small><b>${esc(compactMetric(leads))}</b></span>
             </span>
+            <button type="button" class="mission-website-open" data-view="Website Analytics">Open full website analytics ›</button>
             <span class="mission-website-top">
               <small>TOP PAGE</small>
               <b>${site.topPage ? esc(site.topPage) : '—'}</b>
@@ -967,6 +968,64 @@ function renderBatchSchedule() {
     </table></div>
     ${scheduledRows}`;
 }
+
+function wName(path){if(!path||path==='/')return'Home';return String(path).replace(/^\//,'').replace(/[-_]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());}
+function wTime(v){const n=Number(v);if(!Number.isFinite(n))return'—';return n<60?Math.round(n)+'s':Math.floor(n/60)+'m '+Math.round(n%60)+'s';}
+function wPct(v){const n=Number(v);if(!Number.isFinite(n))return'—';const p=n<=1?n*100:n;return p.toFixed(p<10?1:0)+'%';}
+function wBar(rows,key,label){
+  const vals=(rows||[]).map(r=>Number(r[key])).filter(Number.isFinite),max=Math.max(...vals,1);
+  return '<div class="wa-chart"><b>'+esc(label)+'</b><div class="wa-bars">'+(rows||[]).map(r=>{const v=Number(r[key]);return '<span><i style="height:'+Math.max(3,Number.isFinite(v)?v/max*100:0)+'%"></i><small>'+esc(r.label||'')+'</small><strong>'+esc(compactMetric(v))+'</strong></span>';}).join('')+'</div></div>';
+}
+function wInsights(s){
+  const out=[],p=s.topPages||[],w=s.weekly||[],src=s.trafficSources||[];
+  if(w.length>1){const a=Number(w.at(-2).sessions),b=Number(w.at(-1).sessions);if(a>0){const x=(b-a)/a*100;out.push((x>=0?'Traffic up ':'Traffic down ')+Math.abs(x).toFixed(0)+'% vs prior week.');}}
+  if(p[0])out.push('Top page is '+wName(p[0].path)+' with '+compactMetric(p[0].views)+' views.');
+  const best=p.filter(x=>Number(x.views)>=2&&Number.isFinite(Number(x.bounceRate))).sort((a,b)=>a.bounceRate-b.bounceRate)[0];
+  if(best)out.push(wName(best.path)+' kept '+wPct(1-Number(best.bounceRate))+' moving to another page.');
+  const leak=p.filter(x=>Number(x.views)>=3&&Number.isFinite(Number(x.bounceRate))).sort((a,b)=>b.bounceRate-a.bounceRate)[0];
+  if(leak&&Number(leak.bounceRate)>=.7)out.push(wName(leak.path)+' may be a leak: '+wPct(leak.bounceRate)+' bounce.');
+  if(src[0])out.push('Top traffic source is '+String(src[0].category||src[0].source||'Unknown').replace(/_/g,' ')+' with '+compactMetric(src[0].sessions)+' sessions.');
+  if(Number(s.sessions)>0&&Number(s.orders||0)===0)out.push('Traffic is arriving but has not produced a Wix order yet.');
+  return out.slice(0,6);
+}
+function renderWebsiteAnalytics(){
+  const s=localData?.website||{},w=s.weekly||[],p=s.topPages||[],src=s.trafficSources||[],dev=s.devices||[],vt=s.visitorTypes||[],geo=s.geography||[],land=s.landingPages||[],exit=s.exitPages||[];
+  const leads=Number(s.contactClicks||0)+Number(s.formsSubmitted||0),sales=Number(s.sales),salesText=Number.isFinite(sales)?new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(sales):'—';
+  const nv=vt.find(x=>x.type==='first_time_visitor')?.visitors,rv=vt.find(x=>x.type==='returning_visitor')?.visitors;
+  const status=s.connected?(s.partial?'YELLOW':'GREEN'):'RED',color=s.connected?(s.partial?'yellow':'green'):'red';
+  $('content').innerHTML=`
+  <section class="wa">
+    <div class="wa-head"><div><small>WEBSITE · WIX</small><h2>DOCJAKS.COM ANALYTICS</h2><p>Main website research page. Find what works, what loses people, and what deserves more attention.</p></div><div><i class="mission-glance-light ${color}"></i><b>${status}</b><span>${esc(s.message||'Not connected')}</span></div></div>
+    <div class="wa-kpis">
+      ${[['Sessions',s.sessions],['Visitors',s.visitors],['Page views',s.pageViews],['Avg stay',wTime(s.avgTimeSeconds)],['Pages / visit',s.pagesPerSession==null?'—':Number(s.pagesPerSession).toFixed(2)],['Bounce',wPct(s.bounceRate)],['Leads',leads],['Orders',s.orders],['Sales',salesText]].map(x=>`<span><small>${x[0]}</small><b>${esc(compactMetric(x[1]))}</b></span>`).join('')}
+    </div>
+    <section class="wa-box"><h3>GOLD NUGGETS</h3><div class="wa-nuggets">${wInsights(s).map(x=>`<span>${esc(x)}</span>`).join('')||'<span>Not enough traffic yet for patterns.</span>'}</div></section>
+    <section class="wa-box"><h3>WEEK BY WEEK</h3><div class="wa-charts">${wBar(w,'sessions','Sessions')}${wBar(w,'visitors','People')}${wBar(w,'views','Page views')}</div>
+      <div class="wa-week"><div class="head"><span>Week</span><span>Sessions</span><span>People</span><span>Views</span><span>Avg stay</span><span>Pages/visit</span><span>Continued</span></div>${w.map(r=>`<div><span>${esc(r.label||'')}</span><span>${esc(compactMetric(r.sessions))}</span><span>${esc(compactMetric(r.visitors))}</span><span>${esc(compactMetric(r.views))}</span><span>${esc(wTime(r.avgTimeSeconds))}</span><span>${r.pagesPerSession==null?'—':Number(r.pagesPerSession).toFixed(2)}</span><span>${Number.isFinite(Number(r.bounceRate))?esc(wPct(1-Number(r.bounceRate))):'—'}</span></div>`).join('')}</div>
+    </section>
+    <section class="wa-box"><h3>TOP PAGES · LAST 7 DAYS</h3>
+      <div class="wa-pages"><div class="head"><span>Page</span><span>Views</span><span>People</span><span>Sessions</span><span>Avg time</span><span>Continued</span></div>${p.map((r,i)=>`<div><span><b>${i+1}. ${esc(wName(r.path))}</b><small>${esc(r.path)}</small></span><span>${esc(compactMetric(r.views))}</span><span>${esc(compactMetric(r.visitors))}</span><span>${esc(compactMetric(r.sessions))}</span><span>${esc(wTime(r.avgTimeSeconds))}</span><span>${Number.isFinite(Number(r.bounceRate))?esc(wPct(1-Number(r.bounceRate))):'—'}</span></div>`).join('')}</div>
+    </section>
+    <div class="wa-two">
+      <section class="wa-box"><h3>TRAFFIC SOURCES</h3>${src.map((r,i)=>`<p><b>${i+1}. ${esc(String(r.category||r.source||'Unknown').replace(/_/g,' '))}</b><span>${esc(compactMetric(r.sessions))} sessions${r.source&&r.source!==r.category?' · '+esc(r.source):''}</span></p>`).join('')}</section>
+      <section class="wa-box"><h3>DEVICES</h3>${dev.map((r,i)=>`<p><b>${i+1}. ${esc(r.device)}</b><span>${esc(compactMetric(r.sessions))} sessions</span></p>`).join('')}</section>
+    </div>
+    <div class="wa-two">
+      <section class="wa-box"><h3>AUDIENCE</h3><div class="wa-mini"><span><small>New</small><b>${esc(compactMetric(nv))}</b></span><span><small>Returning</small><b>${esc(compactMetric(rv))}</b></span><span><small>Total</small><b>${esc(compactMetric(s.visitors))}</b></span></div></section>
+      <section class="wa-box"><h3>GEOGRAPHY</h3>${geo.slice(0,8).map((r,i)=>`<p><b>${i+1}. ${esc([r.city,r.region].filter(Boolean).join(', ')||r.country||'Unknown')}</b><span>${esc(compactMetric(r.visitors))} people</span></p>`).join('')}</section>
+    </div>
+    <div class="wa-two">
+      <section class="wa-box"><h3>LANDING PAGES · WHERE THEY ENTER</h3>${land.map((r,i)=>`<p><b>${i+1}. ${esc(wName(r.path))}</b><span>${esc(compactMetric(r.sessions))} sessions</span></p>`).join('')}</section>
+      <section class="wa-box"><h3>EXIT PAGES · WHERE THEY LEAVE</h3>${exit.map((r,i)=>`<p><b>${i+1}. ${esc(wName(r.path))}</b><span>${esc(compactMetric(r.sessions))} sessions</span></p>`).join('')}</section>
+    </div>
+    <div class="wa-two">
+      <section class="wa-box"><h3>LEADS</h3><div class="wa-mini"><span><small>Contact clicks</small><b>${esc(compactMetric(s.contactClicks))}</b></span><span><small>Forms</small><b>${esc(compactMetric(s.formsSubmitted))}</b></span><span><small>Total</small><b>${esc(compactMetric,leads))}</b></span></div></section>
+      <section class="wa-box"><h3>COMMERCE</h3><div class="wa-mini"><span><small>Orders</small><b>${esc(compactMetric(s.orders))}</b></span><span><small>Sales</small><b>${esc(salesText)}</b></span><span><small>Order rate</small><b>${Number(s.sessions)>0?((Number(s.orders||0)/Number(s.sessions))*100).toFixed(1)+'%':'—'}</b></span></div></section>
+    </div>
+    <section class="wa-next"><h3>NEXT LAYERS</h3><span>Button / CTA clicks</span><span>Google Search queries & ranking</span><span>Shopping funnel</span><span>Site speed & technical health</span></section>
+  </section>`;
+}
+
 function render() {
   $('workspace').hidden = false; $('editor').hidden = true; selected = null; dirty = false;
   if (['Mission Control','Platform Details'].includes(activeView)) renderConnectionStrip();
@@ -1006,6 +1065,10 @@ function render() {
   }
   if (activeView === 'Batch Schedule') {
     renderBatchSchedule();
+    return;
+  }
+  if (activeView === 'Website Analytics') {
+    renderWebsiteAnalytics();
     return;
   }
   if (activeView === 'Analytics') {
