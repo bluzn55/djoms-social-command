@@ -48,7 +48,7 @@ async function loadLocalStatus() {
 function localCard(key, name) {
   const info = localData?.[key] || {};
   const connected = !!info.connected;
-  const needs = connected && (info.needsLocation || info.needsReviewData || Number(info.unanswered || 0) > 0);
+  const needs = connected && (info.needsLocation || info.needsReviewData || info.needsPermission || Number(info.unanswered || 0) > 0);
   const color = connected ? (needs ? 'yellow' : 'green') : 'red';
   const rating = info.rating == null ? '—' : Number(info.rating).toFixed(1);
   const total = info.totalReviewCount == null ? '—' : compactMetric(info.totalReviewCount);
