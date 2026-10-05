@@ -1019,7 +1019,7 @@ function renderWebsiteAnalytics(){
       <section class="wa-box"><h3>EXIT PAGES · WHERE THEY LEAVE</h3>${exit.map((r,i)=>`<p><b>${i+1}. ${esc(wName(r.path))}</b><span>${esc(compactMetric(r.sessions))} sessions</span></p>`).join('')}</section>
     </div>
     <div class="wa-two">
-      <section class="wa-box"><h3>LEADS</h3><div class="wa-mini"><span><small>Contact clicks</small><b>${esc(compactMetric(s.contactClicks))}</b></span><span><small>Forms</small><b>${esc(compactMetric(s.formsSubmitted))}</b></span><span><small>Total</small><b>${esc(compactMetric,leads))}</b></span></div></section>
+      <section class="wa-box"><h3>LEADS</h3><div class="wa-mini"><span><small>Contact clicks</small><b>${esc(compactMetric(s.contactClicks))}</b></span><span><small>Forms</small><b>${esc(compactMetric(s.formsSubmitted))}</b></span><span><small>Total</small><b>${esc(compactMetric(leads))}</b></span></div></section>
       <section class="wa-box"><h3>COMMERCE</h3><div class="wa-mini"><span><small>Orders</small><b>${esc(compactMetric(s.orders))}</b></span><span><small>Sales</small><b>${esc(salesText)}</b></span><span><small>Order rate</small><b>${Number(s.sessions)>0?((Number(s.orders||0)/Number(s.sessions))*100).toFixed(1)+'%':'—'}</b></span></div></section>
     </div>
     <section class="wa-next"><h3>NEXT LAYERS</h3><span>Button / CTA clicks</span><span>Google Search queries & ranking</span><span>Shopping funnel</span><span>Site speed & technical health</span></section>
