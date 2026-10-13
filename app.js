@@ -662,10 +662,14 @@ function rowsHtml(list) {
 function updateDraftSelectionControls() {
   const boxes = [...document.querySelectorAll('.draft-check')];
   const chosen = boxes.filter(b => b.checked).length;
-  const bulkButton = $('deleteSelectedDrafts'), selectAll = $('selectAllDrafts');
+  const bulkButton = $('deleteSelectedDrafts'), approveButton = $('approveSelectedDrafts'), selectAll = $('selectAllDrafts');
   if (!bulkButton || !selectAll) return;
   bulkButton.disabled = busy || chosen === 0;
   bulkButton.textContent = 'Delete selected (' + chosen + ')';
+  if (approveButton) {
+    approveButton.disabled = busy || chosen === 0;
+    approveButton.textContent = 'Approve selected (' + chosen + ')';
+  }
   selectAll.checked = !!boxes.length && chosen === boxes.length;
   selectAll.indeterminate = chosen > 0 && chosen < boxes.length;
 }
@@ -1251,7 +1255,7 @@ function render() {
   if (searchTerm) list = list.filter(r => (r.title + ' ' + r.caption).toLowerCase().includes(searchTerm.toLowerCase()));
   const canSelect = activeView === 'Content Library';
   const draftCount = list.filter(canDeleteDraft).length;
-  const bulkTools = canSelect ? `<label class="draft-select-all"><input type="checkbox" id="selectAllDrafts" ${draftCount ? '' : 'disabled'}> Select all drafts shown</label><button type="button" class="danger" id="deleteSelectedDrafts" data-action="deleteSelectedDrafts" disabled>Delete selected (0)</button>` : '';
+  const bulkTools = canSelect ? `<label class="draft-select-all"><input type="checkbox" id="selectAllDrafts" ${draftCount ? '' : 'disabled'}> Select all drafts shown</label><button type="button" class="approve" id="approveSelectedDrafts" data-action="approveSelectedDrafts" disabled>Approve selected (0)</button><button type="button" class="danger" id="deleteSelectedDrafts" data-action="deleteSelectedDrafts" disabled>Delete selected (0)</button>` : '';
   const campaignPicker = canSelect ? `<label class="library-campaign-filter">Campaign<select id="libraryCampaignFilter"><option value="">All campaigns</option>${campaigns.map(c => `<option value="${esc(c.id)}" ${campaignFilter === c.id ? 'selected' : ''}>${esc(c.title)}</option>`).join('')}</select></label>` : '';
   const missingBookLinks = records.filter(r => r.campaign === 'BOOK' && canDeleteDraft(r) && !String(r.link || '').trim()).length;
   const bookLinkRepair = canSelect && (!campaignFilter || campaignFilter === 'BOOK') && missingBookLinks
@@ -1465,6 +1469,49 @@ document.addEventListener('click', event => {
       await loadRecords();
       render();
       notice(result.updated + ' missing Book Campaign link' + (result.updated === 1 ? '' : 's') + ' filled. Nothing was published.');
+    });
+  }
+  if (action === 'approveSelectedDrafts') {
+    if (activeView !== 'Content Library') return;
+    const chosen = [...document.querySelectorAll('.draft-check:checked')]
+      .map(box => records.find(r => r.id === box.dataset.draftId));
+    if (!chosen.length) { notice('Check the drafts you want to approve first.', true); return; }
+    if (chosen.some(r => !canDeleteDraft(r))) {
+      notice('Only unsent draft posts can be approved in bulk. Refresh the list and try again.', true);
+      return;
+    }
+    const count = chosen.length;
+    const campaignNames = [...new Set(chosen.map(r => campaigns.find(c => c.id === r.campaign)?.title || r.campaign))];
+    if (!confirm('Approve ' + count + ' selected draft' + (count === 1 ? '' : 's') + ' from ' +
+      campaignNames.join(', ') + '? This does NOT publish or schedule any posts. Posts with missing or invalid details will remain drafts.')) return;
+    return perform(async () => {
+      let approved = 0;
+      const failures = [];
+      // Process a few at a time to keep the dashboard responsive without
+      // bypassing each record's server-side approval validation.
+      for (let i = 0; i < chosen.length; i += 4) {
+        notice('Checking and approving drafts ' + (i + 1) + '–' +
+          Math.min(i + 4, count) + ' of ' + count + '…');
+        const results = await Promise.allSettled(chosen.slice(i, i + 4).map(r =>
+          api('records', { action:'approve', id:r.id, revision:r.revision })));
+        results.forEach((result, index) => {
+          if (result.status === 'fulfilled') {
+            approved++;
+          } else {
+            failures.push({ title:chosen[i+index].title, message:result.reason?.message || 'Approval failed.' });
+          }
+        });
+      }
+      await loadRecords();
+      render();
+      const failed = failures.length;
+      if (failed) {
+        const example = failures.slice(0, 3).map(f => f.title + ': ' + f.message).join(' | ');
+        notice(approved + ' approved. ' + failed + ' stayed as drafts and need attention. ' + example +
+          (failed > 3 ? ' (and ' + (failed - 3) + ' more)' : '') + '. No posts were published.', true);
+      } else {
+        notice(approved + ' drafts approved and ready for scheduling. Nothing was published.');
+      }
     });
   }
   if (action === 'deleteSelectedDrafts') {
