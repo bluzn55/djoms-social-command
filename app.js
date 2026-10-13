@@ -6,6 +6,8 @@ const statusPlatforms = ['facebook','instagram','x','youtube'];
 const labels = { draft:'Draft', approved:'Approved', scheduled:'Scheduled', queueing:'Confirming schedule', paused:'Paused', publishing:'Publishing', published:'Published', failed:'Needs attention', partial:'Partly published', uncertain:'Check result', processing:'Preparing photo', prepared:'Prepared' };
 let records = [], campaigns = [], mediaInbox = [], videoInbox = [], commentStream = [], commentWarnings = [], commentCheckedAt = null, commentPlatformFilter = 'all', commentStatusFilter = 'all', csrf = '', selected = null, connection = null, analyticsData = { platforms:{}, posts:[], history:[] }, localData = { google:{}, yelp:{}, tripadvisor:{}, facebook:{} }, dirty = false, busy = false, activeView = 'Mission Control', campaignFilter = '', searchTerm = '', owner = '';
 let pollTimer;
+let rotationStatus = null, rotationPreview = null, rotationStartDate = '', rotationStartTime = '';
+const rotationZone = 'America/Chicago';
 // Media Inbox fields are saved independently of converting pictures into posts.
 const inboxDirty = new Set();
 const inboxSaveTimers = new Map();
@@ -1198,6 +1200,115 @@ function renderWebsiteAnalytics(){
   </section>`;
 }
 
+function rotationToday() {
+  const parts = new Intl.DateTimeFormat('en-US',{timeZone:rotationZone,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+  const part=key=>parts.find(p=>p.type===key)?.value || '';
+  return [part('year'),part('month'),part('day')].join('-');
+}
+
+function rotationDateTime(iso) {
+  if (!iso) return '—';
+  return new Intl.DateTimeFormat('en-US',{
+    timeZone:rotationZone,month:'short',day:'numeric',year:'numeric',
+    hour:'numeric',minute:'2-digit',timeZoneName:'short'
+  }).format(new Date(iso));
+}
+
+function renderPostingRotation() {
+  const plan=rotationStatus?.plan || null;
+  const counts=rotationStatus?.approved || {};
+  const activePlan=plan && ['active','paused','needs_attention','starting'].includes(plan.state);
+  const titleMap={ BBQ:'BBQ', MUSIC:'Music', BOOK:'Book' };
+  const inventory=Object.entries(titleMap).map(([key,label])=>
+    `<span class="rotation-count"><strong>${esc(label)}</strong><b>${esc(counts[key] ?? 0)} approved</b></span>`).join('');
+  const previewEntries=rotationPreview?.entries || [];
+  const times=previewEntries.length ? `
+    <div class="rotation-preview">
+      <h3>Review the full posting order</h3>
+      <p>45 posts, every other day, at the Central time selected above. Only the next post is queued with the free seven-day scheduler.</p>
+      <div class="table-wrap"><table class="rotation-table"><thead>
+        <tr><th>Day</th><th>When (Central)</th><th>Campaign</th><th>Post</th></tr>
+      </thead><tbody>${previewEntries.map((r,i)=>
+        `<tr><td>${1+i*2}</td><td>${esc(rotationDateTime(r.at))}</td><td>${esc(titleMap[r.campaign] || r.campaign)}</td><td>${esc(r.title)}</td></tr>`
+      ).join('')}</tbody></table></div>
+      <label class="check rotation-consent"><input type="checkbox" id="rotationConfirm">
+        I reviewed the schedule and authorize automatic Facebook and Instagram posting.
+      </label>
+      <button type="button" class="approve rotation-activate" data-action="activateRotation" id="activateRotation" disabled>Activate 90-day rotation</button>
+    </div>` : '';
+  const date=rotationStartDate || rotationToday();
+  const setup=activePlan ? '' : `
+    <div class="rotation-fields">
+      <label>First post date (Central time)<input type="date" id="rotationDate" min="${esc(rotationToday())}" value="${esc(date)}"></label>
+      <label>Posting time (Central time)<input type="time" id="rotationTime" value="${esc(rotationStartTime)}" required></label>
+      <button type="button" class="approve" data-action="previewRotation">Preview all 45 posts</button>
+    </div>
+    ${times}`;
+  const next=activePlan ? plan.entries?.[plan.nextIndex] : null;
+  const completed=plan ? plan.entries.filter(x=>x.state==='published').length : 0;
+  const stateText={ active:'ACTIVE',paused:'PAUSED',needs_attention:'NEEDS ATTENTION',starting:'SETTING UP',completed:'COMPLETE',setup_failed:'SETUP FAILED' };
+  const current=plan ? `
+    <section class="rotation-current">
+      <h3>Current rotation: ${esc(stateText[plan.state] || plan.state)}</h3>
+      <p><strong>${completed} of 45 posted.</strong> ${plan.state === 'active' ? 'Future posts will be queued automatically after each successful scheduled delivery.' : ''}</p>
+      ${next && plan.state !== 'completed' ? `<p><strong>Next:</strong> ${esc(next.title)} · ${esc(rotationDateTime(next.at))}</p>` : ''}
+      ${plan.lastError ? `<p class="rotation-error">${esc(plan.lastError)}</p>` : ''}
+      ${plan.state === 'active' ? '<button type="button" class="danger" data-action="pauseRotation">Pause the rotation</button>' : ''}
+      ${plan.state === 'paused' ? '<p>The rotation is paused. Nothing else will be posted automatically. The remaining posts need to be rescheduled.</p>' : ''}
+      ${plan.state === 'needs_attention' ? '<p>Automatic follow-on scheduling has stopped. Review the failed post before restarting.</p>' : ''}
+    </section>` : '';
+  $('content').innerHTML = `
+    <section class="box rotation-panel">
+      <h2>90-DAY CAMPAIGN ROTATION</h2>
+      <p><strong>BBQ → Music → Book, every other day.</strong> All 45 approved posts are included once, across 89 calendar days.</p>
+      <div class="rotation-inventory">${inventory}</div>
+      <p class="rotation-caution"><strong>Delivery:</strong> Facebook and Instagram publish automatically if their accounts remain connected.
+      X is prepared only and does not yet publish automatically. No posts go live until the chosen starting time.</p>
+      ${current}
+      ${setup}
+    </section>`;
+}
+
+function rotationPreviewClick(){
+  const date=$('rotationDate')?.value, time=$('rotationTime')?.value;
+  if(!date || !time) { notice('Choose today’s posting time before previewing the rotation.',true); return; }
+  rotationStartDate=date; rotationStartTime=time;
+  return perform(async()=>{
+    rotationPreview=await api('rotation',{action:'preview',startLocal:date+'T'+time});
+    renderPostingRotation();
+    notice('Preview ready: 45 posts, beginning ' + rotationDateTime(rotationPreview.entries[0].at) + '. Review the order before activating.');
+  });
+}
+
+function rotationActivateClick(){
+  if(!rotationPreview?.entries?.length || !$('rotationConfirm')?.checked) {
+    notice('Review and confirm the schedule before activating.',true); return;
+  }
+  const startLocal=rotationStartDate+'T'+rotationStartTime;
+  const when=rotationDateTime(rotationPreview.entries[0].at);
+  if(!confirm('ACTIVATE 90-DAY POSTING ROTATION? First post: BBQ-0001 on ' + when +
+    '. After that, each successful post queues the next, every other day. Facebook and Instagram publish automatically; X is prepared only. Nothing will post before the chosen time.')) return;
+  return perform(async()=>{
+    const response=await api('rotation',{action:'activate',startLocal});
+    rotationPreview=null;
+    rotationStatus={...(rotationStatus || {}),plan:response.plan};
+    await loadRecords();
+    renderPostingRotation();
+    notice('90-day rotation activated! First BBQ post scheduled for ' + rotationDateTime(response.plan.entries[0].at) + '.');
+  });
+}
+
+function rotationPauseClick(){
+  if (!confirm('Pause automatic posting? The next scheduled post will be stopped, and later posts will not be queued.')) return;
+  return perform(async()=>{
+    const response=await api('rotation',{action:'pause'});
+    rotationStatus={...(rotationStatus||{}),plan:response.plan};
+    await loadRecords();
+    renderPostingRotation();
+    notice('Posting rotation paused. No future posts are queued.');
+  });
+}
+
 function render() {
   $('workspace').hidden = false; $('editor').hidden = true; selected = null; dirty = false;
   if (['Mission Control','Platform Details'].includes(activeView)) renderConnectionStrip();
@@ -1237,6 +1348,14 @@ function render() {
   }
   if (activeView === 'Batch Schedule') {
     renderBatchSchedule();
+    return;
+  }
+  if (activeView === 'Posting Rotation') {
+    $('content').innerHTML='<div class="box"><h3>Checking the 90-day rotation…</h3></div>';
+    api('rotation').then(data=>{
+      rotationStatus=data;
+      if(activeView==='Posting Rotation') renderPostingRotation();
+    }).catch(e=>notice('Could not load the rotation: ' + e.message,true));
     return;
   }
   if (activeView === 'Website Analytics') {
@@ -1459,6 +1578,9 @@ document.addEventListener('click', event => {
   }
   if (action === 'back') { if (!dirty || confirm('Leave without saving your changes?')) render(); return; }
   if (action === 'allCampaigns') { campaignFilter=''; return render(); }
+  if (action === 'previewRotation') return rotationPreviewClick();
+  if (action === 'activateRotation') return rotationActivateClick();
+  if (action === 'pauseRotation') return rotationPauseClick();
   if (action === 'fillMissingBookLinks') {
     if (activeView !== 'Content Library') return;
     const count = records.filter(r => r.campaign === 'BOOK' && canDeleteDraft(r) && !String(r.link || '').trim()).length;
@@ -1734,6 +1856,18 @@ document.addEventListener('click', event => {
   });
 });
 document.addEventListener('change', event => {
+  if (event.target.id === 'rotationConfirm') {
+    const button=$('activateRotation');
+    if (button) button.disabled = !event.target.checked;
+    return;
+  }
+  if (event.target.id === 'rotationDate' || event.target.id === 'rotationTime') {
+    rotationStartDate=$('rotationDate')?.value || rotationStartDate;
+    rotationStartTime=$('rotationTime')?.value || rotationStartTime;
+    rotationPreview=null;
+    if(activeView==='Posting Rotation') renderPostingRotation();
+    return;
+  }
   if(event.target.id === 'selectAllInbox') {
     document.querySelectorAll('.inbox-check').forEach(box=>{
       if(box.checked !== event.target.checked) {
