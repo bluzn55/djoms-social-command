@@ -2515,3 +2515,20 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 /* Limit bulk cleanup by campaign (especially BBQ versus Book). */
 .filterbar .library-campaign-filter { min-width:215px; flex:0 1 280px; }
 .filterbar .library-campaign-filter select { margin:6px 0 0; }
+
+/* Media Inbox persistence: visible save state and compact save controls. */
+.inbox-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+.inbox-toolbar>div:first-child { flex:1 1 280px; }
+.inbox-toolbar .inbox-upload { flex:0 0 auto; }
+.inbox-toolbar .inbox-select-all { display:inline-flex; flex:0 0 auto; align-items:center; gap:7px; white-space:nowrap; }
+.inbox-toolbar .inbox-select-all input { margin:0; }
+.inbox-toolbar #inboxCount { margin-left:auto; }
+.inbox-actions { display:flex; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:9px; }
+.inbox-actions .inbox-save-state { font-size:13px; font-weight:600; margin-right:auto; color:#315b38; overflow-wrap:anywhere; }
+.inbox-actions .inbox-save-state.inbox-save-error { color:#9e3b26; }
+@media (max-width:720px) {
+  .inbox-toolbar { display:flex; flex-direction:column; align-items:stretch; }
+  .inbox-toolbar>div:first-child { flex:auto; }
+  .inbox-toolbar #inboxCount { margin:0; }
+  .inbox-actions { justify-content:flex-start; }
+}
