@@ -2540,3 +2540,30 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   background:#fff0ec !important;
   outline-offset:2px;
 }
+
+/* Owner-reviewed 90-day campaign rotation. */
+.rotation-panel { max-width:1200px; }
+.rotation-panel h2 { font-family:Georgia,serif; font-size:27px; margin:0 0 12px; }
+.rotation-panel h3 { font-size:21px; margin:8px 0 12px; }
+.rotation-panel p { line-height:1.6; }
+.rotation-inventory { display:flex; gap:12px; flex-wrap:wrap; margin:14px 0 16px; }
+.rotation-count { display:flex; flex-direction:column; gap:2px; border:1px solid #d5c29e; border-radius:8px; background:#fffaf0; padding:12px 17px; min-width:145px; }
+.rotation-count strong { color:#78551f; font-size:14px; }
+.rotation-count b { font-size:20px; }
+.rotation-caution { border-left:4px solid #9c742e; padding:10px 15px; background:#fff8e9; }
+.rotation-fields { display:flex; flex-wrap:wrap; align-items:end; gap:12px; margin:22px 0; }
+.rotation-fields label { min-width:210px; }
+.rotation-fields input { margin:6px 0 0; }
+.rotation-fields button { margin-bottom:0; }
+.rotation-preview { margin:22px 0 0; }
+.rotation-preview .rotation-table { min-width:680px; }
+.rotation-preview table td { font-size:14px; }
+.rotation-consent { margin:20px 0 12px; align-items:start; }
+.rotation-activate { font-weight:bold; }
+.rotation-current { padding:18px; border:1px solid #d1bc94; background:#fffaf0; border-radius:8px; margin:20px 0; }
+.rotation-error { color:#8b3220; font-weight:bold; }
+@media(max-width:700px) {
+  .rotation-fields { display:block; }
+  .rotation-fields label, .rotation-fields button { width:100%; margin-bottom:12px; }
+  .rotation-inventory { flex-direction:column; }
+}
