@@ -2567,3 +2567,22 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   .rotation-fields label, .rotation-fields button { width:100%; margin-bottom:12px; }
   .rotation-inventory { flex-direction:column; }
 }
+
+/* X automation remains visibly separate from no-cost Facebook/Instagram delivery. */
+.rotation-x-settings {
+  margin:18px 0;
+  padding:18px;
+  border:1px solid #c8b38a;
+  border-radius:9px;
+  background:#fffaf0;
+}
+.rotation-x-settings h3 { margin:0 0 8px; font-size:21px; }
+.rotation-x-settings p { font-size:15px; line-height:1.5; margin:9px 0; }
+.rotation-x-settings .check { margin:14px 0; font-size:16px; font-weight:600; }
+.rotation-x-settings .button { display:inline-block; margin:10px 0; }
+.rotation-x-settings button { margin:10px 0 4px; }
+.rotation-x-settings button.approve { background:#315b38; color:white; }
+.rotation-x-settings button:disabled { opacity:.5; }
+.x-result-info { display:block; font-size:12px; margin-top:5px; }
+.x-result-info.failed, .x-result-info.uncertain { color:#a33b2b; font-weight:700; }
+.x-result-info.published { color:#315b38; font-weight:700; }
