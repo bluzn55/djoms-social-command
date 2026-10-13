@@ -1322,7 +1322,7 @@ function renderPostingRotation() {
       <p><strong>BBQ → Music → Book, every other day.</strong> All 45 approved posts are included once, across 89 calendar days.</p>
       <div class="rotation-inventory">${inventory}</div>
       <p class="rotation-caution"><strong>Delivery:</strong> Facebook and Instagram publish automatically if their accounts remain connected.
-      X is prepared only and does not yet publish automatically. No posts go live until the chosen starting time.</p>
+      X remains prepared-only until you separately authorize and enable paid X API posting below. The existing Facebook and Instagram schedule continues unchanged.</p>
       ${current}
       ${rotationXPanel(plan)}
       ${setup}
@@ -1522,7 +1522,7 @@ function openRecord(r) {
     $('scheduleTime').value = `${when.getFullYear()}-${pad(when.getMonth()+1)}-${pad(when.getDate())}T${pad(when.getHours())}:${pad(when.getMinutes())}`;
   } else $('scheduleTime').value = '';
   $('historyList').innerHTML = (r.history || []).map(h => `<p><small>${esc(date(h.at))} · ${esc(h.user)}</small><br>${esc(h.message)}</p>`).join('');
-  $('results').innerHTML = Object.entries(r.results || {}).map(([p,v]) => `<div class="result-item"><strong>${esc(names[p])}: ${esc(labels[v.status] || v.status)}</strong>${v.postId ? `<p>Post ID: ${esc(v.postId)}</p>`:''}${v.error ? `<p>${esc(v.error)}</p>`:''}${v.note ? `<p>${esc(v.note)}</p>`:''}${['sending','uncertain'].includes(v.status) ? `<button data-resolve="${p}" data-outcome="posted">I found the post</button><button data-resolve="${p}" data-outcome="not-posted">I checked: it did not post</button>`:''}</div>`).join('');
+  $('results').innerHTML = Object.entries(r.results || {}).map(([p,v]) => `<div class="result-item"><strong>${esc(names[p])}: ${esc(labels[v.status] || v.status)}</strong>${v.postId ? `<p>Post ID: ${esc(v.postId)}</p>${p==='x' ? `<p><a href="https://x.com/i/web/status/${encodeURIComponent(v.postId)}" target="_blank" rel="noopener noreferrer">View X post ↗</a></p>` : ''}`:''}${v.error ? `<p>${esc(v.error)}</p>`:''}${v.note ? `<p>${esc(v.note)}</p>`:''}${['sending','uncertain'].includes(v.status) && (p==='facebook' || p==='instagram') ? `<button data-resolve="${p}" data-outcome="posted">I found the post</button><button data-resolve="${p}" data-outcome="not-posted">I checked: it did not post</button>`:''}</div>`).join('');
   updatePreview(); buttons();
 }
 async function saveDraft() {
