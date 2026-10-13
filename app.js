@@ -7,6 +7,7 @@ const labels = { draft:'Draft', approved:'Approved', scheduled:'Scheduled', queu
 let records = [], campaigns = [], mediaInbox = [], videoInbox = [], commentStream = [], commentWarnings = [], commentCheckedAt = null, commentPlatformFilter = 'all', commentStatusFilter = 'all', csrf = '', selected = null, connection = null, analyticsData = { platforms:{}, posts:[], history:[] }, localData = { google:{}, yelp:{}, tripadvisor:{}, facebook:{} }, dirty = false, busy = false, activeView = 'Mission Control', campaignFilter = '', searchTerm = '', owner = '';
 let pollTimer;
 let rotationStatus = null, rotationPreview = null, rotationStartDate = '', rotationStartTime = '';
+let xAutoStatus = null;
 const rotationZone = 'America/Chicago';
 // Media Inbox fields are saved independently of converting pictures into posts.
 const inboxDirty = new Set();
@@ -143,6 +144,20 @@ async function platformApi(prefix, path, label) {
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || label + ' could not be checked.');
   return data;
+}
+async function xAutoPost(body){
+  const response=await fetch('/api/x/auto',{
+    method:'POST',credentials:'same-origin',
+    headers:{'Content-Type':'application/json','X-DJOMS-CSRF':csrf},
+    body:JSON.stringify(body),signal:AbortSignal.timeout(30000)
+  });
+  const data=await response.json();
+  if(!response.ok)throw new Error(data.error || 'X automatic posting settings could not be changed.');
+  return data;
+}
+async function loadXAuto(){
+  xAutoStatus=await platformApi('x','auto','X automation');
+  return xAutoStatus;
 }
 async function youtubePost(path, body) {
   const response = await fetch('/api/youtube/' + path, {
@@ -1581,6 +1596,25 @@ document.addEventListener('click', event => {
   if (action === 'previewRotation') return rotationPreviewClick();
   if (action === 'activateRotation') return rotationActivateClick();
   if (action === 'pauseRotation') return rotationPauseClick();
+  if(action==='enableXAuto'){
+    if(!$('xBillingConsent')?.checked)return notice('Confirm X API pay-per-use charges first.',true);
+    if(!confirm('Enable paid X picture posting for FUTURE 90-day rotation posts? Linked posts currently cost approximately $0.20 each, billed by X. Earlier posts will NOT be reposted.'))return;
+    return perform(async()=>{
+      const data=await xAutoPost({action:'enable',acknowledgePayPerUse:true});
+      await loadXAuto();
+      renderPostingRotation();
+      notice('Automatic X posting enabled for future scheduled posts to '+(data.account || 'the connected account')+'.');
+    });
+  }
+  if(action==='disableXAuto'){
+    if(!confirm('Turn OFF automatic X posts? Facebook and Instagram will continue unchanged.'))return;
+    return perform(async()=>{
+      await xAutoPost({action:'disable'});
+      await loadXAuto();
+      renderPostingRotation();
+      notice('Automatic X posting disabled. Facebook and Instagram continue as scheduled.');
+    });
+  }
   if (action === 'fillMissingBookLinks') {
     if (activeView !== 'Content Library') return;
     const count = records.filter(r => r.campaign === 'BOOK' && canDeleteDraft(r) && !String(r.link || '').trim()).length;
@@ -1856,6 +1890,11 @@ document.addEventListener('click', event => {
   });
 });
 document.addEventListener('change', event => {
+  if(event.target.id==='xBillingConsent'){
+    const button=$('enableXAuto');
+    if(button)button.disabled=!event.target.checked;
+    return;
+  }
   if (event.target.id === 'rotationConfirm') {
     const button=$('activateRotation');
     if (button) button.disabled = !event.target.checked;
