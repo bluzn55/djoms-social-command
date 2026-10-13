@@ -642,7 +642,7 @@ async function signedIn(s) {
 function badge(status) { return `<span class="status state-${esc(status)}">${esc(labels[status] || status)}</span>`; }
 function rowsHtml(list) {
   if (!list.length) return '<div class="empty"><h3>No posts here yet.</h3><p>Use New post to start one.</p></div>';
-  return '<div class="table-wrap"><table><thead><tr><th>Photo</th><th>Post</th><th>Platforms</th><th>Status</th><th>Posting time</th><th></th></tr></thead><tbody>' + list.map(r => `<tr><td>${r.imageUrl ? `<img class="row-photo" src="${esc(r.imageUrl)}" alt="">` : '<span class="thumb">PHOTO</span>'}</td><td><small class="id">${esc(code(r))}</small><strong>${esc(r.title)}</strong></td><td>${r.targets.map(t => esc(names[t])).join('<br>') || 'Choose platforms'}</td><td>${badge(r.status)}</td><td>${esc(date(r.scheduledAt))}</td><td><button data-open="${esc(r.id)}" aria-label="Open ${esc(r.title)}">Open ›</button></td></tr>`).join('') + '</tbody></table></div>';
+  return '<div class="table-wrap"><table><thead><tr><th>Photo</th><th>Post</th><th>Platforms</th><th>Status</th><th>Posting time</th><th></th></tr></thead><tbody>' + list.map(r => `<tr><td>${r.imageUrl ? `<img class="row-photo" src="${esc(r.imageUrl)}" alt="">` : '<span class="thumb">PHOTO</span>'}</td><td><small class="id">${esc(code(r))}</small><strong>${esc(r.title)}</strong></td><td>${r.targets.map(t => esc(names[t])).join('<br>') || 'Choose platforms'}</td><td>${badge(r.status)}</td><td>${esc(date(r.scheduledAt))}</td><td class="post-row-actions"><button data-open="${esc(r.id)}" aria-label="Open ${esc(r.title)}">Open ›</button>${r.status === 'draft' ? `<button class="danger" data-delete-draft="${esc(r.id)}" aria-label="Delete draft ${esc(r.title)}">Delete</button>` : ''}</td></tr>`).join('') + '</tbody></table></div>';
 }
 function attention(r) { return ['failed','partial','uncertain','queueing','processing','publishing'].includes(r.status); }
 function localInputValue(value) {
@@ -1130,6 +1130,8 @@ function buttons() {
   $('publishButton').disabled = busy || dirty || !retryable;
   $('publishButton').textContent = interrupted ? 'Check interrupted post' : r.status === 'processing' || r.results?.instagram?.status === 'processing' ? 'Finish Instagram post' : ['failed','partial'].includes(r.status) ? 'Retry unsent platforms' : 'Publish now';
   $('scheduleButton').disabled = busy || dirty || r.status !== 'approved' || !connection?.scheduler;
+  $('deleteDraftButton').hidden = r.status !== 'draft';
+  $('deleteDraftButton').disabled = busy || dirty || r.status !== 'draft';
   ['pauseButton','draftButton'].forEach(x => $(x).disabled = busy || dirty || ['publishing','published','partial','uncertain'].includes(r.status));
   $('savedState').textContent = dirty ? 'Unsaved changes — save the draft before approving or posting.' : 'Saved ' + date(r.updatedAt);
   $('scheduleNote').textContent = r.status === 'scheduled' ? 'Scheduled for ' + date(r.scheduledAt) + '. Delivery continues when this browser is closed.' : connection?.scheduler ? 'Approve the saved post, then choose a time from two minutes to seven days ahead. Delivery can be delayed by the platforms.' : 'Scheduling is disabled until its one-time server setup is finished.';
@@ -1223,6 +1225,17 @@ document.addEventListener('click', event => {
   if (b.dataset.view) return setView(b.dataset.view);
   if (b.dataset.open) return openRecord(records.find(r => r.id === b.dataset.open));
   if (b.dataset.campaign) { campaignFilter = campaignFilter === b.dataset.campaign ? '' : b.dataset.campaign; return render(); }
+  if (b.dataset.deleteDraft) {
+    const r = records.find(x => x.id === b.dataset.deleteDraft);
+    if (!r || r.status !== 'draft') { notice('Only unsent drafts can be deleted.', true); return; }
+    if (!confirm('Permanently delete the draft "' + r.title + '"? This cannot be undone. Original artwork files on your computer are not affected.')) return;
+    return perform(async () => {
+      await api('records', { action:'deleteDraft', id:r.id, revision:r.revision });
+      records = records.filter(x => x.id !== r.id);
+      render();
+      notice('Draft deleted from Content Library.');
+    });
+  }
   if (b.dataset.resolve) return perform(async () => {
     const extra = { platform:b.dataset.resolve, outcome:b.dataset.outcome };
     if (extra.outcome === 'posted') { extra.postId = prompt('Enter the post ID from the account:'); if (!extra.postId) return; }
@@ -1257,6 +1270,17 @@ document.addEventListener('click', event => {
   }
   if (action === 'back') { if (!dirty || confirm('Leave without saving your changes?')) render(); return; }
   if (action === 'allCampaigns') { campaignFilter=''; return render(); }
+  if (action === 'deleteDraft') {
+    const r = selected;
+    if (!r || r.status !== 'draft' || dirty) { notice('Only saved, unsent drafts can be deleted. Save or discard any unsaved changes first.', true); return; }
+    if (!confirm('Permanently delete the draft "' + r.title + '"? This cannot be undone. Original artwork files on your computer are not affected.')) return;
+    return perform(async () => {
+      await api('records', { action:'deleteDraft', id:r.id, revision:r.revision });
+      records = records.filter(x => x.id !== r.id);
+      render();
+      notice('Draft deleted from Content Library.');
+    });
+  }
   if (action === 'removeImage') { if ($('imageFile').disabled) return; selected.imageId=null; selected.imageUrl=null; selected.imageVariantIds={}; selected.imageVariants={}; dirty=true; updatePreview(); buttons(); return; }
   if (action === 'refreshComments') {
     return perform(async()=>{ await loadComments(); renderComments(); notice('Comments updated.'); });
