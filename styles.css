@@ -2491,3 +2491,13 @@ textarea { line-height:1.65 !important; }
 .wa-week>div{display:grid;grid-template-columns:1.2fr repeat(6,1fr);gap:6px;padding:7px;border-top:1px solid #ece1ce;font-size:9px}.wa-week .head,.wa-pages .head{background:#f7efdf;color:#8d806c;text-transform:uppercase;font-size:8px}.wa-pages>div{display:grid;grid-template-columns:2.4fr repeat(5,1fr);gap:6px;padding:8px;border-top:1px solid #ece1ce;font-size:9px;align-items:center}.wa-pages small{display:block;color:#8d806c;margin-top:2px}
 .wa-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.wa-box p{display:flex;justify-content:space-between;gap:10px;margin:0;padding:8px 2px;border-top:1px solid #ece1ce;font-size:10px}.wa-box p:first-of-type{border-top:0}.wa-box p span{color:#766a59}.wa-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.wa-mini b{display:block;font-size:18px;margin-top:5px}.wa-next{background:#302419;color:#ead09a;border:1px solid #9c742e;border-radius:9px;padding:14px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.wa-next h3{grid-column:1/-1}.wa-next span{background:#3b2c1c;border:1px solid #654c2c;border-radius:6px;padding:10px;font-size:10px}
 @media(max-width:1250px){.wa-kpis{grid-template-columns:repeat(3,1fr)}.wa-nuggets{grid-template-columns:repeat(2,1fr)}.wa-charts{grid-template-columns:1fr}}
+
+/* Safe draft cleanup controls: only shown on unsent drafts. */
+button.danger {
+  border-color:#b36f5f;
+  color:#833b2b;
+  background:#fff0e9;
+}
+button.danger:hover:not(:disabled) { background:#f9ded5; }
+.post-row-actions { white-space:nowrap; }
+.post-row-actions button + button { margin-left:8px; }
