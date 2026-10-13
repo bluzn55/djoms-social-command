@@ -667,13 +667,26 @@ function canDeleteDraft(r) {
   return r?.status === 'draft' && !r.scheduleToken &&
     !Object.values(r.results || {}).some(p => p && (p.postId || ['published','sending','uncertain','processing'].includes(p.status)));
 }
+function platformsForRow(r) {
+  return r.targets.map(platform=>{
+    const label=esc(names[platform]||platform);
+    if(platform!=='x')return label;
+    const status=r.results?.x?.status;
+    const text=status==='published'?'Posted':
+      status==='failed'?'Failed: check X settings':
+      status==='uncertain'?'Uncertain: check X profile':
+      r.status==='published'?'Not posted (prepared only)':'Prepared for scheduled use';
+    const cls=['published','failed','uncertain'].includes(status)?status:'prepared';
+    return label+'<small class="x-result-info '+cls+'">'+esc(text)+'</small>';
+  }).join('<br>') || 'Choose platforms';
+}
 function rowsHtml(list) {
   if (!list.length) return '<div class="empty"><h3>No posts here yet.</h3><p>Use New post to start one.</p></div>';
   const withSelection = activeView === 'Content Library';
   return '<div class="table-wrap"><table><thead><tr>' +
     (withSelection ? '<th scope="col">Select</th>' : '') +
     '<th>Photo</th><th>Post</th><th>Platforms</th><th>Status</th><th>Posting time</th><th></th></tr></thead><tbody>' +
-    list.map(r => `<tr>${withSelection ? `<td class="draft-select-cell">${canDeleteDraft(r) ? `<input type="checkbox" class="draft-check" data-draft-id="${esc(r.id)}" aria-label="Select draft ${esc(r.title)}">` : '<span class="draft-not-selectable" title="Only unsent drafts may be selected">—</span>'}</td>` : ''}<td>${r.imageUrl ? `<img class="row-photo" src="${esc(r.imageUrl)}" alt="">` : '<span class="thumb">PHOTO</span>'}</td><td><small class="id">${esc(code(r))}</small><strong>${esc(r.title)}</strong></td><td>${r.targets.map(t => esc(names[t])).join('<br>') || 'Choose platforms'}</td><td>${badge(r.status)}</td><td>${esc(date(r.scheduledAt))}</td><td class="post-row-actions"><button data-open="${esc(r.id)}" aria-label="Open ${esc(r.title)}">Open ›</button>${canDeleteDraft(r) ? `<button class="danger" data-delete-draft="${esc(r.id)}" aria-label="Delete draft ${esc(r.title)}">Delete</button>` : ''}</td></tr>`).join('') +
+    list.map(r => `<tr>${withSelection ? `<td class="draft-select-cell">${canDeleteDraft(r) ? `<input type="checkbox" class="draft-check" data-draft-id="${esc(r.id)}" aria-label="Select draft ${esc(r.title)}">` : '<span class="draft-not-selectable" title="Only unsent drafts may be selected">—</span>'}</td>` : ''}<td>${r.imageUrl ? `<img class="row-photo" src="${esc(r.imageUrl)}" alt="">` : '<span class="thumb">PHOTO</span>'}</td><td><small class="id">${esc(code(r))}</small><strong>${esc(r.title)}</strong></td><td>${platformsForRow(r)}</td><td>${badge(r.status)}</td><td>${esc(date(r.scheduledAt))}</td><td class="post-row-actions"><button data-open="${esc(r.id)}" aria-label="Open ${esc(r.title)}">Open ›</button>${canDeleteDraft(r) ? `<button class="danger" data-delete-draft="${esc(r.id)}" aria-label="Delete draft ${esc(r.title)}">Delete</button>` : ''}</td></tr>`).join('') +
     '</tbody></table></div>';
 }
 function updateDraftSelectionControls() {
@@ -690,7 +703,10 @@ function updateDraftSelectionControls() {
   selectAll.checked = !!boxes.length && chosen === boxes.length;
   selectAll.indeterminate = chosen > 0 && chosen < boxes.length;
 }
-function attention(r) { return ['failed','partial','uncertain','queueing','processing','publishing'].includes(r.status); }
+function attention(r) {
+  return ['failed','partial','uncertain','queueing','processing','publishing'].includes(r.status)
+    || ['failed','uncertain'].includes(r.results?.x?.status);
+}
 function localInputValue(value) {
   if (!value) return '';
   const d = new Date(value), pad = n => String(n).padStart(2,'0');
