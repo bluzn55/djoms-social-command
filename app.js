@@ -6,6 +6,12 @@ const statusPlatforms = ['facebook','instagram','x','youtube'];
 const labels = { draft:'Draft', approved:'Approved', scheduled:'Scheduled', queueing:'Confirming schedule', paused:'Paused', publishing:'Publishing', published:'Published', failed:'Needs attention', partial:'Partly published', uncertain:'Check result', processing:'Preparing photo', prepared:'Prepared' };
 let records = [], campaigns = [], mediaInbox = [], videoInbox = [], commentStream = [], commentWarnings = [], commentCheckedAt = null, commentPlatformFilter = 'all', commentStatusFilter = 'all', csrf = '', selected = null, connection = null, analyticsData = { platforms:{}, posts:[], history:[] }, localData = { google:{}, yelp:{}, tripadvisor:{}, facebook:{} }, dirty = false, busy = false, activeView = 'Mission Control', campaignFilter = '', searchTerm = '', owner = '';
 let pollTimer;
+// Media Inbox fields are saved independently of converting pictures into posts.
+const inboxDirty = new Set();
+const inboxSaveTimers = new Map();
+const inboxSaveChains = new Map();
+const inboxEditVersions = new Map();
+let inboxChangingView = false;
 let platformMetricRange = '7d';
 let selectedStatusPlatform = null;
 let connectionCheckedAt = null;
@@ -877,36 +883,138 @@ function wireDropZone(zoneId, handler, label) {
     handler(files).catch(err=>notice(err.message || ('Could not load ' + label + '.'),true));
   });
 }
+
+function inboxFieldValues(itemId) {
+  const card=document.querySelector('[data-inbox-card="' + CSS.escape(itemId) + '"]');
+  if (!card) return null;
+  return {
+    itemId,
+    campaign:card.querySelector('[data-inbox-campaign]')?.value || 'BBQ',
+    title:card.querySelector('[data-inbox-title]')?.value || '',
+    caption:card.querySelector('[data-inbox-caption]')?.value || '',
+    link:card.querySelector('[data-inbox-link]')?.value || '',
+    targets:[...card.querySelectorAll('[data-inbox-platform]:checked')].map(x=>x.value),
+    usePicture:!!card.querySelector('.inbox-check')?.checked
+  };
+}
+function inboxStatus(itemId, message, bad=false) {
+  const label=document.querySelector('[data-inbox-save-status="' + CSS.escape(itemId) + '"]');
+  if(label) {
+    label.textContent=message;
+    label.classList.toggle('inbox-save-error',bad);
+  }
+}
+function inboxMarkEdited(itemId) {
+  const values=inboxFieldValues(itemId), item=mediaInbox.find(x=>x.id===itemId);
+  if(!values || !item) return;
+  Object.assign(item,values);
+  inboxDirty.add(itemId);
+  inboxEditVersions.set(itemId,(inboxEditVersions.get(itemId)||0)+1);
+  inboxStatus(itemId,'Unsaved changes');
+  if(inboxSaveTimers.has(itemId)) clearTimeout(inboxSaveTimers.get(itemId));
+  inboxSaveTimers.set(itemId,setTimeout(()=>{
+    inboxSaveTimers.delete(itemId);
+    saveInboxFields(itemId).catch(()=>{});
+  },1100));
+}
+async function saveInboxFields(itemId) {
+  const item=mediaInbox.find(x=>x.id===itemId);
+  if(!item) throw new Error('This Media Inbox picture is no longer available.');
+  if(inboxSaveTimers.has(itemId)) { clearTimeout(inboxSaveTimers.get(itemId)); inboxSaveTimers.delete(itemId); }
+  const values=inboxFieldValues(itemId) || {
+    itemId, title:item.title || item.filename.replace(/\\.[^.]+$/,''),
+    campaign:item.campaign || 'BBQ', caption:item.caption || '',link:item.link || '',
+    targets:item.targets || ['facebook','instagram','x'],usePicture:item.usePicture !== false
+  };
+  const version=inboxEditVersions.get(itemId)||0;
+  const preceding=inboxSaveChains.get(itemId)||Promise.resolve();
+  const task=preceding.catch(()=>{}).then(async()=>{
+    inboxStatus(itemId,'Saving…');
+    const result=await api('records',{action:'mediaInboxSave',...values});
+    const latest=mediaInbox.find(x=>x.id===itemId);
+    if(latest) {
+      if((inboxEditVersions.get(itemId)||0)===version) {
+        Object.assign(latest,result.item);
+        inboxDirty.delete(itemId);
+        inboxStatus(itemId,'Saved ✓');
+      } else {
+        latest.updatedAt=result.item.updatedAt;
+        inboxStatus(itemId,'Unsaved changes');
+      }
+    }
+    return result.item;
+  }).catch(error=>{
+    inboxDirty.add(itemId);
+    inboxStatus(itemId,'Not saved: ' + error.message,true);
+    throw error;
+  });
+  inboxSaveChains.set(itemId,task);
+  try { return await task; }
+  finally { if(inboxSaveChains.get(itemId)===task) inboxSaveChains.delete(itemId); }
+}
+async function saveInboxFieldsAll(onlyChanged=false) {
+  const ids=(onlyChanged?[...inboxDirty]:mediaInbox.map(x=>x.id))
+    .filter(id=>mediaInbox.some(x=>x.id===id));
+  let saved=0;
+  for(let i=0;i<ids.length;i+=4) {
+    const results=await Promise.allSettled(ids.slice(i,i+4).map(id=>saveInboxFields(id)));
+    const failed=results.find(x=>x.status==='rejected');
+    saved+=results.filter(x=>x.status==='fulfilled').length;
+    if(failed) throw new Error(saved + ' saved; at least one picture was not saved. ' + failed.reason.message);
+  }
+  return saved;
+}
+function updateInboxSelectAll() {
+  const checks=[...document.querySelectorAll('.inbox-check')];
+  const all=$('selectAllInbox');
+  if(!all) return;
+  const num=checks.filter(c=>c.checked).length;
+  all.checked=checks.length>0 && num===checks.length;
+  all.indeterminate=num>0 && num<checks.length;
+}
 function renderMediaInbox() {
   const campaignOptions = campaigns.map(c => `<option value="${esc(c.id)}">${esc(c.title)}</option>`).join('');
-  const cards = mediaInbox.length ? mediaInbox.map((item,index) => `
+  const cards = mediaInbox.length ? mediaInbox.map(item => {
+    const activeTargets=item.targets || ['facebook','instagram','x'];
+    const enabled=item.usePicture !== false;
+    return `
     <article class="inbox-card" data-inbox-card="${esc(item.id)}">
       <div class="inbox-image"><img src="${esc(item.imageUrl)}" alt=""></div>
       <div class="inbox-fields">
-        <label class="check inbox-use"><input class="inbox-check" type="checkbox" data-inbox-id="${esc(item.id)}" checked> Use this picture</label>
+        <label class="check inbox-use"><input class="inbox-check" type="checkbox" data-inbox-id="${esc(item.id)}" ${enabled ? 'checked' : ''}> Use this picture</label>
         <label>Campaign<select data-inbox-campaign="${esc(item.id)}">${campaignOptions}</select></label>
-        <label>Post title<input data-inbox-title="${esc(item.id)}" maxlength="120" value="${esc(item.filename.replace(/\.[^.]+$/,''))}"></label>
-        <label>Caption<textarea data-inbox-caption="${esc(item.id)}" rows="5" maxlength="10000" placeholder="What do you want people to hear?"></textarea></label>
-        <label>Link <small>(optional)</small><input data-inbox-link="${esc(item.id)}" type="url" placeholder="https://docjaks.com"></label>
+        <label>Post title<input data-inbox-title="${esc(item.id)}" maxlength="120" value="${esc(item.title ?? item.filename.replace(/\\.[^.]+$/,''))}"></label>
+        <label>Caption<textarea data-inbox-caption="${esc(item.id)}" rows="5" maxlength="10000" placeholder="What do you want people to hear?">${esc(item.caption || '')}</textarea></label>
+        <label>Link <small>(optional)</small><input data-inbox-link="${esc(item.id)}" type="url" value="${esc(item.link || '')}" placeholder="https://docjaks.com"></label>
         <fieldset><legend>Prepare for</legend>
-          <label class="check"><input type="checkbox" data-inbox-platform="${esc(item.id)}" value="facebook" checked> Facebook</label>
-          <label class="check"><input type="checkbox" data-inbox-platform="${esc(item.id)}" value="instagram" checked> Instagram</label>
-          <label class="check"><input type="checkbox" data-inbox-platform="${esc(item.id)}" value="x" checked> X</label>
-          <label class="check"><input type="checkbox" data-inbox-platform="${esc(item.id)}" value="youtube"> YouTube</label>
+          ${[['facebook','Facebook'],['instagram','Instagram'],['x','X'],['youtube','YouTube']].map(([id,label])=>`<label class="check"><input type="checkbox" data-inbox-platform="${esc(item.id)}" value="${id}" ${activeTargets.includes(id)?'checked':''}> ${label}</label>`).join('')}
         </fieldset>
-        <div class="inbox-actions"><button data-action="removeInbox" data-inbox-id="${esc(item.id)}">Remove</button></div>
+        <div class="inbox-actions">
+          <span class="inbox-save-state" data-inbox-save-status="${esc(item.id)}">${inboxDirty.has(item.id) ? 'Unsaved changes' : item.updatedAt ? 'Saved ✓' : 'Not saved yet'}</span>
+          <button class="approve" type="button" data-action="saveInboxItem" data-inbox-id="${esc(item.id)}">Save</button>
+          <button type="button" data-action="removeInbox" data-inbox-id="${esc(item.id)}">Remove</button>
+        </div>
       </div>
-    </article>`).join('') : '<div class="empty"><h3>Your Media Inbox is empty.</h3><p>Drop in a whole campaign of pictures at once. Fill out the information whenever you are ready.</p></div>';
+    </article>`;
+  }).join('') : '<div class="empty"><h3>Your Media Inbox is empty.</h3><p>Drop in a whole campaign of pictures at once. Fill out the information whenever you are ready.</p></div>';
   $('content').innerHTML = `
     <div class="box inbox-toolbar">
-      <div><strong>Media Inbox / Batch Upload</strong><p>Load all your campaign pictures first. Assign campaign, title, caption, link and platforms afterward.</p></div>
+      <div><strong>Media Inbox / Batch Upload</strong><p>Changes save automatically. You can also click Save or Save all. Your captions will still be here when you return.</p></div>
       <label class="upload-button inbox-upload">Load pictures<input id="batchImageFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden></label>
+      <label class="check inbox-select-all"><input type="checkbox" id="selectAllInbox" ${mediaInbox.length ? '' : 'disabled'}> Select all pictures</label>
+      <button type="button" class="approve" data-action="saveAllInbox" ${mediaInbox.length ? '' : 'disabled'}>Save all</button>
       <button class="approve" data-action="createInboxDrafts">Create drafts from selected</button>
       <span id="inboxCount">${mediaInbox.length} picture${mediaInbox.length===1?'':'s'} waiting</span>
     </div>
     <div id="mediaDropZone" class="drop-zone"><strong>Drag & drop pictures here</strong><span>JPG, PNG or WebP · multiple files welcome</span></div>
     <div class="inbox-grid">${cards}</div>`;
-  $('batchImageFiles')?.addEventListener('change', e => {
+  mediaInbox.forEach(item=>{
+    const select=document.querySelector('[data-inbox-campaign="' + CSS.escape(item.id) + '"]');
+    if(select) select.value=item.campaign || 'BBQ';
+    if(inboxDirty.has(item.id)) inboxStatus(item.id,'Unsaved changes');
+  });
+  updateInboxSelectAll();
+  $('batchImageFiles')?.addEventListener('change',e=>{
     const files=[...e.target.files]; e.target.value='';
     handlePictureFiles(files);
   });
