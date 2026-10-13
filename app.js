@@ -255,14 +255,14 @@ function platformMetricData(info = {}, platform) {
   return {
     audience: info.followers ?? info.subscribers ?? info.audience ?? source.followers ?? source.subscribers ?? source.audience ?? source.followersCount ?? source.subscriberCount,
     audienceChange: source.audienceChange ?? source.followersChange ?? source.netFollowers ?? source.subscriberGain ?? source.subscribersGained ?? info.audienceChange,
-    likes: source.likes ?? source.likeCount ?? info.likes,
-    replies: source.replies ?? source.comments ?? source.replyCount ?? source.commentCount ?? info.replies ?? info.comments,
+    likes: (platform==='x' ? actual.likes : null) ?? source.likes ?? source.likeCount ?? info.likes,
+    replies: (platform==='x' ? actual.replies : null) ?? source.replies ?? source.comments ?? source.replyCount ?? source.commentCount ?? info.replies ?? info.comments,
     clicks: actual.clicks ?? source.clicks ?? source.linkClicks ?? source.clickCount ?? info.clicks ?? info.linkClicks,
     shares: actual.shares ?? source.shares ?? source.reposts ?? source.forwards ?? source.shareCount ?? source.repostCount ?? info.shares ?? info.reposts,
     reach: actual.reach ?? source.reach ?? source.views ?? source.impressions ?? source.viewCount ?? source.reachCount ?? info.reach ?? info.views,
     reactions: source.reactions ?? source.reactionCount ?? info.reactions,
     saves: source.saves ?? source.saveCount ?? info.saves,
-    bookmarks: source.bookmarks ?? source.bookmarkCount ?? info.bookmarks,
+    bookmarks: (platform==='x' ? actual.bookmarks : null) ?? source.bookmarks ?? source.bookmarkCount ?? info.bookmarks,
     watchTime: source.watchTimeHours !== undefined ? compactMetric(source.watchTimeHours) + ' hr' : source.watchTimeMinutes !== undefined ? compactMetric(source.watchTimeMinutes) + ' min' : source.watchTime ?? info.watchTime,
     subscriberGain: source.subscriberGain ?? source.subscribersGained ?? source.netSubscribers ?? info.subscriberGain,
     topPostTitle: typeof top === 'string' ? top : top?.title ?? top?.caption ?? top?.name,
@@ -1426,7 +1426,20 @@ function render() {
   }
   if (activeView === 'Analytics') {
     const count = p => records.filter(r => r.results?.[p]?.status === 'published').length;
-    $('content').innerHTML = `<div class="cards"><div class="card"><h3>Facebook posts</h3><strong class="metric">${count('facebook')}</strong></div><div class="card"><h3>Instagram posts</h3><strong class="metric">${count('instagram')}</strong></div><div class="card"><h3>Scheduled</h3><strong class="metric">${records.filter(r => r.status === 'scheduled').length}</strong></div><div class="card"><h3>Needs attention</h3><strong class="metric">${records.filter(attention).length}</strong></div></div><p>Confirmed activity from this Command Center. Reach, likes, and audience analytics are not connected yet.</p>`;
+    const xStats = analyticsData?.platforms?.x || {};
+    $('content').innerHTML = `<div class="cards"><div class="card"><h3>Facebook posts</h3><strong class="metric">${count('facebook')}</strong></div><div class="card"><h3>Instagram posts</h3><strong class="metric">${count('instagram')}</strong></div><div class="card"><h3>X posts tracked</h3><strong class="metric">${count('x')}</strong></div><div class="card"><h3>Scheduled</h3><strong class="metric">${records.filter(r => r.status === 'scheduled').length}</strong></div><div class="card"><h3>Needs attention</h3><strong class="metric">${records.filter(attention).length}</strong></div></div>
+      <section class="box">
+        <h3>X campaign performance</h3>
+        <p>The X connection already supports account details and mentions. For manually posted campaigns, DJOMS tracks the copied post link and the numbers you enter. No extra X analytics API calls are made by this tracking feature.</p>
+        <div class="x-analytics-summary">
+          <span><small>Posts in this range</small><strong>${esc(xStats.posts ?? 0)}</strong></span>
+          <span><small>Views</small><strong>${esc(compactMetric(xStats.views ?? 'Not entered'))}</strong></span>
+          <span><small>Likes</small><strong>${esc(compactMetric(xStats.likes ?? 'Not entered'))}</strong></span>
+          <span><small>Reposts</small><strong>${esc(compactMetric(xStats.shares ?? 'Not entered'))}</strong></span>
+          <span><small>Replies</small><strong>${esc(compactMetric(xStats.replies ?? 'Not entered'))}</strong></span>
+        </div>
+        <p class="locknote">To record an X post, open its campaign card in Content Library, paste the X post URL, select Mark X as Posted, then enter any visible engagement counts. These are snapshots, not live measurements.</p>
+      </section>`;
     return;
   }
   let list = records.filter(r => !campaignFilter || r.campaign === campaignFilter);
