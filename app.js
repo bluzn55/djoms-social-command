@@ -863,6 +863,8 @@ async function handlePictureFiles(files) {
       mediaInbox.unshift(added.item);
       done++;
     }
+    // Keep any captions on previously uploaded pictures before rebuilding the grid.
+    await saveInboxFieldsAll(true);
     renderMediaInbox();
     notice(done + ' picture' + (done===1?'':'s') + ' loaded into Media Inbox.');
   });
@@ -1214,7 +1216,17 @@ function render() {
   const campaignPicker = canSelect ? `<label class="library-campaign-filter">Campaign<select id="libraryCampaignFilter"><option value="">All campaigns</option>${campaigns.map(c => `<option value="${esc(c.id)}" ${campaignFilter === c.id ? 'selected' : ''}>${esc(c.title)}</option>`).join('')}</select></label>` : '';
   $('content').innerHTML = `<div class="filterbar"><label>Find a post<input id="searchPosts" type="search" value="${esc(searchTerm)}" placeholder="Title or caption"></label>${campaignPicker}${campaignFilter && !canSelect ? '<button data-action="allCampaigns">Show all campaigns</button>':''}${bulkTools}<span>${list.length} posts</span></div>` + rowsHtml(list);
 }
-function setView(view) { if (dirty && !confirm('Leave without saving your changes?')) return; activeView = view; campaignFilter = ''; searchTerm = ''; render(); }
+async function setView(view) {
+  if (inboxChangingView) return;
+  if (activeView === 'Media Inbox' && view !== 'Media Inbox' && inboxDirty.size) {
+    inboxChangingView = true;
+    try { await saveInboxFieldsAll(true); }
+    catch(error) { notice('Could not save Media Inbox changes. Stay here and click Save again: ' + error.message,true); return; }
+    finally { inboxChangingView = false; }
+  }
+  if (dirty && !confirm('Leave without saving your changes?')) return;
+  activeView = view; campaignFilter = ''; searchTerm = ''; render();
+}
 function platformText() {
   const caption = $('postCaption').value.trim();
   const link = $('postLink').value.trim();
@@ -1517,18 +1529,38 @@ document.addEventListener('click', event => {
       renderVideoInbox(); notice('Video deleted.');
     });
   }
+  if (action === 'saveInboxItem') {
+    const itemId=b.dataset.inboxId;
+    return perform(async()=>{
+      await saveInboxFields(itemId);
+      notice('Media Inbox placecard saved. You can leave and reopen it.');
+    });
+  }
+  if (action === 'saveAllInbox') {
+    return perform(async()=>{
+      const count=await saveInboxFieldsAll(false);
+      notice(count + ' Media Inbox placecard' + (count===1?'':'s') + ' saved. Captions, titles, links and platform selections will remain when you return.');
+    });
+  }
   if (action === 'removeInbox') {
     const itemId=b.dataset.inboxId;
     if (!confirm('Remove this picture from Media Inbox?')) return;
     return perform(async()=> {
+      if(inboxSaveTimers.has(itemId)) clearTimeout(inboxSaveTimers.get(itemId));
+      inboxSaveTimers.delete(itemId);
+      await inboxSaveChains.get(itemId)?.catch(()=>{});
       await api('records',{action:'mediaInboxDelete',itemId});
       mediaInbox=mediaInbox.filter(x=>x.id!==itemId);
+      inboxDirty.delete(itemId);
+      inboxEditVersions.delete(itemId);
+      inboxSaveChains.delete(itemId);
       renderMediaInbox();
       notice('Picture removed from Media Inbox.');
     });
   }
   if (action === 'createInboxDrafts') {
     return perform(async()=> {
+      await saveInboxFieldsAll(true);
       const selectedIds=[...document.querySelectorAll('.inbox-check:checked')].map(x=>x.dataset.inboxId);
       if(!selectedIds.length) throw new Error('Select at least one picture.');
       if(!confirm('Create ' + selectedIds.length + ' draft post' + (selectedIds.length===1?'':'s') + ' from these pictures?')) return;
@@ -1538,6 +1570,10 @@ document.addEventListener('click', event => {
         const record=await buildInboxDraft(itemId);
         updateRecord(record);
         mediaInbox=mediaInbox.filter(x=>x.id!==itemId);
+        inboxDirty.delete(itemId);
+        inboxEditVersions.delete(itemId);
+        if(inboxSaveTimers.has(itemId)) clearTimeout(inboxSaveTimers.get(itemId));
+        inboxSaveTimers.delete(itemId);
         done++;
       }
       await loadRecords();
@@ -1595,6 +1631,22 @@ document.addEventListener('click', event => {
   });
 });
 document.addEventListener('change', event => {
+  if(event.target.id === 'selectAllInbox') {
+    document.querySelectorAll('.inbox-check').forEach(box=>{
+      if(box.checked !== event.target.checked) {
+        box.checked=event.target.checked;
+        inboxMarkEdited(box.dataset.inboxId);
+      }
+    });
+    updateInboxSelectAll();
+    return;
+  }
+  const inboxCard=event.target.closest('.inbox-card');
+  if(inboxCard) {
+    inboxMarkEdited(inboxCard.dataset.inboxCard);
+    if(event.target.classList.contains('inbox-check')) updateInboxSelectAll();
+    return;
+  }
   if (event.target.id === 'libraryCampaignFilter') {
     campaignFilter = event.target.value;
     render();
@@ -1608,8 +1660,19 @@ document.addEventListener('change', event => {
   }
 });
 document.addEventListener('input', event => {
+  const inboxCard=event.target.closest('.inbox-card');
+  if(inboxCard && event.target.type !== 'checkbox') {
+    inboxMarkEdited(inboxCard.dataset.inboxCard);
+    return;
+  }
   if (event.target.id === 'searchPosts') { const position=event.target.selectionStart; searchTerm=event.target.value; render(); $('searchPosts').focus(); try{$('searchPosts').setSelectionRange(position,position);}catch{} return; }
   if (event.target.closest('#editForm')) { dirty=true; updatePreview(); buttons(); }
+});
+window.addEventListener('beforeunload',event=>{
+  if(inboxDirty.size && activeView === 'Media Inbox') {
+    event.preventDefault();
+    event.returnValue='';
+  }
 });
 $('imageFile').addEventListener('change', e => { const file=e.target.files[0]; e.target.value=''; perform(() => upload(file)); });
 $('editForm').addEventListener('submit', e => { e.preventDefault(); perform(saveDraft); });
