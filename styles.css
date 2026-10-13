@@ -2607,3 +2607,22 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 .x-manual-actions button { margin:0; }
 .x-manual-caution { color:#993a29; font-weight:700; }
 @media (max-width:730px) { .x-manual-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+
+.x-analytics-summary {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(125px,1fr));
+  gap:12px;
+  margin:15px 0 18px;
+}
+.x-analytics-summary span {
+  padding:13px;
+  background:#f7eedc;
+  border:1px solid #d4bea1;
+  border-radius:8px;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+.x-analytics-summary small { font-size:12px; font-weight:600; }
+.x-analytics-summary strong { font-size:23px; }
