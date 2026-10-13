@@ -640,9 +640,28 @@ async function signedIn(s) {
   }
 }
 function badge(status) { return `<span class="status state-${esc(status)}">${esc(labels[status] || status)}</span>`; }
+function canDeleteDraft(r) {
+  return r?.status === 'draft' && !r.scheduleToken &&
+    !Object.values(r.results || {}).some(p => p && (p.postId || ['published','sending','uncertain','processing'].includes(p.status)));
+}
 function rowsHtml(list) {
   if (!list.length) return '<div class="empty"><h3>No posts here yet.</h3><p>Use New post to start one.</p></div>';
-  return '<div class="table-wrap"><table><thead><tr><th>Photo</th><th>Post</th><th>Platforms</th><th>Status</th><th>Posting time</th><th></th></tr></thead><tbody>' + list.map(r => `<tr><td>${r.imageUrl ? `<img class="row-photo" src="${esc(r.imageUrl)}" alt="">` : '<span class="thumb">PHOTO</span>'}</td><td><small class="id">${esc(code(r))}</small><strong>${esc(r.title)}</strong></td><td>${r.targets.map(t => esc(names[t])).join('<br>') || 'Choose platforms'}</td><td>${badge(r.status)}</td><td>${esc(date(r.scheduledAt))}</td><td class="post-row-actions"><button data-open="${esc(r.id)}" aria-label="Open ${esc(r.title)}">Open ›</button>${r.status === 'draft' ? `<button class="danger" data-delete-draft="${esc(r.id)}" aria-label="Delete draft ${esc(r.title)}">Delete</button>` : ''}</td></tr>`).join('') + '</tbody></table></div>';
+  const withSelection = activeView === 'Content Library';
+  return '<div class="table-wrap"><table><thead><tr>' +
+    (withSelection ? '<th scope="col">Select</th>' : '') +
+    '<th>Photo</th><th>Post</th><th>Platforms</th><th>Status</th><th>Posting time</th><th></th></tr></thead><tbody>' +
+    list.map(r => `<tr>${withSelection ? `<td class="draft-select-cell">${canDeleteDraft(r) ? `<input type="checkbox" class="draft-check" data-draft-id="${esc(r.id)}" aria-label="Select draft ${esc(r.title)}">` : '<span class="draft-not-selectable" title="Only unsent drafts may be selected">—</span>'}</td>` : ''}<td>${r.imageUrl ? `<img class="row-photo" src="${esc(r.imageUrl)}" alt="">` : '<span class="thumb">PHOTO</span>'}</td><td><small class="id">${esc(code(r))}</small><strong>${esc(r.title)}</strong></td><td>${r.targets.map(t => esc(names[t])).join('<br>') || 'Choose platforms'}</td><td>${badge(r.status)}</td><td>${esc(date(r.scheduledAt))}</td><td class="post-row-actions"><button data-open="${esc(r.id)}" aria-label="Open ${esc(r.title)}">Open ›</button>${canDeleteDraft(r) ? `<button class="danger" data-delete-draft="${esc(r.id)}" aria-label="Delete draft ${esc(r.title)}">Delete</button>` : ''}</td></tr>`).join('') +
+    '</tbody></table></div>';
+}
+function updateDraftSelectionControls() {
+  const boxes = [...document.querySelectorAll('.draft-check')];
+  const chosen = boxes.filter(b => b.checked).length;
+  const bulkButton = $('deleteSelectedDrafts'), selectAll = $('selectAllDrafts');
+  if (!bulkButton || !selectAll) return;
+  bulkButton.disabled = busy || chosen === 0;
+  bulkButton.textContent = 'Delete selected (' + chosen + ')';
+  selectAll.checked = !!boxes.length && chosen === boxes.length;
+  selectAll.indeterminate = chosen > 0 && chosen < boxes.length;
 }
 function attention(r) { return ['failed','partial','uncertain','queueing','processing','publishing'].includes(r.status); }
 function localInputValue(value) {
@@ -1081,7 +1100,10 @@ function render() {
   if (activeView === 'Approvals') list = records.filter(r => ['draft','approved'].includes(r.status));
   if (activeView === 'Needs Attention') list = records.filter(attention);
   if (searchTerm) list = list.filter(r => (r.title + ' ' + r.caption).toLowerCase().includes(searchTerm.toLowerCase()));
-  $('content').innerHTML = `<div class="filterbar"><label>Find a post<input id="searchPosts" type="search" value="${esc(searchTerm)}" placeholder="Title or caption"></label>${campaignFilter ? '<button data-action="allCampaigns">Show all campaigns</button>':''}<span>${list.length} posts</span></div>` + rowsHtml(list);
+  const canSelect = activeView === 'Content Library';
+  const draftCount = list.filter(canDeleteDraft).length;
+  const bulkTools = canSelect ? `<label class="draft-select-all"><input type="checkbox" id="selectAllDrafts" ${draftCount ? '' : 'disabled'}> Select all drafts shown</label><button type="button" class="danger" id="deleteSelectedDrafts" data-action="deleteSelectedDrafts" disabled>Delete selected (0)</button>` : '';
+  $('content').innerHTML = `<div class="filterbar"><label>Find a post<input id="searchPosts" type="search" value="${esc(searchTerm)}" placeholder="Title or caption"></label>${campaignFilter ? '<button data-action="allCampaigns">Show all campaigns</button>':''}${bulkTools}<span>${list.length} posts</span></div>` + rowsHtml(list);
 }
 function setView(view) { if (dirty && !confirm('Leave without saving your changes?')) return; activeView = view; campaignFilter = ''; searchTerm = ''; render(); }
 function platformText() {
@@ -1130,8 +1152,8 @@ function buttons() {
   $('publishButton').disabled = busy || dirty || !retryable;
   $('publishButton').textContent = interrupted ? 'Check interrupted post' : r.status === 'processing' || r.results?.instagram?.status === 'processing' ? 'Finish Instagram post' : ['failed','partial'].includes(r.status) ? 'Retry unsent platforms' : 'Publish now';
   $('scheduleButton').disabled = busy || dirty || r.status !== 'approved' || !connection?.scheduler;
-  $('deleteDraftButton').hidden = r.status !== 'draft';
-  $('deleteDraftButton').disabled = busy || dirty || r.status !== 'draft';
+  $('deleteDraftButton').hidden = !canDeleteDraft(r);
+  $('deleteDraftButton').disabled = busy || dirty || !canDeleteDraft(r);
   ['pauseButton','draftButton'].forEach(x => $(x).disabled = busy || dirty || ['publishing','published','partial','uncertain'].includes(r.status));
   $('savedState').textContent = dirty ? 'Unsaved changes — save the draft before approving or posting.' : 'Saved ' + date(r.updatedAt);
   $('scheduleNote').textContent = r.status === 'scheduled' ? 'Scheduled for ' + date(r.scheduledAt) + '. Delivery continues when this browser is closed.' : connection?.scheduler ? 'Approve the saved post, then choose a time from two minutes to seven days ahead. Delivery can be delayed by the platforms.' : 'Scheduling is disabled until its one-time server setup is finished.';
@@ -1227,7 +1249,7 @@ document.addEventListener('click', event => {
   if (b.dataset.campaign) { campaignFilter = campaignFilter === b.dataset.campaign ? '' : b.dataset.campaign; return render(); }
   if (b.dataset.deleteDraft) {
     const r = records.find(x => x.id === b.dataset.deleteDraft);
-    if (!r || r.status !== 'draft') { notice('Only unsent drafts can be deleted.', true); return; }
+    if (!canDeleteDraft(r)) { notice('Only unsent drafts can be deleted.', true); return; }
     if (!confirm('Permanently delete the draft "' + r.title + '"? This cannot be undone. Original artwork files on your computer are not affected.')) return;
     return perform(async () => {
       await api('records', { action:'deleteDraft', id:r.id, revision:r.revision });
@@ -1270,9 +1292,36 @@ document.addEventListener('click', event => {
   }
   if (action === 'back') { if (!dirty || confirm('Leave without saving your changes?')) render(); return; }
   if (action === 'allCampaigns') { campaignFilter=''; return render(); }
+  if (action === 'deleteSelectedDrafts') {
+    if (activeView !== 'Content Library') return;
+    const chosen = [...document.querySelectorAll('.draft-check:checked')]
+      .map(box => records.find(r => r.id === box.dataset.draftId));
+    if (!chosen.length) { notice('Check the drafts you want to delete first.', true); return; }
+    if (chosen.some(r => !canDeleteDraft(r))) { notice('Only unsent drafts can be deleted. Refresh the list and try again.', true); return; }
+    const count = chosen.length;
+    if (!confirm('Permanently delete ' + count + ' selected draft post' + (count === 1 ? '' : 's') + '? This cannot be undone. Published and scheduled posts are protected.')) return;
+    return perform(async () => {
+      let deleted = 0, error = null;
+      for (const r of chosen) {
+        notice('Deleting draft ' + (deleted + 1) + ' of ' + count + '…');
+        try {
+          await api('records', { action:'deleteDraft', id:r.id, revision:r.revision });
+          records = records.filter(x => x.id !== r.id);
+          deleted++;
+        } catch (e) { error = e; break; }
+      }
+      // Refresh so an interrupted run or revision conflict cannot leave stale rows.
+      await loadRecords();
+      render();
+      notice(error
+        ? deleted + ' of ' + count + ' selected drafts deleted. Remaining drafts were kept. ' + error.message
+        : deleted + ' selected draft' + (deleted === 1 ? '' : 's') + ' deleted.',
+        !!error);
+    });
+  }
   if (action === 'deleteDraft') {
     const r = selected;
-    if (!r || r.status !== 'draft' || dirty) { notice('Only saved, unsent drafts can be deleted. Save or discard any unsaved changes first.', true); return; }
+    if (!canDeleteDraft(r) || dirty) { notice('Only saved, unsent drafts can be deleted. Save or discard any unsaved changes first.', true); return; }
     if (!confirm('Permanently delete the draft "' + r.title + '"? This cannot be undone. Original artwork files on your computer are not affected.')) return;
     return perform(async () => {
       await api('records', { action:'deleteDraft', id:r.id, revision:r.revision });
@@ -1434,6 +1483,14 @@ document.addEventListener('click', event => {
     else if (action === 'schedule') { const at=$('scheduleTime').value; if(!at) throw new Error('Choose a posting date and time.'); await recordAction('schedule',{scheduledAt:new Date(at).toISOString(),timeZone:timezone}); }
     else if (['approve','pause','draft','duplicate'].includes(action)) await recordAction(action);
   });
+});
+document.addEventListener('change', event => {
+  if (event.target.id === 'selectAllDrafts') {
+    document.querySelectorAll('.draft-check').forEach(box => { box.checked = event.target.checked; });
+    updateDraftSelectionControls();
+  } else if (event.target.classList?.contains('draft-check')) {
+    updateDraftSelectionControls();
+  }
 });
 document.addEventListener('input', event => {
   if (event.target.id === 'searchPosts') { const position=event.target.selectionStart; searchTerm=event.target.value; render(); $('searchPosts').focus(); try{$('searchPosts').setSelectionRange(position,position);}catch{} return; }
