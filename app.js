@@ -1103,7 +1103,8 @@ function render() {
   const canSelect = activeView === 'Content Library';
   const draftCount = list.filter(canDeleteDraft).length;
   const bulkTools = canSelect ? `<label class="draft-select-all"><input type="checkbox" id="selectAllDrafts" ${draftCount ? '' : 'disabled'}> Select all drafts shown</label><button type="button" class="danger" id="deleteSelectedDrafts" data-action="deleteSelectedDrafts" disabled>Delete selected (0)</button>` : '';
-  $('content').innerHTML = `<div class="filterbar"><label>Find a post<input id="searchPosts" type="search" value="${esc(searchTerm)}" placeholder="Title or caption"></label>${campaignFilter ? '<button data-action="allCampaigns">Show all campaigns</button>':''}${bulkTools}<span>${list.length} posts</span></div>` + rowsHtml(list);
+  const campaignPicker = canSelect ? `<label class="library-campaign-filter">Campaign<select id="libraryCampaignFilter"><option value="">All campaigns</option>${campaigns.map(c => `<option value="${esc(c.id)}" ${campaignFilter === c.id ? 'selected' : ''}>${esc(c.title)}</option>`).join('')}</select></label>` : '';
+  $('content').innerHTML = `<div class="filterbar"><label>Find a post<input id="searchPosts" type="search" value="${esc(searchTerm)}" placeholder="Title or caption"></label>${campaignPicker}${campaignFilter && !canSelect ? '<button data-action="allCampaigns">Show all campaigns</button>':''}${bulkTools}<span>${list.length} posts</span></div>` + rowsHtml(list);
 }
 function setView(view) { if (dirty && !confirm('Leave without saving your changes?')) return; activeView = view; campaignFilter = ''; searchTerm = ''; render(); }
 function platformText() {
@@ -1299,7 +1300,8 @@ document.addEventListener('click', event => {
     if (!chosen.length) { notice('Check the drafts you want to delete first.', true); return; }
     if (chosen.some(r => !canDeleteDraft(r))) { notice('Only unsent drafts can be deleted. Refresh the list and try again.', true); return; }
     const count = chosen.length;
-    if (!confirm('Permanently delete ' + count + ' selected draft post' + (count === 1 ? '' : 's') + '? This cannot be undone. Published and scheduled posts are protected.')) return;
+    const includedCampaigns = [...new Set(chosen.map(r => campaigns.find(c => c.id === r.campaign)?.title || r.campaign))];
+    if (!confirm('Permanently delete ' + count + ' selected draft post' + (count === 1 ? '' : 's') + ' from ' + includedCampaigns.join(', ') + '? This cannot be undone. Published and scheduled posts are protected.')) return;
     return perform(async () => {
       let deleted = 0, error = null;
       for (const r of chosen) {
@@ -1485,6 +1487,11 @@ document.addEventListener('click', event => {
   });
 });
 document.addEventListener('change', event => {
+  if (event.target.id === 'libraryCampaignFilter') {
+    campaignFilter = event.target.value;
+    render();
+    return;
+  }
   if (event.target.id === 'selectAllDrafts') {
     document.querySelectorAll('.draft-check').forEach(box => { box.checked = event.target.checked; });
     updateDraftSelectionControls();
