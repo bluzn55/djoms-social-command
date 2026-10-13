@@ -1506,6 +1506,47 @@ function buttons() {
   $('savedState').textContent = dirty ? 'Unsaved changes — save the draft before approving or posting.' : 'Saved ' + date(r.updatedAt);
   $('scheduleNote').textContent = r.status === 'scheduled' ? 'Scheduled for ' + date(r.scheduledAt) + '. Delivery continues when this browser is closed.' : connection?.scheduler ? 'Approve the saved post, then choose a time from two minutes to seven days ahead. Delivery can be delayed by the platforms.' : 'Scheduling is disabled until its one-time server setup is finished.';
 }
+
+function renderXManualTracker(record) {
+  const host=$('manualXTracker');
+  if(!host)return;
+  if(!record?.targets?.includes('x')) {host.hidden=true;host.innerHTML='';return;}
+  host.hidden=false;
+  const item=record.results?.x || {};
+  const reported=item.status==='published' && !!item.postId;
+  if(!reported) {
+    const blocked=['sending','uncertain','preparing'].includes(item.status);
+    host.innerHTML='<h3>Track a post you published manually on X</h3>' +
+      '<p>Post normally on X, then open that post, click Share, and choose Copy link. Paste the post link here to mark this campaign as posted on X.</p>' +
+      '<label>Link to your published X post<input type="url" id="manualXPostUrl" placeholder="https://x.com/YourAccount/status/1234567890123456789" ' +
+        (blocked?'disabled':'') + '></label>' +
+      '<button type="button" class="approve" data-action="markXManual" '+
+        (blocked?'disabled':'')+'>Mark X as Posted</button>' +
+      '<p class="locknote">This records the existing post in DJOMS. It does not publish anything or enable paid X automation.</p>' +
+      (blocked?'<p class="x-manual-caution">A previous X delivery is awaiting confirmation. Check the account before adding a manual link.</p>':'');
+    return;
+  }
+  const fields=[
+    ['views','Views'],['likes','Likes'],['replies','Replies'],
+    ['reposts','Reposts'],['bookmarks','Bookmarks'],['linkClicks','Link clicks']
+  ];
+  const editor=fields.map(([key,label])=>
+    '<label>'+label+
+    '<input id="xMetric-'+key+'" type="number" inputmode="numeric" min="0" max="100000000000" '+
+    'placeholder="Not entered" value="'+esc(item.metrics?.[key] ?? '')+'"></label>'
+  ).join('');
+  const url='https://x.com/i/web/status/'+encodeURIComponent(item.postId);
+  host.innerHTML='<h3>X post: '+(item.source==='manual'?'Posted manually':'Posted')+'</h3>' +
+    '<p><a href="'+url+'" target="_blank" rel="noopener noreferrer">View your X post ↗</a></p>' +
+    '<p>Track the numbers visible on X. Leave a field blank if that number is unavailable.</p>' +
+    '<div class="x-manual-metrics">'+editor+'</div>' +
+    '<div class="x-manual-actions"><button type="button" class="approve" data-action="saveXMetrics">Save X numbers</button>' +
+    (item.source==='manual' ? '<button type="button" data-action="clearXManual">Unlink manual X post</button>' : '')+'</div>' +
+    '<p class="locknote">Stats are entered manually and are not an automatic X analytics feed. ' +
+    (item.metricsUpdatedAt?'Last updated: '+esc(date(item.metricsUpdatedAt))+'. ':'')+
+    'Unlinking does not delete anything from X.</p>';
+}
+
 function openRecord(r) {
   if (!r) return;
   clearTimeout(pollTimer); selected = structuredClone(r); dirty = false;
@@ -1523,6 +1564,7 @@ function openRecord(r) {
   } else $('scheduleTime').value = '';
   $('historyList').innerHTML = (r.history || []).map(h => `<p><small>${esc(date(h.at))} · ${esc(h.user)}</small><br>${esc(h.message)}</p>`).join('');
   $('results').innerHTML = Object.entries(r.results || {}).map(([p,v]) => `<div class="result-item"><strong>${esc(names[p])}: ${esc(labels[v.status] || v.status)}</strong>${v.postId ? `<p>Post ID: ${esc(v.postId)}</p>${p==='x' ? `<p><a href="https://x.com/i/web/status/${encodeURIComponent(v.postId)}" target="_blank" rel="noopener noreferrer">View X post ↗</a></p>` : ''}`:''}${v.error ? `<p>${esc(v.error)}</p>`:''}${v.note ? `<p>${esc(v.note)}</p>`:''}${['sending','uncertain'].includes(v.status) && (p==='facebook' || p==='instagram') ? `<button data-resolve="${p}" data-outcome="posted">I found the post</button><button data-resolve="${p}" data-outcome="not-posted">I checked: it did not post</button>`:''}</div>`).join('');
+  renderXManualTracker(r);
   updatePreview(); buttons();
 }
 async function saveDraft() {
@@ -1615,6 +1657,33 @@ document.addEventListener('click', event => {
   if (b.dataset.commentPlatformFilter) { commentPlatformFilter=b.dataset.commentPlatformFilter; renderComments(); return; }
   if (b.dataset.commentStatusFilter) { commentStatusFilter=b.dataset.commentStatusFilter; renderComments(); return; }
   const action = b.dataset.action; if (!action) return;
+  if(action==='markXManual') {
+    if(!selected || dirty) { notice('Save or discard unsaved post edits before linking X.',true);return; }
+    const url=$('manualXPostUrl')?.value.trim();
+    if(!url) {notice('Copy your published X post link and paste it first.',true);return;}
+    if(!confirm('Confirm that you already posted this campaign on X? This records a link in DJOMS; it does not publish anything.'))return;
+    return perform(async()=>{
+      await recordAction('recordManualX',{url});
+      notice('Manual X post linked to this campaign. You can now save its views, likes and reposts.');
+    });
+  }
+  if(action==='saveXMetrics') {
+    if(!selected || dirty) {notice('Save or discard unsaved post edits first.',true);return;}
+    const keys=['views','likes','replies','reposts','bookmarks','linkClicks'];
+    const metrics=Object.fromEntries(keys.map(key=>[key,$('xMetric-'+key)?.value.trim() || null]));
+    return perform(async()=>{
+      await recordAction('updateManualXMetrics',{metrics});
+      notice('X statistics saved to DJOMS. These are manually entered numbers, not live X API analytics.');
+    });
+  }
+  if(action==='clearXManual') {
+    if(!selected || dirty)return notice('Save or discard unsaved post edits first.',true);
+    if(!confirm('Unlink this manually recorded X post from DJOMS? It will remain published on X.'))return;
+    return perform(async()=>{
+      await recordAction('clearManualX');
+      notice('Manual X tracking link removed. The post remains on X.');
+    });
+  }
   if (action === 'openUnansweredComments') { commentStatusFilter = 'unanswered'; setView('Comments'); return; }
   if (action === 'openBlogComments') { commentPlatformFilter = 'blog'; commentStatusFilter = 'all'; setView('Comments'); return; }
   if (action === 'connectBlog') {
