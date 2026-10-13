@@ -2511,3 +2511,7 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 .draft-select-cell input { cursor:pointer; }
 .draft-select-cell .draft-not-selectable { color:#897d69; }
 .post-row-actions { min-width:170px; }
+
+/* Limit bulk cleanup by campaign (especially BBQ versus Book). */
+.filterbar .library-campaign-filter { min-width:215px; flex:0 1 280px; }
+.filterbar .library-campaign-filter select { margin:6px 0 0; }
