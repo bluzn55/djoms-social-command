@@ -1253,7 +1253,10 @@ function render() {
   const draftCount = list.filter(canDeleteDraft).length;
   const bulkTools = canSelect ? `<label class="draft-select-all"><input type="checkbox" id="selectAllDrafts" ${draftCount ? '' : 'disabled'}> Select all drafts shown</label><button type="button" class="danger" id="deleteSelectedDrafts" data-action="deleteSelectedDrafts" disabled>Delete selected (0)</button>` : '';
   const campaignPicker = canSelect ? `<label class="library-campaign-filter">Campaign<select id="libraryCampaignFilter"><option value="">All campaigns</option>${campaigns.map(c => `<option value="${esc(c.id)}" ${campaignFilter === c.id ? 'selected' : ''}>${esc(c.title)}</option>`).join('')}</select></label>` : '';
-  $('content').innerHTML = `<div class="filterbar"><label>Find a post<input id="searchPosts" type="search" value="${esc(searchTerm)}" placeholder="Title or caption"></label>${campaignPicker}${campaignFilter && !canSelect ? '<button data-action="allCampaigns">Show all campaigns</button>':''}${bulkTools}<span>${list.length} posts</span></div>` + rowsHtml(list);
+  const missingBookLinks = records.filter(r => r.campaign === 'BOOK' && canDeleteDraft(r) && !String(r.link || '').trim()).length;
+  const bookLinkRepair = canSelect && (!campaignFilter || campaignFilter === 'BOOK') && missingBookLinks
+    ? `<button type="button" class="approve" data-action="fillMissingBookLinks">Fill missing Book links (${missingBookLinks})</button>` : '';
+  $('content').innerHTML = `<div class="filterbar"><label>Find a post<input id="searchPosts" type="search" value="${esc(searchTerm)}" placeholder="Title or caption"></label>${campaignPicker}${campaignFilter && !canSelect ? '<button data-action="allCampaigns">Show all campaigns</button>':''}${bulkTools}${bookLinkRepair}<span>${list.length} posts</span></div>` + rowsHtml(list);
 }
 async function setView(view) {
   if (inboxChangingView) return;
@@ -1452,6 +1455,18 @@ document.addEventListener('click', event => {
   }
   if (action === 'back') { if (!dirty || confirm('Leave without saving your changes?')) render(); return; }
   if (action === 'allCampaigns') { campaignFilter=''; return render(); }
+  if (action === 'fillMissingBookLinks') {
+    if (activeView !== 'Content Library') return;
+    const count = records.filter(r => r.campaign === 'BOOK' && canDeleteDraft(r) && !String(r.link || '').trim()).length;
+    if (!count) { notice('No missing links remain on the Book drafts.'); return; }
+    if (!confirm('Add https://www.docjaks.com to the ' + count + ' Book draft' + (count === 1 ? '' : 's') + ' with empty links? Existing links, artwork, captions, and other campaigns will be left alone. This will NOT publish any posts.')) return;
+    return perform(async() => {
+      const result = await api('records', { action:'fillMissingBookLinks' });
+      await loadRecords();
+      render();
+      notice(result.updated + ' missing Book Campaign link' + (result.updated === 1 ? '' : 's') + ' filled. Nothing was published.');
+    });
+  }
   if (action === 'deleteSelectedDrafts') {
     if (activeView !== 'Content Library') return;
     const chosen = [...document.querySelectorAll('.draft-check:checked')]
