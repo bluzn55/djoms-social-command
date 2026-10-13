@@ -2532,3 +2532,11 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   .inbox-toolbar #inboxCount { margin:0; }
   .inbox-actions { justify-content:flex-start; }
 }
+
+/* Call attention to the exact placecard URL blocking draft creation. */
+.inbox-fields input.inbox-invalid-link,
+.inbox-fields input[aria-invalid="true"] {
+  border:3px solid #ae3328 !important;
+  background:#fff0ec !important;
+  outline-offset:2px;
+}
