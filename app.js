@@ -1229,6 +1229,34 @@ function rotationDateTime(iso) {
   }).format(new Date(iso));
 }
 
+
+function rotationXPanel(plan) {
+  const x=xAutoStatus || {};
+  const future=(plan?.entries || []).filter(e=>Date.parse(e.at)>Date.now() && e.state!=='published' &&
+    records.find(r=>r.id===e.recordId)?.targets?.includes('x')).length;
+  const estimate=(future*0.20).toFixed(2);
+  let controls='';
+  if(x.enabled){
+    controls='<button type="button" class="danger" data-action="disableXAuto">Turn OFF automatic X posting</button>';
+  } else if(!x.ready){
+    controls='<a class="button" href="/api/x/connect">Connect / reconnect X for image posting</a>' +
+      '<p>After connecting the intended X account, return here and refresh the page.</p>';
+  } else {
+    controls='<label class="check"><input type="checkbox" id="xBillingConsent"> I authorize X API pay-per-use charges for future rotation posts.</label>' +
+      '<button type="button" class="approve" id="enableXAuto" data-action="enableXAuto" disabled>Enable automatic X posting</button>';
+  }
+  return '<section class="rotation-x-settings" aria-label="X automatic posting settings">' +
+    '<h3>X Automatic Posting</h3>' +
+    '<p><strong>' + (x.enabled ? 'ON FOR UPCOMING POSTS' : 'OFF: X IS NOT AUTO-POSTING') + '</strong></p>' +
+    '<p>Connected account: ' + esc(x.account || 'Not verified') + ' · ' +
+      esc(x.connectionMessage || 'Checking X account…') + '</p>' +
+    '<p>When enabled, DJOMS sends each future rotation post to X with its campaign picture, a short caption, and its website link.</p>' +
+    '<p><strong>Estimated X API cost:</strong> X currently charges about $0.20 per linked post. ' +
+      future + ' upcoming posts could cost approximately <strong>$' + estimate + '</strong> at current rates. ' +
+      'X bills from prepaid developer credits. Prices may change.</p>' +
+    '<p>Already-published posts are not sent again automatically. Facebook and Instagram continue unchanged.</p>' +
+    controls + '</section>';
+}
 function renderPostingRotation() {
   const plan=rotationStatus?.plan || null;
   const counts=rotationStatus?.approved || {};
@@ -1280,6 +1308,7 @@ function renderPostingRotation() {
       <p class="rotation-caution"><strong>Delivery:</strong> Facebook and Instagram publish automatically if their accounts remain connected.
       X is prepared only and does not yet publish automatically. No posts go live until the chosen starting time.</p>
       ${current}
+      ${rotationXPanel(plan)}
       ${setup}
     </section>`;
 }
@@ -1366,11 +1395,13 @@ function render() {
     return;
   }
   if (activeView === 'Posting Rotation') {
-    $('content').innerHTML='<div class="box"><h3>Checking the 90-day rotation…</h3></div>';
-    api('rotation').then(data=>{
-      rotationStatus=data;
-      if(activeView==='Posting Rotation') renderPostingRotation();
-    }).catch(e=>notice('Could not load the rotation: ' + e.message,true));
+    $('content').innerHTML='<div class="box"><h3>Checking the rotation and X connection…</h3></div>';
+    Promise.allSettled([api('rotation'),loadXAuto()]).then(results=>{
+      if(results[0].status==='fulfilled')rotationStatus=results[0].value;
+      else notice('Could not load the rotation: '+results[0].reason.message,true);
+      if(results[1].status==='rejected')xAutoStatus={enabled:false,ready:false,connected:false,connectionMessage:results[1].reason.message};
+      if(activeView==='Posting Rotation')renderPostingRotation();
+    });
     return;
   }
   if (activeView === 'Website Analytics') {
