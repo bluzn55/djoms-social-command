@@ -899,6 +899,35 @@ function inboxFieldValues(itemId) {
     usePicture:!!card.querySelector('.inbox-check')?.checked
   };
 }
+function isValidInboxLink(value) {
+  const link=String(value || '').trim();
+  if (!link) return true; // Links are optional.
+  try {
+    const parsed=new URL(link);
+    return parsed.protocol === 'https:' && !parsed.username && !parsed.password && !!parsed.hostname;
+  } catch { return false; }
+}
+function checkInboxLinks(onlySelected=false) {
+  const bad=[];
+  for (const item of mediaInbox) {
+    const card=document.querySelector('[data-inbox-card="' + CSS.escape(item.id) + '"]');
+    const input=card?.querySelector('[data-inbox-link]');
+    if (!input || (onlySelected && !card.querySelector('.inbox-check')?.checked)) continue;
+    const valid=isValidInboxLink(input.value);
+    input.classList.toggle('inbox-invalid-link',!valid);
+    input.setAttribute('aria-invalid',valid ? 'false' : 'true');
+    if (!valid) bad.push({ item, input, title:card.querySelector('[data-inbox-title]')?.value || item.filename });
+  }
+  if(bad.length) {
+    const first=bad[0];
+    first.input.scrollIntoView({behavior:'smooth',block:'center'});
+    first.input.focus({preventScroll:true});
+    notice('Invalid Link on "' + first.title + '"'
+      + (bad.length > 1 ? ' (and ' + (bad.length-1) + ' more placecards)' : '')
+      + '. Enter a full address beginning https:// or clear the optional field.',true);
+  }
+  return bad;
+}
 function inboxStatus(itemId, message, bad=false) {
   const label=document.querySelector('[data-inbox-save-status="' + CSS.escape(itemId) + '"]');
   if(label) {
@@ -928,6 +957,16 @@ async function saveInboxFields(itemId) {
     campaign:item.campaign || 'BBQ', caption:item.caption || '',link:item.link || '',
     targets:item.targets || ['facebook','instagram','x'],usePicture:item.usePicture !== false
   };
+  if (!isValidInboxLink(values.link)) {
+    const input=document.querySelector('[data-inbox-link="' + CSS.escape(itemId) + '"]');
+    if (input) {
+      input.classList.add('inbox-invalid-link');
+      input.setAttribute('aria-invalid','true');
+    }
+    const message='Invalid Link on "' + (values.title || item.filename) + '". Use a complete https:// address or leave it blank.';
+    inboxStatus(itemId,message,true);
+    throw new Error(message);
+  }
   const version=inboxEditVersions.get(itemId)||0;
   const preceding=inboxSaveChains.get(itemId)||Promise.resolve();
   const task=preceding.catch(()=>{}).then(async()=>{
@@ -987,7 +1026,7 @@ function renderMediaInbox() {
         <label>Campaign<select data-inbox-campaign="${esc(item.id)}">${campaignOptions}</select></label>
         <label>Post title<input data-inbox-title="${esc(item.id)}" maxlength="120" value="${esc(item.title ?? item.filename.replace(/\.[^.]+$/,''))}"></label>
         <label>Caption<textarea data-inbox-caption="${esc(item.id)}" rows="5" maxlength="10000" placeholder="What do you want people to hear?">${esc(item.caption || '')}</textarea></label>
-        <label>Link <small>(optional)</small><input data-inbox-link="${esc(item.id)}" type="url" value="${esc(item.link || '')}" placeholder="https://docjaks.com"></label>
+        <label>Link <small>(optional; full https:// address)</small><input data-inbox-link="${esc(item.id)}" type="url" value="${esc(item.link || '')}" placeholder="https://www.docjaks.com"></label>
         <fieldset><legend>Prepare for</legend>
           ${[['facebook','Facebook'],['instagram','Instagram'],['x','X'],['youtube','YouTube']].map(([id,label])=>`<label class="check"><input type="checkbox" data-inbox-platform="${esc(item.id)}" value="${id}" ${activeTargets.includes(id)?'checked':''}> ${label}</label>`).join('')}
         </fieldset>
@@ -1537,6 +1576,7 @@ document.addEventListener('click', event => {
     });
   }
   if (action === 'saveAllInbox') {
+    if (checkInboxLinks().length) return;
     return perform(async()=>{
       const count=await saveInboxFieldsAll(false);
       notice(count + ' Media Inbox placecard' + (count===1?'':'s') + ' saved. Captions, titles, links and platform selections will remain when you return.');
@@ -1559,6 +1599,7 @@ document.addEventListener('click', event => {
     });
   }
   if (action === 'createInboxDrafts') {
+    if (checkInboxLinks().length) return;
     return perform(async()=> {
       await saveInboxFieldsAll(true);
       const selectedIds=[...document.querySelectorAll('.inbox-check:checked')].map(x=>x.dataset.inboxId);
@@ -1662,6 +1703,11 @@ document.addEventListener('change', event => {
 document.addEventListener('input', event => {
   const inboxCard=event.target.closest('.inbox-card');
   if(inboxCard && event.target.type !== 'checkbox') {
+    if(event.target.hasAttribute('data-inbox-link')) {
+      const valid=isValidInboxLink(event.target.value);
+      event.target.classList.toggle('inbox-invalid-link',!valid);
+      event.target.setAttribute('aria-invalid',valid ? 'false' : 'true');
+    }
     inboxMarkEdited(inboxCard.dataset.inboxCard);
     return;
   }
