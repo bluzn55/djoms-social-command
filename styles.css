@@ -2501,3 +2501,13 @@ button.danger {
 button.danger:hover:not(:disabled) { background:#f9ded5; }
 .post-row-actions { white-space:nowrap; }
 .post-row-actions button + button { margin-left:8px; }
+
+/* Content Library: checkbox-selectable draft cleanup. */
+.filterbar { flex-wrap:wrap; }
+.filterbar .draft-select-all { display:inline-flex; gap:9px; align-items:center; white-space:nowrap; font-weight:600; margin:0; }
+.filterbar .draft-select-all input { flex:0 0 auto; margin:0; }
+.filterbar #deleteSelectedDrafts { white-space:nowrap; }
+.draft-select-cell { width:66px; text-align:center; }
+.draft-select-cell input { cursor:pointer; }
+.draft-select-cell .draft-not-selectable { color:#897d69; }
+.post-row-actions { min-width:170px; }
