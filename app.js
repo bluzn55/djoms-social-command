@@ -924,7 +924,7 @@ async function saveInboxFields(itemId) {
   if(!item) throw new Error('This Media Inbox picture is no longer available.');
   if(inboxSaveTimers.has(itemId)) { clearTimeout(inboxSaveTimers.get(itemId)); inboxSaveTimers.delete(itemId); }
   const values=inboxFieldValues(itemId) || {
-    itemId, title:item.title || item.filename.replace(/\\.[^.]+$/,''),
+    itemId, title:item.title || item.filename.replace(/\.[^.]+$/,''),
     campaign:item.campaign || 'BBQ', caption:item.caption || '',link:item.link || '',
     targets:item.targets || ['facebook','instagram','x'],usePicture:item.usePicture !== false
   };
@@ -985,7 +985,7 @@ function renderMediaInbox() {
       <div class="inbox-fields">
         <label class="check inbox-use"><input class="inbox-check" type="checkbox" data-inbox-id="${esc(item.id)}" ${enabled ? 'checked' : ''}> Use this picture</label>
         <label>Campaign<select data-inbox-campaign="${esc(item.id)}">${campaignOptions}</select></label>
-        <label>Post title<input data-inbox-title="${esc(item.id)}" maxlength="120" value="${esc(item.title ?? item.filename.replace(/\\.[^.]+$/,''))}"></label>
+        <label>Post title<input data-inbox-title="${esc(item.id)}" maxlength="120" value="${esc(item.title ?? item.filename.replace(/\.[^.]+$/,''))}"></label>
         <label>Caption<textarea data-inbox-caption="${esc(item.id)}" rows="5" maxlength="10000" placeholder="What do you want people to hear?">${esc(item.caption || '')}</textarea></label>
         <label>Link <small>(optional)</small><input data-inbox-link="${esc(item.id)}" type="url" value="${esc(item.link || '')}" placeholder="https://docjaks.com"></label>
         <fieldset><legend>Prepare for</legend>
