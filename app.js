@@ -422,6 +422,7 @@ function renderConnectionStrip() {
               ${counters.map(([title,value,key])=>`<div class="mission-web-gauge mission-web-trend-${missionMetricTrendColor(site.metricComparisons?.[key]||(key==='visitors'?site.visitorComparison:null),title)}${title==='Bounce rate'?' mission-web-bounce':''}${title==='Visitors'?' mission-web-visitors':''}">
                 <small>${esc(title)}</small>
                 <div class="mission-web-value-line"><strong>${esc(compactMetric(value))}</strong>${renderVisitorChangeGauge(site.metricComparisons?.[key]||(key==='visitors'?site.visitorComparison:null),title)}</div>
+                ${title==='Bounce rate'?renderBounceMeter(site.bounceRate):''}
               </div>`).join('')}
             </div>
             <div class="mission-web-controls">
