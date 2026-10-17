@@ -162,7 +162,7 @@
     const campaignRows = (data.campaigns || []).map(campaign => '<tr><td><b>' + html(campaign.campaign) + '</b></td>' +
       ['facebook', 'instagram'].map(platform => '<td>' + html(count(campaign.platforms?.[platform]?.posts)) + '</td><td>' + html(count(campaign.platforms?.[platform]?.views)) + '</td>').join('') + '</tr>').join('');
     document.getElementById('content').innerHTML = '<div class="vr" data-report-version="' + VERSION + '"><section class="box"><h2>Verified social performance</h2>' +
-      '<p><b>Posts published ' + html(period.startDate || 'within the selected dates') + ' to ' + html(period.endDate || 'today') + '</b>, Central time. Today is partial. Checked ' + html(time(data.checkedAt)) + '.</p>' +
+      '<p><b>Posts published ' + html(period.startDate || 'within the selected dates') + ' to ' + html(period.endDate || 'today') + '</b>, Central time. ' + (period.includesPartialToday?'Today is partial. ':'') + 'Checked ' + html(time(data.checkedAt)) + '.</p>' +
       '<div class="vr-toolbar">' + (typeof websiteRangeButtons==='function'?websiteRangeButtons():'') +
       '<button type="button" data-report-refresh="true">Refresh report</button></div><p class="vr-note">Missing data is shown as Not available, never changed to zero. A connected account does not guarantee permission for every measurement.</p>' +
       (data.warnings || []).map(warning => '<p class="vr-note">' + html(warning) + '</p>').join('') + '</section>' +
