@@ -8,7 +8,7 @@
   const duration = v => num(v) === null ? 'Not measured' : Math.round(v) < 60 ? Math.round(v) + ' sec' : Math.floor(Math.round(v) / 60) + 'm ' + Math.round(v) % 60 + 's';
   const names = { '/': 'Home', '/kjak': 'KJAK Entertainment Network', '/kjak-24-7': 'KJAK 24.7', '/back-porch-rebellion': 'Back Porch Rebellion', '/trading-post-1': 'Trading Post', '/ember-hall': 'Ember Hall' };
   const pageName = path => names[path] || String(path || 'Unknown page').replace(/^\//, '').replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-  let days = 7, sequence = 0;
+  let sequence=0;
   const running = new Map();
   function dateLabel(v) {
     const d = new Date(v);
@@ -24,7 +24,7 @@
   function lineGraph(rows, key, title, site) {
     if (!rows.length) return '<p>No weekly data returned.</p>';
     const today = dateLabel(site.checkedAt || new Date().toISOString());
-    const first = shift(site.range?.start, -21), last = site.range?.end || '';
+    const first=site.range?.start||'', last=site.range?.end||'';
     const data = rows.map(r => {
       const start = dateLabel(r.start), end = shift(start, 7);
       return { value: num(r[key]), start, complete: !!(start && end && first && last && start >= first && end <= today && end <= last) };
@@ -64,7 +64,7 @@
     return '<article class="wi-card wi-' + esc(g.id) + '"><h4>' + esc(g.label) + '</h4><p class="wi-subtitle">' + esc(subtitles[g.id] || '') + '</p><strong class="wi-big">' + esc(count(g.visitors)) + '</strong><span>tracked visitors</span><div class="wi-metrics"><span><b>' + esc(count(g.views)) + '</b> page views</span><span><b>' + esc(count(g.sessions)) + '</b> sessions</span></div><p class="wi-share">' + esc(share) + '</p><details><summary>See included pages (' + pages.length + ')</summary>' + (pages.length ? '<div class="wda-table-wrap"><table><caption>Per-page visitors can overlap. Do not add them for a group total.</caption><thead><tr><th>Page</th><th>Views</th><th>Visitors</th><th>Avg time</th></tr></thead><tbody>' + rows + '</tbody></table></div>' : '<p>No activity returned for the mapped pages in this period.</p>') + '</details></article>';
   }
   function draw(panel, report, error) {
-    let text = '<div class="wi-heading"><div><small>AUDIENCE INTERESTS</small><h3>Book. Music. Soss. What are they exploring?</h3></div><div class="wi-buttons"><button type="button" data-interest-days="7" aria-pressed="' + (days === 7) + '">7 days</button><button type="button" data-interest-days="28" aria-pressed="' + (days === 28) + '">28 days</button></div></div><p>Based on pages viewed, not a confirmed reason for visiting. People can explore more than one theme.</p>';
+    let text = '<div class="wi-heading"><div><small>AUDIENCE INTERESTS · SELECTED DATES</small><h3>Book. Music. Soss. What are they exploring?</h3></div></div><p>Uses the same reporting dates as the Wix panel. These pages do not prove a visitor\'s reason for visiting.</p>';
     if (error) text += '<p class="wi-warning" role="alert">' + esc(error) + '</p><button type="button" data-interest-retry>Retry interest data</button>';
     else if (!report) text += '<p role="status">Reading Wix audience interests...</p>';
     else {
@@ -74,25 +74,28 @@
       text += '<div class="wi-cards">' + (report.groups || []).map(g => card(g, report)).join('') + '</div><div class="wi-explain"><p><b>No double-counting within a theme:</b> Wix counts unique visitors across that theme\'s pages. The same person may appear in Book and Music, so the four visitor and session counts must not be added together.</p><p><b>General / Unknown is not "by mistake."</b> The homepage, Trading Post, KJAK lobby, Ember Hall and mixed bundles do not prove one specific interest. Unmapped new pages stay here until classified.</p><p><b>How they found us stays separate.</b> This section does not claim a recommendation, a sale, a playback, or a confirmed motive. Tagged campaigns and optional survey answers are a later addition.</p></div><p class="wda-note">Interest data checked ' + esc(new Date(report.checkedAt).toLocaleString('en-US', { timeZone: 'America/Chicago' })) + ' Central. Results may be reused for up to two minutes. Existing Wix tracking and consent limits still apply.</p>';
     }
     panel.innerHTML = text;
-    panel.querySelectorAll('[data-interest-days]').forEach(button => button.addEventListener('click', () => { days = Number(button.dataset.interestDays); load(panel); }));
     panel.querySelector('[data-interest-retry]')?.addEventListener('click', () => load(panel));
   }
   async function load(panel) {
-    const ticket = ++sequence, selectedDays = days;
+    const ticket=++sequence, selectedDays=typeof websitePeriodQuery==='function'?websitePeriodQuery():'range=7d';
     draw(panel, null, null);
     try {
       let job = running.get(selectedDays);
       if (!job) {
         job = (async () => {
-          const response = await fetch('/api/meta/website-interests?days=' + selectedDays, { credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.timeout(45000) });
+          const response = await fetch('/api/meta/website-interests?' + selectedDays, { credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.timeout(45000) });
           const data = await response.json();
           if (!response.ok || !data.connected || !Array.isArray(data.groups)) throw new Error(data.error || 'Interest data is not available yet. The rest of the dashboard is unchanged.');
           return data;
         })().finally(() => running.delete(selectedDays));
         running.set(selectedDays, job);
       }
-      const data = await job;
-      if (ticket === sequence && panel.isConnected) draw(panel, data, null);
+      const data=await job;
+      const selected=typeof websiteReportPeriod==='function'?websiteReportPeriod():null;
+      if(selected?.start&&data.range?.start!==selected.start ||
+         selected?.end&&data.range?.end!==selected.end)
+        throw new Error('Interest report does not match the selected dates.');
+      if(ticket===sequence&&panel.isConnected)draw(panel,data,null);
     } catch (e) {
       if (ticket === sequence && panel.isConnected) draw(panel, null, e.name === 'TimeoutError' ? 'Wix took too long. Please retry the interest report.' : e.message || 'Interest data could not be loaded.');
     }
@@ -110,7 +113,7 @@
     previous.apply(this, arguments);
     const root = document.querySelector('#content .wda');
     if (!root) return;
-    const site = typeof localData !== 'undefined' ? localData.website || {} : {};
+    const site=typeof websiteSnapshot==='function'?websiteSnapshot():(typeof localData!=='undefined'?localData.website||{}:{});
     convertWeeklyCharts(root, site);
     const caution = root.querySelector('.wda-caution');
     if (caution) caution.innerHTML = '<b>Testing traffic may be included.</b> Owner/test exclusions have not been verified. A working connection does not prove customer demand.';
