@@ -2729,3 +2729,61 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   .website-range-toolbar>strong {flex-basis:100%}
   .website-range-toolbar button,.wda .website-range-toolbar button {min-width:calc(50% - 6px);flex:1}
 }
+
+/* MISSION BUSINESS PULSE V1: Book, Trading Post, Outlaw Radio overview. */
+.mission-intel-section {width:100%;margin:16px 0;padding:0;min-width:0}
+.mission-intel-title {display:flex;justify-content:space-between;align-items:center;gap:14px;margin:4px 0 13px}
+.mission-intel-title>div {min-width:0;display:grid;gap:5px}
+.mission-intel-title strong {font-size:16px;letter-spacing:.7px;color:#674819}
+.mission-intel-title small {font-size:13px;color:#6e5b3f}
+.connection-strip .mission-intel-title button {margin-left:0;min-height:43px;font-size:15px;padding:10px 16px;border-radius:7px}
+.mission-intel-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:stretch}
+.mission-intel-card {background:#fffaf0;border:1px solid #d6c4a5;border-top:5px solid #9c742e;border-radius:10px;padding:16px;min-width:0}
+.mission-intel-card-head {display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid #e3d7c3;padding-bottom:12px;margin-bottom:10px;gap:12px}
+.mission-intel-card-head>div {min-width:0}
+.mission-intel-card-head small {font-size:12px;color:#795a2d;font-weight:800;letter-spacing:.4px}
+.mission-intel-card-head h3 {font:700 21px/1.25 Georgia,serif;margin:5px 0 0;color:#2c2419}
+.mission-intel-health {display:flex;align-items:center;gap:7px;white-space:nowrap;font-size:12px;color:#443723}
+.mission-intel-health .gyr-light {width:20px;height:20px}
+.mission-intel-health strong {font-size:12px}
+.mission-intel-card>p {font-size:14px;line-height:1.55;margin:10px 0;color:#5d503d}
+.mission-intel-meters {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:12px 0}
+.mission-intel-meters.mission-intel-3 {grid-template-columns:repeat(3,minmax(0,1fr))}
+.mission-intel-meter {background:#fffdf8;border:1px solid #ddd0b6;padding:12px 10px;border-radius:8px;min-width:0}
+.mission-intel-meter small {display:block;font-size:12px;line-height:1.4;font-weight:700;color:#655332}
+.mission-intel-meter b {display:block;font-size:21px;line-height:1.3;margin-top:7px;overflow-wrap:anywhere}
+.mission-intel-meter em {font-size:12px;font-weight:normal;color:#77674d}
+.mission-intel-card h4 {font-size:12px;letter-spacing:.7px;color:#674819;margin:18px 0 8px}
+.mission-intel-products {min-height:43px}
+.mission-intel-product {display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #e3d5bd;font-size:13px;line-height:1.4}
+.mission-intel-product:last-child {border-bottom:0}
+.mission-intel-product span {min-width:0;overflow-wrap:anywhere}
+.mission-intel-product strong {white-space:nowrap}
+.mission-intel-muted {font-size:13px;line-height:1.45;color:#806b4e;margin:6px 0}
+.mission-intel-context {display:block;font-size:12px;line-height:1.6;color:#746247;margin-top:10px}
+.mission-intel-radio-note {background:#f8efdc;padding:11px;border-left:3px solid #ac873f}
+.mission-intel-card .mission-intel-error {color:#853e28;font-size:12px;overflow-wrap:anywhere;margin-top:11px}
+.mission-intel-actions {display:flex;flex-wrap:wrap;gap:9px;margin-top:15px}
+.connection-strip .mission-intel-actions button,
+.mission-intel-actions a {font:700 13px/1.4 Arial,sans-serif;min-height:42px;padding:10px 12px;margin:0;border:1px solid #ac8d5d;border-radius:6px;text-decoration:none;color:#4a3519;background:#f4e7c8;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.connection-strip .mission-intel-actions button {background:#315b38;color:#fff;border-color:#315b38}
+.mission-intel-actions a:hover {background:#f0dcb2}
+.mission-intel-footnote {font-size:13px;line-height:1.5;color:#6b5b43;margin:12px 0 0}
+.website-connection-row {margin-bottom:14px}
+.website-connection-row .website-gyr-card {border-left:5px solid #9c742e;padding:20px}
+.website-gyr-card .website-gyr-label {display:block;font-size:13px;font-weight:800;letter-spacing:1px;color:#896620;margin-bottom:5px}
+.website-gyr-card .platform-detail-head h2 {font:700 26px Georgia,serif}
+.website-gyr-card p {margin:10px 0;line-height:1.5}
+.website-gyr-card small {font-size:13px;color:#796951}
+.website-gyr-actions {display:flex;flex-wrap:wrap;gap:11px;align-items:center;margin-top:14px}
+.website-gyr-actions button,.website-gyr-actions a.button {margin:0;min-height:44px;padding:10px 14px;font-size:15px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+@media(max-width:1180px){.mission-intel-grid {grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:780px){.mission-intel-grid {grid-template-columns:1fr}}
+@media(max-width:480px){
+  .mission-intel-title {align-items:flex-start;flex-direction:column}
+  .mission-intel-meters.mission-intel-3 {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mission-intel-card-head h3 {font-size:20px}
+  .mission-intel-card {padding:14px}
+  .mission-intel-actions button,.mission-intel-actions a {width:100%}
+  .website-gyr-actions button,.website-gyr-actions a.button {width:100%}
+}
