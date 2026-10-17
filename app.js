@@ -1245,8 +1245,8 @@ function renderVisitorChangeGauge(comparison,metric='Visitors') {
   const period=selection==='today'?'yesterday (today incomplete)'
     : selection==='7d'?'the previous 7 days'
     : selection==='30d'?'the previous 30 days':'the previous 365 days';
-  const current=comparison?.current??comparison?.currentVisitors;
-  const previous=comparison?.previous??comparison?.previousVisitors;
+  const current=typeof comparison?.current==='number'?comparison.current:comparison?.currentVisitors;
+  const previous=typeof comparison?.previous==='number'?comparison.previous:comparison?.previousVisitors;
   const details=typeof current==='number'&&typeof previous==='number'
     ? ' Current: '+current+'. Previous: '+previous+'.'
     : ' Comparison figures are not both available.';
