@@ -466,6 +466,9 @@ function renderConnectionStrip() {
                 </div>
               </div>`;
             })()}
+            <section id="missionSeoPanel" class="mission-seo-panel" aria-label="Google Search SEO performance">
+              <div class="mission-seo-loading"><strong>GOOGLE SEARCH · SEO</strong><span>Checking connection…</span></div>
+            </section>
             <div class="mission-web-controls">
               <div class="mission-web-range" role="group" aria-label="Website reporting period">
                 ${periodChoices.map(([key,name])=>`<button type="button" data-website-range="${key}" aria-pressed="${websiteRange===key}" title="${esc(({today:'Today so far','7d':'Last 7 days','30d':'Last 30 days','365d':'Last 365 days'})[key])}">${name}</button>`).join('')}
@@ -1879,6 +1882,7 @@ document.addEventListener('click', event => {
       if(!site.connected)throw new Error(site.message||'Wix data is not available for these dates.');
       websiteRange=requested;
       platformMetricRange=requested;
+      analyticsData=null;
       render();
       // Facebook and Instagram have separate APIs and may report less than Wix.
       // Always pass the same date selector; missing data remains unavailable.
