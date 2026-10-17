@@ -1255,7 +1255,7 @@ function renderWebsitePlatform() {
     </div>
     <p class="website-platform-message">${esc(site.message || 'Website analytics connection has not been checked yet.')}</p>
     ${websiteRangeButtons()}
-    <p class="website-platform-period">Showing ${esc(websiteRanges.find(([key]) => key === websiteRange)?.[1] || websiteRange)}, including today's partial results. ${esc(site.range?.start || 'Dates pending')} to ${esc(site.range?.end ? new Date(site.range.end+'T12:00:00Z').toISOString().slice(0,10) : 'now')} (Wix end boundary exclusive).</p>
+    <p class="website-platform-period">Showing ${esc(websiteRanges.find(([key]) => key === websiteRange)?.[1] || websiteRange)}, including today's partial results. ${esc(site.range?.start || 'Dates pending')} through ${esc(site.range?.end ? new Date(Date.parse(site.range.end+'T12:00:00Z')-86400000).toISOString().slice(0,10) : 'today')}.</p>
     <div class="website-platform-kpis">${kpis.map(([label,value]) => `<div class="website-platform-kpi"><small>${esc(label)}</small><strong>${esc(compactMetric(value))}</strong></div>`).join('')}</div>
     <div class="website-platform-details">
       <div class="website-platform-detail"><h3>TOP WEBSITE PAGES</h3>${listHtml(pages, row => wName(row.path), row => row.views)}</div>
