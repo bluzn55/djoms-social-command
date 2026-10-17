@@ -3766,3 +3766,180 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 @media(max-width:640px) {
   .mission-visitor-change {font-size:16px}
 }
+
+/* MISSION WEBSITE ALL KPI TRENDS INLINE V2 */
+/* Arrange the six Wix KPIs as a full-width instrument rail so large, bold
+   values and their percent changes genuinely fit on the SAME line. */
+.mission-website-section .mission-web-console {
+  grid-template-columns:minmax(0,1fr) minmax(175px,225px) minmax(0,1fr);
+  grid-template-areas:
+    ". brand controls"
+    "gauges gauges gauges"
+    "lists lists lists"
+    "foot foot foot";
+  column-gap:10px;
+  row-gap:9px;
+}
+.mission-website-section .mission-web-brand {
+  grid-area:brand;
+  justify-self:center;
+  align-self:center;
+}
+.mission-website-section .mission-web-controls {
+  grid-area:controls;
+  justify-self:end;
+  width:min(100%,285px);
+  max-width:285px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  align-items:center;
+}
+.mission-website-section .mission-web-range {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  width:100%;
+  max-width:none;
+  gap:4px;
+}
+.connection-strip .mission-website-section .mission-web-range button {
+  min-height:41px;
+  padding:8px 4px;
+  font-size:13px !important;
+}
+.connection-strip .mission-website-section .mission-web-open {
+  min-height:42px;
+  width:100%;
+  max-width:none;
+  margin:0;
+  font-size:14px !important;
+}
+.mission-website-section .mission-web-gauges {
+  grid-area:gauges;
+  display:grid;
+  width:100%;
+  max-width:none;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:8px;
+  justify-self:stretch;
+  margin:0;
+  min-width:0;
+}
+.mission-website-section .mission-web-lists {
+  grid-area:lists;
+  min-width:0;
+  padding-top:8px;
+}
+.mission-website-section .mission-web-partial-flag {
+  grid-area:foot;
+  font-size:12px;
+}
+.mission-website-section .mission-web-gauge {
+  min-width:0;
+  min-height:87px;
+  box-sizing:border-box;
+  padding:8px 6px;
+}
+.mission-website-section .mission-web-gauge small {
+  font-size:13px;
+  line-height:1.25;
+}
+.mission-web-value-line {
+  display:flex;
+  flex-direction:row;
+  flex-wrap:nowrap;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  margin-top:7px;
+  text-align:center;
+}
+.mission-web-value-line > strong {
+  display:block;
+  min-width:0;
+  margin:0;
+  color:#25180f;
+  font:900 clamp(18px,1.55vw,28px)/1.08 Arial,sans-serif;
+  letter-spacing:-.6px;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.mission-web-value-line > .mission-visitor-change {
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  max-width:none;
+  min-width:0;
+  padding:4px 6px;
+  margin:0;
+  border-width:1px;
+  font:900 clamp(12px,1.0vw,16px)/1.15 Arial,sans-serif;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+  overflow-wrap:normal;
+}
+.mission-website-section .mission-web-bounce .mission-bounce-meter {
+  margin:6px auto 0;
+}
+@media(max-width:1270px) {
+  .mission-website-section .mission-web-console {
+    grid-template-columns:minmax(0,1fr) minmax(180px,270px);
+    grid-template-areas:
+      "brand controls"
+      "gauges gauges"
+      "lists lists"
+      "foot foot";
+  }
+  .mission-website-section .mission-web-brand {
+    justify-self:center;
+    width:100%;
+    text-align:center;
+  }
+  .mission-website-section .mission-web-gauges {
+    grid-template-columns:repeat(6,minmax(0,1fr));
+  }
+}
+@media(max-width:1070px) {
+  .mission-website-section .mission-web-gauges {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  .mission-web-value-line > strong {font-size:26px}
+  .mission-web-value-line > .mission-visitor-change {font-size:15px}
+}
+@media(max-width:640px) {
+  .mission-website-section .mission-web-console {
+    grid-template-columns:minmax(0,1fr);
+    grid-template-areas:"brand" "controls" "gauges" "lists" "foot";
+    row-gap:10px;
+    padding:12px 11px;
+  }
+  .mission-website-section .mission-web-brand {
+    width:100%;
+    justify-self:center;
+  }
+  .mission-website-section .mission-web-controls {
+    width:100%;
+    max-width:340px;
+    justify-self:center;
+  }
+  .mission-website-section .mission-web-gauges {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:7px;
+  }
+  .mission-website-section .mission-web-gauge {
+    min-height:82px;
+  }
+  .mission-web-value-line > strong {font-size:24px}
+  .mission-web-value-line > .mission-visitor-change {font-size:13px}
+}
+@media(max-width:380px) {
+  .mission-web-value-line {gap:3px}
+  .mission-web-value-line > strong {font-size:21px}
+  .mission-web-value-line > .mission-visitor-change {font-size:12px;padding:4px}
+}
