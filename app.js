@@ -382,40 +382,40 @@ function renderConnectionStrip() {
         <span class="mission-attention-arrow">›</span>
       </button>
 
-      <section class="mission-website-section" aria-label="Doc Jaks website status">
+      <section class="mission-website-section" aria-label="DOCJAKS.COM website connection and activity">
         ${(() => {
           const site=localData?.website || {};
-          const connected=!!site.connected;
-          const websiteColor=connected ? (site.partial ? 'yellow' : 'green') : 'red';
-          const websiteLabel=connected ? (site.partial ? 'YELLOW' : 'GREEN') : 'RED';
-          const leads=Number(site.contactClicks||0)+Number(site.formsSubmitted||0);
-          const sales=Number(site.sales);
-          const salesText=Number.isFinite(sales) ? new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2}).format(sales) : '—';
-          return `<div class="mission-website-card">
-            <span class="mission-website-copy">
-              <small>WEBSITE · WIX</small>
+          const live=site.connected===true;
+          const health=live ? (site.partial ? 'yellow':'green') : 'red';
+          const label=live ? (site.partial ? 'PARTIAL':'CONNECTED') : 'NEEDS CONNECTION';
+          const validNumber=value=>typeof value==='number' && Number.isFinite(value) && value>=0;
+          const leads=validNumber(site.contactClicks)||validNumber(site.formsSubmitted)
+            ? Number(validNumber(site.contactClicks)?site.contactClicks:0)+Number(validNumber(site.formsSubmitted)?site.formsSubmitted:0) : null;
+          const sales=validNumber(site.sales)
+            ? new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(site.sales) : '—';
+          const counters=[
+            ['Sessions',site.sessions],
+            ['Visitors',site.visitors],
+            ['Page views',site.pageViews],
+            ['Orders',site.orders],
+            ['Sales',sales],
+            ['Leads',leads]
+          ];
+          const topPage=site.topPage ? wName(site.topPage) : 'Not available';
+          return `<div class="mission-web-console">
+            <div class="mission-web-brand">
+              <small class="mission-web-overline">⚜ DOC JAKS · WIX</small>
               <strong>DOCJAKS.COM</strong>
-              <span>${esc(site.message || 'Website analytics not connected')}</span>
-            </span>
-            <span class="mission-website-status">
-              <i class="mission-glance-light ${websiteColor}" aria-hidden="true"></i>
-              <b>${websiteLabel}</b>
-              <small>Updated ${esc(updatedText(site.checkedAt || localData?.checkedAt))}</small>
-            </span>
-            <span class="mission-website-metrics">
-              <span><small>Sessions</small><b>${esc(compactMetric(site.sessions))}</b></span>
-              <span><small>Visitors</small><b>${esc(compactMetric(site.visitors))}</b></span>
-              <span><small>Page views</small><b>${esc(compactMetric(site.pageViews))}</b></span>
-              <span><small>Orders</small><b>${esc(compactMetric(site.orders))}</b></span>
-              <span><small>Sales</small><b>${esc(salesText)}</b></span>
-              <span><small>Leads</small><b>${esc(compactMetric(leads))}</b></span>
-            </span>
-            <button type="button" class="mission-website-open" data-view="Website Analytics">Open full website analytics ›</button>
-            <span class="mission-website-top">
-              <small>TOP PAGE</small>
-              <b>${site.topPage ? esc(site.topPage) : '—'}</b>
-              <span>${site.topPageViews == null ? '' : esc(compactMetric(site.topPageViews)) + ' views'}</span>
-            </span>
+              <span class="mission-web-live"><i class="gyr-light ${health}" aria-hidden="true"></i><b>${label}</b></span>
+              <small class="mission-web-checked">Last 7 days · Updated ${esc(updatedText(site.checkedAt || localData?.checkedAt))}</small>
+            </div>
+            <div class="mission-web-gauges" aria-label="Website figures, last seven days">
+              ${counters.map(([title,value])=>`<div class="mission-web-gauge"><small>${esc(title)}</small><strong>${esc(compactMetric(value))}</strong></div>`).join('')}
+            </div>
+            <div class="mission-web-controls">
+              <div class="mission-web-popular"><small>TOP PAGE</small><strong title="${esc(topPage)}">${esc(topPage)}</strong><span>${site.topPageViews==null?'—':esc(compactMetric(site.topPageViews))+' views'}</span></div>
+              <button type="button" class="mission-web-open" data-view="Website Analytics">Website Analytics ›</button>
+            </div>
           </div>`;
         })()}
       </section>
