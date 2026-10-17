@@ -3943,3 +3943,72 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   .mission-web-value-line > strong {font-size:21px}
   .mission-web-value-line > .mission-visitor-change {font-size:12px;padding:4px}
 }
+
+/* MISSION KPI COMPACT INSET TREND LINES V3 */
+/* One current value and one colored delta, on the same line.
+   The color is carried by an inset rule, not a colored box or badge. */
+.mission-website-section .mission-web-gauge {
+  --metric-trend:#ae8c45;
+}
+.mission-website-section .mission-web-gauge.mission-web-trend-green {
+  --metric-trend:#328246;
+}
+.mission-website-section .mission-web-gauge.mission-web-trend-yellow {
+  --metric-trend:#d3aa35;
+}
+.mission-website-section .mission-web-gauge.mission-web-trend-red {
+  --metric-trend:#b44b38;
+}
+.mission-website-section .mission-web-gauge::after {
+  content:"";
+  display:block;
+  width:calc(100% - 20px);
+  max-width:calc(100% - 20px);
+  height:4px;
+  flex:0 0 4px;
+  margin:9px auto 0;
+  border-radius:4px;
+  background:var(--metric-trend);
+}
+.mission-website-section .mission-web-value-line {
+  display:flex;
+  flex-flow:row nowrap;
+  align-items:baseline;
+  justify-content:center;
+  gap:6px;
+  margin-top:7px;
+  min-width:0;
+  width:100%;
+  text-align:center;
+}
+.mission-website-section .mission-web-value-line > .mission-visitor-change,
+.mission-website-section .mission-web-value-line > .mission-visitor-change.green,
+.mission-website-section .mission-web-value-line > .mission-visitor-change.yellow,
+.mission-website-section .mission-web-value-line > .mission-visitor-change.red {
+  display:inline;
+  flex:0 1 auto;
+  width:auto;
+  min-width:0;
+  max-width:100%;
+  margin:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  font-size:clamp(13px,1.05vw,17px);
+  font-weight:900;
+  line-height:1.1;
+  text-align:center;
+  white-space:nowrap;
+  overflow:visible;
+}
+@media(max-width:640px) {
+  .mission-website-section .mission-web-value-line > .mission-visitor-change {
+    font-size:14px;
+  }
+  .mission-website-section .mission-web-gauge::after {
+    width:calc(100% - 18px);
+    max-width:calc(100% - 18px);
+  }
+}
