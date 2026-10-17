@@ -16,6 +16,26 @@ const inboxSaveChains = new Map();
 const inboxEditVersions = new Map();
 let inboxChangingView = false;
 let platformMetricRange = '7d';
+let websiteRange = '7d';
+const websiteRangeReports = Object.create(null);
+const websiteRanges = Object.freeze([['today','Today'],['7d','7 days'],['30d','30 days'],['365d','1 year']]);
+function websiteRangeButtons() {
+  return '<div class="website-range-toolbar" role="group" aria-label="Website analytics time range"><strong>REPORTING PERIOD</strong>' +
+    websiteRanges.map(([key,label]) => '<button type="button" data-website-range="'+key+'" class="'+(websiteRange===key?'active':'')+'" aria-pressed="'+(websiteRange===key)+'">'+label+'</button>').join('') +
+    '</div>';
+}
+function websiteSnapshot() {
+  return websiteRange === '7d' ? (localData?.website || websiteRangeReports['7d'] || {})
+    : (websiteRangeReports[websiteRange] || {});
+}
+async function loadWebsiteRange(range = websiteRange) {
+  if (!websiteRanges.some(([key]) => key === range)) throw new Error('Choose a supported website reporting period.');
+  const data = await api('website-range?range='+encodeURIComponent(range));
+  if (data.range?.selection && data.range.selection !== range) throw new Error('Wix returned a different reporting period. No numbers were changed.');
+  websiteRangeReports[range] = data;
+  if (range === '7d') localData.website = data;
+  return data;
+}
 let selectedStatusPlatform = null;
 let connectionCheckedAt = null;
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -50,8 +70,8 @@ async function loadAnalytics(refresh = false) {
   return analyticsData;
 }
 async function loadLocalStatus() {
-  try { localData = await api('local-status'); }
-  catch { localData = { google:{connected:false,message:'Could not check Google.'}, yelp:{connected:false,message:'Could not check Yelp.'}, tripadvisor:{connected:false,message:'Could not check Tripadvisor.'}, facebook:{connected:false,message:'Not connected.'} }; }
+  try { localData = await api('local-status'); websiteRangeReports['7d'] = localData.website || null; }
+  catch { localData = { google:{connected:false,message:'Could not check Google.'}, yelp:{connected:false,message:'Could not check Yelp.'}, tripadvisor:{connected:false,message:'Could not check Tripadvisor.'}, facebook:{connected:false,message:'Not connected.'},website:{connected:false,message:'Could not check Wix.'} }; websiteRangeReports['7d'] = null; }
   return localData;
 }
 function localCard(key, name) {
@@ -1194,7 +1214,7 @@ function wInsights(s){
   return out.slice(0,6);
 }
 function renderWebsitePlatform() {
-  const site = localData?.website || {};
+  const site = websiteSnapshot();
   const connected = site.connected === true;
   const color = connected ? (site.partial ? 'yellow' : 'green') : 'red';
   const status = connected ? (site.partial ? 'PARTIAL DATA' : 'CONNECTED') : 'NEEDS CONNECTION';
@@ -1234,6 +1254,8 @@ function renderWebsitePlatform() {
       </div>
     </div>
     <p class="website-platform-message">${esc(site.message || 'Website analytics connection has not been checked yet.')}</p>
+    ${websiteRangeButtons()}
+    <p class="website-platform-period">Showing ${esc(websiteRanges.find(([key]) => key === websiteRange)?.[1] || websiteRange)}, including today's partial results. ${esc(site.range?.start || 'Dates pending')} to ${esc(site.range?.end ? new Date(site.range.end+'T12:00:00Z').toISOString().slice(0,10) : 'now')} (Wix end boundary exclusive).</p>
     <div class="website-platform-kpis">${kpis.map(([label,value]) => `<div class="website-platform-kpi"><small>${esc(label)}</small><strong>${esc(compactMetric(value))}</strong></div>`).join('')}</div>
     <div class="website-platform-details">
       <div class="website-platform-detail"><h3>TOP WEBSITE PAGES</h3>${listHtml(pages, row => wName(row.path), row => row.views)}</div>
@@ -1245,17 +1267,18 @@ function renderWebsitePlatform() {
       <button type="button" data-action="checkWebsiteConnection">Check Wix connection</button>
       <a class="button" href="https://docjaks.com" target="_blank" rel="noopener noreferrer">Open DOCJAKS.COM ↗</a>
     </div>
-    <p class="website-platform-note">Wix's latest seven-day snapshot. Your own website testing may be included. Missing numbers are shown as a dash, not zero.</p>
+    <p class="website-platform-note">Wix reporting for the selected period. Your own website testing may be included. Missing numbers are shown as a dash, not zero.</p>
   </section>`;
 }
 
 function renderWebsiteAnalytics(){
-  const s=localData?.website||{},w=s.weekly||[],p=s.topPages||[],src=s.trafficSources||[],dev=s.devices||[],vt=s.visitorTypes||[],geo=s.geography||[],land=s.landingPages||[],exit=s.exitPages||[];
+  const s=websiteSnapshot(),w=s.weekly||[],p=s.topPages||[],src=s.trafficSources||[],dev=s.devices||[],vt=s.visitorTypes||[],geo=s.geography||[],land=s.landingPages||[],exit=s.exitPages||[];
   const leads=Number(s.contactClicks||0)+Number(s.formsSubmitted||0),sales=Number(s.sales),salesText=Number.isFinite(sales)?new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(sales):'—';
   const nv=vt.find(x=>x.type==='first_time_visitor')?.visitors,rv=vt.find(x=>x.type==='returning_visitor')?.visitors;
   const status=s.connected?(s.partial?'YELLOW':'GREEN'):'RED',color=s.connected?(s.partial?'yellow':'green'):'red';
   $('content').innerHTML=`
   <section class="wa">
+    ${websiteRangeButtons()}
     <div class="wa-head"><div><small>WEBSITE · WIX</small><h2>DOCJAKS.COM ANALYTICS</h2><p>Main website research page. Find what works, what loses people, and what deserves more attention.</p></div><div><i class="mission-glance-light ${color}"></i><b>${status}</b><span>${esc(s.message||'Not connected')}</span></div></div>
     <div class="wa-kpis">
       ${[['Sessions',s.sessions],['Visitors',s.visitors],['Page views',s.pageViews],['Avg stay',wTime(s.avgTimeSeconds)],['Pages / visit',s.pagesPerSession==null?'—':Number(s.pagesPerSession).toFixed(2)],['Bounce',wPct(s.bounceRate)],['Leads',leads],['Orders',s.orders],['Sales',salesText]].map(x=>`<span><small>${x[0]}</small><b>${esc(compactMetric(x[1]))}</b></span>`).join('')}
@@ -1264,7 +1287,7 @@ function renderWebsiteAnalytics(){
     <section class="wa-box"><h3>WEEK BY WEEK</h3><div class="wa-charts">${wBar(w,'sessions','Sessions')}${wBar(w,'visitors','People')}${wBar(w,'views','Page views')}</div>
       <div class="wa-week"><div class="head"><span>Week</span><span>Sessions</span><span>People</span><span>Views</span><span>Avg stay</span><span>Pages/visit</span><span>Continued</span></div>${w.map(r=>`<div><span>${esc(r.label||'')}</span><span>${esc(compactMetric(r.sessions))}</span><span>${esc(compactMetric(r.visitors))}</span><span>${esc(compactMetric(r.views))}</span><span>${esc(wTime(r.avgTimeSeconds))}</span><span>${r.pagesPerSession==null?'—':Number(r.pagesPerSession).toFixed(2)}</span><span>${Number.isFinite(Number(r.bounceRate))?esc(wPct(1-Number(r.bounceRate))):'—'}</span></div>`).join('')}</div>
     </section>
-    <section class="wa-box"><h3>TOP PAGES · LAST 7 DAYS</h3>
+    <section class="wa-box"><h3>TOP PAGES · SELECTED PERIOD</h3>
       <div class="wa-pages"><div class="head"><span>Page</span><span>Views</span><span>People</span><span>Sessions</span><span>Avg time</span><span>Continued</span></div>${p.map((r,i)=>`<div><span><b>${i+1}. ${esc(wName(r.path))}</b><small>${esc(r.path)}</small></span><span>${esc(compactMetric(r.views))}</span><span>${esc(compactMetric(r.visitors))}</span><span>${esc(compactMetric(r.sessions))}</span><span>${esc(wTime(r.avgTimeSeconds))}</span><span>${Number.isFinite(Number(r.bounceRate))?esc(wPct(1-Number(r.bounceRate))):'—'}</span></div>`).join('')}</div>
     </section>
     <div class="wa-two">
@@ -1701,6 +1724,16 @@ async function perform(work) {
 }
 document.addEventListener('click', event => {
   const b = event.target.closest('button,a'); if (!b || b.disabled || busy) return;
+  if (b.dataset.websiteRange) {
+    const requested = b.dataset.websiteRange;
+    return perform(async () => {
+      notice('Checking Wix for '+(websiteRanges.find(([key]) => key===requested)?.[1] || requested)+'…');
+      const site = await loadWebsiteRange(requested);
+      websiteRange = requested;
+      render();
+      notice(site.connected ? 'Wix website report updated for '+requested+'.' : (site.message || 'Wix reporting needs attention.'), !site.connected);
+    });
+  }
   if (b.dataset.metricRange) { platformMetricRange = b.dataset.metricRange; return perform(async()=>{ await loadAnalytics(true); renderConnectionStrip(); }); }
   if (b.dataset.platformDetail) { if (activeView === 'Mission Control') { selectedStatusPlatform = b.dataset.platformDetail; activeView = 'Platform Details'; render(); return; } selectedStatusPlatform = selectedStatusPlatform === b.dataset.platformDetail ? null : b.dataset.platformDetail; renderConnectionStrip(); return; }
   if (b.dataset.view) return setView(b.dataset.view);
@@ -2066,9 +2099,9 @@ document.addEventListener('click', event => {
   perform(async () => {
     if (action === 'logout') { if (dirty && !confirm('Sign out without saving changes?')) return; await api('session',null,'DELETE'); location.reload(); }
     else if (action === 'new') { const d=await api('records',{action:'create',campaign:campaignFilter || 'BBQ'}); updateRecord(d.record); openRecord(d.record); }
-    else if (action === 'refresh') { await loadRecords(); await loadAnalytics(true); await loadLocalStatus(); await refreshConnection(); await loadComments(); render(); renderConnectionStrip(); notice('Updated.'); }
+    else if (action === 'refresh') { await loadRecords(); await loadAnalytics(true); await loadLocalStatus(); if (websiteRange !== '7d') await loadWebsiteRange(websiteRange); await refreshConnection(); await loadComments(); render(); renderConnectionStrip(); notice('Updated.'); }
     else if (action === 'refreshRecord') { if (dirty && !confirm('Refresh and discard unsaved changes?')) return; const currentId=selected.id; await loadRecords(); openRecord(records.find(r=>r.id===currentId)); notice('Showing the latest saved result.'); }
-    else if (action === 'checkWebsiteConnection') { await loadLocalStatus(); render(); notice(localData?.website?.connected ? 'Wix website connection checked.' : 'Wix website reporting needs attention.', !localData?.website?.connected); }
+    else if (action === 'checkWebsiteConnection') { const site=await loadWebsiteRange(websiteRange); render(); notice(site.connected ? 'Wix website connection checked.' : (site.message || 'Wix website reporting needs attention.'), !site.connected); }
     else if (action === 'checkConnection') { await Promise.all([refreshConnection(), loadLocalStatus()]); render(); notice('Platform and website connections checked.'); }
     else if (action === 'publish') await publish();
     else if (action === 'schedule') { const at=$('scheduleTime').value; if(!at) throw new Error('Choose a posting date and time.'); await recordAction('schedule',{scheduledAt:new Date(at).toISOString(),timeZone:timezone}); }
