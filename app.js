@@ -419,10 +419,9 @@ function renderConnectionStrip() {
               <small class="mission-web-checked">${esc(rangeCaption)} · Updated ${esc(updatedText(site.checkedAt || localData?.checkedAt))}</small>
             </div>
             <div class="mission-web-gauges" aria-label="Website figures for ${esc(rangeCaption)}">
-              ${counters.map(([title,value,key])=>`<div class="mission-web-gauge${title==='Bounce rate'?' mission-web-bounce':''}${title==='Visitors'?' mission-web-visitors':''}">
+              ${counters.map(([title,value,key])=>`<div class="mission-web-gauge mission-web-trend-${missionMetricTrendColor(site.metricComparisons?.[key]||(key==='visitors'?site.visitorComparison:null),title)}${title==='Bounce rate'?' mission-web-bounce':''}${title==='Visitors'?' mission-web-visitors':''}">
                 <small>${esc(title)}</small>
                 <div class="mission-web-value-line"><strong>${esc(compactMetric(value))}</strong>${renderVisitorChangeGauge(site.metricComparisons?.[key]||(key==='visitors'?site.visitorComparison:null),title)}</div>
-                ${title==='Bounce rate'?renderBounceMeter(site.bounceRate):''}
               </div>`).join('')}
             </div>
             <div class="mission-web-controls">
@@ -1228,16 +1227,24 @@ function wName(path){if(!path||path==='/')return'Home';return String(path).repla
 function wTime(v){const n=Number(v);if(!Number.isFinite(n))return'—';return n<60?Math.round(n)+'s':Math.floor(n/60)+'m '+Math.round(n%60)+'s';}
 function wPct(v){const n=Number(v);if(!Number.isFinite(n))return'—';const p=n<=1?n*100:n;return p.toFixed(p<10?1:0)+'%';}
 
+function missionMetricTrendColor(comparison,metric='Visitors') {
+  // A lower bounce rate is generally better. Unknown or unchanged is yellow.
+  const change=comparison?.percentChange;
+  const invert=metric==='Bounce rate'||comparison?.lowerIsBetter===true;
+  if(typeof change!=='number'||!Number.isFinite(change)) {
+    return comparison?.direction==='new'&&!invert?'green':'yellow';
+  }
+  return change===0?'yellow':((change>0)!==invert?'green':'red');
+}
+
 function renderVisitorChangeGauge(comparison,metric='Visitors') {
-  // Direction is relative to the previous equal-length period, not a
-  // generic red/yellow/green health score. Bounce is inverse: lower is better.
+  // This comparison stays alongside the current numeric value; color also
+  // drives the small inset line, never a filled badge or another chart.
   const change=comparison?.percentChange;
   const valid=typeof change==='number'&&Number.isFinite(change);
   const noBase=comparison?.direction==='new';
   const invert=metric==='Bounce rate'||comparison?.lowerIsBetter===true;
-  const color=valid
-    ? change===0?'yellow':(change>0)!==invert?'green':'red'
-    : noBase&&!invert?'green':'yellow';
+  const color=missionMetricTrendColor(comparison,metric);
   const amount=valid
     ? (change>0?'+':'')+change.toFixed(1)+'%'
     : noBase?'NEW':'—';
