@@ -6,10 +6,11 @@
     sales:{status:'idle',data:null,error:null}
   };
   const ENDPOINTS = {
-    interests:'website-interests?days=7',
-    chapter:'chapter-clicks?days=7',
-    sales:'trading-post-sales?days=7'
+    interests:'website-interests',
+    chapter:'chapter-clicks',
+    sales:'trading-post-sales'
   };
+  let lastPeriodKey='';
   let lastLoaded = 0;
   let sequence = 0;
   const PERIOD = 2 * 60 * 1000;
@@ -23,8 +24,15 @@
     ? new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(cents / 100)
     : '—';
 
-  async function getReport(path) {
-    const response=await fetch('/api/meta/'+path,{
+  function period() {
+    const selection=typeof websiteReportPeriod==='function'?websiteReportPeriod():null;
+    if(!selection?.start||!selection?.end||!selection?.query)
+      throw new Error('Choose a website reporting period before reading the Business Pulse.');
+    return selection;
+  }
+
+  async function getReport(path,selected) {
+    const response=await fetch('/api/meta/'+path+'?'+selected.query,{
       credentials:'same-origin',
       cache:'no-store',
       signal:AbortSignal.timeout(55000)
@@ -34,6 +42,11 @@
       ? 'Sign in again to read the report.'
       : String(value.error || 'The report could not be checked.'));
     if (!value || value.connected !== true) throw new Error('The source has not confirmed its connection.');
+    // The chapter report begins when click tracking was enabled. Its
+    // requestedStart is still the exact shared period.
+    if(value.range?.end!==selected.end ||
+       (value.range?.requestedStart||value.range?.start)!==selected.start)
+      throw new Error('This report does not match the selected dates. Showing no stale totals.');
     return value;
   }
 
@@ -122,8 +135,8 @@
     const interest=snapshot.interests;
     const group=findGroup('music');
     const page=group?.pages?.find(item=>linked(item.path)==='/outlaw-radio-5150');
-    const fallback=typeof localData!=='undefined'
-      ?(localData?.website?.topPages||[]).find(item=>linked(item.path)==='/outlaw-radio-5150')
+    const fallback=typeof websiteSnapshot==='function'
+      ?(websiteSnapshot()?.topPages||[]).find(item=>linked(item.path)==='/outlaw-radio-5150')
       :null;
     const views=measurable(page?.views)?page.views
       :(interest.status==='ok'&&interest.data?.reconciled&&!interest.data.partial&&!page?0
@@ -152,24 +165,31 @@
   function paint() {
     const panel=document.getElementById('missionBusinessPulse');
     if(!panel) return;
+    const selected=period();
+    const periodName=selected.range==='custom'
+      ? selected.start+' to '+selected.endInclusive
+      : ({today:'TODAY','7d':'LAST 7 DAYS','30d':'LAST 30 DAYS','365d':'LAST 365 DAYS'})[selected.range]||'SELECTED DATES';
     panel.innerHTML=`<div class="mission-intel-title">
-        <div><strong>BUSINESS PULSE</strong><small>LAST 7 DAYS</small></div>
+        <div><strong>BUSINESS PULSE</strong><small>${escape(periodName)}</small></div>
         <button type="button" data-mission-pulse-refresh="1" aria-label="Refresh book, store and radio website statistics">Check activity</button>
       </div>
       <div class="mission-intel-grid">${bookCard()}${storeCard()}${radioCard()}</div>
       <details class="mission-intel-data-notes">
         <summary>About these numbers</summary>
-        <p>Last 7 days, including today. Missing values are not zero. Book clicks do not prove reading. Wix paid product sales exclude tax, shipping, refunds and outside channels such as Amazon. Radio webpage views are not listener counts, and Radio.co live statistics are not yet connected. Your own Wix testing traffic may be included.</p>
+        <p>Selected dates: ${escape(selected.start)} through ${escape(selected.endInclusive)}. Missing data stays unavailable. Chapter clicks do not prove reading. Wix paid store sales exclude tax and shipping, refunds and outside channels. Radio webpage views are not listener counts. Testing traffic may be included.</p>
       </details>`;
   }
   function refresh(force = false) {
     if(typeof owner==='undefined' || !owner) return;
-    if(!force && lastLoaded && Date.now()-lastLoaded<PERIOD) return;
-    const ticket=++sequence; lastLoaded=Date.now();
+    const selected=period();
+    if(!force && lastLoaded && lastPeriodKey===selected.query && Date.now()-lastLoaded<PERIOD) return;
+    const ticket=++sequence;
+    lastLoaded=Date.now();
+    lastPeriodKey=selected.query;
     for(const key of Object.keys(ENDPOINTS)) snapshot[key]={status:'loading',data:null,error:null};
     paint();
     for(const [key,path] of Object.entries(ENDPOINTS)) {
-      getReport(path).then(data=>{
+      getReport(path,selected).then(data=>{
         if(ticket!==sequence) return;
         snapshot[key]={status:'ok',data,error:null};
         paint();
