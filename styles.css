@@ -2927,95 +2927,353 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   .mission-campaign-card {min-height:54px}
 }
 
-/* MISSION BUSINESS PULSE · METRICS ONLY V3 */
-/* One compact header, one metric bar, one button bar. No filler paragraphs. */
-#missionBusinessPulse {margin:8px 0 9px}
-#missionBusinessPulse .mission-intel-title {margin:0 0 6px;align-items:center;gap:8px}
-#missionBusinessPulse .mission-intel-title>div {display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 14px}
-#missionBusinessPulse .mission-intel-title strong {font-size:16px;letter-spacing:.6px}
-#missionBusinessPulse .mission-intel-title small {font-size:13px;color:#78684e}
-#missionBusinessPulse .mission-intel-grid {gap:11px;align-items:start}
-#missionBusinessPulse .mission-intel-card {padding:10px 13px 11px;display:block;min-width:0}
-#missionBusinessPulse .mission-intel-card-head {display:flex;align-items:center;gap:8px;padding-bottom:7px;margin-bottom:0;min-width:0}
-#missionBusinessPulse .mission-intel-card-head h3 {font:700 23px/1.15 Georgia,serif;margin:1px 0 0}
-#missionBusinessPulse .mission-intel-card-head small {font-size:12px}
-#missionBusinessPulse .mission-intel-health {gap:6px;font-size:13px}
-#missionBusinessPulse .mission-intel-meters {
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:0;
-  margin:10px 0 0;
-  border:1px solid #dccaaa;
-  background:#fffdf8;
-  border-radius:7px;
-  overflow:hidden;
+/* MISSION BUSINESS PULSE V4 · DOC JAKS CENTERED COMMAND CARDS
+   Presentation only. No API, permissions, business rules or storage changes. */
+#missionBusinessPulse {
+  margin:8px 0 10px;
+  width:100%;
+  min-width:0;
 }
-#missionBusinessPulse .mission-intel-meters.mission-intel-3 {grid-template-columns:repeat(3,minmax(0,1fr))}
-#missionBusinessPulse .mission-intel-meters.mission-intel-4 {grid-template-columns:repeat(4,minmax(0,1fr))}
-#missionBusinessPulse .mission-intel-meter {
+#missionBusinessPulse .mission-intel-title {
+  display:grid;
+  grid-template-columns:minmax(155px,1fr) auto minmax(155px,1fr);
+  align-items:center;
+  margin:0 0 10px;
+  gap:10px;
+}
+#missionBusinessPulse .mission-intel-title>div {
+  grid-column:2;
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:3px 10px;
+  text-align:center;
+}
+#missionBusinessPulse .mission-intel-title strong {
+  font-size:19px;
+  font-weight:900;
+  color:#332312;
+  letter-spacing:.9px;
+}
+#missionBusinessPulse .mission-intel-title small {
+  font-size:14px;
+  font-weight:800;
+  color:#775a29;
+  letter-spacing:.3px;
+}
+.connection-strip #missionBusinessPulse .mission-intel-title button {
+  grid-column:3;
+  justify-self:end;
+  margin:0;
+  min-height:44px;
+  padding:8px 14px;
+  background:#271c13;
+  color:#f9e2ab;
+  border:1px solid #a77b39;
+  border-radius:7px;
+  font-size:16px !important;
+  font-weight:800;
+  cursor:pointer;
+}
+#missionBusinessPulse .mission-intel-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  align-items:start;
+  gap:12px;
+  margin:0;
+}
+#missionBusinessPulse .mission-intel-card {
+  display:block;
+  min-width:0;
+  width:100%;
+  padding:0 0 12px;
+  border:1px solid #b68a44;
+  border-top:3px solid #d4a957;
+  border-radius:11px;
+  background:#f8f0df;
+  box-shadow:0 3px 10px #3b281414;
+  overflow:hidden;
+  text-align:center;
+}
+#missionBusinessPulse .mission-intel-card-head {
+  position:relative;
   display:flex;
   flex-direction:column;
-  align-items:flex-start;
+  align-items:center;
   justify-content:center;
+  gap:0;
+  text-align:center;
+  min-height:79px;
+  margin:0;
+  padding:12px 8px 10px;
   border:0;
-  border-right:1px solid #e4d8c2;
-  border-radius:0;
-  padding:8px 10px;
-  min-width:0;
-  min-height:70px;
-  background:transparent;
+  border-bottom:2px solid #bd9045;
+  background:#281b13;
 }
-#missionBusinessPulse .mission-intel-meter:last-child {border-right:0}
-#missionBusinessPulse .mission-intel-meter small {font-size:13px;line-height:1.25;color:#655332;font-weight:700}
-#missionBusinessPulse .mission-intel-meter b {font-size:24px;line-height:1.17;margin:4px 0 0;overflow-wrap:anywhere}
-#missionBusinessPulse .mission-intel-meter em {font-size:12px;line-height:1.25;margin:2px 0 0;color:#785c31}
-#missionBusinessPulse .mission-intel-actions {margin:9px 0 0;gap:8px}
-#missionBusinessPulse .mission-intel-actions button,
-#missionBusinessPulse .mission-intel-actions a {font-size:14px;min-height:42px;padding:8px 11px;margin:0}
-#missionBusinessPulse .mission-intel-products {margin:8px 0 0}
-#missionBusinessPulse .mission-intel-product {padding:4px 0;font-size:14px}
+#missionBusinessPulse .mission-intel-card-head::before {
+  content:"⚜";
+  position:absolute;
+  left:13px;
+  top:8px;
+  color:#cfa659;
+  font-size:22px;
+  font-weight:700;
+  line-height:1;
+}
+#missionBusinessPulse .mission-intel-card-head>div {
+  width:100%;
+  min-width:0;
+  text-align:center;
+}
+#missionBusinessPulse .mission-intel-card-head small {
+  display:block;
+  color:#e4bd75;
+  font-size:14px;
+  line-height:1.2;
+  font-weight:900;
+  letter-spacing:.7px;
+  text-transform:uppercase;
+}
+#missionBusinessPulse .mission-intel-card-head h3 {
+  margin:5px 0 0;
+  color:#fff0cd;
+  font:800 26px/1.12 Georgia,serif;
+  text-align:center;
+}
+#missionBusinessPulse .mission-intel-health {
+  position:absolute;
+  top:10px;
+  right:11px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  color:#fff1cd;
+  font-size:13px;
+  font-weight:900;
+}
+#missionBusinessPulse .mission-intel-health .gyr-light {
+  width:18px;
+  height:18px;
+  border-width:2px;
+  border-color:#ead7b2;
+}
+#missionBusinessPulse .mission-intel-meters,
+#missionBusinessPulse .mission-intel-meters.mission-intel-3,
+#missionBusinessPulse .mission-intel-meters.mission-intel-4 {
+  display:grid;
+  justify-content:center;
+  justify-items:stretch;
+  align-items:stretch;
+  column-gap:7px;
+  row-gap:7px;
+  max-width:100%;
+  width:max-content;
+  border:0;
+  background:transparent;
+  border-radius:0;
+  overflow:visible;
+  padding:0;
+  margin:12px auto 10px;
+}
+#missionBusinessPulse .mission-intel-meters.mission-intel-4 {
+  grid-template-columns:repeat(4,minmax(0,103px));
+}
+#missionBusinessPulse .mission-intel-meters.mission-intel-3 {
+  grid-template-columns:repeat(3,minmax(0,120px));
+}
+#missionBusinessPulse .mission-intel-card:nth-child(2) .mission-intel-meters.mission-intel-3 {
+  grid-template-columns:repeat(2,minmax(0,111px)) minmax(0,138px);
+}
+#missionBusinessPulse .mission-intel-meter,
+#missionBusinessPulse .mission-intel-meters .mission-intel-meter:last-child {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  min-height:87px;
+  min-width:0;
+  height:auto;
+  width:auto;
+  padding:8px 5px;
+  border:1px solid #c9aa70;
+  border-radius:8px;
+  background:#fffdf7;
+  box-shadow:inset 0 2px 0 #e6c98d44;
+  text-align:center;
+}
+#missionBusinessPulse .mission-intel-meter small {
+  display:block;
+  width:100%;
+  text-align:center;
+  color:#513819;
+  font-size:15px;
+  line-height:1.22;
+  font-weight:900;
+  overflow-wrap:normal;
+}
+#missionBusinessPulse .mission-intel-meter b {
+  display:block;
+  max-width:100%;
+  margin:5px 0 0;
+  color:#24180e;
+  font:900 30px/1.07 Arial,sans-serif;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.5px;
+  overflow-wrap:anywhere;
+  text-align:center;
+}
+#missionBusinessPulse .mission-intel-meter em {
+  display:block;
+  margin-top:4px;
+  text-align:center;
+  color:#755e3b;
+  font-size:13px;
+  line-height:1.2;
+  font-weight:800;
+  font-style:normal;
+}
+#missionBusinessPulse .mission-intel-actions {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  align-items:center;
+  gap:9px;
+  margin:0 auto;
+  padding:0 10px;
+  text-align:center;
+}
+.connection-strip #missionBusinessPulse .mission-intel-actions button,
+#missionBusinessPulse .mission-intel-actions a {
+  flex:0 0 auto;
+  display:inline-flex;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  white-space:normal;
+  margin:0;
+  min-height:44px;
+  padding:10px 14px;
+  font-size:16px !important;
+  line-height:1.3;
+  font-weight:900;
+  text-decoration:none;
+  border-radius:7px;
+  border:1px solid #bb8f45;
+}
+.connection-strip #missionBusinessPulse .mission-intel-actions button {
+  background:#2d2016;
+  color:#ffe6af;
+}
+#missionBusinessPulse .mission-intel-actions a {
+  background:#e6c580;
+  color:#2a1b0e;
+}
+#missionBusinessPulse .mission-intel-products {
+  margin:0 auto 10px;
+  padding:0 12px;
+  min-height:0;
+  text-align:center;
+}
+#missionBusinessPulse .mission-intel-product {
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:2px 9px;
+  padding:6px 0;
+  font-size:15px;
+  font-weight:800;
+  text-align:center;
+}
+#missionBusinessPulse .mission-intel-product strong {
+  font-size:15px;
+  font-weight:900;
+}
 #missionBusinessPulse .mission-intel-card .mission-intel-error {
-  margin:6px 0 0;font-size:12px;line-height:1.4;
+  margin:8px 12px 0;
+  font-size:14px;
+  font-weight:800;
+  line-height:1.35;
+  text-align:center;
+  overflow-wrap:anywhere;
 }
 #missionBusinessPulse .mission-intel-data-notes {
-  display:inline-block;
-  margin-top:6px;
+  display:block;
+  width:max-content;
+  max-width:100%;
+  margin:7px auto 0;
   padding:0;
   border:0;
-  color:#69583e;
+  color:#534026;
+  text-align:center;
 }
 #missionBusinessPulse .mission-intel-data-notes summary {
   display:list-item;
   cursor:pointer;
-  padding:5px 1px;
-  font-size:13px;
-  font-weight:700;
+  padding:6px 12px;
+  font-size:14px;
+  font-weight:900;
   line-height:1.3;
 }
 #missionBusinessPulse .mission-intel-data-notes p {
-  font-size:13px;
-  max-width:1000px;
-  padding:9px 11px;
-  margin:4px 0;
+  max-width:900px;
+  padding:10px 14px;
+  margin:5px auto;
   background:#fbefd6;
   border-left:3px solid #9c742e;
+  color:#4b3920;
+  font-size:15px;
+  font-weight:700;
   line-height:1.5;
+  text-align:left;
 }
-@media(max-width:1380px) {
-  #missionBusinessPulse .mission-intel-card-head h3 {font-size:21px}
-  #missionBusinessPulse .mission-intel-meter {padding:7px 8px}
-  #missionBusinessPulse .mission-intel-meter small {font-size:12px}
-  #missionBusinessPulse .mission-intel-meter b {font-size:22px}
+@media(max-width:1550px) {
+  #missionBusinessPulse .mission-intel-card-head h3 {font-size:24px}
+  #missionBusinessPulse .mission-intel-meters.mission-intel-4 {
+    grid-template-columns:repeat(2,minmax(0,128px));
+  }
 }
-@media(max-width:780px) {
-  #missionBusinessPulse .mission-intel-meters.mission-intel-4 {grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:1180px) {
+  #missionBusinessPulse .mission-intel-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+  #missionBusinessPulse .mission-intel-meters.mission-intel-4 {
+    grid-template-columns:repeat(4,minmax(0,103px));
+  }
 }
-@media(max-width:500px) {
-  #missionBusinessPulse .mission-intel-title {align-items:flex-start;flex-direction:column}
-  #missionBusinessPulse .mission-intel-meters.mission-intel-4 {grid-template-columns:repeat(2,minmax(0,1fr))}
-  #missionBusinessPulse .mission-intel-meters.mission-intel-4 .mission-intel-meter:nth-child(2) {border-right:0}
-  #missionBusinessPulse .mission-intel-meters.mission-intel-4 .mission-intel-meter:nth-child(-n+2) {border-bottom:1px solid #e4d8c2}
-  #missionBusinessPulse .mission-intel-meters.mission-intel-3 .mission-intel-meter {padding:7px 6px}
-  #missionBusinessPulse .mission-intel-meters.mission-intel-3 .mission-intel-meter small {font-size:12px}
-  #missionBusinessPulse .mission-intel-meters.mission-intel-3 .mission-intel-meter b {font-size:20px}
+@media(max-width:920px) {
+  #missionBusinessPulse .mission-intel-grid {grid-template-columns:1fr}
+  #missionBusinessPulse .mission-intel-meters.mission-intel-4 {
+    grid-template-columns:repeat(4,minmax(0,115px));
+  }
 }
+@media(max-width:620px) {
+  #missionBusinessPulse .mission-intel-title {
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  #missionBusinessPulse .mission-intel-card-head h3 {font-size:25px}
+  #missionBusinessPulse .mission-intel-meters.mission-intel-4 {
+    grid-template-columns:repeat(2,minmax(0,125px));
+  }
+  #missionBusinessPulse .mission-intel-meters.mission-intel-3 {
+    grid-template-columns:repeat(3,minmax(0,105px));
+  }
+  #missionBusinessPulse .mission-intel-card:nth-child(2) .mission-intel-meters.mission-intel-3 {
+    grid-template-columns:repeat(2,minmax(0,103px)) minmax(0,127px);
+  }
+  #missionBusinessPulse .mission-intel-card-head::before {font-size:18px;left:8px}
+  #missionBusinessPulse .mission-intel-health {right:8px;font-size:11px}
+}
+@media(max-width:370px) {
+  #missionBusinessPulse .mission-intel-meters.mission-intel-3,
+  #missionBusinessPulse .mission-intel-card:nth-child(2) .mission-intel-meters.mission-intel-3 {
+    grid-template-columns:repeat(2,minmax(0,125px));
+  }
+  #missionBusinessPulse .mission-intel-meters.mission-intel-3 .mission-intel-meter:last-child {
+    grid-column:1/-1;
+    width:125px;
+    justify-self:center;
+  }
+}
+
