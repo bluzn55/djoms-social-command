@@ -17,23 +17,49 @@ const inboxEditVersions = new Map();
 let inboxChangingView = false;
 let platformMetricRange = '7d';
 let websiteRange = '7d';
+let websiteCustomStart='';
+let websiteCustomEnd='';
 const websiteRangeReports = Object.create(null);
 const websiteRanges = Object.freeze([['today','Today'],['7d','7 days'],['30d','30 days'],['365d','1 year']]);
+function websiteCustomControls() {
+  return '<div class="website-custom-picker" role="group" aria-label="Custom report dates">' +
+    '<label>Start date <input type="date" id="websiteCustomStart" value="'+esc(websiteCustomStart)+'"></label>' +
+    '<label>End date <input type="date" id="websiteCustomEnd" value="'+esc(websiteCustomEnd)+'"></label>' +
+    '<button type="button" data-website-custom="1" aria-pressed="'+(websiteRange==='custom')+'">Apply Dates</button></div>';
+}
 function websiteRangeButtons() {
   return '<div class="website-range-toolbar" role="group" aria-label="Website analytics time range"><strong>REPORTING PERIOD</strong>' +
     websiteRanges.map(([key,label]) => '<button type="button" data-website-range="'+key+'" class="'+(websiteRange===key?'active':'')+'" aria-pressed="'+(websiteRange===key)+'">'+label+'</button>').join('') +
-    '</div>';
+    websiteCustomControls() + '</div>';
 }
 function websiteSnapshot() {
   return websiteRange === '7d' ? (localData?.website || websiteRangeReports['7d'] || {})
     : (websiteRangeReports[websiteRange] || {});
 }
-async function loadWebsiteRange(range = websiteRange) {
-  if (!websiteRanges.some(([key]) => key === range)) throw new Error('Choose a supported website reporting period.');
-  const data = await api('website-range?range='+encodeURIComponent(range));
-  if (data.range?.selection && data.range.selection !== range) throw new Error('Wix returned a different reporting period. No numbers were changed.');
-  websiteRangeReports[range] = data;
-  if (range === '7d') localData.website = data;
+function websitePeriodQuery(range=websiteRange) {
+  if(range==='custom') {
+    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(websiteCustomStart)||!/^\\d{4}-\\d{2}-\\d{2}$/.test(websiteCustomEnd))
+      throw new Error('Choose a valid Start Date and End Date.');
+    if(websiteCustomStart>websiteCustomEnd)throw new Error('Start Date must not be after End Date.');
+    return 'range=custom&start='+encodeURIComponent(websiteCustomStart)+'&end='+encodeURIComponent(websiteCustomEnd);
+  }
+  if(!websiteRanges.some(([key])=>key===range))throw new Error('Choose Day, Week, Month, Year, or custom dates.');
+  return 'range='+encodeURIComponent(range);
+}
+function websiteReportPeriod() {
+  const site=websiteSnapshot();
+  const chosen=site?.range||{};
+  return {range:websiteRange,start:chosen.start||null,end:chosen.end||null,
+    endInclusive:chosen.end?new Date(Date.parse(chosen.end+'T12:00:00Z')-86400000).toISOString().slice(0,10):null,
+    days:chosen.days||null,includesToday:chosen.includesToday??true,
+    query:websitePeriodQuery()};
+}
+async function loadWebsiteRange(range=websiteRange) {
+  const params=websitePeriodQuery(range);
+  const data=await api('website-range?'+params);
+  if(data?.range?.selection&&data.range.selection!==range)throw new Error('Wix returned a different reporting period.');
+  websiteRangeReports[range]=data;
+  if(range==='7d')localData.website=data;
   return data;
 }
 let selectedStatusPlatform = null;
@@ -403,7 +429,7 @@ function renderConnectionStrip() {
             ['Bounce rate',validNumber(site.bounceRate) ? wPct(site.bounceRate) : '—','bounceRate'],
             ['Contact Actions',leads,'contactActions']
           ];
-          const rangeCaption=({today:'Today','7d':'Last 7 days','30d':'Last 30 days','365d':'Last 365 days'})[websiteRange]||'Last 7 days';
+          const rangeCaption=({today:'Today','7d':'Last 7 days','30d':'Last 30 days','365d':'Last 365 days',custom:'Custom dates'})[websiteRange]||'Last 7 days';
           const pages=Array.isArray(site.topPages)
             ? site.topPages.filter(item=>item && typeof item.path==='string' && item.path.trim()).slice(0,5) : [];
           if (!pages.length && site.topPage) pages.push({path:site.topPage,views:site.topPageViews});
@@ -429,6 +455,7 @@ function renderConnectionStrip() {
               <div class="mission-web-range" role="group" aria-label="Website reporting period">
                 ${periodChoices.map(([key,name])=>`<button type="button" data-website-range="${key}" aria-pressed="${websiteRange===key}" title="${esc(({today:'Today so far','7d':'Last 7 days','30d':'Last 30 days','365d':'Last 365 days'})[key])}">${name}</button>`).join('')}
               </div>
+              ${websiteCustomControls()}
               <button type="button" class="mission-web-open" data-view="Website Analytics">Website Analytics ›</button>
             </div>
             <div class="mission-web-lists">
@@ -1777,14 +1804,25 @@ async function perform(work) {
 }
 document.addEventListener('click', event => {
   const b = event.target.closest('button,a'); if (!b || b.disabled || busy) return;
-  if (b.dataset.websiteRange) {
-    const requested = b.dataset.websiteRange;
-    return perform(async () => {
-      notice('Checking Wix for '+(websiteRanges.find(([key]) => key===requested)?.[1] || requested)+'…');
-      const site = await loadWebsiteRange(requested);
-      websiteRange = requested;
+  if(b.dataset.websiteRange||b.dataset.websiteCustom) {
+    const requested=b.dataset.websiteCustom?'custom':b.dataset.websiteRange;
+    return perform(async()=>{
+      if(requested==='custom') {
+        websiteCustomStart=document.getElementById('websiteCustomStart')?.value||'';
+        websiteCustomEnd=document.getElementById('websiteCustomEnd')?.value||'';
+      }
+      notice('Reading reports for '+(websiteRanges.find(([key])=>key===requested)?.[1]||'custom dates')+'…');
+      const site=await loadWebsiteRange(requested);
+      if(!site.connected)throw new Error(site.message||'Wix data is not available for these dates.');
+      websiteRange=requested;
+      platformMetricRange=requested;
       render();
-      notice(site.connected ? 'Wix website report updated for '+requested+'.' : (site.message || 'Wix reporting needs attention.'), !site.connected);
+      // Facebook and Instagram have separate APIs and may report less than Wix.
+      // Always pass the same date selector; missing data remains unavailable.
+      void loadAnalytics(true).then(()=>{
+        if(['Mission Control','Platform Details','Analytics'].includes(activeView))render();
+      }).catch(()=>{});
+      notice('Reporting period updated.');
     });
   }
   if (b.dataset.metricRange) { platformMetricRange = b.dataset.metricRange; return perform(async()=>{ await loadAnalytics(true); renderConnectionStrip(); }); }
