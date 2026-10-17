@@ -441,6 +441,7 @@ function renderConnectionStrip() {
                 </div>
               </section>
             </div>
+            <p class="mission-web-partial-flag">Visitor change compares with the previous equal-length period. Current figures include today so far${websiteRange==='today'?', compared with all of yesterday':''}.</p>
           </div>`;
         })()}
       </section>
