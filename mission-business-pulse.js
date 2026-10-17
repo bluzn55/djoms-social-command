@@ -62,106 +62,106 @@
 
   function bookCard() {
     const interest=findGroup('book');
-    const chapter=snapshot.chapter.status === 'ok' ? snapshot.chapter.data : null;
-    const store=snapshot.sales.status === 'ok' ? snapshot.sales.data : null;
+    const chapter=snapshot.chapter.status==='ok' ? snapshot.chapter.data : null;
+    const store=snapshot.sales.status==='ok' ? snapshot.sales.data : null;
     const bookUnits=store?.complete && Array.isArray(store.products)
       ? store.products.filter(product => /\bwooden\s+token\b/i.test(String(product.name||'')))
-          .reduce((sum, product) => sum + (measurable(product.units) ? product.units : 0),0)
+          .reduce((sum,product)=>sum+(measurable(product.units)?product.units:0),0)
       : null;
-    const views=interest?.views;
     const visitors=interest?.verified ? interest.visitors : null;
-    const clicks=chapter?.status === 'reported' && measurable(chapter.clicks) ? chapter.clicks : null;
-    const problems=[snapshot.interests, snapshot.chapter, snapshot.sales].filter(x=>x.status === 'error').length;
-    const color=problems===3 ? 'red' : problems || !interest?.verified || chapter?.status !== 'reported' || !store?.complete ? 'yellow':'green';
-    const subtitle=problems ? 'Some book reporting is unavailable' : chapter?.status==='waiting'
-      ? 'First-chapter clicks are not yet verified' : 'Book interest, chapter link and Wix sales';
-    const chapterNote=chapter?.enabledDate ? 'Chapter link tracked since '+chapter.enabledDate : 'Chapter clicks are not confirmed reads';
+    const clicks=chapter?.status==='reported' && measurable(chapter.clicks) ? chapter.clicks : null;
+    const problems=[snapshot.interests,snapshot.chapter,snapshot.sales].filter(x=>x.status==='error').length;
+    const color=problems===3?'red':problems || !interest?.verified || chapter?.status!=='reported' || !store?.complete?'yellow':'green';
+    const warnings=[snapshot.interests.error,snapshot.chapter.error,snapshot.sales.error].filter(Boolean);
     return `<article class="mission-intel-card">
-      <header class="mission-intel-card-head"><div><small>BOOK · THE WOODEN TOKEN</small><h3>Book & first chapter</h3></div>${statusLight(color,color==='green'?'GREEN':color==='red'?'RED':'YELLOW')}</header>
-      <p>${escape(subtitle)}</p>
-      <div class="mission-intel-meters">
-        ${meter('Book page views',show(views))}
-        ${meter('Book visitors',show(visitors))}
-        ${meter('Chapter link clicks',clicks === null ? '—' : show(clicks))}
-        ${meter('Book units · Wix',show(bookUnits))}
+      <header class="mission-intel-card-head">
+        <div><small>BOOK · CHAPTER 1</small><h3>The Wooden Token</h3></div>
+        ${statusLight(color,color.toUpperCase())}
+      </header>
+      <div class="mission-intel-meters mission-intel-4">
+        ${meter('Page views',show(interest?.views))}
+        ${meter('Visitors',show(visitors))}
+        ${meter('Chapter clicks',show(clicks))}
+        ${meter('Wix book units',show(bookUnits))}
       </div>
-      <small class="mission-intel-context">${escape(chapterNote)}. PDF clicks are not reads; Amazon sales excluded.</small>
       <div class="mission-intel-actions">
         <button type="button" data-view="Website Analytics">Book details ›</button>
         <a href="https://www.docjaks.com/_files/ugd/cf21c8_27ee63f049e5479b8d37c885f638bb2b.pdf" target="_blank" rel="noopener noreferrer">Chapter 1 ↗</a>
       </div>
-      ${problems ? '<p class="mission-intel-error">'+escape([snapshot.interests.error,snapshot.chapter.error,snapshot.sales.error].filter(Boolean).join(' · '))+'</p>':''}
+      ${warnings.length?'<p class="mission-intel-error">'+escape(warnings.join(' · '))+'</p>':''}
     </article>`;
   }
-
   function storeCard() {
     const info=snapshot.sales, data=info.status==='ok'?info.data:null;
     const ready=!!data?.complete && Array.isArray(data.products);
     const color=info.status==='error'?'red':ready?'green':'yellow';
-    const productRows=ready && data.products.length
-      ? data.products.slice(0,5).map(product=>`<div class="mission-intel-product"><span>${escape(product.name||'Unnamed product')}</span><strong>${show(product.units)} sold</strong></div>`).join('')
-      : ready ? '<p class="mission-intel-muted">No qualifying items sold in 7 days.</p>'
-        : '<p class="mission-intel-muted">'+escape(phaseText(info,'','Checking paid Wix orders…'))+'</p>';
+    const products=ready && data.products.length
+      ? '<div class="mission-intel-products">'+data.products.slice(0,3).map(product=>
+          '<div class="mission-intel-product"><span>'+escape(product.name||'Unnamed product')+'</span><strong>'+show(product.units)+' sold</strong></div>'
+        ).join('')+'</div>'
+      : '';
     return `<article class="mission-intel-card">
-      <header class="mission-intel-card-head"><div><small>STORE · WHAT SOLD</small><h3>Trading Post</h3></div>${statusLight(color,color==='green'?'GREEN':color==='red'?'RED':'YELLOW')}</header>
-      <p>Paid Wix orders only; refunds excluded.</p>
+      <header class="mission-intel-card-head">
+        <div><small>STORE · WHAT SOLD</small><h3>Trading Post</h3></div>
+        ${statusLight(color,color.toUpperCase())}
+      </header>
       <div class="mission-intel-meters mission-intel-3">
         ${meter('Paid orders',show(ready?data.paidOrders:null))}
         ${meter('Items sold',show(ready?data.units:null))}
         ${meter('Item sales',money(ready?data.itemSalesCents:null))}
       </div>
-      <h4>PRODUCTS SOLD</h4>
-      <div class="mission-intel-products">${productRows}</div>
-      <small class="mission-intel-context">Item sales exclude tax and shipping; not profit. Wix-only reporting.</small>
+      ${products}
       <div class="mission-intel-actions">
         <button type="button" data-view="Website Analytics">Sales details ›</button>
         <a href="https://www.docjaks.com/trading-post-1" target="_blank" rel="noopener noreferrer">Visit Trading Post ↗</a>
       </div>
+      ${info.status==='error'?'<p class="mission-intel-error">'+escape(info.error||'Store reporting unavailable')+'</p>':''}
     </article>`;
   }
-
   function radioCard() {
     const interest=snapshot.interests;
-    const g=findGroup('music');
-    const p=g?.pages?.find(page=>linked(page.path)==='/outlaw-radio-5150');
-    const fallback=typeof localData !== 'undefined'
-      ? (localData?.website?.topPages || []).find(page=>linked(page.path)==='/outlaw-radio-5150')
-      : null;
-    const views=measurable(p?.views) ? p.views
-      : (interest.status==='ok' && interest.data?.reconciled && !interest.data.partial && !p ? 0
-        : measurable(fallback?.views) ? fallback.views : null);
-    const visitors=measurable(p?.visitors) ? p.visitors
-      : measurable(fallback?.visitors) ? fallback.visitors : null;
-    const connected=typeof localData !== 'undefined' && localData?.website?.connected === true;
-    const color=interest.status==='error' && !connected ? 'red':'yellow';
+    const group=findGroup('music');
+    const page=group?.pages?.find(item=>linked(item.path)==='/outlaw-radio-5150');
+    const fallback=typeof localData!=='undefined'
+      ?(localData?.website?.topPages||[]).find(item=>linked(item.path)==='/outlaw-radio-5150')
+      :null;
+    const views=measurable(page?.views)?page.views
+      :(interest.status==='ok'&&interest.data?.reconciled&&!interest.data.partial&&!page?0
+        :measurable(fallback?.views)?fallback.views:null);
+    const visitors=measurable(page?.visitors)?page.visitors
+      :measurable(fallback?.visitors)?fallback.visitors:null;
+    const connected=typeof localData!=='undefined'&&localData?.website?.connected===true;
+    const color=interest.status==='error'&&!connected?'red':'yellow';
     return `<article class="mission-intel-card">
-      <header class="mission-intel-card-head"><div><small>RADIO · 51.50</small><h3>Outlaw Radio 5150</h3></div>${statusLight(color,color==='red'?'RED':'YELLOW')}</header>
-      <p>Radio webpage activity, not listening counts.</p>
+      <header class="mission-intel-card-head">
+        <div><small>RADIO · 51.50</small><h3>Outlaw Radio 5150</h3></div>
+        ${statusLight(color,color.toUpperCase())}
+      </header>
       <div class="mission-intel-meters mission-intel-3">
         ${meter('Page views',show(views))}
-        ${meter('Page visitors',show(visitors))}
+        ${meter('Visitors',show(visitors))}
         ${meter('Live listeners','—','Not connected')}
       </div>
-      <p class="mission-intel-radio-note">Live Radio.co data isn't connected. The historical KJAK export is excluded.</p>
       <div class="mission-intel-actions">
         <button type="button" data-view="Website Analytics">Radio details ›</button>
         <a href="https://outlawradio5150.com" target="_blank" rel="noopener noreferrer">Listen live ↗</a>
       </div>
-      ${interest.status==='error' ? '<p class="mission-intel-error">'+escape(interest.error||'Wix radio page reporting unavailable')+'</p>':''}
+      ${interest.status==='error'?'<p class="mission-intel-error">'+escape(interest.error||'Wix page reporting unavailable')+'</p>':''}
     </article>`;
   }
-
   function paint() {
     const panel=document.getElementById('missionBusinessPulse');
     if(!panel) return;
-    panel.innerHTML = `<div class="mission-intel-title">
-        <div><strong>BOOK · TRADING POST · OUTLAW RADIO</strong><small>Verified activity and connection status.</small></div>
+    panel.innerHTML=`<div class="mission-intel-title">
+        <div><strong>BOOK · TRADING POST · OUTLAW RADIO</strong><small>Last 7 days</small></div>
         <button type="button" data-mission-pulse-refresh="1" aria-label="Refresh book, store and radio website statistics">Check activity</button>
       </div>
       <div class="mission-intel-grid">${bookCard()}${storeCard()}${radioCard()}</div>
-      <p class="mission-intel-footnote">Last 7 days, including today. Unavailable ≠ zero. Website testing may be included.</p>`;
+      <details class="mission-intel-data-notes">
+        <summary>About these numbers</summary>
+        <p>Last 7 days, including today. Missing values are not zero. Book clicks do not prove reading. Wix paid product sales exclude tax, shipping, refunds and outside channels such as Amazon. Radio webpage views are not listener counts, and Radio.co live statistics are not yet connected. Your own Wix testing traffic may be included.</p>
+      </details>`;
   }
-
   function refresh(force = false) {
     if(typeof owner==='undefined' || !owner) return;
     if(!force && lastLoaded && Date.now()-lastLoaded<PERIOD) return;
