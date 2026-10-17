@@ -2787,3 +2787,142 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   .mission-intel-actions button,.mission-intel-actions a {width:100%}
   .website-gyr-actions button,.website-gyr-actions a.button {width:100%}
 }
+
+/* MISSION CONTROL COMPACT LAYOUT V2
+   Scope to the Mission Control-only classes; full reporting pages are untouched.
+   Keep readable labels and 42-44px minimum tap targets. */
+.mission-top-attention {
+  margin-bottom:9px;
+  padding:10px 14px;
+  gap:10px;
+  border-left-width:6px;
+}
+.mission-top-attention>strong {font-size:28px}
+.mission-top-attention span:first-child b {font-size:18px}
+.mission-website-section {margin:7px 0 11px}
+.mission-website-card {padding:10px 12px;gap:10px}
+.mission-website-copy strong {font-size:19px}
+.mission-website-copy span {font-size:13px;line-height:1.3}
+.mission-website-copy small,.mission-website-top small {font-size:11px}
+.mission-website-metrics {gap:6px}
+.mission-website-metrics>span {min-height:0;padding:6px 8px}
+.mission-website-metrics small {font-size:11px;font-weight:700;margin-bottom:2px}
+.mission-website-metrics b {font-size:17px}
+.mission-website-top {padding-left:9px}
+.mission-website-top b {font-size:14px;margin:3px 0}
+.mission-website-top span {font-size:12px}
+.mission-website-status .mission-glance-light {width:36px;height:36px;border-width:4px}
+.mission-website-status b {font-size:13px}
+.mission-website-status small {font-size:11px}
+.mission-website-open {min-height:44px;padding:8px 12px;font-size:13px}
+
+.mission-intel-section {margin:8px 0 10px}
+.mission-intel-title {margin:0 0 7px;gap:10px}
+.mission-intel-title>div {gap:2px}
+.mission-intel-title small {font-size:14px}
+.mission-intel-grid {gap:10px;align-items:start}
+.mission-intel-card {padding:11px 12px 12px}
+.mission-intel-card-head {padding-bottom:7px;margin-bottom:6px;gap:8px}
+.mission-intel-card-head h3 {font-size:20px;line-height:1.2;margin-top:2px}
+.mission-intel-card>p {font-size:15px;line-height:1.35;margin:6px 0}
+.mission-intel-meters {gap:7px;margin:8px 0}
+.mission-intel-meter {padding:8px 9px}
+.mission-intel-meter small {font-size:13px;line-height:1.25}
+.mission-intel-meter b {font-size:20px;line-height:1.22;margin-top:3px}
+.mission-intel-meter em {font-size:12px;line-height:1.2;display:block;margin-top:3px}
+.mission-intel-card h4 {margin:9px 0 4px}
+.mission-intel-products {min-height:0}
+.mission-intel-product {padding:5px 0;font-size:14px}
+.mission-intel-muted {margin:3px 0;font-size:14px}
+.mission-intel-context {margin-top:6px;font-size:13px;line-height:1.35}
+.mission-intel-radio-note {padding:7px 9px}
+.mission-intel-actions {gap:7px;margin-top:9px}
+.connection-strip .mission-intel-actions button,
+.mission-intel-actions a {min-height:44px;padding:9px 11px;font-size:14px}
+.mission-intel-footnote {font-size:14px;line-height:1.4;margin:7px 0 0}
+
+.mission-glance-head {gap:10px;margin-bottom:8px}
+.mission-glance-head strong {font-size:23px}
+.mission-glance-grid {gap:9px}
+.connection-strip .mission-glance-card {
+  min-height:0 !important;
+  height:auto;
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr);
+  grid-template-areas:
+    "light brand"
+    "light state"
+    "purpose purpose"
+    "metrics metrics";
+  align-items:center;
+  justify-items:stretch;
+  gap:4px 9px;
+  padding:11px 12px;
+  text-align:left;
+}
+.mission-glance-card>.mission-glance-brand {
+  grid-area:brand;
+  justify-content:flex-start;
+  font-size:19px;
+}
+.mission-glance-card>.mission-glance-light {
+  grid-area:light;
+  width:42px;height:42px;
+  border-width:4px;
+  box-shadow:inset 0 0 0 2px #ffffff66,0 2px 7px #00000018;
+}
+.mission-glance-card>.mission-glance-state {
+  grid-area:state;
+  font-size:16px;
+  letter-spacing:.4px;
+}
+.mission-glance-card>small {
+  grid-area:purpose;
+  margin:3px 0 1px;
+  min-height:0;
+  font-size:12px !important;
+  text-align:left;
+}
+.mission-glance-card>.mission-glance-metrics {
+  grid-area:metrics;
+  gap:6px;
+  margin-top:0;
+}
+.mission-glance-metrics>span {padding:7px 9px}
+.mission-glance-metrics small {font-size:12px !important;line-height:1.25}
+.mission-glance-metrics b {font-size:18px;margin-top:3px}
+
+.mission-action-strip {margin-top:10px}
+.connection-strip .mission-action-strip button {min-height:60px;padding:8px 11px}
+.mission-action-strip button b {margin:1px 0}
+.mission-blog-section {margin-top:12px}
+.mission-blog-card {gap:11px;padding:10px 13px}
+.mission-blog-metrics {gap:6px}
+.mission-blog-metrics>span {padding:6px 8px}
+.mission-blog-status .mission-glance-light {width:32px;height:32px;border-width:4px}
+.mission-blog-copy strong {font-size:19px}
+.mission-blog-copy span {margin-top:2px}
+
+.mission-campaigns-section,.reviews-local-section {margin-top:14px;padding-top:10px}
+.mission-campaigns-head,.reviews-local-head {margin-bottom:8px}
+.mission-campaigns-grid {gap:9px}
+.mission-campaign-card {min-height:60px;padding:9px 11px;gap:9px}
+.mission-campaign-card .gyr-light {width:22px;height:22px}
+.reviews-local-grid {gap:9px}
+.reviews-local-card {padding:10px}
+.reviews-local-status {margin-top:5px}
+.reviews-local-metrics {gap:6px;margin-top:8px}
+.reviews-local-metrics>span {padding:6px 8px}
+.reviews-local-metrics b {margin-top:2px}
+
+@media(max-width:1100px) {
+  .mission-website-metrics {grid-template-columns:repeat(3,minmax(0,1fr))}
+  .mission-website-top {padding-left:0}
+}
+@media(max-width:560px) {
+  .connection-strip .mission-glance-card {grid-template-columns:44px minmax(0,1fr)}
+  .mission-intel-meters.mission-intel-3 {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mission-blog-card {gap:8px}
+  .mission-blog-metrics {grid-template-columns:repeat(3,minmax(0,1fr))}
+  .mission-campaign-card {min-height:54px}
+}
