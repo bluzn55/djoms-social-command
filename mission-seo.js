@@ -147,7 +147,7 @@
         '<a href="'+sourceLink+'" target="_blank" rel="noopener noreferrer">Google Search Console ↗</a>'+
         '. Index coverage is not reported by the Search Analytics endpoint. Search Console days use Google’s reporting time zone and often lag by two days.</p>'+
       '</section>';
-    if(force||!snapshot){
+    if((force||!snapshot)&&selection?.query&&selection?.start&&selection?.end){
       void read(selection,force).then(()=>{
         if(typeof activeView!=='undefined'&&activeView==='SEO Analytics'&&current()?.query===selection?.query)
           renderDetails(false);
