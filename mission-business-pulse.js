@@ -189,7 +189,7 @@
     if(typeof activeView==='undefined' || activeView!=='Mission Control') return value;
     const strip=document.getElementById('connectionStrip');
     if(!strip || strip.hidden) return value;
-    const anchor=strip.querySelector('.mission-blog-section');
+    const anchor=strip.querySelector('.mission-glance-head');
     let panel=document.getElementById('missionBusinessPulse');
     if(!panel) {
       panel=document.createElement('section');
