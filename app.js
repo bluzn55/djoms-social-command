@@ -412,7 +412,7 @@ function renderConnectionStrip() {
               <small class="mission-web-checked">Last 7 days · Updated ${esc(updatedText(site.checkedAt || localData?.checkedAt))}</small>
             </div>
             <div class="mission-web-gauges" aria-label="Website figures, last seven days">
-              ${counters.map(([title,value])=>`<div class="mission-web-gauge"><small>${esc(title)}</small><strong>${esc(compactMetric(value))}</strong></div>`).join('')}
+              ${counters.map(([title,value])=>`<div class="mission-web-gauge${title==='Bounce rate'?' mission-web-bounce':''}"><small>${esc(title)}</small><strong>${esc(compactMetric(value))}</strong>${title==='Bounce rate'?renderBounceMeter(site.bounceRate):''}</div>`).join('')}
             </div>
             <div class="mission-web-controls">
               <div class="mission-web-popular"><small>TOP PAGE</small><strong title="${esc(topPage)}">${esc(topPage)}</strong><span>${site.topPageViews==null?'—':esc(compactMetric(site.topPageViews))+' views'}</span></div>
@@ -1199,6 +1199,27 @@ function renderBatchSchedule() {
 function wName(path){if(!path||path==='/')return'Home';return String(path).replace(/^\//,'').replace(/[-_]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());}
 function wTime(v){const n=Number(v);if(!Number.isFinite(n))return'—';return n<60?Math.round(n)+'s':Math.floor(n/60)+'m '+Math.round(n%60)+'s';}
 function wPct(v){const n=Number(v);if(!Number.isFinite(n))return'—';const p=n<=1?n*100:n;return p.toFixed(p<10?1:0)+'%';}
+
+function renderBounceMeter(rate) {
+  // A qualitative website navigation cue, not a measurement of visitor satisfaction.
+  // Wix may supply a ratio (0..1) or a percentage (0..100).
+  if (rate === null || rate === undefined || rate === '') {
+    return '<span class="mission-bounce-nodata">NO DATA</span>';
+  }
+  const value=Number(rate);
+  if(!Number.isFinite(value) || value<0 || value>100) {
+    return '<span class="mission-bounce-nodata">NO DATA</span>';
+  }
+  const pct=value<=1?value*100:value;
+  const grade=pct<40?'good':pct<70?'watch':'high';
+  const label=grade==='good'?'GOOD':grade==='watch'?'WATCH':'HIGH';
+  const guide='General guide: green is under 40%, yellow is 40–69%, red is 70% or more. A one-page radio listening visit can still be successful.';
+  return `<span class="mission-bounce-meter" role="img" aria-label="${esc(wPct(rate))} bounce rate. ${label}. ${esc(guide)}" title="${esc(guide)}">
+    <span class="mission-bounce-track"><span class="mission-bounce-needle" style="left:${pct.toFixed(1)}%" aria-hidden="true"></span></span>
+    <span class="mission-bounce-grade ${grade}">${label}</span>
+  </span>`;
+}
+
 function wBar(rows,key,label){
   const vals=(rows||[]).map(r=>Number(r[key])).filter(Number.isFinite),max=Math.max(...vals,1);
   return '<div class="wa-chart"><b>'+esc(label)+'</b><div class="wa-bars">'+(rows||[]).map(r=>{const v=Number(r[key]);return '<span><i style="height:'+Math.max(3,Number.isFinite(v)?v/max*100:0)+'%"></i><small>'+esc(r.label||'')+'</small><strong>'+esc(compactMetric(v))+'</strong></span>';}).join('')+'</div></div>';
