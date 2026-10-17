@@ -2681,3 +2681,51 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   .website-platform-kpi strong {font-size:21px}
   .website-platform-actions button,.website-platform-actions a {width:100%;justify-content:center}
 }
+
+/* Wix reporting period selectors shared by Platforms and Website Analytics. */
+.website-range-toolbar {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  padding:12px 0 14px;
+}
+.website-range-toolbar>strong {
+  color:#795d2b;
+  font-size:13px;
+  letter-spacing:.5px;
+  margin-right:6px;
+}
+.website-range-toolbar button,
+.wda .website-range-toolbar button {
+  min-height:44px;
+  min-width:84px;
+  margin:0;
+  padding:10px 16px;
+  border:1px solid #ba9e71;
+  border-radius:8px;
+  background:#fffaf0;
+  color:#302719;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+}
+.website-range-toolbar button.active,
+.wda .website-range-toolbar button.active {
+  background:#315b38;
+  border-color:#315b38;
+  color:#fff;
+}
+.website-range-toolbar button:hover:not(.active),
+.wda .website-range-toolbar button:hover:not(.active) {background:#f6e9cb}
+.website-range-toolbar button:focus-visible,
+.wda .website-range-toolbar button:focus-visible {outline:3px solid #356d4e;outline-offset:3px}
+.website-platform-period {
+  color:#66553a;
+  font-size:13px;
+  margin:0 0 16px;
+}
+@media(max-width:480px) {
+  .website-range-toolbar>strong {flex-basis:100%}
+  .website-range-toolbar button,.wda .website-range-toolbar button {min-width:calc(50% - 6px);flex:1}
+}
