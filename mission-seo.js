@@ -125,10 +125,7 @@
       '<span class="mission-seo-status"><i class="gyr-light '+(snapshot?.error?'red':state.light)+'" aria-hidden="true"></i><b>'+esc(snapshot?.error?'UNAVAILABLE':busy?'CHECKING':state.label)+'</b></span></div>'+
       '<div class="seo-detail-toolbar">'+
        '<button type="button" data-view="Mission Control">‹ Mission Control</button>'+
-       '<button type="button" data-website-range="today" aria-pressed="'+(selection?.range==='today')+'">Day</button>'+
-       '<button type="button" data-website-range="7d" aria-pressed="'+(selection?.range==='7d')+'">Week</button>'+
-       '<button type="button" data-website-range="30d" aria-pressed="'+(selection?.range==='30d')+'">Month</button>'+
-       '<button type="button" data-website-range="365d" aria-pressed="'+(selection?.range==='365d')+'">Year</button>'+
+       (typeof websiteRangeButtons==='function'?websiteRangeButtons():'')+
        '<button type="button" data-seo-refresh="1">Refresh SEO</button>'+
       '</div>'+
       '<div class="seo-detail-statgrid">'+
