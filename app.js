@@ -419,7 +419,7 @@ function renderConnectionStrip() {
               <small class="mission-web-checked">${esc(rangeCaption)} · Updated ${esc(updatedText(site.checkedAt || localData?.checkedAt))}</small>
             </div>
             <div class="mission-web-gauges" aria-label="Website figures for ${esc(rangeCaption)}">
-              ${counters.map(([title,value])=>`<div class="mission-web-gauge${title==='Bounce rate'?' mission-web-bounce':''}"><small>${esc(title)}</small><strong>${esc(compactMetric(value))}</strong>${title==='Bounce rate'?renderBounceMeter(site.bounceRate):''}</div>`).join('')}
+              ${counters.map(([title,value])=>`<div class="mission-web-gauge${title==='Bounce rate'?' mission-web-bounce':''}${title==='Visitors'?' mission-web-visitors':''}"><small>${esc(title)}</small><strong>${esc(compactMetric(value))}</strong>${title==='Visitors'?renderVisitorChangeGauge(site.visitorComparison):''}${title==='Bounce rate'?renderBounceMeter(site.bounceRate):''}</div>`).join('')}
             </div>
             <div class="mission-web-controls">
               <div class="mission-web-range" role="group" aria-label="Website reporting period">
@@ -1222,6 +1222,39 @@ function renderBatchSchedule() {
 function wName(path){if(!path||path==='/')return'Home';return String(path).replace(/^\//,'').replace(/[-_]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());}
 function wTime(v){const n=Number(v);if(!Number.isFinite(n))return'—';return n<60?Math.round(n)+'s':Math.floor(n/60)+'m '+Math.round(n%60)+'s';}
 function wPct(v){const n=Number(v);if(!Number.isFinite(n))return'—';const p=n<=1?n*100:n;return p.toFixed(p<10?1:0)+'%';}
+
+function renderVisitorChangeGauge(comparison) {
+  const status=comparison?.direction || 'unavailable';
+  const validPercent=typeof comparison?.percentChange==='number' && Number.isFinite(comparison.percentChange);
+  const prior=typeof comparison?.previousVisitors==='number' && Number.isFinite(comparison.previousVisitors)
+    ? comparison.previousVisitors : null;
+  const current=typeof comparison?.currentVisitors==='number' && Number.isFinite(comparison.currentVisitors)
+    ? comparison.currentVisitors : null;
+  const selection=comparison?.selection || websiteRange;
+  const periodText=selection==='today'?'yesterday (today partial)':
+    selection==='7d'?'prior 7 days':selection==='30d'?'prior 30 days':'prior 365 days';
+  const note=comparison?.note || 'Compared with the preceding equal-length reporting period.';
+  const detail=prior===null||current===null ? 'The previous visitor count is unavailable.' :
+    current+' visitor(s) this period, '+prior+' in the previous period.';
+  const fullText=detail+' '+note;
+  if(!validPercent && status!=='new' && status!=='no-baseline') {
+    return `<span class="mission-visitor-change unavailable" title="${esc(fullText)}"><b>—</b><small>VS PRIOR</small></span>`;
+  }
+  const direction=status==='up'?'up':status==='down'?'down':status==='new'?'new':'flat';
+  const percent=validPercent
+    ? (comparison.percentChange>0?'+':'')+comparison.percentChange.toFixed(1).replace(/\\.0$/,'')+'%'
+    : status==='new'?'NEW':'—';
+  const pointer=validPercent
+    ? 50+Math.max(-50,Math.min(50,comparison.percentChange))
+    : status==='new'?100:50;
+  const arrow=direction==='up'||direction==='new'?'▲':direction==='down'?'▼':'•';
+  const aria=percent+' visitor change versus '+periodText+'. '+fullText;
+  return `<span class="mission-visitor-change ${direction}" role="img" aria-label="${esc(aria)}" title="${esc(aria)}">
+    <b>${arrow} ${esc(percent)}</b>
+    <span class="mission-visitor-change-track" aria-hidden="true"><i class="mission-visitor-change-needle" style="left:${pointer.toFixed(1)}%"></i></span>
+    <small>${esc(selection==='today'?'VS YESTERDAY*':'VS PRIOR')}</small>
+  </span>`;
+}
 
 function renderBounceMeter(rate) {
   // A qualitative website navigation cue, not a measurement of visitor satisfaction.
