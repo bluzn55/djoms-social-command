@@ -61,14 +61,13 @@
   async function load(box) {
     if (box.dataset.loading === '1') return;
     box.dataset.loading = '1';
-    const panel = box.closest('#wdaInterests');
-    const days = panel?.querySelector('[data-interest-days][aria-pressed="true"]')?.dataset.interestDays === '28' ? '28' : '7';
+    const days=typeof websitePeriodQuery==='function'?websitePeriodQuery():'range=7d';
     draw(box, null, null);
     try {
       let job = active.get(days);
       if (!job) {
         job = (async () => {
-          const response = await fetch('/api/meta/chapter-clicks?days='+days, { credentials:'same-origin', cache:'no-store', signal:AbortSignal.timeout(45000) });
+          const response = await fetch('/api/meta/chapter-clicks?' + days, { credentials:'same-origin', cache:'no-store', signal:AbortSignal.timeout(45000) });
           const data = await response.json();
           if (!response.ok || !data.connected || !Array.isArray(data.buttons) || data.target !== TARGET) throw new Error(response.status === 401 ? 'Sign in to read the chapter report.' : 'Chapter-click data could not be checked. Other reports are unchanged.');
           return data;
@@ -76,6 +75,10 @@
         active.set(days, job);
       }
       const data = await job;
+      const selected=typeof websiteReportPeriod==='function'?websiteReportPeriod():null;
+      if(selected?.start&&(data.range?.requestedStart||data.range?.start)!==selected.start ||
+         selected?.end&&data.range?.end!==selected.end)
+        throw new Error('This report does not match the selected dates.');
       if (box.isConnected) draw(box, data, null);
     } catch (e) {
       if (box.isConnected) draw(box, null, e.name === 'TimeoutError' ? 'Wix took too long. Try this report again later.' : e.message || 'Chapter-click data could not be checked.');
