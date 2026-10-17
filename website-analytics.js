@@ -39,7 +39,8 @@
     const today = ymd(site.checkedAt || new Date());
     // The current backend requests 28 days, ending on the same date as its
     // seven-day summary. A boundary bucket may contain only part of a week.
-    const windowStart = shiftDay(site.range?.start, -21);
+    const windowStart = site.range?.selection && site.range.selection !== '7d'
+      ? site.range.start : shiftDay(site.range?.start,-21);
     const windowEnd = site.range?.end;
     return list(site.weekly).map(row => {
       const start = ymd(row.start);
@@ -87,7 +88,7 @@
 .wda-head{border-left:6px solid #9c742e}.wda .wda-note{color:#625238;font-size:15px}.wda .wda-caution{background:#fff1c9;border:1px solid #bc8932;border-radius:8px;padding:14px;font-size:17px}
 .wda-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.wda-kpi{background:#fffaf0;border:1px solid #cbb994;border-radius:8px;padding:18px}.wda-kpi small,.wda-kpi strong{display:block}.wda-kpi strong{font-size:29px;line-height:1.2;margin-top:7px}
 .wda-nuggets{display:grid;grid-template-columns:1fr 1fr;gap:12px}.wda-nuggets p{background:#f8efdc;border-left:4px solid #a27c36;padding:15px;margin:0}.wda-charts{display:grid;grid-template-columns:1fr;gap:18px}
-.wda-chart{border:1px solid #d5c4a2;padding:16px;border-radius:8px}.wda-column-chart{display:flex;gap:15px;align-items:stretch}.wda-column{flex:1;min-width:0;text-align:center}.wda-column strong{display:block;font-size:20px}.wda-track{height:145px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid #8e7c5f;margin:10px 0}.wda-track i{display:block;width:65%;background:#9c742e;min-width:8px}.wda-column small{overflow-wrap:anywhere;display:block}
+.wda-chart{border:1px solid #d5c4a2;padding:16px;border-radius:8px}.wda-column-chart{display:flex;gap:15px;align-items:stretch;overflow-x:auto}.wda-column{min-width:34px}.wda-column{flex:1;min-width:0;text-align:center}.wda-column strong{display:block;font-size:20px}.wda-track{height:145px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid #8e7c5f;margin:10px 0}.wda-track i{display:block;width:65%;background:#9c742e;min-width:8px}.wda-column small{overflow-wrap:anywhere;display:block}
 .wda-ranking{display:grid;gap:15px}.wda-rank-line{display:grid;grid-template-columns:minmax(160px,1fr) 2fr auto;align-items:center;gap:14px}.wda-rank-line small{display:block}.wda-horizontal-track{height:18px;background:#eee0c7;border-radius:6px;overflow:hidden}.wda-horizontal-track i{height:100%;display:block;background:#9c742e}
 .wda-table-wrap{overflow-x:auto;margin-top:20px}.wda table{border-collapse:collapse;width:100%;font-size:16px}.wda caption{text-align:left;color:#625238;padding:0 0 10px;font-size:15px}.wda th,.wda td{padding:13px 12px;text-align:left;border-bottom:1px solid #dfd0b5;vertical-align:top}.wda th{font-weight:700;background:#f1e4ca;white-space:nowrap}.wda td:first-child{min-width:165px}.wda td small{display:block;overflow-wrap:anywhere}
 .wda-two{display:grid;grid-template-columns:1fr 1fr;gap:18px;min-width:0}.wda-list>div{display:flex;justify-content:space-between;gap:15px;padding:12px 0;border-bottom:1px solid #dfd0b5}.wda-list strong{white-space:nowrap}.wda-list span{overflow-wrap:anywhere}
@@ -96,7 +97,7 @@
 `;
   function renderWebsiteAnalytics() {
     const data = typeof localData !== 'undefined' ? localData : {};
-    const site = data.website || {};
+    const site = typeof websiteSnapshot === 'function' ? websiteSnapshot() : (data.website || {});
     const weeks = weekInfo(site);
     const pages = list(site.topPages);
     const connected = !!site.connected;
@@ -109,11 +110,13 @@
     const weekTable = table(['Week starts','Coverage','Sessions','Visitors','Views','Average stay','Pages / session'],weeks.map(w => [html(w.weekStart || w.label),w.complete?'Complete':'Partial',html(count(w.sessions)),html(count(w.visitors)),html(count(w.views)),html(duration(w.avgTimeSeconds)),html(count(w.pagesPerSession))]),'Unique visitors are reported per week. Do not add weekly visitors to get a unique monthly total.');
     let saved = '';
     try { saved = localStorage.getItem(NOTE_KEY) || ''; } catch (_) {}
-    const output = '<div class="wda" data-version="'+VERSION+'">' +
+    const periodButtons = typeof websiteRangeButtons === 'function' ? websiteRangeButtons() : '';
+    const rangeLabel = { today:'Today', '7d':'Last 7 days', '30d':'Last 30 days', '365d':'Last 365 days' }[site.range?.selection] || 'Last 7 days';
+    const output = '<div class="wda" data-version="'+VERSION+'">' + periodButtons +
       '<div class="wda-head"><small>DOC JAKS · WEBSITE RESEARCH</small><h2>Website Analytics</h2><p>What people visit, how long they stay, and what we should test next.</p><p><b>'+(connected?(site.partial?'Data connection: partial':'Data connection: available'):'Data connection: needs attention')+'</b> · '+html(site.message || 'Awaiting website data')+'</p><p class="wda-note">Summary dates: '+html(site.range?.start || 'Not available')+' through '+html(shiftDay(site.range?.end,-1) || 'Not available')+'. Time zone: Central. Last checked: '+html(site.checkedAt ? new Date(site.checkedAt).toLocaleString('en-US',{timeZone:ZONE}) : 'Not checked')+'.</p><div class="wda-caution"><b>Testing traffic is included.</b> Most current activity may be your own page checks. No owner-traffic exclusion has been applied. A healthy connection does not mean marketing performance is healthy.</div></div>' + kpis +
       section('Gold nuggets: observations and next tests','<div class="wda-nuggets">'+insights(site,weeks).map(t=>'<p>'+html(t)+'</p>').join('')+'</div>','Small samples and owner testing limit conclusions. These are prompts for investigation, not proven causes.') +
-      section('Top pages, ranked by views',ranking+pageTable,'Last seven days, including today so far. Average time can be unmeasured. Bounce does not identify a visitor’s next page.') +
-      section('Week by week','<div class="wda-charts">'+weeklyChart(weeks,'sessions','Sessions')+weeklyChart(weeks,'visitors','Tracked visitors')+weeklyChart(weeks,'views','Page views')+'</div>'+weekTable,'The first and current week may be partial. Growth observations compare only consecutive complete weeks.') +
+      section('Top pages, ranked by views',ranking+pageTable,rangeLabel+' (including today so far). Average time can be unmeasured. Bounce does not identify a visitor’s next page.') +
+      section('Traffic history','<div class="wda-charts">'+weeklyChart(weeks,'sessions','Sessions')+weeklyChart(weeks,'visitors','Tracked visitors')+weeklyChart(weeks,'views','Page views')+'</div>'+weekTable,'The first and current week may be partial. Growth observations compare only consecutive complete weeks.') +
       '<div class="wda-two">'+breakdown('Where visits came from',list(site.trafficSources),r=>String(r.source||r.category||'Unknown').replace(/_/g,' '),'sessions','sessions')+breakdown('Devices',list(site.devices),r=>r.device||'Unknown','sessions','sessions')+'</div>' +
       '<div class="wda-two">'+breakdown('New and returning visitors',list(site.visitorTypes),r=>r.type==='first_time_visitor'?'New':r.type==='returning_visitor'?'Returning':r.type,'visitors','visitors')+breakdown('Reported visitor locations',list(site.geography),r=>[r.city,r.region,r.country].filter(Boolean).join(', ')||'Unknown','visitors','visitors')+'</div>' +
       '<div class="wda-two">'+breakdown('Entry pages',list(site.landingPages),r=>pageName(r.path),'sessions','sessions')+breakdown('Exit pages',list(site.exitPages),r=>pageName(r.path),'sessions','sessions')+'</div>' +
