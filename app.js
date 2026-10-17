@@ -396,12 +396,12 @@ function renderConnectionStrip() {
           const returningVisitors=returningRow && validNumber(returningRow.visitors)
             ? returningRow.visitors : null;
           const counters=[
-            ['Visitors',site.visitors],
-            ['Returning visitors',returningVisitors],
-            ['Page views',site.pageViews],
-            ['Avg. stay',validNumber(site.avgTimeSeconds) ? wTime(site.avgTimeSeconds) : '—'],
-            ['Bounce rate',validNumber(site.bounceRate) ? wPct(site.bounceRate) : '—'],
-            ['Contact Actions',leads]
+            ['Visitors',site.visitors,'visitors'],
+            ['Returning visitors',returningVisitors,'returningVisitors'],
+            ['Page views',site.pageViews,'pageViews'],
+            ['Avg. stay',validNumber(site.avgTimeSeconds) ? wTime(site.avgTimeSeconds) : '—','avgTimeSeconds'],
+            ['Bounce rate',validNumber(site.bounceRate) ? wPct(site.bounceRate) : '—','bounceRate'],
+            ['Contact Actions',leads,'contactActions']
           ];
           const rangeCaption=({today:'Today','7d':'Last 7 days','30d':'Last 30 days','365d':'Last 365 days'})[websiteRange]||'Last 7 days';
           const pages=Array.isArray(site.topPages)
@@ -419,7 +419,11 @@ function renderConnectionStrip() {
               <small class="mission-web-checked">${esc(rangeCaption)} · Updated ${esc(updatedText(site.checkedAt || localData?.checkedAt))}</small>
             </div>
             <div class="mission-web-gauges" aria-label="Website figures for ${esc(rangeCaption)}">
-              ${counters.map(([title,value])=>`<div class="mission-web-gauge${title==='Bounce rate'?' mission-web-bounce':''}${title==='Visitors'?' mission-web-visitors':''}"><small>${esc(title)}</small><strong>${esc(compactMetric(value))}</strong>${title==='Visitors'?renderVisitorChangeGauge(site.visitorComparison):''}${title==='Bounce rate'?renderBounceMeter(site.bounceRate):''}</div>`).join('')}
+              ${counters.map(([title,value,key])=>`<div class="mission-web-gauge${title==='Bounce rate'?' mission-web-bounce':''}${title==='Visitors'?' mission-web-visitors':''}">
+                <small>${esc(title)}</small>
+                <div class="mission-web-value-line"><strong>${esc(compactMetric(value))}</strong>${renderVisitorChangeGauge(site.metricComparisons?.[key]||(key==='visitors'?site.visitorComparison:null),title)}</div>
+                ${title==='Bounce rate'?renderBounceMeter(site.bounceRate):''}
+              </div>`).join('')}
             </div>
             <div class="mission-web-controls">
               <div class="mission-web-range" role="group" aria-label="Website reporting period">
@@ -441,7 +445,7 @@ function renderConnectionStrip() {
                 </div>
               </section>
             </div>
-            <p class="mission-web-partial-flag">Visitor change compares with the previous equal-length period. Current figures include today so far${websiteRange==='today'?', compared with all of yesterday':''}.</p>
+            <p class="mission-web-partial-flag">All six percentages compare with the previous equal-length period. Green means improvement, red means decline, and yellow means unchanged or unavailable. Lower bounce rates are generally better. Current figures include today so far${websiteRange==='today'?', compared with all of yesterday':''}.</p>
           </div>`;
         })()}
       </section>
@@ -1224,30 +1228,33 @@ function wName(path){if(!path||path==='/')return'Home';return String(path).repla
 function wTime(v){const n=Number(v);if(!Number.isFinite(n))return'—';return n<60?Math.round(n)+'s':Math.floor(n/60)+'m '+Math.round(n%60)+'s';}
 function wPct(v){const n=Number(v);if(!Number.isFinite(n))return'—';const p=n<=1?n*100:n;return p.toFixed(p<10?1:0)+'%';}
 
-function renderVisitorChangeGauge(comparison) {
-  // Only the reported change percentage, with an honest no-baseline state.
-  // The visitor total is rendered in the parent metric tile.
+function renderVisitorChangeGauge(comparison,metric='Visitors') {
+  // Direction is relative to the previous equal-length period, not a
+  // generic red/yellow/green health score. Bounce is inverse: lower is better.
   const change=comparison?.percentChange;
-  const valid=typeof change==='number' && Number.isFinite(change);
-  const status=comparison?.direction || 'unavailable';
-  const color=valid ? (change>0?'green':change<0?'red':'yellow')
-    : status==='new'?'green':'yellow';
-  const amount=valid ? (change>0?'+':'')+change.toFixed(1)+'%'
-    : status==='new'?'NEW':'—';
-  const selection=comparison?.selection || websiteRange;
-  const prior=typeof comparison?.previousVisitors==='number' && Number.isFinite(comparison.previousVisitors)
-    ? comparison.previousVisitors : null;
-  const current=typeof comparison?.currentVisitors==='number' && Number.isFinite(comparison.currentVisitors)
-    ? comparison.currentVisitors : null;
-  const period=selection==='today'?'yesterday; today is still in progress'
-    : selection==='7d'?'the preceding 7 days'
-    : selection==='30d'?'the preceding 30 days'
-    :'the preceding 365 days';
-  const detail=prior===null||current===null
-    ? 'The comparison could not be calculated from Wix data.'
-    : prior===0 ? 'Previous period had zero visitors, so a percentage cannot be calculated.'
-    : current+' visitors compared with '+prior+' previously.';
-  return `<span class="mission-visitor-change ${color}" title="${esc('Visitors compared with '+period+'. '+detail)}" aria-label="${esc(amount+' visitor change versus '+period)}">${esc(amount)}</span>`;
+  const valid=typeof change==='number'&&Number.isFinite(change);
+  const noBase=comparison?.direction==='new';
+  const invert=metric==='Bounce rate'||comparison?.lowerIsBetter===true;
+  const color=valid
+    ? change===0?'yellow':(change>0)!==invert?'green':'red'
+    : noBase&&!invert?'green':'yellow';
+  const amount=valid
+    ? (change>0?'+':'')+change.toFixed(1)+'%'
+    : noBase?'NEW':'—';
+  const selection=comparison?.selection||websiteRange;
+  const period=selection==='today'?'yesterday (today incomplete)'
+    : selection==='7d'?'the previous 7 days'
+    : selection==='30d'?'the previous 30 days':'the previous 365 days';
+  const current=comparison?.current??comparison?.currentVisitors;
+  const previous=comparison?.previous??comparison?.previousVisitors;
+  const details=typeof current==='number'&&typeof previous==='number'
+    ? ' Current: '+current+'. Previous: '+previous+'.'
+    : ' Comparison figures are not both available.';
+  const caveat=invert?' Lower bounce rate is generally better; one-page radio listening can be an exception.':'';
+  const tip=metric+' vs '+period+': '+amount+'.'+details
+    +(noBase?' Previous period was zero, so a percentage cannot be calculated.':'')
+    +caveat;
+  return `<span class="mission-visitor-change ${color}" title="${esc(tip)}" aria-label="${esc(tip)}">${esc(amount)}</span>`;
 }
 
 function renderBounceMeter(rate) {
