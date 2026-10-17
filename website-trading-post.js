@@ -30,13 +30,13 @@
   async function load(box) {
     if (box.dataset.loading === '1') return;
     box.dataset.loading = '1';
-    const days = box.closest('#wdaInterests')?.querySelector('[data-interest-days][aria-pressed="true"]')?.dataset.interestDays === '28' ? '28' : '7';
+    const days=typeof websitePeriodQuery==='function'?websitePeriodQuery():'range=7d';
     draw(box, null, null);
     try {
       let job = active.get(days);
       if (!job) {
         job = (async () => {
-          const response = await fetch('/api/meta/trading-post-sales?days=' + days, { credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.timeout(45000) });
+          const response = await fetch('/api/meta/trading-post-sales?' + days, { credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.timeout(45000) });
           const data = await response.json();
           if (!response.ok || !data.connected || !data.complete || !Array.isArray(data.products)) throw new Error(data.error || 'Product sales could not be checked. Other reports are unchanged.');
           return data;
@@ -44,6 +44,10 @@
         active.set(days, job);
       }
       const data = await job;
+      const selected=typeof websiteReportPeriod==='function'?websiteReportPeriod():null;
+      if(selected?.start&&(data.range?.requestedStart||data.range?.start)!==selected.start ||
+         selected?.end&&data.range?.end!==selected.end)
+        throw new Error('This report does not match the selected dates.');
       if (box.isConnected) draw(box, data, null);
     } catch (error) {
       if (box.isConnected) draw(box, null, error.name === 'TimeoutError' ? 'Wix took too long. Retry this report later.' : error.message);
