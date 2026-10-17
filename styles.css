@@ -3718,3 +3718,84 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     max-width:220px;
   }
 }
+
+/* MISSION CONTROL VISITOR CHANGE GAUGE V1 */
+/* Green/right = growth; red/left = decline; midpoint = no change.
+   The percent printed above the needle is the actual unsaturated change. */
+.mission-web-gauge.mission-web-visitors {
+  padding-top:6px;
+  padding-bottom:6px;
+}
+.mission-visitor-change {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  max-width:102px;
+  gap:2px;
+  margin-top:5px;
+  text-align:center;
+}
+.mission-visitor-change b {
+  display:block;
+  max-width:100%;
+  font:900 16px/1.14 Arial,sans-serif;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.mission-visitor-change.up b,
+.mission-visitor-change.new b {color:#2b733c}
+.mission-visitor-change.down b {color:#a12f22}
+.mission-visitor-change.flat b,
+.mission-visitor-change.unavailable b,
+.mission-visitor-change.no-baseline b {color:#745626}
+.mission-visitor-change-track {
+  position:relative;
+  display:block;
+  width:100%;
+  max-width:100px;
+  height:10px;
+  flex:0 0 10px;
+  box-sizing:border-box;
+  border:1px solid #7f6142;
+  border-radius:6px;
+  background:linear-gradient(to right,#b84332 0%,#d88a55 30%,#cab67a 46%,#cab67a 54%,#7cad65 70%,#328144 100%);
+  box-shadow:inset 0 1px 2px #00000038;
+}
+.mission-visitor-change-needle {
+  position:absolute;
+  top:-5px;
+  display:block;
+  width:4px;
+  height:18px;
+  background:#25170b;
+  border:1px solid #fff7df;
+  border-radius:3px;
+  box-shadow:0 1px 2px #00000066;
+  transform:translateX(-50%);
+}
+.mission-web-gauge .mission-visitor-change small {
+  display:block;
+  width:100%;
+  color:#604922;
+  font-size:10px;
+  font-weight:900;
+  line-height:1.18;
+  letter-spacing:.2px;
+}
+.mission-web-partial-flag {
+  display:block;
+  grid-column:1/-1;
+  width:100%;
+  text-align:center;
+  color:#efcc84;
+  font-size:12px;
+  line-height:1.35;
+  font-weight:700;
+  margin:0;
+}
+@media(max-width:640px) {
+  .mission-visitor-change {max-width:96px}
+  .mission-visitor-change b {font-size:15px}
+}
