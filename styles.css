@@ -4012,3 +4012,109 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     max-width:calc(100% - 18px);
   }
 }
+
+/* MISSION CONTROL WEBSITE HEALTH COMPOSITE V1 */
+/* Three clear signals: visitors, returning-visitor share, and time on site.
+   Compact in the existing Wix instrument panel. */
+.mission-website-section .mission-web-console {
+  grid-template-areas:
+    ". brand controls"
+    "gauges gauges gauges"
+    "health health health"
+    "lists lists lists";
+}
+.mission-website-health {
+  grid-area:health;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  width:100%;
+  padding:9px 16px;
+  box-sizing:border-box;
+  border-top:1px solid #9b753f;
+  border-bottom:1px solid #9b753f;
+  color:#f7db9d;
+  min-width:0;
+}
+.mission-health-head {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  flex-wrap:wrap;
+  flex:0 0 auto;
+  min-width:0;
+  text-align:center;
+}
+.mission-health-head>strong {
+  font-size:17px;
+  font-weight:900;
+  letter-spacing:.7px;
+  color:#f5d28b;
+}
+.mission-health-status {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  font-size:15px;
+  font-weight:900;
+  color:#fff4d1;
+}
+.mission-health-status .gyr-light {
+  width:19px;
+  height:19px;
+  border:2px solid #e3c17b;
+  box-shadow:0 0 0 1px #6d4a21;
+}
+.mission-health-score {
+  font-size:15px;
+  font-variant-numeric:tabular-nums;
+  color:#f7c77a;
+}
+.mission-health-signals {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:9px 16px;
+  min-width:0;
+}
+.mission-health-signal {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:2px 0;
+  white-space:nowrap;
+}
+.mission-health-signal span {
+  color:#e9c99b;
+  font-size:13px;
+  font-weight:900;
+}
+.mission-health-signal b {
+  font-size:16px;
+  font-weight:900;
+  font-variant-numeric:tabular-nums;
+}
+.mission-health-signal b.green {color:#7ed69a}
+.mission-health-signal b.yellow {color:#f1cd60}
+.mission-health-signal b.red {color:#f08d7b}
+.mission-health-signal b.unknown {color:#e4cfaa}
+@media(max-width:1270px) {
+  .mission-website-section .mission-web-console {
+    grid-template-areas:"brand controls" "gauges gauges" "health health" "lists lists";
+  }
+  .mission-website-health {flex-wrap:wrap;gap:7px 15px}
+}
+@media(max-width:640px) {
+  .mission-website-section .mission-web-console {
+    grid-template-areas:"brand" "controls" "gauges" "health" "lists";
+  }
+  .mission-website-health {gap:8px;padding:10px 6px}
+  .mission-health-signals {gap:7px 12px}
+  .mission-health-signal {white-space:normal;gap:5px}
+  .mission-health-head>strong {font-size:17px}
+}
