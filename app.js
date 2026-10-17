@@ -1242,7 +1242,7 @@ function renderVisitorChangeGauge(comparison) {
   }
   const direction=status==='up'?'up':status==='down'?'down':status==='new'?'new':'flat';
   const percent=validPercent
-    ? (comparison.percentChange>0?'+':'')+comparison.percentChange.toFixed(1).replace(/\\.0$/,'')+'%'
+    ? (comparison.percentChange>0?'+':'')+comparison.percentChange.toFixed(1)+'%'
     : status==='new'?'NEW':'—';
   const pointer=validPercent
     ? 50+Math.max(-50,Math.min(50,comparison.percentChange))
