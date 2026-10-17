@@ -2626,3 +2626,58 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 }
 .x-analytics-summary small { font-size:12px; font-weight:600; }
 .x-analytics-summary strong { font-size:23px; }
+
+/* DOCJAKS.COM: first and featured platform, with richer Wix analytics. */
+.website-platform-feature {
+  margin:0 0 18px;
+  padding:22px;
+  border:1px solid #c9b389;
+  border-left:6px solid #9c742e;
+  border-radius:12px;
+  background:#fff9eb;
+  box-shadow:0 2px 12px #34230e14;
+  min-width:0;
+}
+.website-platform-header {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:22px;
+}
+.website-platform-kicker {font-size:12px;color:#86601e;letter-spacing:1.2px;font-weight:700}
+.website-platform-header h2 {font:700 29px Georgia,serif;margin:5px 0 8px;color:#2b2116}
+.website-platform-header p {font-size:15px;color:#63523a;margin:0;line-height:1.5}
+.website-platform-health {text-align:right;min-width:205px}
+.website-platform-health > span {display:flex;align-items:center;gap:10px;justify-content:flex-end;font-size:15px;color:#30271d}
+.website-platform-health .gyr-light {width:22px;height:22px}
+.website-platform-health small {display:block;color:#716149;font-size:12px;margin-top:5px}
+.website-platform-message {margin:13px 0 16px;font-size:14px;color:#65573f}
+.website-platform-kpis {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+.website-platform-kpi {border:1px solid #deceb1;background:#fffdf8;border-radius:8px;padding:13px 15px;min-width:0}
+.website-platform-kpi small {display:block;font-weight:700;color:#685634;font-size:12px;margin-bottom:5px}
+.website-platform-kpi strong {display:block;color:#2c2519;font-size:25px;line-height:1.25;overflow-wrap:anywhere}
+.website-platform-details {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:15px 0}
+.website-platform-detail {background:#fffdf8;border:1px solid #deceb1;border-radius:8px;padding:14px;min-width:0}
+.website-platform-detail h3 {font-size:13px;letter-spacing:.7px;color:#6a4a16;margin:0 0 10px}
+.website-platform-fact {display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:7px 0;border-bottom:1px solid #ecdfca;font-size:13px}
+.website-platform-fact:last-child {border-bottom:0}
+.website-platform-fact span {overflow-wrap:anywhere;min-width:0}
+.website-platform-fact strong {white-space:nowrap}
+.website-platform-unavailable {font-size:13px;color:#706048;margin:6px 0}
+.website-platform-actions {display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0}
+.website-platform-actions button,.website-platform-actions a {font-size:14px;min-height:40px;margin:0}
+.website-platform-actions a.button {display:inline-flex;align-items:center;text-decoration:none}
+.website-platform-note {font-size:12px;color:#675d4e;line-height:1.5;margin:12px 0 0}
+@media(max-width:850px) {
+  .website-platform-header {flex-direction:column;gap:12px}
+  .website-platform-health {text-align:left;min-width:0}
+  .website-platform-health > span {justify-content:flex-start}
+  .website-platform-kpis {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .website-platform-details {grid-template-columns:1fr}
+  .website-platform-feature {padding:17px}
+}
+@media(max-width:480px) {
+  .website-platform-header h2 {font-size:25px}
+  .website-platform-kpi strong {font-size:21px}
+  .website-platform-actions button,.website-platform-actions a {width:100%;justify-content:center}
+}
