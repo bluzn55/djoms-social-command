@@ -384,7 +384,7 @@ function renderConnectionStrip() {
 
       <section class="mission-website-section" aria-label="DOCJAKS.COM website connection and activity">
         ${(() => {
-          const site=localData?.website || {};
+          const site=websiteSnapshot();
           const live=site.connected===true;
           const health=live ? (site.partial ? 'yellow':'green') : 'red';
           const label=live ? (site.partial ? 'PARTIAL':'CONNECTED') : 'NEEDS CONNECTION';
@@ -403,20 +403,43 @@ function renderConnectionStrip() {
             ['Bounce rate',validNumber(site.bounceRate) ? wPct(site.bounceRate) : '—'],
             ['Contact Actions',leads]
           ];
-          const topPage=site.topPage ? wName(site.topPage) : 'Not available';
+          const rangeCaption=({today:'Today','7d':'Last 7 days','30d':'Last 30 days','365d':'Last 365 days'})[websiteRange]||'Last 7 days';
+          const pages=Array.isArray(site.topPages)
+            ? site.topPages.filter(item=>item && typeof item.path==='string' && item.path.trim()).slice(0,5) : [];
+          if (!pages.length && site.topPage) pages.push({path:site.topPage,views:site.topPageViews});
+          const locations=Array.isArray(site.geography)
+            ? site.geography.filter(item=>item && (item.city||item.region||item.country)).slice(0,5) : [];
+          const locationName=item=>[item.city,item.region].filter(Boolean).join(', ')||item.country||'Not reported';
+          const periodChoices=[['today','Day'],['7d','Week'],['30d','Month'],['365d','Year']];
           return `<div class="mission-web-console">
             <div class="mission-web-brand">
               <small class="mission-web-overline">⚜ DOC JAKS · WIX</small>
               <strong>DOCJAKS.COM</strong>
               <span class="mission-web-live"><i class="gyr-light ${health}" aria-hidden="true"></i><b>${label}</b></span>
-              <small class="mission-web-checked">Last 7 days · Updated ${esc(updatedText(site.checkedAt || localData?.checkedAt))}</small>
+              <small class="mission-web-checked">${esc(rangeCaption)} · Updated ${esc(updatedText(site.checkedAt || localData?.checkedAt))}</small>
             </div>
-            <div class="mission-web-gauges" aria-label="Website figures, last seven days">
+            <div class="mission-web-gauges" aria-label="Website figures for ${esc(rangeCaption)}">
               ${counters.map(([title,value])=>`<div class="mission-web-gauge${title==='Bounce rate'?' mission-web-bounce':''}"><small>${esc(title)}</small><strong>${esc(compactMetric(value))}</strong>${title==='Bounce rate'?renderBounceMeter(site.bounceRate):''}</div>`).join('')}
             </div>
             <div class="mission-web-controls">
-              <div class="mission-web-popular"><small>TOP PAGE</small><strong title="${esc(topPage)}">${esc(topPage)}</strong><span>${site.topPageViews==null?'—':esc(compactMetric(site.topPageViews))+' views'}</span></div>
+              <div class="mission-web-range" role="group" aria-label="Website reporting period">
+                ${periodChoices.map(([key,name])=>`<button type="button" data-website-range="${key}" aria-pressed="${websiteRange===key}" title="${esc(({today:'Today so far','7d':'Last 7 days','30d':'Last 30 days','365d':'Last 365 days'})[key])}">${name}</button>`).join('')}
+              </div>
               <button type="button" class="mission-web-open" data-view="Website Analytics">Website Analytics ›</button>
+            </div>
+            <div class="mission-web-lists">
+              <section class="mission-web-mini" aria-label="Top five website pages">
+                <h3>TOP 5 PAGES <small>· Page views</small></h3>
+                <div class="mission-web-list">
+                  ${pages.length?pages.map((item,index)=>`<div class="mission-web-listrow"><span title="${esc(item.path)}"><em>${index+1}.</em> ${esc(wName(item.path))}</span><strong>${esc(compactMetric(item.views))}</strong></div>`).join(''):'<p class="mission-web-empty">No page details available for this period.</p>'}
+                </div>
+              </section>
+              <section class="mission-web-mini" aria-label="Top five reported visitor locations">
+                <h3>WHERE VISITORS ARE FROM <small>· Approximate</small></h3>
+                <div class="mission-web-list">
+                  ${locations.length?locations.map((item,index)=>`<div class="mission-web-listrow"><span><em>${index+1}.</em> ${esc(locationName(item))}</span><strong>${esc(compactMetric(item.visitors))}</strong></div>`).join(''):'<p class="mission-web-empty">No location details available for this period.</p>'}
+                </div>
+              </section>
             </div>
           </div>`;
         })()}
