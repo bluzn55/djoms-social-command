@@ -444,7 +444,6 @@ function renderConnectionStrip() {
                 </div>
               </section>
             </div>
-            <p class="mission-web-partial-flag">All six percentages compare with the previous equal-length period. Green means improvement, red means decline, and yellow means unchanged or unavailable. Lower bounce rates are generally better. Current figures include today so far${websiteRange==='today'?', compared with all of yesterday':''}.</p>
           </div>`;
         })()}
       </section>
