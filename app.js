@@ -391,9 +391,13 @@ function renderConnectionStrip() {
           const validNumber=value=>typeof value==='number' && Number.isFinite(value) && value>=0;
           const leads=validNumber(site.contactClicks)||validNumber(site.formsSubmitted)
             ? Number(validNumber(site.contactClicks)?site.contactClicks:0)+Number(validNumber(site.formsSubmitted)?site.formsSubmitted:0) : null;
+          const returningRow=Array.isArray(site.visitorTypes)
+            ? site.visitorTypes.find(row=>row?.type==='returning_visitor') : null;
+          const returningVisitors=returningRow && validNumber(returningRow.visitors)
+            ? returningRow.visitors : null;
           const counters=[
             ['Visitors',site.visitors],
-            ['Sessions',site.sessions],
+            ['Returning visitors',returningVisitors],
             ['Page views',site.pageViews],
             ['Avg. stay',validNumber(site.avgTimeSeconds) ? wTime(site.avgTimeSeconds) : '—'],
             ['Bounce rate',validNumber(site.bounceRate) ? wPct(site.bounceRate) : '—'],
