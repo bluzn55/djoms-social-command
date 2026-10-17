@@ -1193,6 +1193,62 @@ function wInsights(s){
   if(Number(s.sessions)>0&&Number(s.orders||0)===0)out.push('Traffic is arriving but has not produced a Wix order yet.');
   return out.slice(0,6);
 }
+function renderWebsitePlatform() {
+  const site = localData?.website || {};
+  const connected = site.connected === true;
+  const color = connected ? (site.partial ? 'yellow' : 'green') : 'red';
+  const status = connected ? (site.partial ? 'PARTIAL DATA' : 'CONNECTED') : 'NEEDS CONNECTION';
+  const checked = site.checkedAt || localData?.checkedAt;
+  const known = value => value !== null && value !== undefined && value !== '';
+  const leads = known(site.contactClicks) || known(site.formsSubmitted)
+    ? (Number(site.contactClicks || 0) + Number(site.formsSubmitted || 0)) : null;
+  const sales = known(site.sales) && Number.isFinite(Number(site.sales))
+    ? new Intl.NumberFormat('en-US', { style:'currency', currency:'USD' }).format(Number(site.sales)) : '—';
+  const kpis = [
+    ['Visitors', site.visitors],
+    ['Sessions', site.sessions],
+    ['Page views', site.pageViews],
+    ['Average stay', known(site.avgTimeSeconds) ? wTime(site.avgTimeSeconds) : '—'],
+    ['Bounce rate', known(site.bounceRate) ? wPct(site.bounceRate) : '—'],
+    ['Leads', leads],
+    ['Orders', site.orders],
+    ['Reported sales', sales]
+  ];
+  const pages = Array.isArray(site.topPages) ? site.topPages.slice(0,3) : [];
+  if (!pages.length && site.topPage) pages.push({ path:site.topPage, views:site.topPageViews });
+  const traffic = Array.isArray(site.trafficSources) ? site.trafficSources.slice(0,3) : [];
+  const regions = Array.isArray(site.geography) ? site.geography.slice(0,3) : [];
+  const listHtml = (rows, name, value) => rows.length
+    ? rows.map(row => `<div class="website-platform-fact"><span>${esc(name(row))}</span><strong>${esc(compactMetric(value(row)))}</strong></div>`).join('')
+    : '<p class="website-platform-unavailable">Detailed data not available yet.</p>';
+  return `<section class="website-platform-feature" aria-label="DOCJAKS.COM website platform">
+    <div class="website-platform-header">
+      <div>
+        <small class="website-platform-kicker">YOUR HOME PLATFORM · WIX WEBSITE</small>
+        <h2>DOCJAKS.COM</h2>
+        <p>Website traffic, visitors, store activity, and where people find you.</p>
+      </div>
+      <div class="website-platform-health">
+        <span><i class="gyr-light ${color}" aria-hidden="true"></i><strong>${status}</strong></span>
+        <small>Wix analytics connection · ${esc(updatedText(checked))}</small>
+      </div>
+    </div>
+    <p class="website-platform-message">${esc(site.message || 'Website analytics connection has not been checked yet.')}</p>
+    <div class="website-platform-kpis">${kpis.map(([label,value]) => `<div class="website-platform-kpi"><small>${esc(label)}</small><strong>${esc(compactMetric(value))}</strong></div>`).join('')}</div>
+    <div class="website-platform-details">
+      <div class="website-platform-detail"><h3>TOP WEBSITE PAGES</h3>${listHtml(pages, row => wName(row.path), row => row.views)}</div>
+      <div class="website-platform-detail"><h3>WHERE VISITS COME FROM</h3>${listHtml(traffic, row => String(row.source || row.category || 'Unknown').replace(/_/g,' '), row => row.sessions)}</div>
+      <div class="website-platform-detail"><h3>VISITOR LOCATIONS</h3>${listHtml(regions, row => [row.city,row.region].filter(Boolean).join(', ') || row.country || 'Unknown', row => row.visitors)}</div>
+    </div>
+    <div class="website-platform-actions">
+      <button type="button" class="approve" data-view="Website Analytics">Open full website analytics</button>
+      <button type="button" data-action="checkWebsiteConnection">Check Wix connection</button>
+      <a class="button" href="https://docjaks.com" target="_blank" rel="noopener noreferrer">Open DOCJAKS.COM ↗</a>
+    </div>
+    <p class="website-platform-note">Wix's latest seven-day snapshot. Your own website testing may be included. Missing numbers are shown as a dash, not zero.</p>
+  </section>`;
+}
+
 function renderWebsiteAnalytics(){
   const s=localData?.website||{},w=s.weekly||[],p=s.topPages||[],src=s.trafficSources||[],dev=s.devices||[],vt=s.visitorTypes||[],geo=s.geography||[],land=s.landingPages||[],exit=s.exitPages||[];
   const leads=Number(s.contactClicks||0)+Number(s.formsSubmitted||0),sales=Number(s.sales),salesText=Number.isFinite(sales)?new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(sales):'—';
@@ -1400,7 +1456,7 @@ function render() {
     return;
   }
   if (activeView === 'Platforms') {
-    $('content').innerHTML = `<div class="platforms connection-panels">${statusPlatforms.map(p => {
+    $('content').innerHTML = renderWebsitePlatform() + `<div class="platforms connection-panels">${statusPlatforms.map(p => {
       const n = names[p], info = connection?.[p] || {}, health = connectionHealth(info);
       return `<div class="box platform-detail"><div class="platform-detail-head"><h2>${esc(n)}</h2><i class="gyr-light ${health.color}" aria-hidden="true"></i></div><p><strong>${esc(health.label)} · ${esc(health.text)}</strong></p><p>${esc(info.name || 'Account not verified')}</p><p>${esc(info.message || 'Connection and posting permissions checked.')}</p></div>`;
     }).join('')}</div><div class="box connection-actions"><a class="button approve" href="/api/meta/connect">Connect / reconnect Facebook & Instagram</a><button data-action="checkConnection">Check connections</button><p>Choose the Doc Jaks Facebook Page and its linked professional Instagram account when Meta asks.</p><p>Scheduling: ${connection?.scheduler ? 'Configured · confirmed separately when you schedule a post.' : 'One-time scheduler setup still needed.'}</p><a class="button approve" href="/api/x/connect">Connect / reconnect X</a><p>Connect the Doc Jaks X account and approve read/write access when X asks.</p><a class="button approve" href="/api/youtube/connect">Connect / reconnect YouTube</a><p>Connect the Doc Jaks YouTube channel now so it is ready when video publishing begins.</p></div>`;
@@ -2012,7 +2068,8 @@ document.addEventListener('click', event => {
     else if (action === 'new') { const d=await api('records',{action:'create',campaign:campaignFilter || 'BBQ'}); updateRecord(d.record); openRecord(d.record); }
     else if (action === 'refresh') { await loadRecords(); await loadAnalytics(true); await loadLocalStatus(); await refreshConnection(); await loadComments(); render(); renderConnectionStrip(); notice('Updated.'); }
     else if (action === 'refreshRecord') { if (dirty && !confirm('Refresh and discard unsaved changes?')) return; const currentId=selected.id; await loadRecords(); openRecord(records.find(r=>r.id===currentId)); notice('Showing the latest saved result.'); }
-    else if (action === 'checkConnection') { await refreshConnection(); render(); notice('Account checks completed.'); }
+    else if (action === 'checkWebsiteConnection') { await loadLocalStatus(); render(); notice(localData?.website?.connected ? 'Wix website connection checked.' : 'Wix website reporting needs attention.', !localData?.website?.connected); }
+    else if (action === 'checkConnection') { await Promise.all([refreshConnection(), loadLocalStatus()]); render(); notice('Platform and website connections checked.'); }
     else if (action === 'publish') await publish();
     else if (action === 'schedule') { const at=$('scheduleTime').value; if(!at) throw new Error('Choose a posting date and time.'); await recordAction('schedule',{scheduledAt:new Date(at).toISOString(),timeZone:timezone}); }
     else if (['approve','pause','draft','duplicate'].includes(action)) await recordAction(action);
