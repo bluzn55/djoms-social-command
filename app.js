@@ -451,6 +451,21 @@ function renderConnectionStrip() {
                 ${title==='Bounce rate'?renderBounceMeter(site.bounceRate):''}
               </div>`).join('')}
             </div>
+            ${(() => {
+              const health=calculateWebsiteHealth(site);
+              return `<div class="mission-website-health" role="group" aria-label="Overall website health indicators">
+                <div class="mission-health-head" title="${esc(health.note)}">
+                  <strong>WEBSITE HEALTH</strong>
+                  <span class="mission-health-status"><i class="gyr-light ${health.color}" aria-hidden="true"></i><b>${esc(health.label)}</b><b class="mission-health-score">${health.total===null?'—':health.total+'/6'}</b></span>
+                </div>
+                <div class="mission-health-signals">
+                  ${health.signals.map(signal=>`<div class="mission-health-signal">
+                    <span>${esc(signal.label)}</span>
+                    <b class="${signal.grade}">${esc(signal.display)}</b>
+                  </div>`).join('')}
+                </div>
+              </div>`;
+            })()}
             <div class="mission-web-controls">
               <div class="mission-web-range" role="group" aria-label="Website reporting period">
                 ${periodChoices.map(([key,name])=>`<button type="button" data-website-range="${key}" aria-pressed="${websiteRange===key}" title="${esc(({today:'Today so far','7d':'Last 7 days','30d':'Last 30 days','365d':'Last 365 days'})[key])}">${name}</button>`).join('')}
@@ -1289,6 +1304,54 @@ function renderVisitorChangeGauge(comparison,metric='Visitors') {
     +(noBase?' Previous period was zero, so a percentage cannot be calculated.':'')
     +caveat;
   return `<span class="mission-visitor-change ${color}" title="${esc(tip)}" aria-label="${esc(tip)}">${esc(amount)}</span>`;
+}
+
+// Three equally weighted directional signals for the DJOMS GYR website pulse.
+// A GREEN is a direction-of-change summary, not proof of real people or sales.
+function calculateWebsiteHealth(site) {
+  const metric=site?.metricComparisons || {};
+  const visitor=metric.visitors || site?.visitorComparison || {};
+  const goodNumber=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0;
+  const signals=[
+    {key:'visitors',label:'VISITOR GROWTH',value:null,unit:'%',threshold:10},
+    {key:'return',label:'RETURN RATE',value:null,unit:'pp',threshold:2},
+    {key:'stay',label:'TIME ON SITE',value:null,unit:'%',threshold:10}
+  ];
+  if(typeof visitor.percentChange==='number'&&Number.isFinite(visitor.percentChange))
+    signals[0].value=visitor.percentChange;
+  const currentVisitors=visitor.currentVisitors,priorVisitors=visitor.previousVisitors;
+  const returningRow=(site?.visitorTypes||[]).find(item=>item?.type==='returning_visitor');
+  const currentReturning=returningRow?.visitors;
+  const priorReturning=metric.returningVisitors?.previous;
+  // Compare repeat-visitor SHARE, not raw repeat counts. Rising overall traffic
+  // must not automatically make repeat engagement look stronger.
+  if([currentVisitors,priorVisitors,currentReturning,priorReturning].every(goodNumber)
+     &&currentVisitors>0&&priorVisitors>0) {
+    const currentShare=currentReturning/currentVisitors;
+    const priorShare=priorReturning/priorVisitors;
+    if(currentShare<=1&&priorShare<=1)
+      signals[1].value=(currentShare-priorShare)*100;
+  }
+  if(typeof metric.avgTimeSeconds?.percentChange==='number'
+     &&Number.isFinite(metric.avgTimeSeconds.percentChange))
+    signals[2].value=metric.avgTimeSeconds.percentChange;
+  for(const item of signals) {
+    item.grade=item.value===null?'unknown'
+      :item.value>=item.threshold?'green'
+      :item.value<=-item.threshold?'red':'yellow';
+    item.points=item.grade==='green'?2:item.grade==='red'?0:item.grade==='yellow'?1:null;
+    item.display=item.value===null?'—'
+      :(item.value>0?'+':'')+item.value.toFixed(1)+item.unit;
+  }
+  const smallSample=!goodNumber(currentVisitors)||!goodNumber(priorVisitors)
+    ||currentVisitors<20||priorVisitors<20;
+  const incomplete=signals.some(item=>item.points===null);
+  const total=incomplete||smallSample?null:signals.reduce((sum,item)=>sum+item.points,0);
+  const color=total===null?'yellow':total>=5?'green':total<=2?'red':'yellow';
+  const label=total===null?(incomplete?'NEEDS DATA':'EARLY DATA')
+    :color==='green'?'GREEN':color==='red'?'RED':'YELLOW';
+  return {color,label,total,max:6,signals,
+    note:'Equal weight: visitor growth (±10%), returning-visitor share (±2 percentage points), and average stay (±10%). Score only when all three are measured and both periods have at least 20 visitors. Directional indicator only; testing traffic may be included.'};
 }
 
 function renderBounceMeter(rate) {
