@@ -38,7 +38,7 @@ function websiteSnapshot() {
 }
 function websitePeriodQuery(range=websiteRange) {
   if(range==='custom') {
-    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(websiteCustomStart)||!/^\\d{4}-\\d{2}-\\d{2}$/.test(websiteCustomEnd))
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(websiteCustomStart)||!/^\d{4}-\d{2}-\d{2}$/.test(websiteCustomEnd))
       throw new Error('Choose a valid Start Date and End Date.');
     if(websiteCustomStart>websiteCustomEnd)throw new Error('Start Date must not be after End Date.');
     return 'range=custom&start='+encodeURIComponent(websiteCustomStart)+'&end='+encodeURIComponent(websiteCustomEnd);
