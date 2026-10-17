@@ -23,15 +23,17 @@
   window.loadAnalytics = async function (refresh = false) {
     const ticket = ++loadSequence;
     const range = platformMetricRange;
+    const selectedQuery=websitePeriodQuery(range);
     let result;
     try {
-      result = await api('analytics?range=' + encodeURIComponent(range) + (refresh ? '&refresh=1' : ''));
+      result = await api('analytics?' + selectedQuery + (refresh ? '&refresh=1' : ''));
       if (result.version !== VERSION) throw new Error('The verified reporting service is not available on this deployment yet.');
     } catch (error) {
       result = { version: VERSION, range, platforms: {}, posts: [], history: [],
         warnings: [error.message || 'Statistics could not be retrieved.'], status: 'unavailable', checkedAt: null };
     }
-    if (ticket === loadSequence && range === platformMetricRange) analyticsData = result;
+    if(ticket===loadSequence && range===platformMetricRange && selectedQuery===websitePeriodQuery(range))
+      analyticsData=result;
     return result;
   };
 
@@ -119,7 +121,7 @@
     const ytMetrics = yt.metrics || {};
     const x = report.social?.platforms?.x || {};
     return '<section class="box"><h3>Website: raw records and your testing estimate</h3><p>Website range: ' + html(raw.range?.start || 'Not available') + ' to ' + html(raw.range?.end || 'Not available') +
-      ' (end boundary excluded), Central time. This website summary remains seven days when the social-post date selection changes.</p>' +
+      ' (end boundary excluded), Central time. Wix and social post reporting use the same selected dates when the source can provide them.</p>' +
       '<div class="vr-metrics">' + metricCell('Raw Wix visitors', raw.visitors) + metricCell('Estimated after 25% testing', estimate.visitors) +
       metricCell('Raw page views', raw.pageViews) + '</div><p class="vr-note">The 25% allowance is your assumption, not a verified exclusion. Raw records stay unchanged. The remainder is not proof of customer demand.</p></section>' +
       '<section class="box"><h3>YouTube</h3><p><b>' + html(yt.status || 'Unavailable').replaceAll('_', ' ') + '</b>. ' + html(yt.message || '') + '</p>' +
@@ -134,17 +136,19 @@
       '. It is not used as current listening data. Individual website song previews are also not connected.</p></section>';
   }
 
-  async function loadCombined(range, refresh = false) {
-    if (combinedPending.has(range)) return combinedPending.get(range);
-    combinedAttempts.set(range, Date.now());
-    const job = api('report?range=' + encodeURIComponent(range) + (refresh ? '&refresh=1' : ''))
-      .then(report => { combined.set(range, { report, checkedAt: Date.now() }); return report; })
-      .catch(error => { combined.set(range, { error: error.message, checkedAt: Date.now() }); return null; })
-      .finally(() => {
-        combinedPending.delete(range);
-        if (activeView === 'Analytics' && platformMetricRange === range) drawAnalytics(false);
+  async function loadCombined(range, refresh=false) {
+    const selectedQuery=websitePeriodQuery(range);
+    if(combinedPending.has(selectedQuery))return combinedPending.get(selectedQuery);
+    combinedAttempts.set(selectedQuery,Date.now());
+    const job=api('report?'+selectedQuery+(refresh?'&refresh=1':''))
+      .then(report=>{combined.set(selectedQuery,{report,checkedAt:Date.now()});return report;})
+      .catch(error=>{combined.set(selectedQuery,{error:error.message,checkedAt:Date.now()});return null;})
+      .finally(()=>{
+        combinedPending.delete(selectedQuery);
+        if(activeView==='Analytics'&&platformMetricRange===range&&websitePeriodQuery(range)===selectedQuery)
+          drawAnalytics(false);
       });
-    combinedPending.set(range, job);
+    combinedPending.set(selectedQuery,job);
     return job;
   }
 
@@ -152,21 +156,22 @@
     const data = analyticsData || {};
     const range = platformMetricRange;
     const period = data.period || {};
-    const selected = combined.get(range);
+    const selectedKey=websitePeriodQuery(range);
+    const selected=combined.get(selectedKey);
     const source = selected?.report;
     const campaignRows = (data.campaigns || []).map(campaign => '<tr><td><b>' + html(campaign.campaign) + '</b></td>' +
       ['facebook', 'instagram'].map(platform => '<td>' + html(count(campaign.platforms?.[platform]?.posts)) + '</td><td>' + html(count(campaign.platforms?.[platform]?.views)) + '</td>').join('') + '</tr>').join('');
     document.getElementById('content').innerHTML = '<div class="vr" data-report-version="' + VERSION + '"><section class="box"><h2>Verified social performance</h2>' +
       '<p><b>Posts published ' + html(period.startDate || 'within the selected dates') + ' to ' + html(period.endDate || 'today') + '</b>, Central time. Today is partial. Checked ' + html(time(data.checkedAt)) + '.</p>' +
-      '<div class="vr-toolbar">' + [['today', 'Today'], ['7d', '7 days'], ['30d', '30 days'], ['365d', '1 year']].map(([key, label]) =>
-        '<button type="button" data-report-range="' + key + '" aria-pressed="' + (key === range) + '">' + label + '</button>').join('') +
+      '<div class="vr-toolbar">' + (typeof websiteRangeButtons==='function'?websiteRangeButtons():'') +
       '<button type="button" data-report-refresh="true">Refresh report</button></div><p class="vr-note">Missing data is shown as Not available, never changed to zero. A connected account does not guarantee permission for every measurement.</p>' +
       (data.warnings || []).map(warning => '<p class="vr-note">' + html(warning) + '</p>').join('') + '</section>' +
       platformPanel('facebook', data) + platformPanel('instagram', data) +
       '<section class="box"><h3>Our three campaigns</h3><p>Only posts matched to saved DJOMS campaign records are assigned here. Other account posts remain Unassigned.</p><div class="vr-scroll"><table><thead><tr><th>Campaign</th><th>Facebook posts</th><th>Facebook post views</th><th>Instagram posts</th><th>Instagram post views</th></tr></thead><tbody>' +
       (campaignRows || '<tr><td colspan="5">Campaign measurements are unavailable.</td></tr>') + '</tbody></table></div></section>' +
       sourcePanels(source, selected?.error) + '<p class="vr-note">Reporting version ' + VERSION + '. No cross-platform unique audience or campaign-caused sales are inferred.</p></div>';
-    if (autoload && (!combinedAttempts.has(range) || Date.now() - combinedAttempts.get(range) > 60000)) void loadCombined(range);
+    if(autoload&&(!combinedAttempts.has(selectedKey)||Date.now()-combinedAttempts.get(selectedKey)>60000))
+      void loadCombined(range);
   }
 
   const previousRender = window.render;
@@ -179,11 +184,10 @@
   window.renderConnectionStrip = function () { previousStrip(); decorate(); };
 
   document.addEventListener('click', async event => {
-    const button = event.target.closest('[data-report-range],[data-report-refresh]');
+    const button = event.target.closest('[data-report-refresh]');
     if (!button) return;
     event.preventDefault();
-    if (button.dataset.reportRange) platformMetricRange = button.dataset.reportRange;
-    button.disabled = true;
+    button.disabled=true;
     await loadAnalytics(true);
     if (activeView === 'Analytics') drawAnalytics(false);
     void loadCombined(platformMetricRange, true);
