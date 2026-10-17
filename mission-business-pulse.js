@@ -18,10 +18,10 @@
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
   }[char]));
   const measurable = value => typeof value === 'number' && Number.isFinite(value) && value >= 0;
-  const show = value => measurable(value) ? new Intl.NumberFormat('en-US').format(value) : 'Not available';
+  const show = value => measurable(value) ? new Intl.NumberFormat('en-US').format(value) : '—';
   const money = cents => Number.isSafeInteger(cents) && cents >= 0
     ? new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(cents / 100)
-    : 'Not available';
+    : '—';
 
   async function getReport(path) {
     const response=await fetch('/api/meta/'+path,{
@@ -153,7 +153,7 @@
     const panel=document.getElementById('missionBusinessPulse');
     if(!panel) return;
     panel.innerHTML=`<div class="mission-intel-title">
-        <div><strong>BOOK · TRADING POST · OUTLAW RADIO</strong><small>Last 7 days</small></div>
+        <div><strong>BUSINESS PULSE</strong><small>LAST 7 DAYS</small></div>
         <button type="button" data-mission-pulse-refresh="1" aria-label="Refresh book, store and radio website statistics">Check activity</button>
       </div>
       <div class="mission-intel-grid">${bookCard()}${storeCard()}${radioCard()}</div>
