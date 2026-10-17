@@ -391,14 +391,12 @@ function renderConnectionStrip() {
           const validNumber=value=>typeof value==='number' && Number.isFinite(value) && value>=0;
           const leads=validNumber(site.contactClicks)||validNumber(site.formsSubmitted)
             ? Number(validNumber(site.contactClicks)?site.contactClicks:0)+Number(validNumber(site.formsSubmitted)?site.formsSubmitted:0) : null;
-          const sales=validNumber(site.sales)
-            ? new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(site.sales) : '—';
           const counters=[
-            ['Sessions',site.sessions],
             ['Visitors',site.visitors],
+            ['Sessions',site.sessions],
             ['Page views',site.pageViews],
-            ['Orders',site.orders],
-            ['Sales',sales],
+            ['Avg. stay',validNumber(site.avgTimeSeconds) ? wTime(site.avgTimeSeconds) : '—'],
+            ['Bounce rate',validNumber(site.bounceRate) ? wPct(site.bounceRate) : '—'],
             ['Leads',leads]
           ];
           const topPage=site.topPage ? wName(site.topPage) : 'Not available';
