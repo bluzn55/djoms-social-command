@@ -401,7 +401,7 @@ function renderConnectionStrip() {
             ['Page views',site.pageViews],
             ['Avg. stay',validNumber(site.avgTimeSeconds) ? wTime(site.avgTimeSeconds) : '—'],
             ['Bounce rate',validNumber(site.bounceRate) ? wPct(site.bounceRate) : '—'],
-            ['Leads',leads]
+            ['Contact Actions',leads]
           ];
           const topPage=site.topPage ? wName(site.topPage) : 'Not available';
           return `<div class="mission-web-console">
