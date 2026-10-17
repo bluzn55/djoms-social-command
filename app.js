@@ -1214,61 +1214,27 @@ function wInsights(s){
   return out.slice(0,6);
 }
 function renderWebsitePlatform() {
-  const site = websiteSnapshot();
-  const connected = site.connected === true;
-  const color = connected ? (site.partial ? 'yellow' : 'green') : 'red';
-  const status = connected ? (site.partial ? 'PARTIAL DATA' : 'CONNECTED') : 'NEEDS CONNECTION';
-  const checked = site.checkedAt || localData?.checkedAt;
-  const known = value => value !== null && value !== undefined && value !== '';
-  const leads = known(site.contactClicks) || known(site.formsSubmitted)
-    ? (Number(site.contactClicks || 0) + Number(site.formsSubmitted || 0)) : null;
-  const sales = known(site.sales) && Number.isFinite(Number(site.sales))
-    ? new Intl.NumberFormat('en-US', { style:'currency', currency:'USD' }).format(Number(site.sales)) : '—';
-  const kpis = [
-    ['Visitors', site.visitors],
-    ['Sessions', site.sessions],
-    ['Page views', site.pageViews],
-    ['Average stay', known(site.avgTimeSeconds) ? wTime(site.avgTimeSeconds) : '—'],
-    ['Bounce rate', known(site.bounceRate) ? wPct(site.bounceRate) : '—'],
-    ['Leads', leads],
-    ['Orders', site.orders],
-    ['Reported sales', sales]
-  ];
-  const pages = Array.isArray(site.topPages) ? site.topPages.slice(0,3) : [];
-  if (!pages.length && site.topPage) pages.push({ path:site.topPage, views:site.topPageViews });
-  const traffic = Array.isArray(site.trafficSources) ? site.trafficSources.slice(0,3) : [];
-  const regions = Array.isArray(site.geography) ? site.geography.slice(0,3) : [];
-  const listHtml = (rows, name, value) => rows.length
-    ? rows.map(row => `<div class="website-platform-fact"><span>${esc(name(row))}</span><strong>${esc(compactMetric(value(row)))}</strong></div>`).join('')
-    : '<p class="website-platform-unavailable">Detailed data not available yet.</p>';
-  return `<section class="website-platform-feature" aria-label="DOCJAKS.COM website platform">
-    <div class="website-platform-header">
-      <div>
-        <small class="website-platform-kicker">YOUR HOME PLATFORM · WIX WEBSITE</small>
-        <h2>DOCJAKS.COM</h2>
-        <p>Website traffic, visitors, store activity, and where people find you.</p>
+  // Platforms is a connection/health board, not a duplicate analytics dashboard.
+  // Detailed Wix measurements and date ranges live in Website Analytics.
+  const site=localData?.website||{};
+  const health=site.connected ? (site.partial?'yellow':'green') : 'red';
+  const label=site.connected ? (site.partial?'YELLOW · Some reporting unavailable':'GREEN · Connected & working') : 'RED · Connection needs attention';
+  return `<div class="platforms connection-panels website-connection-row">
+    <div class="box platform-detail website-gyr-card">
+      <div class="platform-detail-head">
+        <div><small class="website-gyr-label">YOUR HOME PLATFORM · WIX WEBSITE</small><h2>DOCJAKS.COM</h2></div>
+        <i class="gyr-light ${health}" aria-label="${esc(health)}" role="img"></i>
       </div>
-      <div class="website-platform-health">
-        <span><i class="gyr-light ${color}" aria-hidden="true"></i><strong>${status}</strong></span>
-        <small>Wix analytics connection · ${esc(updatedText(checked))}</small>
+      <p><strong>${esc(label)}</strong></p>
+      <p>${esc(site.message||'Wix reporting connection has not been checked.')}</p>
+      <small>Last checked: ${esc(updatedText(site.checkedAt||localData?.checkedAt))}. Detailed website figures are kept on Website Analytics.</small>
+      <div class="website-gyr-actions">
+        <button type="button" class="approve" data-view="Website Analytics">Website Analytics</button>
+        <button type="button" data-action="checkWebsiteConnection">Check Wix connection</button>
+        <a class="button" href="https://docjaks.com" target="_blank" rel="noopener noreferrer">Visit DOCJAKS.COM ↗</a>
       </div>
     </div>
-    <p class="website-platform-message">${esc(site.message || 'Website analytics connection has not been checked yet.')}</p>
-    ${websiteRangeButtons()}
-    <p class="website-platform-period">Showing ${esc(websiteRanges.find(([key]) => key === websiteRange)?.[1] || websiteRange)}, including today's partial results. ${esc(site.range?.start || 'Dates pending')} through ${esc(site.range?.end ? new Date(Date.parse(site.range.end+'T12:00:00Z')-86400000).toISOString().slice(0,10) : 'today')}.</p>
-    <div class="website-platform-kpis">${kpis.map(([label,value]) => `<div class="website-platform-kpi"><small>${esc(label)}</small><strong>${esc(compactMetric(value))}</strong></div>`).join('')}</div>
-    <div class="website-platform-details">
-      <div class="website-platform-detail"><h3>TOP WEBSITE PAGES</h3>${listHtml(pages, row => wName(row.path), row => row.views)}</div>
-      <div class="website-platform-detail"><h3>WHERE VISITS COME FROM</h3>${listHtml(traffic, row => String(row.source || row.category || 'Unknown').replace(/_/g,' '), row => row.sessions)}</div>
-      <div class="website-platform-detail"><h3>VISITOR LOCATIONS</h3>${listHtml(regions, row => [row.city,row.region].filter(Boolean).join(', ') || row.country || 'Unknown', row => row.visitors)}</div>
-    </div>
-    <div class="website-platform-actions">
-      <button type="button" class="approve" data-view="Website Analytics">Open full website analytics</button>
-      <button type="button" data-action="checkWebsiteConnection">Check Wix connection</button>
-      <a class="button" href="https://docjaks.com" target="_blank" rel="noopener noreferrer">Open DOCJAKS.COM ↗</a>
-    </div>
-    <p class="website-platform-note">Wix reporting for the selected period. Your own website testing may be included. Missing numbers are shown as a dash, not zero.</p>
-  </section>`;
+  </div>`;
 }
 
 function renderWebsiteAnalytics(){
@@ -2101,7 +2067,7 @@ document.addEventListener('click', event => {
     else if (action === 'new') { const d=await api('records',{action:'create',campaign:campaignFilter || 'BBQ'}); updateRecord(d.record); openRecord(d.record); }
     else if (action === 'refresh') { await loadRecords(); await loadAnalytics(true); await loadLocalStatus(); if (websiteRange !== '7d') await loadWebsiteRange(websiteRange); await refreshConnection(); await loadComments(); render(); renderConnectionStrip(); notice('Updated.'); }
     else if (action === 'refreshRecord') { if (dirty && !confirm('Refresh and discard unsaved changes?')) return; const currentId=selected.id; await loadRecords(); openRecord(records.find(r=>r.id===currentId)); notice('Showing the latest saved result.'); }
-    else if (action === 'checkWebsiteConnection') { const site=await loadWebsiteRange(websiteRange); render(); notice(site.connected ? 'Wix website connection checked.' : (site.message || 'Wix website reporting needs attention.'), !site.connected); }
+    else if (action === 'checkWebsiteConnection') { const site=await loadWebsiteRange('7d'); render(); notice(site.connected ? 'Wix website connection checked.' : (site.message || 'Wix website reporting needs attention.'), !site.connected); }
     else if (action === 'checkConnection') { await Promise.all([refreshConnection(), loadLocalStatus()]); render(); notice('Platform and website connections checked.'); }
     else if (action === 'publish') await publish();
     else if (action === 'schedule') { const at=$('scheduleTime').value; if(!at) throw new Error('Choose a posting date and time.'); await recordAction('schedule',{scheduledAt:new Date(at).toISOString(),timeZone:timezone}); }
