@@ -163,7 +163,7 @@
     // Named albums in paid Wix web orders. This is not streaming or all sales.
     const store=snapshot.sales.status==='ok' ?snapshot.sales.data:null;
     const albumUnits=store?.complete && Array.isArray(store.products)
-      ?store.products.filter(p=>/\\b(songs? of emberhold|back porch rebellion|album)\\b/i.test(String(p.name||'')))
+      ?store.products.filter(p=>/\b(songs? of emberhold|back porch rebellion|album)\b/i.test(String(p.name||'')))
           .reduce((n,p)=>n+(measurable(p.units)?p.units:0),0)
       :null;
     const warnings=[snapshot.interests.error,snapshot.sales.error].filter(Boolean);
