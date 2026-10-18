@@ -21,10 +21,10 @@
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
   }[char]));
   const measurable = value => typeof value === 'number' && Number.isFinite(value) && value >= 0;
-  const show = value => measurable(value) ? new Intl.NumberFormat('en-US').format(value) : '—';
+  const show = value => measurable(value) ? new Intl.NumberFormat('en-US').format(value) : 'N/A';
   const money = cents => Number.isSafeInteger(cents) && cents >= 0
     ? new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(cents / 100)
-    : '—';
+    : 'N/A';
 
   function period() {
     const selection=typeof websiteReportPeriod==='function'?websiteReportPeriod():null;
@@ -86,7 +86,7 @@
   }
 
   function audioTime(value) {
-    if(!Number.isFinite(value)||value<0)return '—';
+    if(!Number.isFinite(value)||value<0)return 'N/A';
     const seconds=Math.round(value),h=Math.floor(seconds/3600),
       m=Math.floor(seconds%3600/60),sec=seconds%60;
     return h
@@ -175,9 +175,9 @@
       </header>
       <div class="mission-intel-meters">
         ${meter('Music page views',show(pageViews),'Excludes Outlaw Radio page')}
-        ${meter('Music-only visitors','—','Not separately verified')}
+        ${meter('Music-only visitors','N/A','Not separately verified')}
         ${meter('Wix named album units',show(albumUnits),'Approved paid web orders')}
-        ${meter('Song preview plays','—','Player tracking not connected')}
+        ${meter('Song preview plays','N/A','Player tracking not connected')}
       </div>
       <p class="mission-intel-muted">Page views do not prove music was played. Album units exclude unverified external sales and bundles not identifiable as albums.</p>
       <div class="mission-intel-actions">
@@ -235,7 +235,7 @@
       :'Period not confirmed';
     const live=snapshot.stationLive.status==='ok'?snapshot.stationLive.data:null;
     const liveText=live?.broadcastStatus==='online'?'ON AIR'
-      :live?.broadcastStatus==='offline'?'OFF AIR':'—';
+      :live?.broadcastStatus==='offline'?'OFF AIR':'N/A';
     const liveNote=live?'Radio.co live station status'
       :snapshot.stationLive.status==='error'?'Status unavailable'
       :'Checking status…';
@@ -270,7 +270,7 @@
         ${meter('Avg. listening time',audioTime(report?stats.averageDurationRaw:null),'Last imported CSV')}
       </div>
       ${playing}
-      <p class="mission-intel-muted">Website visitors: <strong>${show(visitors)}</strong> · Live listener count: <strong>—</strong> (not connected)</p>
+      <p class="mission-intel-muted">Website visitors: <strong>${show(visitors)}</strong> · Live listener count: <strong>N/A</strong> (not connected)</p>
       ${snapshot.stationLive.status==='error'
         ?'<p class="mission-intel-error">Radio.co status unavailable: '+escape(snapshot.stationLive.error)+'</p>':''}
       ${oldReport}
