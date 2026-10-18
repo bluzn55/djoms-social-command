@@ -250,19 +250,27 @@ function compactMetric(value) {
   if (Math.abs(number) >= 10000) return new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:1}).format(number);
   return new Intl.NumberFormat('en-US').format(number);
 }
+// A missing value is not zero. Preserve real reported zeroes.
+function reportNumber(raw) {
+  const value = raw && typeof raw === 'object' ? (raw.value ?? raw.count ?? raw.total) : raw;
+  if(value === null || value === undefined || value === '' || typeof value === 'boolean') return null;
+  if(typeof value === 'string' && !/^[-+]?[0-9]+(?:[.][0-9]+)?$/.test(value.trim())) return null;
+  const n=Number(value);
+  return Number.isFinite(n)?n:null;
+}
 function metricSeries(source = {}, keys = []) {
   const directContainers = [source.trends, source.trend, source.series, source.daily, source.history].filter(Boolean);
   for (const container of directContainers) {
     for (const key of keys) {
       const value = container?.[key];
       if (Array.isArray(value)) {
-        const numbers = value.map(v => Number(typeof v === 'object' && v ? (v.value ?? v.count ?? v.total) : v)).filter(Number.isFinite);
+        const numbers = value.map(reportNumber).filter(Number.isFinite);
         if (numbers.length >= 2) return numbers.slice(-14);
       }
     }
     if (Array.isArray(container)) {
       for (const key of keys) {
-        const numbers = container.map(row => Number(row?.[key])).filter(Number.isFinite);
+        const numbers = container.map(row => reportNumber(row?.[key])).filter(Number.isFinite);
         if (numbers.length >= 2) return numbers.slice(-14);
       }
     }
@@ -270,14 +278,14 @@ function metricSeries(source = {}, keys = []) {
   for (const key of keys) {
     const value = source[key + 'Trend'] ?? source[key + 'History'] ?? source[key + 'Series'];
     if (Array.isArray(value)) {
-      const numbers = value.map(v => Number(typeof v === 'object' && v ? (v.value ?? v.count ?? v.total) : v)).filter(Number.isFinite);
+      const numbers = value.map(reportNumber).filter(Number.isFinite);
       if (numbers.length >= 2) return numbers.slice(-14);
     }
   }
   return [];
 }
 function trendChart(values = [], metric = '') {
-  const nums = values.map(Number).filter(Number.isFinite);
+  const nums = values.map(reportNumber).filter(Number.isFinite);
   if (nums.length < 2) return '<span class="trend-chart trend-chart-empty"><span>Trend appears when daily data is available</span></span>';
   const width = 300, height = 108, left = 8, right = 34, top = 8, bottom = 24;
   const maxValue = Math.max(...nums,1);
@@ -322,15 +330,15 @@ function platformMetricData(info = {}, platform) {
     topPostTitle: typeof top === 'string' ? top : top?.title ?? top?.caption ?? top?.name,
     topPostValue: typeof top === 'object' && top ? (top.engagement ?? top.views ?? top.clicks ?? top.likes) : null,
     trends: {
-      engagement: actualHistory.map(x => x.engagementRate).filter(v => Number.isFinite(Number(v))).map(Number).length >= 2 ? actualHistory.map(x => Number(x.engagementRate)).filter(Number.isFinite) : metricSeries(source,['engagementRate','engagement']),
-      clicks: actualHistory.map(x => x.clicks).filter(v => Number.isFinite(Number(v))).map(Number).length >= 2 ? actualHistory.map(x => Number(x.clicks)).filter(Number.isFinite) : metricSeries(source,['clicks','linkClicks']),
-      shares: actualHistory.map(x => x.shares).filter(v => Number.isFinite(Number(v))).map(Number).length >= 2 ? actualHistory.map(x => Number(x.shares)).filter(Number.isFinite) : metricSeries(source,['shares','reposts','forwards']),
-      reach: actualHistory.map(x => x.reach).filter(v => Number.isFinite(Number(v))).map(Number).length >= 2 ? actualHistory.map(x => Number(x.reach)).filter(Number.isFinite) : metricSeries(source,['reach','views','impressions'])
+      engagement: actualHistory.map(x => reportNumber(x.engagementRate)).filter(Number.isFinite).length >= 2 ? actualHistory.map(x => reportNumber(x.engagementRate)).filter(Number.isFinite) : metricSeries(source,['engagementRate','engagement']),
+      clicks: actualHistory.map(x => reportNumber(x.clicks)).filter(Number.isFinite).length >= 2 ? actualHistory.map(x => reportNumber(x.clicks)).filter(Number.isFinite) : metricSeries(source,['clicks','linkClicks']),
+      shares: actualHistory.map(x => reportNumber(x.shares)).filter(Number.isFinite).length >= 2 ? actualHistory.map(x => reportNumber(x.shares)).filter(Number.isFinite) : metricSeries(source,['shares','reposts','forwards']),
+      reach: actualHistory.map(x => reportNumber(x.reach)).filter(Number.isFinite).length >= 2 ? actualHistory.map(x => reportNumber(x.reach)).filter(Number.isFinite) : metricSeries(source,['reach','views','impressions'])
     }
   };
 }
 function audienceChangeHtml(value) {
-  if (value === null || value === undefined || value === '') return '<span class="audience-change neutral-change">—</span>';
+  if (value === null || value === undefined || value === '') return '<span class="audience-change neutral-change">N/A</span>';
   const number = Number(value);
   if (!Number.isFinite(number)) return '<span class="audience-change neutral-change">' + esc(value) + '</span>';
   if (number > 0) return '<span class="audience-change positive">▲ +' + esc(compactMetric(number)) + '</span>';
@@ -338,16 +346,17 @@ function audienceChangeHtml(value) {
   return '<span class="audience-change neutral-change">0</span>';
 }
 function engagementRate(metrics = {}) {
-  const reach = Number(metrics.reach);
-  if (!Number.isFinite(reach) || reach <= 0) return 'N/A';
-  const total = [metrics.likes, metrics.replies, metrics.shares].reduce((sum,value) => {
-    const number = Number(value);
-    return sum + (Number.isFinite(number) ? number : 0);
-  }, 0);
-  return (total / reach * 100).toFixed(total && total / reach * 100 < 10 ? 1 : 0) + '%';
+  const reach = reportNumber(metrics.reach);
+  // Partial interaction counts cannot produce a trustworthy engagement rate.
+  const pieces = [metrics.likes,metrics.replies,metrics.shares].map(reportNumber);
+  if (reach === null || reach <= 0 || pieces.some(value=>value===null || value<0))
+    return 'N/A';
+  const total=pieces.reduce((sum,value)=>sum+value,0);
+  const rate=total/reach*100;
+  return rate.toFixed(rate>0 && rate<10?1:0)+'%';
 }
 function metricTrendStatus(values = []) {
-  const nums = values.map(Number).filter(Number.isFinite);
+  const nums = values.map(reportNumber).filter(Number.isFinite);
   if (nums.length < 2) return { color:'neutral', label:'WAITING', arrow:'•' };
   const first = nums[0], last = nums[nums.length - 1];
   const base = Math.max(Math.abs(first), 1);
