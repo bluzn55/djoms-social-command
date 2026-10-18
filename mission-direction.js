@@ -7,12 +7,12 @@
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
   }[c]));
   const good=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0;
-  const fmt=value=>good(value)?new Intl.NumberFormat('en-US').format(value):'—';
+  const fmt=value=>good(value)?new Intl.NumberFormat('en-US').format(value):'N/A';
   const percent=value=>typeof value==='number'&&Number.isFinite(value)
-    ?(value>0?'+':'')+value.toFixed(1)+'%':'—';
-  const time=value=>good(value)?Math.floor(value/60)+'m '+Math.round(value%60)+'s':'—';
+    ?(value>0?'+':'')+value.toFixed(1)+'%':'N/A';
+  const time=value=>good(value)?Math.floor(value/60)+'m '+Math.round(value%60)+'s':'N/A';
   const money=cents=>Number.isSafeInteger(cents)&&cents>=0
-    ?new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(cents/100):'—';
+    ?new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(cents/100):'N/A';
   const isTrend=value=>value&&typeof value.percentChange==='number'&&Number.isFinite(value.percentChange);
   const trend=(c,higherIsBetter=true)=>{
     if(!isTrend(c))return 'unknown';
@@ -113,16 +113,16 @@
       :period?.includesToday!==false?'This reporting window includes an unfinished day.':'';
     const coverage=[
       proof('DISCOVERY',visitorsTrend==='up'?'green':visitorsTrend==='down'?'red':'neutral',
-        available&&good(currentVisitors)?fmt(currentVisitors)+' visitors':'—',
+        available&&good(currentVisitors)?fmt(currentVisitors)+' visitors':'N/A',
         isTrend(visitors)?percent(visitors.percentChange)+' vs preceding period':'Previous-period comparison pending'),
       proof('ENGAGEMENT',stayTrend==='up'?'green':stayTrend==='down'?'red':'neutral',
-        available?time(site.avgTimeSeconds):'—',
+        available?time(site.avgTimeSeconds):'N/A',
         isTrend(stay)?percent(stay.percentChange)+' average-stay change':'Engagement comparison pending'),
       proof('MEANINGFUL ACTIONS','neutral',
         actualActions?'GA4 events measured': 'NOT FULLY MEASURED',
         'Radio listening and Pit Krewe membership are not yet verified'),
       proof('ONLINE SALES',salesReady?'neutral':'unknown',
-        salesReady?fmt(sales.paidOrders)+' paid orders':'—',
+        salesReady?fmt(sales.paidOrders)+' paid orders':'N/A',
         salesReady?money(sales.itemSalesCents)+' item sales (not profit)':'Paid order report unavailable'),
       proof('CONTRIBUTION MARGIN','unknown','NOT MEASURED',
         'Variable costs, fees and offline sales are not yet combined')
