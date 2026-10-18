@@ -4507,11 +4507,23 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   .mission-seo-query-table tbody td {font-size:15px}
 }
 
-/* Visitor journey: SEO before Wix, in the sequence search → impression → click → visit. */
+/* Visitor journey: Google search is the first, separate stage, above Wix. */
+.connection-strip > .mission-seo-top {
+  display:block;
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  margin:8px 0 12px;
+  padding:13px 18px 14px;
+  border:2px solid #bc8e3e;
+  border-radius:10px;
+  background:linear-gradient(120deg,#211911,#392719 55%,#241b13);
+  color:#ffe8b7;
+  box-shadow:inset 0 0 0 2px #574024,0 3px 10px #26190c1a;
+}
 .mission-website-section .mission-web-console {
   grid-template-areas:
     ". brand controls"
-    "seo seo seo"
     "stage stage stage"
     "gauges gauges gauges"
     "health health health"
@@ -4555,7 +4567,6 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   .mission-website-section .mission-web-console {
     grid-template-areas:
       "brand controls"
-      "seo seo"
       "stage stage"
       "gauges gauges"
       "health health"
@@ -4563,11 +4574,11 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   }
 }
 @media(max-width:640px) {
+  .connection-strip > .mission-seo-top {padding:10px 11px;}
   .mission-website-section .mission-web-console {
     grid-template-areas:
       "brand"
       "controls"
-      "seo"
       "stage"
       "gauges"
       "health"

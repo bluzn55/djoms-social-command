@@ -408,6 +408,10 @@ function renderConnectionStrip() {
         <span class="mission-attention-arrow">›</span>
       </button>
 
+      <section id="missionSeoPanel" class="mission-seo-panel mission-seo-top" aria-label="Step 1: Google Search SEO performance">
+        <div class="mission-seo-loading"><strong>STEP 1 · GOOGLE SEARCH</strong><span>Checking connection…</span></div>
+      </section>
+
       <section class="mission-website-section" aria-label="DOCJAKS.COM website connection and activity">
         ${(() => {
           const site=websiteSnapshot();
@@ -451,9 +455,6 @@ function renderConnectionStrip() {
               ${websiteCustomControls()}
               <button type="button" class="mission-web-open" data-view="Website Analytics">Website Analytics ›</button>
             </div>
-            <section id="missionSeoPanel" class="mission-seo-panel" aria-label="Google Search SEO performance">
-              <div class="mission-seo-loading"><strong>GOOGLE SEARCH · SEO</strong><span>Checking connection…</span></div>
-            </section>
             <div class="mission-web-stage" aria-label="Step 2: website visits">
               <strong>STEP 2 · ON THE WEBSITE</strong>
               <span>Wix tracks visitors and activity from Google, social media, direct links, and other sources.</span>
