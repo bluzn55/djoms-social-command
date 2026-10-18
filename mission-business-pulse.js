@@ -4,7 +4,8 @@
     interests:{status:'idle',data:null,error:null},
     chapter:{status:'idle',data:null,error:null},
     sales:{status:'idle',data:null,error:null},
-    radio:{status:'idle',data:null,error:null}
+    radio:{status:'idle',data:null,error:null},
+    stationLive:{status:'idle',data:null,error:null}
   };
   const ENDPOINTS = {
     interests:'website-interests',
@@ -66,6 +67,24 @@
       throw new Error('Radio.co has not returned a verified export with duration units.');
     return value;
   }
+
+  // Official Radio.co public metadata, not the private listening stats.
+  async function getRadioLiveStatus() {
+    const response=await fetch('/api/meta/radio-live-status',{
+      credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(20000)
+    });
+    const value=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(response.status===401
+      ? 'Sign in again to check Radio.co station status.'
+      : String(value.error||'Station broadcast status unavailable.'));
+    if(value?.connected!==true||value.stationId!=='s37e227d75'
+       ||value.mode!=='public-station-status'
+       ||!['online','offline'].includes(value.broadcastStatus)
+       ||value.listenerCountAvailable!==false)
+      throw new Error('Radio.co has not verified public broadcast status.');
+    return value;
+  }
+
   function audioTime(value) {
     if(!Number.isFinite(value)||value<0)return '—';
     const seconds=Math.round(value),h=Math.floor(seconds/3600),
@@ -172,6 +191,14 @@
     const color=interest.status==='error'&&!connected?'red':'yellow';
     const report=snapshot.radio.status==='ok'?snapshot.radio.data:null;
     const stats=report?.summary||{};
+    const live=snapshot.stationLive.status==='ok'?snapshot.stationLive.data:null;
+    const liveText=live?.broadcastStatus==='online'?'ON AIR'
+      :live?.broadcastStatus==='offline'?'OFF AIR':'—';
+    const liveNote=live?'Official public Radio.co status'
+      :snapshot.stationLive.status==='error'?'Could not verify broadcast status'
+      :'Checking station…';
+    const nowPlaying=live?.broadcastStatus==='online'&&live.nowPlaying
+      ?'<p class="locknote"><strong>NOW PLAYING · </strong>'+escape(live.nowPlaying)+'</p>':'';
     const period=report?.range
       ?report.range.start+' through '+report.range.end+' (UTC)'
       :'Period not confirmed';
@@ -196,11 +223,15 @@
         <div><small>RADIO · 51.50</small><h3>Outlaw Radio 5150</h3></div>
         ${statusLight(color,color.toUpperCase())}
       </header>
-      <div class="mission-intel-meters mission-intel-3">
+      <div class="mission-intel-meters mission-intel-4">
         ${meter('Website page views',show(views))}
         ${meter('Website visitors',show(visitors))}
-        ${meter('Listening right now','—','Live Radio.co not connected')}
+        ${meter('Station broadcast',liveText,liveNote)}
+        ${meter('Active listeners','—','Listener statistics not connected')}
       </div>
+      ${nowPlaying}
+      ${snapshot.stationLive.status==='error'
+        ?'<p class="locknote">Public station-status check unavailable: '+escape(snapshot.stationLive.error)+'</p>':''}
       ${latest}
       <div class="mission-intel-actions">
         <button type="button" data-view="Website Analytics">Radio website details ›</button>
@@ -223,7 +254,7 @@
       <div class="mission-intel-grid">${bookCard()}${storeCard()}${radioCard()}</div>
       <details class="mission-intel-data-notes">
         <summary>About these numbers</summary>
-        <p>Selected Wix dates: ${escape(selected.start)} through ${escape(selected.endInclusive)}. Missing data stays unavailable. Chapter clicks do not prove reading. Wix paid store sales exclude tax and shipping, refunds and outside channels. Radio webpage views are not listener counts. The Radio.co historical export uses its own explicitly labelled UTC dates and is not live or filtered by Wix selection. Testing traffic may be included.</p>
+        <p>Selected Wix dates: ${escape(selected.start)} through ${escape(selected.endInclusive)}. Missing data stays unavailable. Chapter clicks do not prove reading. Wix paid store sales exclude tax and shipping, refunds and outside channels. Radio webpage views are not listener counts. The Radio.co historical export uses its own explicitly labelled UTC dates and is not live or filtered by Wix selection. Current station status and song come from Radio.co's public API, but listener counts do not. Testing traffic may be included.</p>
       </details>`;
   }
   function refresh(force = false) {
@@ -235,7 +266,17 @@
     lastPeriodKey=selected.query;
     for(const key of Object.keys(ENDPOINTS)) snapshot[key]={status:'loading',data:null,error:null};
     snapshot.radio={status:'loading',data:null,error:null};
+    snapshot.stationLive={status:'loading',data:null,error:null};
     paint();
+    getRadioLiveStatus().then(data=>{
+      if(ticket!==sequence)return;
+      snapshot.stationLive={status:'ok',data,error:null};
+      paint();
+    }).catch(error=>{
+      if(ticket!==sequence)return;
+      snapshot.stationLive={status:'error',data:null,error:String(error.message||'Radio.co status unavailable.')};
+      paint();
+    });
     getRadioImport().then(data=>{
       if(ticket!==sequence)return;
       snapshot.radio={status:'ok',data,error:null};
