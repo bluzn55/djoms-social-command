@@ -65,7 +65,7 @@ async function loadWebsiteRange(range=websiteRange) {
 let selectedStatusPlatform = null;
 let connectionCheckedAt = null;
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-function date(value) { return value ? new Date(value).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : '—'; }
+function date(value) { return value ? new Date(value).toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : 'N/A'; }
 function code(r) { return r.campaign + '-' + r.id.slice(-4).toUpperCase(); }
 function notice(message, bad = false) { $('notice').textContent = message; $('notice').hidden = !message; $('notice').className = bad ? 'bad-notice' : 'good-notice'; }
 let resetToken = '';
@@ -416,6 +416,7 @@ function renderConnectionStrip() {
     const baseAttentionText = `${overdue ? overdue + ' overdue · ' : ''}${unanswered} unanswered · ${failed} failed · ${platformIssues} platform issues`;
     const campaignState = campaign => {
       const list = records.filter(r => r.campaign === campaign.id);
+      if (!list.length) return 'yellow';
       if (list.some(r => ['failed','partial','uncertain'].includes(r.status))) return 'red';
       if (list.some(r => attention(r) || r.status === 'draft' || r.status === 'paused')) return 'yellow';
       return 'green';
@@ -472,8 +473,8 @@ function renderConnectionStrip() {
             ['Visitors',site.visitors,'visitors'],
             ['Returning visitors',returningVisitors,'returningVisitors'],
             ['Page views',site.pageViews,'pageViews'],
-            ['Avg. stay',validNumber(site.avgTimeSeconds) ? wTime(site.avgTimeSeconds) : '—','avgTimeSeconds'],
-            ['Bounce rate',validNumber(site.bounceRate) ? wPct(site.bounceRate) : '—','bounceRate'],
+            ['Avg. stay',validNumber(site.avgTimeSeconds) ? wTime(site.avgTimeSeconds) : 'N/A','avgTimeSeconds'],
+            ['Bounce rate',validNumber(site.bounceRate) ? wPct(site.bounceRate) : 'N/A','bounceRate'],
             ['Contact Actions',leads,'contactActions']
           ];
           const rangeCaption=({today:'Today','7d':'Last 7 days','30d':'Last 30 days','365d':'Last 365 days',custom:'Custom dates'})[websiteRange]||'Last 7 days';
@@ -509,7 +510,7 @@ function renderConnectionStrip() {
               return `<div class="mission-website-health" role="group" aria-label="Overall website health indicators">
                 <div class="mission-health-head" title="${esc(health.note)}">
                   <strong>WEBSITE HEALTH</strong>
-                  <span class="mission-health-status"><i class="gyr-light ${health.color}" aria-hidden="true"></i><b>${esc(health.label)}</b><b class="mission-health-score">${health.total===null?'—':health.total+'/6'}</b></span>
+                  <span class="mission-health-status"><i class="gyr-light ${health.color}" aria-hidden="true"></i><b>${esc(health.label)}</b><b class="mission-health-score">${health.total===null?'N/A':health.total+'/6'}</b></span>
                 </div>
                 <div class="mission-health-signals">
                   ${health.signals.map(signal=>`<div class="mission-health-signal">
@@ -579,9 +580,9 @@ function renderConnectionStrip() {
           const blogItems = commentStream.filter(c => c.platform === 'blog');
           const blogUnanswered = blogItems.filter(c => !c.handled).length;
           const blogOver24 = blogItems.filter(ageOver24).length;
-          const blogLinked = blogItems.length > 0 || commentWarnings.every(w => !/^Blog:/i.test(w));
+          const blogLinked = !!commentCheckedAt && (blogItems.length > 0 || commentWarnings.every(w => !/^Blog:/i.test(w)));
           const blogColor = !blogLinked ? 'yellow' : blogOver24 > 0 ? 'red' : blogUnanswered > 0 ? 'yellow' : 'green';
-          const blogLabel = !blogLinked ? 'SETUP' : blogColor.toUpperCase();
+          const blogLabel = !commentCheckedAt ? 'CHECKING' : !blogLinked ? 'SETUP' : blogColor.toUpperCase();
           const latest = blogItems.slice().sort((a,b) => Date.parse(b.publishedAt||0)-Date.parse(a.publishedAt||0))[0];
           return `<button type="button" class="mission-blog-card" data-action="${blogLinked ? 'openBlogComments' : 'connectBlog'}">
             <span class="mission-blog-copy">
@@ -594,8 +595,8 @@ function renderConnectionStrip() {
               <b>${blogLabel}</b>
             </span>
             <span class="mission-blog-metrics">
-              <span><small>Unanswered</small><b>${blogLinked ? blogUnanswered : '—'}</b></span>
-              <span><small>Over 24h</small><b>${blogLinked ? blogOver24 : '—'}</b></span>
+              <span><small>Unanswered</small><b>${blogLinked ? blogUnanswered : 'N/A'}</b></span>
+              <span><small>Over 24h</small><b>${blogLinked ? blogOver24 : 'N/A'}</b></span>
               <span><small>Latest activity</small><b>${latest ? esc(updatedText(latest.publishedAt)) : blogLinked ? 'None waiting' : 'Connect blog'}</b></span>
             </span>
             <span class="mission-attention-arrow">›</span>
@@ -1312,8 +1313,8 @@ function renderBatchSchedule() {
 }
 
 function wName(path){if(!path||path==='/')return'Home';return String(path).replace(/^\//,'').replace(/[-_]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());}
-function wTime(v){const n=Number(v);if(!Number.isFinite(n))return'—';return n<60?Math.round(n)+'s':Math.floor(n/60)+'m '+Math.round(n%60)+'s';}
-function wPct(v){const n=Number(v);if(!Number.isFinite(n))return'—';const p=n<=1?n*100:n;return p.toFixed(p<10?1:0)+'%';}
+function wTime(v){const n=reportNumber(v);if(n===null||n<0)return'N/A';return n<60?Math.round(n)+'s':Math.floor(n/60)+'m '+Math.round(n%60)+'s';}
+function wPct(v){const n=reportNumber(v);if(n===null||n<0)return'N/A';const p=n<=1?n*100:n;return p.toFixed(p<10?1:0)+'%';}
 
 function missionMetricTrendColor(comparison,metric='Visitors') {
   // A lower bounce rate is generally better. Unknown or unchanged is yellow.
@@ -1462,7 +1463,9 @@ function renderWebsitePlatform() {
 
 function renderWebsiteAnalytics(){
   const s=websiteSnapshot(),w=s.weekly||[],p=s.topPages||[],src=s.trafficSources||[],dev=s.devices||[],vt=s.visitorTypes||[],geo=s.geography||[],land=s.landingPages||[],exit=s.exitPages||[];
-  const leads=Number(s.contactClicks||0)+Number(s.formsSubmitted||0),sales=Number(s.sales),salesText=Number.isFinite(sales)?new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(sales):'—';
+  const leads=reportNumber(s.contactClicks)!==null&&reportNumber(s.formsSubmitted)!==null ? reportNumber(s.contactClicks)+reportNumber(s.formsSubmitted):null;
+  const sales=reportNumber(s.sales);
+  const salesText=sales!==null&&sales>=0?new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(sales):'N/A';
   const nv=vt.find(x=>x.type==='first_time_visitor')?.visitors,rv=vt.find(x=>x.type==='returning_visitor')?.visitors;
   const status=s.connected?(s.partial?'YELLOW':'GREEN'):'RED',color=s.connected?(s.partial?'yellow':'green'):'red';
   $('content').innerHTML=`
@@ -1470,14 +1473,14 @@ function renderWebsiteAnalytics(){
     ${websiteRangeButtons()}
     <div class="wa-head"><div><small>WEBSITE · WIX</small><h2>DOCJAKS.COM ANALYTICS</h2><p>Main website research page. Find what works, what loses people, and what deserves more attention.</p></div><div><i class="mission-glance-light ${color}"></i><b>${status}</b><span>${esc(s.message||'Not connected')}</span></div></div>
     <div class="wa-kpis">
-      ${[['Sessions',s.sessions],['Visitors',s.visitors],['Page views',s.pageViews],['Avg stay',wTime(s.avgTimeSeconds)],['Pages / visit',s.pagesPerSession==null?'—':Number(s.pagesPerSession).toFixed(2)],['Bounce',wPct(s.bounceRate)],['Leads',leads],['Orders',s.orders],['Sales',salesText]].map(x=>`<span><small>${x[0]}</small><b>${esc(compactMetric(x[1]))}</b></span>`).join('')}
+      ${[['Sessions',s.sessions],['Visitors',s.visitors],['Page views',s.pageViews],['Avg stay',wTime(s.avgTimeSeconds)],['Pages / visit',s.pagesPerSession==null?'N/A':Number(s.pagesPerSession).toFixed(2)],['Bounce',wPct(s.bounceRate)],['Leads',leads],['Orders',s.orders],['Sales',salesText]].map(x=>`<span><small>${x[0]}</small><b>${esc(compactMetric(x[1]))}</b></span>`).join('')}
     </div>
     <section class="wa-box"><h3>GOLD NUGGETS</h3><div class="wa-nuggets">${wInsights(s).map(x=>`<span>${esc(x)}</span>`).join('')||'<span>Not enough traffic yet for patterns.</span>'}</div></section>
     <section class="wa-box"><h3>WEEK BY WEEK</h3><div class="wa-charts">${wBar(w,'sessions','Sessions')}${wBar(w,'visitors','People')}${wBar(w,'views','Page views')}</div>
-      <div class="wa-week"><div class="head"><span>Week</span><span>Sessions</span><span>People</span><span>Views</span><span>Avg stay</span><span>Pages/visit</span><span>Continued</span></div>${w.map(r=>`<div><span>${esc(r.label||'')}</span><span>${esc(compactMetric(r.sessions))}</span><span>${esc(compactMetric(r.visitors))}</span><span>${esc(compactMetric(r.views))}</span><span>${esc(wTime(r.avgTimeSeconds))}</span><span>${r.pagesPerSession==null?'—':Number(r.pagesPerSession).toFixed(2)}</span><span>${Number.isFinite(Number(r.bounceRate))?esc(wPct(1-Number(r.bounceRate))):'—'}</span></div>`).join('')}</div>
+      <div class="wa-week"><div class="head"><span>Week</span><span>Sessions</span><span>People</span><span>Views</span><span>Avg stay</span><span>Pages/visit</span><span>Continued</span></div>${w.map(r=>`<div><span>${esc(r.label||'')}</span><span>${esc(compactMetric(r.sessions))}</span><span>${esc(compactMetric(r.visitors))}</span><span>${esc(compactMetric(r.views))}</span><span>${esc(wTime(r.avgTimeSeconds))}</span><span>${r.pagesPerSession==null?'N/A':Number(r.pagesPerSession).toFixed(2)}</span><span>${reportNumber(r.bounceRate)!==null?esc(wPct(1-reportNumber(r.bounceRate))):'N/A'}</span></div>`).join('')}</div>
     </section>
     <section class="wa-box"><h3>TOP PAGES · SELECTED PERIOD</h3>
-      <div class="wa-pages"><div class="head"><span>Page</span><span>Views</span><span>People</span><span>Sessions</span><span>Avg time</span><span>Continued</span></div>${p.map((r,i)=>`<div><span><b>${i+1}. ${esc(wName(r.path))}</b><small>${esc(r.path)}</small></span><span>${esc(compactMetric(r.views))}</span><span>${esc(compactMetric(r.visitors))}</span><span>${esc(compactMetric(r.sessions))}</span><span>${esc(wTime(r.avgTimeSeconds))}</span><span>${Number.isFinite(Number(r.bounceRate))?esc(wPct(1-Number(r.bounceRate))):'—'}</span></div>`).join('')}</div>
+      <div class="wa-pages"><div class="head"><span>Page</span><span>Views</span><span>People</span><span>Sessions</span><span>Avg time</span><span>Continued</span></div>${p.map((r,i)=>`<div><span><b>${i+1}. ${esc(wName(r.path))}</b><small>${esc(r.path)}</small></span><span>${esc(compactMetric(r.views))}</span><span>${esc(compactMetric(r.visitors))}</span><span>${esc(compactMetric(r.sessions))}</span><span>${esc(wTime(r.avgTimeSeconds))}</span><span>${reportNumber(r.bounceRate)!==null?esc(wPct(1-reportNumber(r.bounceRate))):'N/A'}</span></div>`).join('')}</div>
     </section>
     <div class="wa-two">
       <section class="wa-box"><h3>TRAFFIC SOURCES</h3>${src.map((r,i)=>`<p><b>${i+1}. ${esc(String(r.category||r.source||'Unknown').replace(/_/g,' '))}</b><span>${esc(compactMetric(r.sessions))} sessions${r.source&&r.source!==r.category?' · '+esc(r.source):''}</span></p>`).join('')}</section>
