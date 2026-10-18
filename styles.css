@@ -5060,3 +5060,13 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   .mission-direction-evidence {grid-template-columns:1fr}
   .mission-direction-action-evidence {grid-template-columns:1fr}
 }
+
+.mission-direction-ninety {border-top:1px solid #d5c19b;padding-top:10px;margin-top:14px}
+.mission-direction-ninety h4 {margin:0 0 6px;font:900 17px Arial,sans-serif}
+.mission-direction-ninety p {font:700 15px/1.5 Arial,sans-serif}
+.mission-direction-ninety button {
+  padding:8px 11px;border:1px solid #b28b48;border-radius:5px;
+  background:#ebd1a0;color:#39250b;cursor:pointer;
+  font:900 13px/1.35 Arial,sans-serif;
+}
+.mission-direction-ninety button:hover {background:#f5dfb8}

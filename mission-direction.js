@@ -193,6 +193,66 @@
     return '<div class="mission-direction-measure"><small>'+esc(label)+'</small>'+
       '<strong>'+esc(content)+'</strong><span>'+esc(comment)+'</span></div>';
   }
+  // The existing Wix report API already compares with the preceding equal
+  // period. Fetch 90 days only on owner request: no duplicate source and no
+  // extra API cost on every dashboard load.
+  let longView={status:'idle',date:'',data:null,error:null};
+  const shift=(day,days)=>{
+    const d=new Date(day+'T12:00:00Z');
+    d.setUTCDate(d.getUTCDate()+days);
+    return d.toISOString().slice(0,10);
+  };
+  const localToday=()=>{
+    const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{
+      timeZone:'America/Chicago',year:'numeric',month:'2-digit',day:'2-digit'
+    }).formatToParts(new Date()).map(p=>[p.type,p.value]));
+    return parts.year+'-'+parts.month+'-'+parts.day;
+  };
+  const ninetyView=()=>{
+    if(longView.status==='idle')return '<p><button type="button" data-direction-90="1">Compare the last 90 days with the 90 before</button></p>';
+    if(longView.status==='loading')return '<p>Checking the last 90 days against the preceding 90 days…</p>';
+    if(longView.status==='error')return '<p>'+esc(longView.error||'90-day comparison unavailable')+
+      ' <button type="button" data-direction-90="1">Retry 90-day report</button></p>';
+    const report=longView.data;
+    const comparisons=report?.metricComparisons||{};
+    const v=comparisons.visitors||{};
+    const stay=comparisons.avgTimeSeconds||{};
+    const visitorsText=good(v.currentVisitors)&&good(v.previousVisitors)
+      ?fmt(v.currentVisitors)+' visitors in the latest 90 days versus '+fmt(v.previousVisitors)+' in the preceding 90 days'
+      :'Visitor totals could not be verified for both 90-day periods';
+    return '<p><b>90-DAY WEBSITE DIRECTION:</b> '+esc(visitorsText)+
+      (isTrend(v)?' ('+esc(percent(v.percentChange))+')':'')+'. Average-stay change: '+
+      esc(isTrend(stay)?percent(stay.percentChange):'not measured')+
+      '. This is website data, not profit or verified listening. '+
+      (report?.partial?'Some supporting Wix details are incomplete. ':'')+
+      '<button type="button" data-direction-90="1">Refresh 90-day comparison</button></p>';
+  };
+  async function loadNinety(){
+    if(longView.status==='loading')return;
+    const today=localToday();
+    longView={status:'loading',date:today,data:null,error:null};
+    repaint();
+    try{
+      const start=shift(today,-89);
+      const url='/api/meta/website-range?range=custom&start='+encodeURIComponent(start)+
+        '&end='+encodeURIComponent(today);
+      const response=await fetch(url,{
+        credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(55000)
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(data.error||'90-day Wix report could not be loaded.');
+      if(!data.connected||data.range?.start!==start||
+         data.range?.end!==shift(today,1)||data.range?.days!==90)
+        throw new Error('90-day report was incomplete or returned unmatched dates.');
+      longView={status:'complete',date:today,data,error:null};
+    }catch(error){
+      longView={status:'error',date:today,data:null,
+        error:error.name==='TimeoutError'?'Wix took too long; other reports remain unchanged.':
+          String(error.message||'90-day report unavailable.')};
+    }
+    repaint();
+  }
+
   function paint(){
     const node=document.getElementById('missionDirectionPanel');
     if(!node)return;
@@ -234,6 +294,7 @@
         '<p><b>What we still need:</b> actual Radio.co audience data, confirmed Pit Krewe signups, and variable costs before contribution margin can be assessed.</p>'+
         '<ul>'+summary.notes.map(note=>'<li>'+esc(note)+'</li>').join('')+'</ul>'+
         '<p>The selected period is '+esc(summary.period)+'. The same date selection is used throughout the dashboard.</p>'+
+        '<section class="mission-direction-ninety"><h4>Longer-term trend</h4>'+ninetyView()+'</section>'+
       '</details>';
   }
   function repaint(){try{paint();}catch(error){
@@ -251,6 +312,12 @@
   }
   document.addEventListener('djoms:verified-report',()=>{
     if(typeof activeView!=='undefined'&&activeView==='Mission Control')repaint();
+  });
+  document.addEventListener('click',event=>{
+    const button=event.target.closest('[data-direction-90]');
+    if(!button)return;
+    event.preventDefault();
+    void loadNinety();
   });
   window.djomsDirectionEvaluate=evaluate;
   if(typeof activeView!=='undefined'&&activeView==='Mission Control'&&
