@@ -31,6 +31,39 @@
     ?(period.start+' to '+period.endInclusive)
     :({today:'Today','7d':'Last 7 days','30d':'Last 30 days','365d':'Last 365 days'})[period?.range]||'Selected dates';
 
+
+  function searchTermPreview(report) {
+    const terms=Array.isArray(report?.topQueries)
+      ?report.topQueries.filter(row=>row&&typeof row.query==='string'&&row.query.trim()).slice(0,5):[];
+    const pages=Array.isArray(report?.topPages)
+      ?report.topPages.filter(row=>row&&typeof row.page==='string'&&row.page.trim()).slice(0,5):[];
+    const showPages=!terms.length&&pages.length>0;
+    const data=showPages?pages:terms;
+    const name=row=>{
+      if(!showPages)return row.query;
+      const short=String(row.page).replace(/^https?:\/\/(?:www\.)?docjaks\.com\/?/i,'/');
+      return short==='/'?'Home page':short;
+    };
+    return '<section class="mission-seo-queries" aria-label="Google search terms and impressions">'+
+      '<div class="mission-seo-queries-head"><strong>'+
+        (showPages?'PAGES APPEARING ON GOOGLE':'WHAT PEOPLE SEARCHED ON GOOGLE')+'</strong>'+
+        '<small>'+(showPages?'Exact searches not reported':'Top 5 reported search terms')+'</small></div>'+
+      (data.length
+        ?'<div class="mission-seo-table-scroll"><table class="mission-seo-query-table">'+
+          '<thead><tr><th scope="col">'+(showPages?'Website page':'Google search phrase')+'</th>'+
+          '<th scope="col">Impressions</th><th scope="col">Clicks</th></tr></thead>'+
+          '<tbody>'+data.map((row,index)=>
+            '<tr><th scope="row"><em>'+(index+1)+'.</em> '+esc(name(row))+'</th>'+
+            '<td>'+esc(fmt(row.impressions))+'</td><td>'+esc(fmt(row.clicks))+'</td></tr>'
+          ).join('')+'</tbody></table></div>'
+        :'<p class="mission-seo-no-queries">Google has not provided individual search phrases for these dates.</p>')+
+      '<p class="mission-seo-queries-note">'+
+        (showPages
+          ?'Google has not shared the exact search words. These are the pages that appeared, not the words someone typed.'
+          :'Google may hide rare searches for privacy, so the listed impressions might not add up to the total above.')+
+      '</p></section>';
+  }
+
   function renderBar(element,report,selection,error) {
     const {light,label}=stateFor(report);
     const pending=!report&&!error;
@@ -50,6 +83,7 @@
           metric('Search CTR',connected?pct(metrics.ctr):'—')+
           metric('Avg. position',connected?dec(metrics.position):'—')+
        '</div>'+
+       (connected?searchTermPreview(report):'')+
        '<div class="mission-seo-actions">'+
          (connected?'<small>'+dataThrough+'</small>':'<small>'+esc(note)+'</small>')+
          (connected?'':'<a href="/api/meta/seo-connect" class="mission-seo-connect">Connect Search Console ↗</a>')+

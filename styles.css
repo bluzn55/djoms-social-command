@@ -4415,3 +4415,94 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   .seo-detail-statgrid {grid-template-columns:repeat(2,minmax(0,1fr))}
   .seo-detail-heading h2 {font-size:24px}
 }
+
+
+/* Mission Control: Google Search terms, actual impressions and clicks. */
+.mission-seo-queries {
+  margin:12px 0 0;
+  padding:11px 0 1px;
+  border-top:1px solid #987b4e;
+}
+.mission-seo-queries-head {
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:4px 12px;
+  padding:0 2px 8px;
+}
+.mission-seo-queries-head strong {
+  font-size:17px;
+  color:#f5d491;
+  letter-spacing:.3px;
+  font-weight:900;
+}
+.mission-seo-queries-head small {
+  font-size:13px;
+  color:#e5cea1;
+  font-weight:700;
+}
+.mission-seo-table-scroll {width:100%;overflow-x:auto}
+.mission-seo-query-table {
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
+  font-size:16px;
+  color:#fff2d4;
+}
+.mission-seo-query-table th,
+.mission-seo-query-table td {
+  padding:9px 12px;
+  text-align:left;
+  border-bottom:1px solid #625039;
+}
+.mission-seo-query-table thead th {
+  background:#49351e;
+  color:#ffe0a0;
+  font-size:14px;
+  font-weight:900;
+}
+.mission-seo-query-table tbody tr:nth-child(odd) {background:#342719}
+.mission-seo-query-table tbody th {
+  font-weight:700;
+  overflow-wrap:anywhere;
+}
+.mission-seo-query-table tbody th em {
+  font-style:normal;
+  color:#d5b17a;
+}
+.mission-seo-query-table th:nth-child(2),
+.mission-seo-query-table th:nth-child(3),
+.mission-seo-query-table td:nth-child(2),
+.mission-seo-query-table td:nth-child(3) {
+  width:125px;
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+.mission-seo-query-table tbody td {
+  font-size:17px;
+  font-weight:900;
+}
+.mission-seo-no-queries {
+  margin:4px 2px;
+  font-size:15px;
+  color:#ffedc1;
+}
+.mission-seo-queries-note {
+  font-size:13px;
+  margin:8px 2px 3px;
+  line-height:1.4;
+  color:#e3c99d;
+}
+@media(max-width:640px) {
+  .mission-seo-queries-head strong {font-size:16px}
+  .mission-seo-query-table {font-size:14px}
+  .mission-seo-query-table th,
+  .mission-seo-query-table td {padding:8px 5px}
+  .mission-seo-query-table th:nth-child(2),
+  .mission-seo-query-table th:nth-child(3),
+  .mission-seo-query-table td:nth-child(2),
+  .mission-seo-query-table td:nth-child(3) {width:72px}
+  .mission-seo-query-table thead th {font-size:12px}
+  .mission-seo-query-table tbody td {font-size:15px}
+}
