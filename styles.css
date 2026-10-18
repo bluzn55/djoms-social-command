@@ -5070,3 +5070,390 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   font:900 13px/1.35 Arial,sans-serif;
 }
 .mission-direction-ninety button:hover {background:#f5dfb8}
+
+/* DJOMS 2026-10-18 STACKED WIDE BUSINESS, SOCIAL AND LOCAL PANELS */
+/*
+ * One section per full-width horizontal row. Within every section, each
+ * measurement has its own line. Preserve source and attention statuses.
+ * This overrides old 3-up KPI tiles without affecting other DJOMS modules.
+ */
+
+/* Business Pulse: 1. Outlaw Radio  2. Music  3. Trading Post  4. Book */
+#missionBusinessPulse .mission-intel-grid {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) !important;
+  gap:14px !important;
+  align-items:stretch !important;
+  width:100%;
+}
+#missionBusinessPulse .mission-intel-card {
+  display:block;
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  padding:0 0 12px;
+  text-align:left !important;
+  overflow:hidden;
+}
+#missionBusinessPulse .mission-intel-card-head {
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  min-height:67px !important;
+  gap:12px !important;
+  padding:13px 20px 13px 41px !important;
+  text-align:left !important;
+}
+#missionBusinessPulse .mission-intel-card-head::before {
+  left:13px;
+  top:23px;
+  font-size:20px;
+}
+#missionBusinessPulse .mission-intel-card-head>div {
+  width:auto;
+  flex:1 1 auto;
+  min-width:0;
+  text-align:left !important;
+}
+#missionBusinessPulse .mission-intel-card-head h3 {
+  margin:3px 0 0;
+  font-size:clamp(21px,2vw,28px) !important;
+  text-align:left !important;
+}
+#missionBusinessPulse .mission-intel-health {
+  position:static !important;
+  flex:0 0 auto;
+  margin:0 0 0 5px;
+  font-size:14px;
+}
+#missionBusinessPulse .mission-intel-meters,
+#missionBusinessPulse .mission-intel-meters.mission-intel-3,
+#missionBusinessPulse .mission-intel-meters.mission-intel-4,
+#missionBusinessPulse .mission-intel-card:nth-child(2) .mission-intel-meters.mission-intel-3 {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) !important;
+  justify-content:stretch !important;
+  justify-items:stretch !important;
+  width:100% !important;
+  max-width:none !important;
+  min-width:0;
+  box-sizing:border-box;
+  gap:0 !important;
+  margin:0 !important;
+  padding:10px 18px 3px !important;
+}
+#missionBusinessPulse .mission-intel-meter,
+#missionBusinessPulse .mission-intel-meters .mission-intel-meter:last-child {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) auto !important;
+  align-items:center !important;
+  justify-content:stretch !important;
+  justify-items:stretch !important;
+  min-height:57px !important;
+  padding:9px 15px !important;
+  gap:4px 14px;
+  width:100%;
+  height:auto;
+  min-width:0;
+  box-sizing:border-box;
+  border:0 !important;
+  border-bottom:1px solid #d3bd97 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  background:#fffdf8 !important;
+  text-align:left !important;
+}
+#missionBusinessPulse .mission-intel-meters .mission-intel-meter:first-child {
+  border-radius:7px 7px 0 0 !important;
+}
+#missionBusinessPulse .mission-intel-meters .mission-intel-meter:last-child {
+  border-radius:0 0 7px 7px !important;
+}
+#missionBusinessPulse .mission-intel-meter small {
+  display:block;
+  grid-column:1;
+  color:#503716;
+  font:900 17px/1.3 Arial,sans-serif !important;
+  text-align:left !important;
+  overflow-wrap:anywhere;
+}
+#missionBusinessPulse .mission-intel-meter b {
+  display:block;
+  grid-column:2;
+  margin:0 !important;
+  color:#24180e;
+  font:900 clamp(20px,2vw,26px)/1.15 Arial,sans-serif !important;
+  text-align:right !important;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+#missionBusinessPulse .mission-intel-meter em {
+  grid-column:1 / -1;
+  margin:0 0 1px !important;
+  color:#776042;
+  font:700 13px/1.35 Arial,sans-serif !important;
+  text-align:left !important;
+  font-style:normal;
+}
+#missionBusinessPulse .mission-intel-card .mission-intel-muted {
+  margin:9px 20px !important;
+  font:700 15px/1.45 Arial,sans-serif;
+  text-align:left !important;
+  color:#665236;
+}
+#missionBusinessPulse .mission-intel-actions {
+  justify-content:flex-start !important;
+  padding:11px 18px 0 !important;
+  margin:0 !important;
+  gap:9px;
+  text-align:left !important;
+}
+#missionBusinessPulse .mission-intel-products {
+  padding:6px 18px 2px;
+  margin:0 !important;
+  text-align:left !important;
+}
+#missionBusinessPulse .mission-intel-product {
+  justify-content:space-between !important;
+  text-align:left !important;
+}
+#missionBusinessPulse .mission-intel-card .mission-intel-error {
+  text-align:left !important;
+  margin:9px 20px;
+}
+#missionBusinessPulse .mission-intel-card details.mission-intel-data-notes {
+  box-sizing:border-box;
+  width:calc(100% - 36px) !important;
+  max-width:none !important;
+  padding:4px 11px !important;
+  margin:10px 18px 3px !important;
+  text-align:left !important;
+  background:#f9efdc;
+  border:1px solid #d7bd8c;
+  border-radius:7px;
+}
+#missionBusinessPulse .mission-intel-card details.mission-intel-data-notes summary {
+  text-align:left;
+  font-size:15px;
+}
+#missionBusinessPulse .mission-intel-card details.mission-intel-data-notes .mission-intel-meters {
+  padding:6px 0 5px !important;
+}
+#missionBusinessPulse .mission-intel-card details.mission-intel-data-notes p {
+  max-width:none;
+  margin:7px 0;
+  color:#60482a;
+  text-align:left;
+}
+
+/* Social network status: Facebook, Instagram, X, YouTube, each its own row */
+#connectionStrip .mission-glance-grid {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) !important;
+  gap:13px !important;
+}
+#connectionStrip .mission-glance-card {
+  width:100%;
+  box-sizing:border-box;
+  min-width:0;
+  display:grid !important;
+  grid-template-columns:48px minmax(0,1fr) auto !important;
+  grid-template-areas:"light brand state" "purpose purpose purpose" "metrics metrics metrics" !important;
+  align-items:center;
+  justify-items:stretch;
+  padding:13px 18px !important;
+  gap:5px 12px !important;
+  text-align:left !important;
+}
+#connectionStrip .mission-glance-card>.mission-glance-light {
+  grid-area:light;
+}
+#connectionStrip .mission-glance-card>.mission-glance-brand {
+  grid-area:brand;
+}
+#connectionStrip .mission-glance-card>.mission-glance-state {
+  grid-area:state;
+  justify-self:end;
+  text-align:right;
+}
+#connectionStrip .mission-glance-card>small {
+  grid-area:purpose;
+  font-size:14px !important;
+  margin:1px 0 7px;
+  text-align:left;
+}
+#connectionStrip .mission-glance-card>.mission-glance-metrics {
+  display:grid !important;
+  grid-area:metrics;
+  grid-template-columns:minmax(0,1fr) !important;
+  width:100%;
+  gap:0 !important;
+}
+#connectionStrip .mission-glance-metrics>span {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:14px;
+  min-height:46px;
+  padding:8px 13px !important;
+  border:0 !important;
+  border-bottom:1px solid #dac8a9 !important;
+  border-radius:0;
+  text-align:left;
+  background:#fffdf8;
+}
+#connectionStrip .mission-glance-metrics small {
+  font:900 16px/1.3 Arial,sans-serif !important;
+  text-align:left;
+}
+#connectionStrip .mission-glance-metrics b {
+  font:900 23px/1.2 Arial,sans-serif !important;
+  margin:0;
+  text-align:right;
+}
+
+/* Detailed FB/Instagram/X/YouTube rows retain verified trend graphics */
+#connectionStrip .platform-status-grid {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) !important;
+  gap:14px !important;
+}
+#connectionStrip .platform-status-card {
+  display:block !important;
+  width:100%;
+  box-sizing:border-box;
+  min-height:0 !important;
+  padding:0 !important;
+}
+#connectionStrip .platform-row-left {
+  border-right:0 !important;
+  border-bottom:1px solid #d7c6a8;
+  padding:17px 20px !important;
+}
+#connectionStrip .platform-row-right {
+  padding:16px 20px !important;
+}
+#connectionStrip .platform-chart-grid {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) !important;
+  gap:9px !important;
+}
+#connectionStrip .platform-chart-card {
+  min-height:0 !important;
+  padding:11px 14px !important;
+}
+#connectionStrip .platform-operational-strip {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) !important;
+  gap:8px !important;
+}
+
+/* Reviews & Local: each provider gets one full-width card with metric rows */
+#connectionStrip .reviews-local-grid {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) !important;
+  gap:13px !important;
+}
+#connectionStrip .reviews-local-card {
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  padding:0 0 11px !important;
+  background:#f8f0df;
+  border:1px solid #b68a44;
+  border-top:3px solid #d4a957;
+  border-radius:10px;
+  overflow:hidden;
+  box-shadow:0 2px 8px #3b281414;
+  text-align:left;
+}
+#connectionStrip .reviews-local-top {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  background:#281b13;
+  padding:13px 20px;
+}
+#connectionStrip .reviews-local-name {
+  font:900 clamp(20px,1.8vw,25px)/1.2 Georgia,serif !important;
+  color:#fff0cd;
+}
+#connectionStrip .reviews-local-status {
+  display:block;
+  font:700 15px/1.45 Arial,sans-serif;
+  color:#655133;
+  padding:9px 20px 5px;
+  margin:0;
+}
+#connectionStrip .reviews-local-metrics {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) !important;
+  gap:0 !important;
+  padding:0 18px !important;
+  margin:0 !important;
+}
+#connectionStrip .reviews-local-metrics>span {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) auto !important;
+  align-items:center;
+  min-height:48px;
+  gap:12px;
+  padding:9px 13px !important;
+  border:0 !important;
+  border-bottom:1px solid #dac8a9 !important;
+  border-radius:0;
+  background:#fffdf8;
+}
+#connectionStrip .reviews-local-metrics small {
+  font:900 16px/1.3 Arial,sans-serif !important;
+  color:#554026;
+}
+#connectionStrip .reviews-local-metrics b {
+  font:900 23px/1.2 Arial,sans-serif !important;
+  color:#24180e;
+  margin:0;
+  text-align:right;
+}
+#connectionStrip .reviews-local-action,
+#connectionStrip .reviews-location-picker,
+#connectionStrip .reviews-setup-note {
+  margin:12px 18px 4px;
+}
+
+/* Mobile: no sideways scrolling or microscopic four-column metrics. */
+@media (max-width:600px) {
+  #missionBusinessPulse .mission-intel-card-head {
+    padding:13px 13px 13px 34px !important;
+    gap:7px !important;
+  }
+  #missionBusinessPulse .mission-intel-health {
+    font-size:11px !important;
+    margin:0;
+  }
+  #missionBusinessPulse .mission-intel-meters,
+  #missionBusinessPulse .mission-intel-meters.mission-intel-3,
+  #missionBusinessPulse .mission-intel-meters.mission-intel-4 {
+    padding:8px 10px 3px !important;
+  }
+  #missionBusinessPulse .mission-intel-meter,
+  #missionBusinessPulse .mission-intel-meters .mission-intel-meter:last-child {
+    grid-template-columns:minmax(0,1fr) auto !important;
+    padding:9px 10px !important;
+  }
+  #missionBusinessPulse .mission-intel-meter small,
+  #connectionStrip .mission-glance-metrics small,
+  #connectionStrip .reviews-local-metrics small {font-size:15px !important}
+  #missionBusinessPulse .mission-intel-meter b,
+  #connectionStrip .mission-glance-metrics b,
+  #connectionStrip .reviews-local-metrics b {font-size:21px !important}
+  #connectionStrip .mission-glance-card {
+    grid-template-columns:38px minmax(0,1fr) auto !important;
+    padding:11px 10px !important;
+    gap:5px 8px !important;
+  }
+  #connectionStrip .mission-glance-card>.mission-glance-light {width:36px;height:36px}
+  #connectionStrip .reviews-local-top {padding:12px 13px}
+  #connectionStrip .reviews-local-metrics {padding:0 9px !important}
+}
