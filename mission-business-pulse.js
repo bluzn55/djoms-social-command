@@ -3,7 +3,8 @@
   const snapshot = {
     interests:{status:'idle',data:null,error:null},
     chapter:{status:'idle',data:null,error:null},
-    sales:{status:'idle',data:null,error:null}
+    sales:{status:'idle',data:null,error:null},
+    radio:{status:'idle',data:null,error:null}
   };
   const ENDPOINTS = {
     interests:'website-interests',
@@ -48,6 +49,30 @@
        (value.range?.requestedStart||value.range?.start)!==selected.start)
       throw new Error('This report does not match the selected dates. Showing no stale totals.');
     return value;
+  }
+
+  // Historical Radio.co export, deliberately separate from Wix's date-scoped reports.
+  async function getRadioImport() {
+    const response=await fetch('/api/meta/radio-report',{
+      credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(30000)
+    });
+    const value=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(response.status===401
+      ? 'Sign in again to view Radio.co statistics.'
+      : String(value.error||'The Radio.co export could not be read.'));
+    if(value?.mode!=='imported'||value?.station!=='Outlaw Radio 5150'
+      ||!Array.isArray(value.rows)||!value.summary
+      ||value.durationUnit!=='seconds')
+      throw new Error('Radio.co has not returned a verified export with duration units.');
+    return value;
+  }
+  function audioTime(value) {
+    if(!Number.isFinite(value)||value<0)return '—';
+    const seconds=Math.round(value),h=Math.floor(seconds/3600),
+      m=Math.floor(seconds%3600/60),sec=seconds%60;
+    return h
+      ? h+'h '+String(m).padStart(2,'0')+'m '+String(sec).padStart(2,'0')+'s'
+      : m+'m '+String(sec).padStart(2,'0')+'s';
   }
 
   function phaseText(item, ok, pending) {
@@ -145,18 +170,40 @@
       :measurable(fallback?.visitors)?fallback.visitors:null;
     const connected=typeof localData!=='undefined'&&localData?.website?.connected===true;
     const color=interest.status==='error'&&!connected?'red':'yellow';
+    const report=snapshot.radio.status==='ok'?snapshot.radio.data:null;
+    const stats=report?.summary||{};
+    const period=report?.range
+      ?report.range.start+' through '+report.range.end+' (UTC)'
+      :'Period not confirmed';
+    const latest=report
+      ?`<div class="mission-intel-meters mission-intel-4">
+         ${meter('Stream connections',show(stats.connections))}
+         ${meter('Peak simultaneous',show(stats.peak))}
+         ${meter('Avg. connection',audioTime(stats.averageDurationRaw))}
+         ${meter('Total listened',audioTime(stats.totalDurationRaw))}
+        </div>
+        <p class="locknote"><strong>HISTORICAL RADIO.CO CSV · ${escape(period)}</strong>
+        This is the latest imported report, NOT live data and NOT necessarily the Wix date selection.
+        The CSV's daily unique counts cannot establish unique people across the entire period.</p>
+        ${report.screenComparison?.note
+           ?'<p class="locknote">Source discrepancy: '+escape(report.screenComparison.note)+'</p>':''}`
+      :`<p class="locknote">${snapshot.radio.status==='error'
+        ?'Radio.co import unavailable: '+escape(snapshot.radio.error)
+        :snapshot.radio.status==='loading'?'Loading the last Radio.co export…'
+        :'Radio.co export not yet loaded.'}</p>`;
     return `<article class="mission-intel-card">
       <header class="mission-intel-card-head">
         <div><small>RADIO · 51.50</small><h3>Outlaw Radio 5150</h3></div>
         ${statusLight(color,color.toUpperCase())}
       </header>
       <div class="mission-intel-meters mission-intel-3">
-        ${meter('Page views',show(views))}
-        ${meter('Visitors',show(visitors))}
-        ${meter('Live listeners','—','Not connected')}
+        ${meter('Website page views',show(views))}
+        ${meter('Website visitors',show(visitors))}
+        ${meter('Listening right now','—','Live Radio.co not connected')}
       </div>
+      ${latest}
       <div class="mission-intel-actions">
-        <button type="button" data-view="Website Analytics">Radio details ›</button>
+        <button type="button" data-view="Website Analytics">Radio website details ›</button>
         <a href="https://outlawradio5150.com" target="_blank" rel="noopener noreferrer">Listen live ↗</a>
       </div>
       ${interest.status==='error'?'<p class="mission-intel-error">'+escape(interest.error||'Wix page reporting unavailable')+'</p>':''}
@@ -176,7 +223,7 @@
       <div class="mission-intel-grid">${bookCard()}${storeCard()}${radioCard()}</div>
       <details class="mission-intel-data-notes">
         <summary>About these numbers</summary>
-        <p>Selected dates: ${escape(selected.start)} through ${escape(selected.endInclusive)}. Missing data stays unavailable. Chapter clicks do not prove reading. Wix paid store sales exclude tax and shipping, refunds and outside channels. Radio webpage views are not listener counts. Testing traffic may be included.</p>
+        <p>Selected Wix dates: ${escape(selected.start)} through ${escape(selected.endInclusive)}. Missing data stays unavailable. Chapter clicks do not prove reading. Wix paid store sales exclude tax and shipping, refunds and outside channels. Radio webpage views are not listener counts. The Radio.co historical export uses its own explicitly labelled UTC dates and is not live or filtered by Wix selection. Testing traffic may be included.</p>
       </details>`;
   }
   function refresh(force = false) {
@@ -187,7 +234,17 @@
     lastLoaded=Date.now();
     lastPeriodKey=selected.query;
     for(const key of Object.keys(ENDPOINTS)) snapshot[key]={status:'loading',data:null,error:null};
+    snapshot.radio={status:'loading',data:null,error:null};
     paint();
+    getRadioImport().then(data=>{
+      if(ticket!==sequence)return;
+      snapshot.radio={status:'ok',data,error:null};
+      paint();
+    }).catch(error=>{
+      if(ticket!==sequence)return;
+      snapshot.radio={status:'error',data:null,error:String(error.message||'Radio.co report unavailable.')};
+      paint();
+    });
     for(const [key,path] of Object.entries(ENDPOINTS)) {
       getReport(path,selected).then(data=>{
         if(ticket!==sequence) return;
