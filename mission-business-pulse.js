@@ -192,11 +192,21 @@
       getReport(path,selected).then(data=>{
         if(ticket!==sequence) return;
         snapshot[key]={status:'ok',data,error:null};
+        if(key==='sales') {
+          window.djomsVerifiedReports ||= {};
+          window.djomsVerifiedReports.sales={query:selected.query,data};
+          document.dispatchEvent(new CustomEvent('djoms:verified-report',{detail:{source:'sales'}}));
+        }
         paint();
       }).catch(error=>{
         if(ticket!==sequence) return;
         snapshot[key]={status:'error',data:null,error:error.name==='TimeoutError'
           ? 'Wix timed out. Try Check activity again.' : String(error.message||'Report unavailable.')};
+        if(key==='sales') {
+          window.djomsVerifiedReports ||= {};
+          window.djomsVerifiedReports.sales={query:selected.query,data:null,error:snapshot[key].error};
+          document.dispatchEvent(new CustomEvent('djoms:verified-report',{detail:{source:'sales'}}));
+        }
         paint();
       });
     }

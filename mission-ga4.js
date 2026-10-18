@@ -39,6 +39,14 @@
     const data=report?.metrics||{};
     const message=error||report?.message||'Checking whether Google Analytics reports are authorized.';
     const channels=Array.isArray(report?.channels)?report.channels.slice(0,5):[];
+    if(report) {
+      window.djomsVerifiedReports ||= {};
+      const old=window.djomsVerifiedReports.ga4;
+      const stamp=String(period?.query||'')+'|'+String(report.checkedAt||'')+'|'+String(report.status||'');
+      window.djomsVerifiedReports.ga4={query:period?.query||null,data:report,stamp};
+      if(old?.stamp!==stamp)
+        document.dispatchEvent(new CustomEvent('djoms:verified-report',{detail:{source:'ga4'}}));
+    }
     panel.innerHTML=
       '<div class="mission-ga4-head">'+
         '<div class="mission-ga4-title"><strong>STEP 2 · GOOGLE ANALYTICS (GA4)</strong>'+
@@ -67,11 +75,26 @@
         '<small>'+esc(message)+'</small>'+
         (connected?
           '<a href="https://analytics.google.com/" target="_blank" rel="noopener noreferrer">Open Google Analytics ↗</a>':
+          report?.status==='enable-api'?'': 
           '<a class="mission-ga4-connect" href="/api/meta/ga4-connect">'+
             (report?.status==='reconnect'?'Reconnect Google Analytics ↗':'Connect Google Analytics ↗')+'</a>')+
         (report?.status==='enable-api'?
           '<a href="https://console.cloud.google.com/apis/library/analyticsdata.googleapis.com" target="_blank" rel="noopener noreferrer">Enable GA4 Data API ↗</a>':'')+
       '</div>'+
+      (connected && report?.actions?.status==='reported'
+        ?'<details class="mission-ga4-action-details"><summary>What visitors actually clicked or did (GA4 events)</summary>'+
+          '<div class="mission-ga4-events">'+
+          [['Form submissions',report.actions.counts?.formSubmit],
+           ['Sign-up events',report.actions.counts?.signUp],
+           ['File downloads',report.actions.counts?.fileDownload],
+           ['Add to cart',report.actions.counts?.addToCart],
+           ['Checkout starts',report.actions.counts?.beginCheckout],
+           ['Purchase events',report.actions.counts?.purchase],
+           ['Outbound link clicks',report.actions.counts?.outboundClick],
+           ['Radio-related external link clicks',report.actions.radioLinkClicks]]
+          .map(([label,value])=>'<span><small>'+esc(label)+'</small><b>'+esc(fmt(value))+'</b></span>')
+          .join('')+'</div><p>These are GA4 events, not unique people or confirmed orders. Radio-related clicks are not actual listening. Use verified Wix paid orders for sales.</p></details>'
+        :'')+
       (connected?'<p class="mission-ga4-footnote">GA4 sessions and Wix visitors use different measurement methods; do not add these numbers together. Google Analytics data may take time to finalize.</p>':'');
   }
   async function load(period,force=false){

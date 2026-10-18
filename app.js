@@ -388,9 +388,15 @@ function renderConnectionStrip() {
     const scheduled = records.filter(r => r.status === 'scheduled').length;
     const failed = records.filter(r => ['failed','partial','uncertain'].includes(r.status)).length;
     const platformIssues = statusPlatforms.filter(p => connectionHealth(connection?.[p] || {}).color !== 'green').length;
-    const needsTotal = records.filter(attention).length + platformIssues + unanswered;
+    const baseAttention = records.filter(attention).length + platformIssues + unanswered;
+    const analyticsIssues = Array.isArray(window.djomsAnalyticsIssues) ? window.djomsAnalyticsIssues : [];
+    const needsTotal = baseAttention + analyticsIssues.length;
 
-    const attentionColor = overdue || failed || platformIssues ? 'red' : unanswered || needsTotal ? 'yellow' : 'green';
+    const attentionColor = overdue || failed || platformIssues ? 'red'
+      : unanswered || needsTotal ? 'yellow' : 'green';
+    const baseAttentionColor = overdue || failed || platformIssues ? 'red'
+      : unanswered || baseAttention ? 'yellow' : 'green';
+    const baseAttentionText = `${overdue ? overdue + ' overdue · ' : ''}${unanswered} unanswered · ${failed} failed · ${platformIssues} platform issues`;
     const campaignState = campaign => {
       const list = records.filter(r => r.campaign === campaign.id);
       if (list.some(r => ['failed','partial','uncertain'].includes(r.status))) return 'red';
@@ -399,10 +405,12 @@ function renderConnectionStrip() {
     };
 
     strip.innerHTML = `
-      <button type="button" class="mission-top-attention ${attentionColor}" data-view="Needs Attention">
+      <button type="button" class="mission-top-attention ${attentionColor}" data-view="Needs Attention"
+        data-base-attention="${baseAttention}" data-base-color="${baseAttentionColor}"
+        data-base-description="${esc(baseAttentionText)}">
         <span>
           <b>NEEDS ATTENTION</b>
-          <small>${overdue ? overdue + ' overdue · ' : ''}${unanswered} unanswered · ${failed} failed · ${platformIssues} platform issues</small>
+          <small>${esc(baseAttentionText)} · ${analyticsIssues.length} analytics issue${analyticsIssues.length===1?'':'s'}</small>
         </span>
         <strong>${needsTotal}</strong>
         <span class="mission-attention-arrow">›</span>
@@ -416,6 +424,10 @@ function renderConnectionStrip() {
           ).join('')}
         </div>
         ${websiteCustomControls()}
+      </section>
+
+      <section id="missionDirectionPanel" class="mission-direction-panel" aria-label="Business direction and next action">
+        <h3>BUSINESS DIRECTION</h3><p>Checking actual performance and reporting coverage…</p>
       </section>
 
       <section id="missionSeoPanel" class="mission-seo-panel mission-seo-top" aria-label="Step 1: Google Search SEO performance">
@@ -1693,7 +1705,17 @@ function render() {
   const missingBookLinks = records.filter(r => r.campaign === 'BOOK' && canDeleteDraft(r) && !String(r.link || '').trim()).length;
   const bookLinkRepair = canSelect && (!campaignFilter || campaignFilter === 'BOOK') && missingBookLinks
     ? `<button type="button" class="approve" data-action="fillMissingBookLinks">Fill missing Book links (${missingBookLinks})</button>` : '';
-  $('content').innerHTML = `<div class="filterbar"><label>Find a post<input id="searchPosts" type="search" value="${esc(searchTerm)}" placeholder="Title or caption"></label>${campaignPicker}${campaignFilter && !canSelect ? '<button data-action="allCampaigns">Show all campaigns</button>':''}${bulkTools}${bookLinkRepair}<span>${list.length} posts</span></div>` + rowsHtml(list);
+  const analyticAlerts = activeView==='Needs Attention' && Array.isArray(window.djomsAnalyticsIssues)
+    ? window.djomsAnalyticsIssues : [];
+  const analyticAlertsHtml = activeView==='Needs Attention' && analyticAlerts.length
+    ? '<section class="djoms-analytics-attention"><h3>Analytics connections</h3>'+
+      analyticAlerts.map(issue=>
+        '<article><strong>'+esc(issue.title||'Analytics needs attention')+'</strong>'+
+        '<p>'+esc(issue.message||'Check this connection.')+'</p>'+
+        (typeof issue.url==='string'&&/^https:\/\//.test(issue.url)
+          ?'<a href="'+esc(issue.url)+'" target="_blank" rel="noopener noreferrer">Open setup ↗</a>':'')+
+        '</article>').join('')+'</section>' : '';
+  $('content').innerHTML = analyticAlertsHtml + `<div class="filterbar"><label>Find a post<input id="searchPosts" type="search" value="${esc(searchTerm)}" placeholder="Title or caption"></label>${campaignPicker}${campaignFilter && !canSelect ? '<button data-action="allCampaigns">Show all campaigns</button>':''}${bulkTools}${bookLinkRepair}<span>${list.length} posts</span></div>` + rowsHtml(list);
 }
 async function setView(view) {
   if (inboxChangingView) return;

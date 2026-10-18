@@ -73,6 +73,16 @@
     const color=pending?'yellow':error?'red':light;
     const note=error?String(error):report?.message||'Checking Search Console permission.';
     const dataThrough=report?.reportedThrough ?'Google data through '+esc(report.reportedThrough):'Google data usually lags by 2 days';
+    if(report) {
+      window.djomsVerifiedReports ||= {};
+      const old=window.djomsVerifiedReports.seo;
+      window.djomsVerifiedReports.seo={query:selection?.query||null,data:report};
+      const stamp=String(selection?.query||'')+'|'+String(report.checkedAt||'')+'|'+String(report.status||'');
+      if(old?.stamp!==stamp) {
+        window.djomsVerifiedReports.seo.stamp=stamp;
+        document.dispatchEvent(new CustomEvent('djoms:verified-report',{detail:{source:'seo'}}));
+      } else window.djomsVerifiedReports.seo.stamp=stamp;
+    }
     element.innerHTML='<div class="mission-seo-head">'+
        '<div class="mission-seo-title"><strong>STEP 1 · GOOGLE SEARCH (SEO)</strong><small>'+esc(periodLabel(selection))+'</small></div>'+
        '<span class="mission-seo-status"><i class="gyr-light '+color+'" aria-hidden="true"></i><b>'+esc(status)+'</b></span>'+
