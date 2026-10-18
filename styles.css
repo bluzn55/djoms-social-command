@@ -4732,3 +4732,141 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   .mission-ga4-channels {grid-template-columns:1fr}
   .mission-ga4-title strong {font-size:16px}
 }
+
+
+/* One shared reporting date rail between Needs Attention and Google Search.
+   Four period choices plus custom start/end/apply control all three reports. */
+.connection-strip > .mission-report-dates {
+  display:flex;
+  flex-flow:row nowrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  box-sizing:border-box;
+  width:100%;
+  margin:1px 0 13px;
+  padding:11px 14px;
+  border:2px solid #bc8e3e;
+  border-radius:9px;
+  background:linear-gradient(120deg,#271c11,#402b17);
+  color:#fff0c8;
+  box-shadow:inset 0 0 0 1px #684d2b;
+}
+.connection-strip > .mission-report-dates > strong {
+  display:block;
+  flex:0 0 auto;
+  white-space:nowrap;
+  color:#f5d491;
+  font:900 15px/1.2 Arial,sans-serif;
+  letter-spacing:.45px;
+}
+.connection-strip .mission-report-quick {
+  display:flex;
+  flex:0 0 auto;
+  align-items:center;
+  gap:5px;
+}
+.connection-strip .mission-report-quick button {
+  flex:0 0 auto;
+  min-width:61px;
+  min-height:43px;
+  margin:0;
+  padding:8px 9px;
+  border:1px solid #c59f62;
+  border-radius:6px;
+  background:#ecd2a0;
+  color:#302216;
+  font:900 14px/1.2 Arial,sans-serif;
+  cursor:pointer;
+}
+.connection-strip .mission-report-quick button[aria-pressed="true"] {
+  border-color:#bbdfa7;
+  background:#345f3d;
+  color:#fff5dc;
+  box-shadow:inset 0 0 0 1px #315236;
+}
+.connection-strip .mission-report-quick button:hover:not([aria-pressed="true"]) {
+  background:#ffebc3;
+}
+.connection-strip > .mission-report-dates .website-custom-picker {
+  display:flex;
+  flex:1 1 auto;
+  flex-flow:row nowrap;
+  align-items:center;
+  justify-content:flex-end;
+  gap:9px;
+  min-width:0;
+  width:auto;
+  margin:0;
+}
+.connection-strip > .mission-report-dates .website-custom-picker label {
+  display:flex;
+  flex:0 1 auto;
+  flex-direction:row;
+  align-items:center;
+  gap:6px;
+  white-space:nowrap;
+  color:#ffe5b6;
+  font:900 13px/1.2 Arial,sans-serif;
+}
+.connection-strip > .mission-report-dates .website-custom-picker input[type="date"] {
+  box-sizing:border-box;
+  flex:0 0 auto;
+  width:136px;
+  min-height:43px;
+  padding:7px 5px;
+  font:700 13px Arial,sans-serif;
+  background:#fff7e5;
+}
+.connection-strip > .mission-report-dates .website-custom-picker button {
+  box-sizing:border-box;
+  flex:0 0 auto;
+  min-height:43px;
+  margin:0;
+  padding:8px 12px;
+  border:1px solid #d3ab66;
+  border-radius:6px;
+  background:#e7c68a;
+  color:#302216;
+  font:900 14px/1.2 Arial,sans-serif;
+  white-space:nowrap;
+}
+.connection-strip > .mission-report-dates .website-custom-picker button[aria-pressed="true"] {
+  background:#386144;
+  color:#fff8e1;
+}
+.connection-strip > .mission-report-dates button:focus-visible,
+.connection-strip > .mission-report-dates input:focus-visible {
+  outline:3px solid #8bbb89;
+  outline-offset:2px;
+}
+@media (max-width:1270px) {
+  .connection-strip > .mission-report-dates {
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .connection-strip > .mission-report-dates .website-custom-picker {
+    flex:1 1 100%;
+    justify-content:center;
+  }
+}
+@media (max-width:650px) {
+  .connection-strip > .mission-report-dates {gap:10px 8px;padding:10px 9px}
+  .connection-strip > .mission-report-dates > strong {width:100%;text-align:center}
+  .connection-strip .mission-report-quick {
+    width:100%;
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+  }
+  .connection-strip .mission-report-quick button {min-width:0;padding:8px 3px}
+  .connection-strip > .mission-report-dates .website-custom-picker {flex-wrap:wrap}
+  .connection-strip > .mission-report-dates .website-custom-picker label {
+    display:flex;
+    flex:1 1 155px;
+    flex-direction:column;
+    gap:4px;
+    align-items:stretch;
+  }
+  .connection-strip > .mission-report-dates .website-custom-picker input[type="date"] {width:100%}
+  .connection-strip > .mission-report-dates .website-custom-picker button {flex:1 1 100%}
+}

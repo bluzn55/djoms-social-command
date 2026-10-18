@@ -408,6 +408,16 @@ function renderConnectionStrip() {
         <span class="mission-attention-arrow">›</span>
       </button>
 
+      <section class="mission-report-dates" aria-label="Reporting period for all three analytics panels">
+        <strong>REPORTING PERIOD</strong>
+        <div class="mission-report-quick" role="group" aria-label="Choose day, week, month, or year">
+          ${[['today','Day'],['7d','Week'],['30d','Month'],['365d','Year']].map(([key,name])=>
+            `<button type="button" data-website-range="${key}" aria-pressed="${websiteRange===key}">${name}</button>`
+          ).join('')}
+        </div>
+        ${websiteCustomControls()}
+      </section>
+
       <section id="missionSeoPanel" class="mission-seo-panel mission-seo-top" aria-label="Step 1: Google Search SEO performance">
         <div class="mission-seo-loading"><strong>STEP 1 · GOOGLE SEARCH</strong><span>Checking connection…</span></div>
       </section>
@@ -444,7 +454,6 @@ function renderConnectionStrip() {
           const locations=Array.isArray(site.geography)
             ? site.geography.filter(item=>item && (item.city||item.region||item.country)).slice(0,5) : [];
           const locationName=item=>[item.city,item.region].filter(Boolean).join(', ')||item.country||'Not reported';
-          const periodChoices=[['today','Day'],['7d','Week'],['30d','Month'],['365d','Year']];
           return `<div class="mission-web-console">
             <div class="mission-web-brand">
               <small class="mission-web-overline">⚜ DOC JAKS · WIX</small>
@@ -453,10 +462,6 @@ function renderConnectionStrip() {
               <small class="mission-web-checked">${esc(rangeCaption)} · Updated ${esc(updatedText(site.checkedAt || localData?.checkedAt))}</small>
             </div>
             <div class="mission-web-controls">
-              <div class="mission-web-range" role="group" aria-label="Website reporting period">
-                ${periodChoices.map(([key,name])=>`<button type="button" data-website-range="${key}" aria-pressed="${websiteRange===key}" title="${esc(({today:'Today so far','7d':'Last 7 days','30d':'Last 30 days','365d':'Last 365 days'})[key])}">${name}</button>`).join('')}
-              </div>
-              ${websiteCustomControls()}
               <button type="button" class="mission-web-open" data-view="Website Analytics">Website Analytics ›</button>
             </div>
             <div class="mission-web-stage" aria-label="Step 3: website visitors and behavior">
@@ -1883,8 +1888,10 @@ document.addEventListener('click', event => {
     const requested=b.dataset.websiteCustom?'custom':b.dataset.websiteRange;
     return perform(async()=>{
       if(requested==='custom') {
-        websiteCustomStart=document.getElementById('websiteCustomStart')?.value||'';
-        websiteCustomEnd=document.getElementById('websiteCustomEnd')?.value||'';
+        // Read the clicked date bar, not a hidden date picker from another analytics view.
+        const picker=b.closest('.website-custom-picker');
+        websiteCustomStart=picker?.querySelector('[id="websiteCustomStart"]')?.value||'';
+        websiteCustomEnd=picker?.querySelector('[id="websiteCustomEnd"]')?.value||'';
       }
       notice('Reading reports for '+(websiteRanges.find(([key])=>key===requested)?.[1]||'custom dates')+'…');
       const site=await loadWebsiteRange(requested);
