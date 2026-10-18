@@ -74,12 +74,18 @@
     const note=error?String(error):report?.message||'Checking Search Console permission.';
     const dataThrough=report?.reportedThrough ?'Google data through '+esc(report.reportedThrough):'Google data usually lags by 2 days';
     element.innerHTML='<div class="mission-seo-head">'+
-       '<div class="mission-seo-title"><strong>SEO · GOOGLE SEARCH</strong><small>'+esc(periodLabel(selection))+'</small></div>'+
+       '<div class="mission-seo-title"><strong>STEP 1 · GOOGLE SEARCH (SEO)</strong><small>'+esc(periodLabel(selection))+'</small></div>'+
        '<span class="mission-seo-status"><i class="gyr-light '+color+'" aria-hidden="true"></i><b>'+esc(status)+'</b></span>'+
        '</div>'+
+       '<div class="mission-seo-path" aria-label="Journey from Google search to a website visit">'+
+         '<span>Someone searches</span><b aria-hidden="true">→</b>'+
+         '<span>Doc Jaks appears (impression)</span><b aria-hidden="true">→</b>'+
+         '<span>Click or no click</span><b aria-hidden="true">→</b>'+
+         '<span>Website visit if clicked</span>'+
+       '</div>'+
        '<div class="mission-seo-metrics">'+
-          metric('Google clicks',connected?fmt(metrics.clicks):'—')+
           metric('Impressions',connected?fmt(metrics.impressions):'—')+
+          metric('Google clicks',connected?fmt(metrics.clicks):'—')+
           metric('Search CTR',connected?pct(metrics.ctr):'—')+
           metric('Avg. position',connected?dec(metrics.position):'—')+
        '</div>'+
@@ -139,7 +145,7 @@
     const showName=row=>type==='query'?row.query:row.page;
     return '<div class="seo-detail-rows">'+rows.slice(0,5).map((row,index)=>
       '<div class="seo-detail-row"><span><em>'+(index+1)+'.</em> '+esc(showName(row)||'Unnamed')+'</span>'+
-      '<strong>'+fmt(row.clicks)+' clicks</strong><small>'+fmt(row.impressions)+' impressions</small></div>'
+      '<strong>'+fmt(row.impressions)+' impressions</strong><small>'+fmt(row.clicks)+' clicks</small></div>'
     ).join('')+'</div>';
   };
 
@@ -163,8 +169,8 @@
        '<button type="button" data-seo-refresh="1">Refresh SEO</button>'+
       '</div>'+
       '<div class="seo-detail-statgrid">'+
-       metric('Search clicks',connected?fmt(metrics.clicks):'—')+
        metric('Impressions',connected?fmt(metrics.impressions):'—')+
+       metric('Search clicks',connected?fmt(metrics.clicks):'—')+
        metric('Search CTR',connected?pct(metrics.ctr):'—')+
        metric('Average position',connected?dec(metrics.position):'—')+
       '</div>'+

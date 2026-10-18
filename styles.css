@@ -4506,3 +4506,74 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   .mission-seo-query-table thead th {font-size:12px}
   .mission-seo-query-table tbody td {font-size:15px}
 }
+
+/* Visitor journey: SEO before Wix, in the sequence search → impression → click → visit. */
+.mission-website-section .mission-web-console {
+  grid-template-areas:
+    ". brand controls"
+    "seo seo seo"
+    "stage stage stage"
+    "gauges gauges gauges"
+    "health health health"
+    "lists lists lists";
+}
+.mission-web-stage {
+  grid-area:stage;
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:6px 12px;
+  padding:5px 7px 1px;
+  min-width:0;
+  border-top:1px solid #8e7047;
+  text-align:center;
+}
+.mission-web-stage strong {
+  color:#f5d491;
+  font:900 17px/1.3 Arial,sans-serif;
+  letter-spacing:.3px;
+}
+.mission-web-stage span {
+  color:#efdab1;
+  font:700 14px/1.4 Arial,sans-serif;
+}
+.mission-seo-path {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:5px 9px;
+  margin:3px 0 11px;
+  color:#ffe5ab;
+  font:800 14px/1.4 Arial,sans-serif;
+  text-align:center;
+}
+.mission-seo-path span {white-space:normal}
+.mission-seo-path b {font-size:17px;color:#dcb675}
+@media(max-width:1270px) {
+  .mission-website-section .mission-web-console {
+    grid-template-areas:
+      "brand controls"
+      "seo seo"
+      "stage stage"
+      "gauges gauges"
+      "health health"
+      "lists lists";
+  }
+}
+@media(max-width:640px) {
+  .mission-website-section .mission-web-console {
+    grid-template-areas:
+      "brand"
+      "controls"
+      "seo"
+      "stage"
+      "gauges"
+      "health"
+      "lists";
+  }
+  .mission-seo-path {font-size:13px;gap:4px 6px}
+  .mission-web-stage strong {font-size:16px}
+  .mission-web-stage span {font-size:13px}
+}

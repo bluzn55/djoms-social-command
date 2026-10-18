@@ -444,6 +444,20 @@ function renderConnectionStrip() {
               <span class="mission-web-live"><i class="gyr-light ${health}" aria-hidden="true"></i><b>${label}</b></span>
               <small class="mission-web-checked">${esc(rangeCaption)} · Updated ${esc(updatedText(site.checkedAt || localData?.checkedAt))}</small>
             </div>
+            <div class="mission-web-controls">
+              <div class="mission-web-range" role="group" aria-label="Website reporting period">
+                ${periodChoices.map(([key,name])=>`<button type="button" data-website-range="${key}" aria-pressed="${websiteRange===key}" title="${esc(({today:'Today so far','7d':'Last 7 days','30d':'Last 30 days','365d':'Last 365 days'})[key])}">${name}</button>`).join('')}
+              </div>
+              ${websiteCustomControls()}
+              <button type="button" class="mission-web-open" data-view="Website Analytics">Website Analytics ›</button>
+            </div>
+            <section id="missionSeoPanel" class="mission-seo-panel" aria-label="Google Search SEO performance">
+              <div class="mission-seo-loading"><strong>GOOGLE SEARCH · SEO</strong><span>Checking connection…</span></div>
+            </section>
+            <div class="mission-web-stage" aria-label="Step 2: website visits">
+              <strong>STEP 2 · ON THE WEBSITE</strong>
+              <span>Wix tracks visitors and activity from Google, social media, direct links, and other sources.</span>
+            </div>
             <div class="mission-web-gauges" aria-label="Website figures for ${esc(rangeCaption)}">
               ${counters.map(([title,value,key])=>`<div class="mission-web-gauge mission-web-trend-${missionMetricTrendColor(site.metricComparisons?.[key]||(key==='visitors'?site.visitorComparison:null),title)}${title==='Bounce rate'?' mission-web-bounce':''}${title==='Visitors'?' mission-web-visitors':''}">
                 <small>${esc(title)}</small>
@@ -466,16 +480,6 @@ function renderConnectionStrip() {
                 </div>
               </div>`;
             })()}
-            <section id="missionSeoPanel" class="mission-seo-panel" aria-label="Google Search SEO performance">
-              <div class="mission-seo-loading"><strong>GOOGLE SEARCH · SEO</strong><span>Checking connection…</span></div>
-            </section>
-            <div class="mission-web-controls">
-              <div class="mission-web-range" role="group" aria-label="Website reporting period">
-                ${periodChoices.map(([key,name])=>`<button type="button" data-website-range="${key}" aria-pressed="${websiteRange===key}" title="${esc(({today:'Today so far','7d':'Last 7 days','30d':'Last 30 days','365d':'Last 365 days'})[key])}">${name}</button>`).join('')}
-              </div>
-              ${websiteCustomControls()}
-              <button type="button" class="mission-web-open" data-view="Website Analytics">Website Analytics ›</button>
-            </div>
             <div class="mission-web-lists">
               <section class="mission-web-mini" aria-label="Top five website pages">
                 <h3>TOP 5 PAGES <small>· Page views</small></h3>
