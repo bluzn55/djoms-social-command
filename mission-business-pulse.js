@@ -284,6 +284,13 @@
   function paint() {
     const panel=document.getElementById('missionBusinessPulse');
     if(!panel) return;
+    // From Doc's Porch is authored and refreshed by the original Mission Control
+    // renderer. Move that existing interactive element directly after the fourth
+    // Business Pulse card, without copying it or losing its delegated actions.
+    // Keep a reference before rebuilding the panel, since some refreshes call
+    // paint() several times without rebuilding Mission Control.
+    const blog=panel.querySelector('.mission-blog-section')
+      || document.querySelector('#connectionStrip .mission-blog-section');
     const selected=period();
     const periodName=selected.range==='custom'
       ? selected.start+' to '+selected.endInclusive
@@ -297,6 +304,9 @@
         <summary>About these numbers</summary>
         <p>Selected Wix dates: ${escape(selected.start)} through ${escape(selected.endInclusive)}. Missing data stays unavailable. Chapter clicks do not prove reading. Wix paid store sales exclude tax and shipping, refunds and outside channels. Radio webpage views are not listener counts. Music-page views exclude the station page but are not confirmed song plays. The Music panel uses named Wix album products, not outside sales. The Radio.co historical export uses its own explicitly labelled UTC dates and is not live or filtered by Wix selection. Current station status and song come from Radio.co's public API, but listener counts do not. Testing traffic may be included.</p>
       </details>`;
+    // Keep the Blog on its own full-width row immediately below The Wooden Token.
+    // The source section is physically moved, not duplicated.
+    if(blog) panel.querySelector('.mission-intel-grid')?.after(blog);
   }
   function refresh(force = false) {
     if(typeof owner==='undefined' || !owner) return;
