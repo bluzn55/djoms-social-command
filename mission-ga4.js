@@ -9,11 +9,11 @@
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
   }[c]));
   const fmt=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0
-    ?new Intl.NumberFormat('en-US').format(Math.round(value)):'—';
+    ?new Intl.NumberFormat('en-US').format(Math.round(value)):'N/A';
   const pct=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0
-    ?(value*100).toFixed(1)+'%':'—';
+    ?(value*100).toFixed(1)+'%':'N/A';
   const duration=value=>{
-    if(typeof value!=='number'||!Number.isFinite(value)||value<0)return '—';
+    if(typeof value!=='number'||!Number.isFinite(value)||value<0)return 'N/A';
     const seconds=Math.round(value);
     return seconds<60?seconds+'s':Math.floor(seconds/60)+'m '+seconds%60+'s';
   };
@@ -56,10 +56,10 @@
       '</div>'+
       '<p class="mission-ga4-intro">After someone reaches the website, GA4 shows which channels brought them here.</p>'+
       '<div class="mission-ga4-stats">'+
-        stat('Sessions',connected?fmt(data.sessions):'—')+
-        stat('Active users',connected?fmt(data.activeUsers):'—')+
-        stat('Engagement rate',connected?pct(data.engagementRate):'—')+
-        stat('Avg. session',connected?duration(data.averageSessionDuration):'—')+
+        stat('Sessions',connected?fmt(data.sessions):'N/A')+
+        stat('Active users',connected?fmt(data.activeUsers):'N/A')+
+        stat('Engagement rate',connected?pct(data.engagementRate):'N/A')+
+        stat('Avg. session',connected?duration(data.averageSessionDuration):'N/A')+
       '</div>'+
       (connected?
         '<div class="mission-ga4-sources">'+
