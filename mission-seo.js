@@ -9,11 +9,11 @@
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
   }[char]));
   const fmt=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0
-    ?new Intl.NumberFormat('en-US').format(Math.round(value)):'—';
+    ?new Intl.NumberFormat('en-US').format(Math.round(value)):'N/A';
   const dec=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0
-    ?value.toFixed(1):'—';
+    ?value.toFixed(1):'N/A';
   const pct=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0
-    ?(value*100).toFixed(1)+'%':'—';
+    ?(value*100).toFixed(1)+'%':'N/A';
   const current=()=>typeof websiteReportPeriod==='function'?websiteReportPeriod():null;
   const sourceLink='https://search.google.com/search-console';
   const checkRange=(report,selection)=>report?.range?.start===selection?.start &&
@@ -94,10 +94,10 @@
          '<span>Website visit if clicked</span>'+
        '</div>'+
        '<div class="mission-seo-metrics">'+
-          metric('Impressions',connected?fmt(metrics.impressions):'—')+
-          metric('Google clicks',connected?fmt(metrics.clicks):'—')+
-          metric('Search CTR',connected?pct(metrics.ctr):'—')+
-          metric('Avg. position',connected?dec(metrics.position):'—')+
+          metric('Impressions',connected?fmt(metrics.impressions):'N/A')+
+          metric('Google clicks',connected?fmt(metrics.clicks):'N/A')+
+          metric('Search CTR',connected?pct(metrics.ctr):'N/A')+
+          metric('Avg. position',connected?dec(metrics.position):'N/A')+
        '</div>'+
        (connected?searchTermPreview(report):'')+
        '<div class="mission-seo-actions">'+
@@ -179,10 +179,10 @@
        '<button type="button" data-seo-refresh="1">Refresh SEO</button>'+
       '</div>'+
       '<div class="seo-detail-statgrid">'+
-       metric('Impressions',connected?fmt(metrics.impressions):'—')+
-       metric('Search clicks',connected?fmt(metrics.clicks):'—')+
-       metric('Search CTR',connected?pct(metrics.ctr):'—')+
-       metric('Average position',connected?dec(metrics.position):'—')+
+       metric('Impressions',connected?fmt(metrics.impressions):'N/A')+
+       metric('Search clicks',connected?fmt(metrics.clicks):'N/A')+
+       metric('Search CTR',connected?pct(metrics.ctr):'N/A')+
+       metric('Average position',connected?dec(metrics.position):'N/A')+
       '</div>'+
       '<p class="seo-detail-hint">'+esc(snapshot?.error||report?.message||(busy?'Checking the verified search report.':'Connect Google Search Console to see verified results.'))+'</p>'+
       (!connected?'<a class="mission-seo-connect" href="/api/meta/seo-connect">Connect Search Console ↗</a>':'')+
