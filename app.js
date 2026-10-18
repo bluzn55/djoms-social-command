@@ -412,6 +412,10 @@ function renderConnectionStrip() {
         <div class="mission-seo-loading"><strong>STEP 1 · GOOGLE SEARCH</strong><span>Checking connection…</span></div>
       </section>
 
+      <section id="missionGa4Panel" class="mission-ga4-panel" aria-label="Step 2: Google Analytics traffic channels">
+        <div class="mission-ga4-loading"><strong>STEP 2 · GOOGLE ANALYTICS</strong><span>Checking connection…</span></div>
+      </section>
+
       <section class="mission-website-section" aria-label="DOCJAKS.COM website connection and activity">
         ${(() => {
           const site=websiteSnapshot();
@@ -455,8 +459,8 @@ function renderConnectionStrip() {
               ${websiteCustomControls()}
               <button type="button" class="mission-web-open" data-view="Website Analytics">Website Analytics ›</button>
             </div>
-            <div class="mission-web-stage" aria-label="Step 2: website visits">
-              <strong>STEP 2 · ON THE WEBSITE</strong>
+            <div class="mission-web-stage" aria-label="Step 3: website visitors and behavior">
+              <strong>STEP 3 · WIX WEBSITE ACTIVITY</strong>
               <span>Wix tracks visitors and activity from Google, social media, direct links, and other sources.</span>
             </div>
             <div class="mission-web-gauges" aria-label="Website figures for ${esc(rangeCaption)}">
