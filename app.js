@@ -105,12 +105,19 @@ function localCard(key, name) {
   const connected = !!info.connected;
   const needs = connected && (info.needsLocation || info.needsReviewData || info.needsPermission || Number(info.unanswered || 0) > 0);
   const color = connected ? (needs ? 'yellow' : 'green') : 'red';
-  const rating = info.rating == null ? '—' : Number(info.rating).toFixed(1);
-  const total = info.totalReviewCount == null ? '—' : compactMetric(info.totalReviewCount);
+  const reviewCoverage = connected && !info.needsReviewData && Array.isArray(info.reviews);
+  const rating = connected && info.rating != null && Number.isFinite(Number(info.rating))
+    ? Number(info.rating).toFixed(1) : 'N/A';
+  const total = connected && !info.needsReviewData && info.totalReviewCount != null
+    ? compactMetric(info.totalReviewCount) : 'N/A';
   const reviews = Array.isArray(info.reviews) ? info.reviews : [];
   const recentCutoff = Date.now() - 7*86400000;
-  const newCount = reviews.filter(r => Date.parse(r.createTime || r.updateTime || 0) >= recentCutoff).length;
-  const unanswered = info.unanswered == null ? reviews.filter(r => !r.reply).length : info.unanswered;
+  const newCount = reviewCoverage
+    ? reviews.filter(r => Date.parse(r.createTime || r.updateTime || 0) >= recentCutoff).length
+    : 'N/A';
+  const unanswered = reviewCoverage && info.unanswered != null
+    ? info.unanswered
+    : reviewCoverage ? reviews.filter(r => !r.reply).length : 'N/A';
   let action = '';
   if (key === 'google' && !connected) action = '<a class="reviews-local-action" href="/api/meta/local-google-connect">Connect Google</a>';
   else if (key === 'google' && info.needsLocation && Array.isArray(info.locations) && info.locations.length) {
@@ -235,10 +242,11 @@ function connectionHealth(info = {}) {
   return { color:'red', label:'RED', text:'Disconnected / needs attention' };
 }
 function compactMetric(value) {
-  if (value === null || value === undefined || value === '') return '—';
+  if (value === null || value === undefined || value === '') return 'N/A';
+  if (typeof value === 'string' && /^(?:not available|unavailable|not measured|—|–|n\s*\/\s*a)$/i.test(value.trim())) return 'N/A';
   if (typeof value === 'string' && !/^[-+]?\d+(\.\d+)?$/.test(value.trim())) return value;
   const number = Number(value);
-  if (!Number.isFinite(number)) return '—';
+  if (!Number.isFinite(number)) return 'N/A';
   if (Math.abs(number) >= 10000) return new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:1}).format(number);
   return new Intl.NumberFormat('en-US').format(number);
 }
@@ -331,7 +339,7 @@ function audienceChangeHtml(value) {
 }
 function engagementRate(metrics = {}) {
   const reach = Number(metrics.reach);
-  if (!Number.isFinite(reach) || reach <= 0) return '—';
+  if (!Number.isFinite(reach) || reach <= 0) return 'N/A';
   const total = [metrics.likes, metrics.replies, metrics.shares].reduce((sum,value) => {
     const number = Number(value);
     return sum + (Number.isFinite(number) ? number : 0);
