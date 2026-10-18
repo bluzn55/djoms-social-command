@@ -191,48 +191,50 @@
     const color=interest.status==='error'&&!connected?'red':'yellow';
     const report=snapshot.radio.status==='ok'?snapshot.radio.data:null;
     const stats=report?.summary||{};
-    const live=snapshot.stationLive.status==='ok'?snapshot.stationLive.data:null;
-    const liveText=live?.broadcastStatus==='online'?'ON AIR'
-      :live?.broadcastStatus==='offline'?'OFF AIR':'—';
-    const liveNote=live?'Official public Radio.co status'
-      :snapshot.stationLive.status==='error'?'Could not verify broadcast status'
-      :'Checking station…';
-    const nowPlaying=live?.broadcastStatus==='online'&&live.nowPlaying
-      ?'<p class="locknote"><strong>NOW PLAYING · </strong>'+escape(live.nowPlaying)+'</p>':'';
     const period=report?.range
       ?report.range.start+' through '+report.range.end+' (UTC)'
       :'Period not confirmed';
-    const latest=report
-      ?`<div class="mission-intel-meters mission-intel-4">
-         ${meter('Stream connections',show(stats.connections))}
-         ${meter('Peak simultaneous',show(stats.peak))}
-         ${meter('Avg. connection',audioTime(stats.averageDurationRaw))}
-         ${meter('Total listened',audioTime(stats.totalDurationRaw))}
-        </div>
-        <p class="locknote"><strong>HISTORICAL RADIO.CO CSV · ${escape(period)}</strong>
-        This is the latest imported report, NOT live data and NOT necessarily the Wix date selection.
-        The CSV's daily unique counts cannot establish unique people across the entire period.</p>
-        ${report.screenComparison?.note
-           ?'<p class="locknote">Source discrepancy: '+escape(report.screenComparison.note)+'</p>':''}`
-      :`<p class="locknote">${snapshot.radio.status==='error'
-        ?'Radio.co import unavailable: '+escape(snapshot.radio.error)
+    const live=snapshot.stationLive.status==='ok'?snapshot.stationLive.data:null;
+    const liveText=live?.broadcastStatus==='online'?'ON AIR'
+      :live?.broadcastStatus==='offline'?'OFF AIR':'—';
+    const liveNote=live?'Radio.co live station status'
+      :snapshot.stationLive.status==='error'?'Status unavailable'
+      :'Checking status…';
+    const playing=live?.broadcastStatus==='online'&&live.nowPlaying
+      ?'<p class="mission-intel-muted"><strong>NOW PLAYING · </strong>'+escape(live.nowPlaying)+'</p>':'';
+    const oldReport=report
+      ?`<details class="mission-intel-data-notes">
+          <summary>More radio statistics · imported CSV</summary>
+          <div class="mission-intel-meters">
+            ${meter('Peak simultaneous',show(stats.peak))}
+            ${meter('Total listened',audioTime(stats.totalDurationRaw))}
+          </div>
+          <p><strong>HISTORICAL RADIO.CO CSV · ${escape(period)}</strong>
+          This import does not update automatically and does not follow the Wix reporting-date selector.
+          Daily unique counts cannot establish different listeners over the entire period.</p>
+          ${report.screenComparison?.note
+            ?'<p>Radio.co source discrepancy: '+escape(report.screenComparison.note)+'</p>':''}
+        </details>`
+      :'<p class="mission-intel-muted">'+(snapshot.radio.status==='error'
+        ?'Radio.co CSV unavailable: '+escape(snapshot.radio.error)
         :snapshot.radio.status==='loading'?'Loading the last Radio.co export…'
-        :'Radio.co export not yet loaded.'}</p>`;
+        :'No Radio.co CSV has been loaded.')+'</p>';
     return `<article class="mission-intel-card">
       <header class="mission-intel-card-head">
         <div><small>RADIO · 51.50</small><h3>Outlaw Radio 5150</h3></div>
         ${statusLight(color,color.toUpperCase())}
       </header>
-      <div class="mission-intel-meters mission-intel-4">
+      <div class="mission-intel-meters">
         ${meter('Website page views',show(views))}
-        ${meter('Website visitors',show(visitors))}
         ${meter('Station broadcast',liveText,liveNote)}
-        ${meter('Active listeners','—','Listener statistics not connected')}
+        ${meter('Stream connections',show(report?stats.connections:null),'Last imported CSV')}
+        ${meter('Avg. listening time',audioTime(report?stats.averageDurationRaw:null),'Last imported CSV')}
       </div>
-      ${nowPlaying}
+      ${playing}
+      <p class="mission-intel-muted">Website visitors: <strong>${show(visitors)}</strong> · Live listener count: <strong>—</strong> (not connected)</p>
       ${snapshot.stationLive.status==='error'
-        ?'<p class="locknote">Public station-status check unavailable: '+escape(snapshot.stationLive.error)+'</p>':''}
-      ${latest}
+        ?'<p class="mission-intel-error">Radio.co status unavailable: '+escape(snapshot.stationLive.error)+'</p>':''}
+      ${oldReport}
       <div class="mission-intel-actions">
         <button type="button" data-view="Website Analytics">Radio website details ›</button>
         <a href="https://outlawradio5150.com" target="_blank" rel="noopener noreferrer">Listen live ↗</a>
