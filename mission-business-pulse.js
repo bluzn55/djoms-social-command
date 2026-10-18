@@ -148,6 +148,45 @@
       ${warnings.length?'<p class="mission-intel-error">'+escape(warnings.join(' · '))+'</p>':''}
     </article>`;
   }
+  function musicCard() {
+    const interest=snapshot.interests;
+    const group=findGroup('music');
+    // Radio visits and music visits are distinct signals. The existing Wix
+    // music theme includes radio pages, so count non-radio page views only.
+    const isRadio=path=>['/outlaw-radio-5150','/kjak-24-7'].includes(linked(path));
+    const songs=Array.isArray(group?.pages)
+      ?group.pages.filter(p=>!isRadio(p.path)):null;
+    const pageViews=songs && songs.every(p=>measurable(p.views))
+      ?(songs.length?songs.reduce((n,p)=>n+p.views,0)
+        :interest.data?.reconciled===true?0:null)
+      :null;
+    // Named albums in paid Wix web orders. This is not streaming or all sales.
+    const store=snapshot.sales.status==='ok' ?snapshot.sales.data:null;
+    const albumUnits=store?.complete && Array.isArray(store.products)
+      ?store.products.filter(p=>/\\b(songs? of emberhold|back porch rebellion|album)\\b/i.test(String(p.name||'')))
+          .reduce((n,p)=>n+(measurable(p.units)?p.units:0),0)
+      :null;
+    const warnings=[snapshot.interests.error,snapshot.sales.error].filter(Boolean);
+    const color=snapshot.interests.status==='error'&&snapshot.sales.status==='error'?'red':'yellow';
+    return `<article class="mission-intel-card mission-pulse-music">
+      <header class="mission-intel-card-head">
+        <div><small>MUSIC · ALBUMS &amp; SONGS</small><h3>Music</h3></div>
+        ${statusLight(color,color.toUpperCase())}
+      </header>
+      <div class="mission-intel-meters">
+        ${meter('Music page views',show(pageViews),'Excludes Outlaw Radio page')}
+        ${meter('Music-only visitors','—','Not separately verified')}
+        ${meter('Wix named album units',show(albumUnits),'Approved paid web orders')}
+        ${meter('Song preview plays','—','Player tracking not connected')}
+      </div>
+      <p class="mission-intel-muted">Page views do not prove music was played. Album units exclude unverified external sales and bundles not identifiable as albums.</p>
+      <div class="mission-intel-actions">
+        <button type="button" data-view="Website Analytics">Music website details ›</button>
+      </div>
+      ${warnings.length?'<p class="mission-intel-error">'+escape(warnings.join(' · '))+'</p>':''}
+    </article>`;
+  }
+
   function storeCard() {
     const info=snapshot.sales, data=info.status==='ok'?info.data:null;
     const ready=!!data?.complete && Array.isArray(data.products);
@@ -251,12 +290,12 @@
       : ({today:'TODAY','7d':'LAST 7 DAYS','30d':'LAST 30 DAYS','365d':'LAST 365 DAYS'})[selected.range]||'SELECTED DATES';
     panel.innerHTML=`<div class="mission-intel-title">
         <div><strong>BUSINESS PULSE</strong><small>${escape(periodName)}</small></div>
-        <button type="button" data-mission-pulse-refresh="1" aria-label="Refresh book, store and radio website statistics">Check activity</button>
+        <button type="button" data-mission-pulse-refresh="1" aria-label="Refresh radio, music, Trading Post and book website statistics">Check activity</button>
       </div>
-      <div class="mission-intel-grid">${bookCard()}${storeCard()}${radioCard()}</div>
+      <div class="mission-intel-grid">${radioCard()}${musicCard()}${storeCard()}${bookCard()}</div>
       <details class="mission-intel-data-notes">
         <summary>About these numbers</summary>
-        <p>Selected Wix dates: ${escape(selected.start)} through ${escape(selected.endInclusive)}. Missing data stays unavailable. Chapter clicks do not prove reading. Wix paid store sales exclude tax and shipping, refunds and outside channels. Radio webpage views are not listener counts. The Radio.co historical export uses its own explicitly labelled UTC dates and is not live or filtered by Wix selection. Current station status and song come from Radio.co's public API, but listener counts do not. Testing traffic may be included.</p>
+        <p>Selected Wix dates: ${escape(selected.start)} through ${escape(selected.endInclusive)}. Missing data stays unavailable. Chapter clicks do not prove reading. Wix paid store sales exclude tax and shipping, refunds and outside channels. Radio webpage views are not listener counts. Music-page views exclude the station page but are not confirmed song plays. The Music panel uses named Wix album products, not outside sales. The Radio.co historical export uses its own explicitly labelled UTC dates and is not live or filtered by Wix selection. Current station status and song come from Radio.co's public API, but listener counts do not. Testing traffic may be included.</p>
       </details>`;
   }
   function refresh(force = false) {
@@ -325,7 +364,7 @@
       panel=document.createElement('section');
       panel.id='missionBusinessPulse';
       panel.className='mission-intel-section';
-      panel.setAttribute('aria-label','Business, book and radio activity');
+      panel.setAttribute('aria-label','Business Pulse: Outlaw Radio, Music, Trading Post, and Book');
       if(anchor) anchor.before(panel); else strip.append(panel);
     }
     paint();
