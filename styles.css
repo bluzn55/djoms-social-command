@@ -408,7 +408,7 @@ aside button { font-size:15px; min-height:45px; }
 aside .user strong { font-size:14px; }
 aside .user small { font-size:12px; }
 aside .ver { font-size:10px; line-height:1.7; }
-section { min-width:0; max-width:1600px; }
+section { min-width:0; max-width:none; }
 header { align-items:center; gap:20px; }
 header p { margin:8px 0; }
 .ey,.label { font-size:11px; letter-spacing:1.3px; }
@@ -5456,4 +5456,32 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   #connectionStrip .mission-glance-card>.mission-glance-light {width:36px;height:36px}
   #connectionStrip .reviews-local-top {padding:12px 13px}
   #connectionStrip .reviews-local-metrics {padding:0 9px !important}
+}
+
+/* DJOMS WIDESCREEN: let the owner console use the whole browser width. */
+@media(min-width:721px) {
+  body > main {
+    display:flex;
+    width:100%;
+    max-width:none;
+  }
+  body > main > aside {
+    flex:0 0 225px;
+    width:225px;
+    min-width:225px;
+  }
+  body > main > section {
+    flex:1 1 0%;
+    width:0;
+    min-width:0;
+    max-width:none !important;
+    padding-left:clamp(18px,1.3vw,36px);
+    padding-right:clamp(18px,1.3vw,36px);
+  }
+}
+@media(max-width:720px) {
+  body > main > section {
+    width:100%;
+    max-width:none !important;
+  }
 }
