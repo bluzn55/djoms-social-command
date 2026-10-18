@@ -221,9 +221,11 @@
     const fallback=typeof websiteSnapshot==='function'
       ?(websiteSnapshot()?.topPages||[]).find(item=>linked(item.path)==='/outlaw-radio-5150')
       :null;
+    // A verified Wix top-page count beats treating an absent interest-group
+    // match as zero. Both views use the same selected website date range.
     const views=measurable(page?.views)?page.views
-      :(interest.status==='ok'&&interest.data?.reconciled&&!interest.data.partial&&!page?0
-        :measurable(fallback?.views)?fallback.views:null);
+      :measurable(fallback?.views)?fallback.views
+      :(interest.status==='ok'&&interest.data?.reconciled&&!interest.data.partial&&!page?0:null);
     const visitors=measurable(page?.visitors)?page.visitors
       :measurable(fallback?.visitors)?fallback.visitors:null;
     const connected=typeof localData!=='undefined'&&localData?.website?.connected===true;
