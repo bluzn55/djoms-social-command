@@ -72,11 +72,16 @@
       .filter(item=>validCount(item?.sessions))
       .map(item=>({kind:originKind(item.source,item.category),sessions:item.sessions})):[];
     const wixComplete=wixAvailable&&wix.trafficSourcesComplete===true;
-    const ga4Available=report?.status==='connected'&&report?.sourceDetails?.status==='reported'&&
+    const ga4Reported=report?.status==='connected'&&report?.sourceDetails?.status==='reported'&&
       Array.isArray(report.sourceDetails.rows);
-    const ga4Entries=ga4Available?report.sourceDetails.rows
+    const ga4Entries=ga4Reported?report.sourceDetails.rows
       .filter(item=>validCount(item?.sessions))
       .map(item=>({kind:originKind(item.sourceMedium),sessions:item.sessions})):[];
+    // Suppressed or partial source rows may not reconcile to GA4's actual
+    // session total. Never turn missing attribution into apparent zeroes.
+    const ga4SourceTotal=ga4Entries.reduce((sum,item)=>sum+item.sessions,0);
+    const ga4Available=ga4Reported&&(!validCount(report?.metrics?.sessions)||
+      ga4SourceTotal===report.metrics.sessions);
     const rows=originOrder.map(([key,label],i)=>
       '<tr><th scope="row"><em>'+(i+1)+'.</em> '+esc(label)+'</th>'+
       '<td>'+esc(fmt(sourceCount(key,wixEntries,wixComplete)))+'</td>'+
