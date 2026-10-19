@@ -30,6 +30,10 @@
   const periodName=period=>period?.range==='custom'
     ?'Custom dates':({today:'Today','7d':'Last 7 days','30d':'Last 30 days','365d':'Last 365 days'})[period?.range]||'Selected dates';
   const proof=(label,state,headline,note)=>({label,state,headline,note});
+  const ga4Gap=(site,ga4)=>site?.connected===true&&ga4?.status==='connected'&&
+    good(site.sessions)&&site.sessions>=10&&good(ga4?.metrics?.sessions)&&
+    ga4.metrics.sessions<site.sessions/2;
+
   function evaluate(site,ga4,seo,sales,period){
     const available=site?.connected===true;
     const comparisons=available?site?.metricComparisons||{}:{};
@@ -51,6 +55,7 @@
     const phoneActions=good(site?.contactClicks)&&good(site?.formsSubmitted)
       ?site.contactClicks+site.formsSubmitted:null;
     const warnings=[];
+    if(ga4Gap(site,ga4))warnings.push('Wix and Google Analytics session counts differ substantially. Verify the GA4 tag, cookie consent and bot filtering; do not assume GA4 sees every visit.');
     if(gaIssue)warnings.push('GA4 Data API needs enabling.');
     else if(gaBlocked)warnings.push('GA4 needs attention before its reports can be trusted.');
     if(!salesReady)warnings.push('Verified online order totals are not available for these dates.');
@@ -83,7 +88,8 @@
         ?'Google showed DOCJAKS.COM '+fmt(seo.metrics.impressions)+' times. Search ranking growth is not yet established.'
         :'We need a verified current and previous period before calling discovery growth.';
     const working=discovering;
-    let concern=gaIssue?'Google Analytics is authorized, but its Data API is disabled. Website action data is unavailable in Social Command.'
+    let concern=ga4Gap(site,ga4)?'Wix reports '+fmt(site.sessions)+' sessions but GA4 shows '+fmt(ga4.metrics.sessions)+'. Some sessions may be excluded by consent, blockers, bot filtering, or a tracking setup issue.'
+      :gaIssue?'Google Analytics is authorized, but its Data API is disabled. Website action data is unavailable in Social Command.'
       :stayTrend==='down'
         ?'Average time on site decreased '+Math.abs(stay.percentChange).toFixed(1)+'%. We have not yet separated actual radio listening from exits.'
         :visitorsTrend==='down'
@@ -93,7 +99,10 @@
             :'We still need measured listening, membership actions and costs to tell whether attention creates business value.';
     let next='Measure actual radio listening and meaningful actions before grading customer growth.';
     let nextHref='';
-    if(gaIssue){
+    if(ga4Gap(site,ga4)){
+      next='Verify that the Google Analytics web stream matches the Wix tag, then test a fresh visit in GA4 Realtime before relying on those session totals.';
+      nextHref='https://analytics.google.com/';
+    }else if(gaIssue){
       next='Enable the Google Analytics Data API in the Doc Jaks Social Command Google Cloud project, then check GA4 again.';
       nextHref='https://console.cloud.google.com/apis/library/analyticsdata.googleapis.com';
     }else if(gaBlocked){
@@ -150,6 +159,15 @@
   }
   function issueList(site,ga4,seo){
     const issues=[];
+    const verify=window.djomsGa4Verification;
+    if(verify?.status==='mismatch')issues.push({key:'ga4-stream',
+      title:'Google Analytics measurement ID does not match Wix',
+      message:verify.message||'Check that Wix and Social Command use the same Google Analytics data stream.',
+      url:'https://analytics.google.com/'});
+    if(ga4Gap(site,ga4))issues.push({key:'ga4-coverage',
+      title:'GA4 captures far fewer website sessions than Wix',
+      message:'For these dates Wix reports '+fmt(site.sessions)+' sessions, while GA4 reports '+fmt(ga4.metrics.sessions)+'. Verify tracking and consent; these counts are not interchangeable.',
+      url:'https://analytics.google.com/'});
     if(site&&site.connected===false){
       issues.push({key:'wix',title:'Wix website reports need attention',
         message:site.message||'The website reporting source is unavailable.',
