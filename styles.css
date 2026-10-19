@@ -7675,3 +7675,155 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   outline:3px solid #80d2b1;
   outline-offset:2px;
 }
+
+
+/* MISSION DIRECTION GYR NEEDLE GAUGE 2026-10-19.
+   Fits immediately to the right of the heading, before NOT YET PROVEN.
+   Existing direction signal and selected reporting date drive the position.
+   Green → Yellow → Red, with gray center when data is insufficient. */
+#connectionStrip .mission-direction-panel .mission-direction-title-block {
+  flex:1 1 390px;
+  min-width:0;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter {
+  flex:0 1 358px;
+  box-sizing:border-box;
+  min-width:275px;
+  max-width:410px;
+  padding:9px 13px 8px;
+  border:1px solid #cfaf74;
+  border-radius:8px;
+  background:linear-gradient(180deg,#fff5dc,#f9eac8);
+  box-shadow:inset 0 1px 0 #fffdf7;
+  color:#392818;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-top {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:space-between;
+  align-items:center;
+  gap:4px 10px;
+  margin:0 0 13px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-top strong {
+  color:#60431e;
+  font:900 12px/1.2 Arial,sans-serif;
+  letter-spacing:.65px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-top span {
+  color:#775320;
+  font:900 12px/1.2 Arial,sans-serif;
+  text-align:right;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter.forward .mission-direction-meter-top span {
+  color:#276e39;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter.backward .mission-direction-meter-top span {
+  color:#a23824;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter.unknown .mission-direction-meter-top span {
+  color:#69645b;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-rail {
+  position:relative;
+  display:block;
+  width:100%;
+  height:18px;
+  box-sizing:border-box;
+  border:2px solid #755632;
+  border-radius:5px;
+  background:linear-gradient(to right,
+    #25844c 0%,#319a52 31.5%,
+    #edc34a 33.5%,#efbd31 65.5%,
+    #d45a3e 67.5%,#b83b2e 100%);
+  box-shadow:inset 0 2px 5px #291b0c50,0 1px 2px #26150b36;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-rail::before,
+#connectionStrip .mission-direction-panel .mission-direction-meter-rail::after {
+  position:absolute;
+  top:1px;
+  bottom:1px;
+  content:"";
+  width:1px;
+  background:#fff9de88;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-rail::before {left:33.333%}
+#connectionStrip .mission-direction-panel .mission-direction-meter-rail::after {left:66.666%}
+#connectionStrip .mission-direction-panel .mission-direction-meter-pointer {
+  position:absolute;
+  z-index:2;
+  top:-7px;
+  left:var(--mission-direction-needle,50%);
+  width:4px;
+  height:29px;
+  border:1px solid #fbedc7;
+  border-radius:2px;
+  background:#251b10;
+  box-shadow:0 0 0 1px #7b5c34,0 1px 5px #24180e90;
+  transform:translateX(-50%);
+  transition:left .35s ease-out;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-pointer::before {
+  position:absolute;
+  content:"";
+  top:-9px;
+  left:-7px;
+  width:0;
+  height:0;
+  border-left:8px solid transparent;
+  border-right:8px solid transparent;
+  border-top:10px solid #251b10;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter.unknown .mission-direction-meter-pointer {
+  background:#68655e;
+  border-color:#efebe4;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter.unknown .mission-direction-meter-pointer::before {
+  border-top-color:#68655e;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-labels {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  margin-top:8px;
+  text-align:center;
+  font:900 10px/1.15 Arial,sans-serif;
+  letter-spacing:.3px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-labels span:first-child {
+  color:#276e39;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-labels span:nth-child(2) {
+  color:#9f741c;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-labels span:last-child {
+  color:#a23824;
+}
+#connectionStrip .mission-direction-panel .mission-direction-verdict {
+  flex:0 0 auto;
+  white-space:nowrap;
+}
+@media(max-width:1150px) {
+  #connectionStrip .mission-direction-panel .mission-direction-meter {
+    flex:1 1 310px;
+    max-width:none;
+  }
+}
+@media(max-width:650px) {
+  #connectionStrip .mission-direction-panel .mission-direction-title-block {
+    flex:1 1 100%;
+  }
+  #connectionStrip .mission-direction-panel .mission-direction-meter {
+    flex:1 1 100%;
+    min-width:0;
+    width:100%;
+    order:2;
+  }
+  #connectionStrip .mission-direction-panel .mission-direction-verdict {
+    order:3;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  #connectionStrip .mission-direction-panel .mission-direction-meter-pointer {
+    transition:none;
+  }
+}
