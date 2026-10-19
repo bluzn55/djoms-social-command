@@ -6760,3 +6760,199 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     font-size:12px;
   }
 }
+
+
+/* WIX ACTIVITY FULL WIDTH CHART BELOW SIX BOXES · 2026-10-19.
+   Preserve the six Wix gauges, website health, top pages and visitor geography.
+   Chart is a new full-width row between the gauges and those lower details. */
+#connectionStrip .mission-website-section .mission-web-console {
+  grid-template-areas:
+    ". brand controls"
+    "stage stage stage"
+    "gauges gauges gauges"
+    "chart chart chart"
+    "health health health"
+    "lists lists lists" !important;
+}
+#connectionStrip .mission-website-section .mission-web-chart {
+  grid-area:chart;
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  margin:0;
+  padding:0;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart {
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  margin:3px 0 6px;
+  padding:16px 20px 14px;
+  border:1px solid #a3834c;
+  border-radius:9px;
+  background:linear-gradient(180deg,#291f15,#302316);
+  color:#f7e6c2;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-header {
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:6px 15px;
+  border-bottom:1px solid #665035;
+  padding:0 0 11px;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-header strong {
+  color:#f4d59a;
+  font:900 19px/1.3 Arial,sans-serif;
+  letter-spacing:.4px;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-header small {
+  color:#d8c3a1;
+  font:800 13px/1.3 Arial,sans-serif;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-legend-row {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px 22px;
+  border-bottom:1px solid #58452f;
+  padding:10px 0 9px;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-legend {
+  --trend-line:#f5c76f;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  color:var(--trend-line);
+  font:900 14px/1.3 Arial,sans-serif;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-legend i {
+  display:inline-block;
+  width:11px;
+  height:11px;
+  flex:0 0 11px;
+  border-radius:50%;
+  background:var(--trend-line);
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-visitors {--trend-line:#79d1ae}
+#connectionStrip .mission-website-section .djoms-wix-chart-returning {--trend-line:#d3a3f8}
+#connectionStrip .mission-website-section .djoms-wix-chart-views {--trend-line:#f5c76f}
+#connectionStrip .mission-website-section .djoms-wix-chart-stay {--trend-line:#88c2f8}
+#connectionStrip .mission-website-section .djoms-wix-chart-bounce {--trend-line:#f69b8b}
+#connectionStrip .mission-website-section .djoms-wix-chart-not-plotted {
+  color:#bba98e;
+  font:700 12px/1.3 Arial,sans-serif;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-scroll {
+  box-sizing:border-box;
+  display:block;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  margin:7px 0 0;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scrollbar-color:#967547 #2a2016;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-svg {
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  height:360px;
+  min-height:360px;
+  margin:0;
+  overflow:visible;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-grid {
+  stroke:#8b7455;
+  stroke-opacity:.54;
+  stroke-width:1;
+  vector-effect:non-scaling-stroke;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-axis {
+  stroke:#c1a373;
+  stroke-width:1.4;
+  vector-effect:non-scaling-stroke;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-y-label,
+#connectionStrip .mission-website-section .djoms-wix-chart-x-label {
+  fill:#ead5aa;
+  font:800 14px Arial,sans-serif;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-date-tick {
+  stroke:#a68a60;
+  stroke-width:1;
+  vector-effect:non-scaling-stroke;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-line {
+  fill:none;
+  stroke:var(--trend-line);
+  stroke-width:3;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  vector-effect:non-scaling-stroke;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-returning .djoms-wix-chart-line {
+  stroke-dasharray:10 5;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-bounce .djoms-wix-chart-line {
+  stroke-dasharray:4 5;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-series circle {
+  fill:var(--trend-line);
+  stroke:#261b11;
+  stroke-width:1.25;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-empty {
+  min-height:250px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:22px;
+  color:#dcc6a1;
+  font:800 16px/1.5 Arial,sans-serif;
+  text-align:center;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-note {
+  color:#d2bea0;
+  font:700 12px/1.45 Arial,sans-serif;
+  margin:9px 0 0;
+  padding-top:9px;
+  border-top:1px solid #665035;
+}
+@media(max-width:1270px) {
+  #connectionStrip .mission-website-section .mission-web-console {
+    grid-template-areas:
+      "brand controls"
+      "stage stage"
+      "gauges gauges"
+      "chart chart"
+      "health health"
+      "lists lists" !important;
+  }
+}
+@media(max-width:900px) {
+  #connectionStrip .mission-website-section .djoms-wix-chart-svg {
+    min-width:850px;
+    height:315px;
+    min-height:315px;
+  }
+}
+@media(max-width:640px) {
+  #connectionStrip .mission-website-section .mission-web-console {
+    grid-template-areas:"brand" "controls" "stage" "gauges" "chart" "health" "lists" !important;
+  }
+  #connectionStrip .mission-website-section .djoms-wix-chart {
+    padding:12px 10px;
+  }
+  #connectionStrip .mission-website-section .djoms-wix-chart-header strong {
+    font-size:16px;
+  }
+  #connectionStrip .mission-website-section .djoms-wix-chart-legend {
+    font-size:12px;
+  }
+}
