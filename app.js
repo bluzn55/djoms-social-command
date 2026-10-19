@@ -584,23 +584,24 @@ function renderConnectionStrip() {
           const blogColor = !blogLinked ? 'yellow' : blogOver24 > 0 ? 'red' : blogUnanswered > 0 ? 'yellow' : 'green';
           const blogLabel = !commentCheckedAt ? 'CHECKING' : !blogLinked ? 'SETUP' : blogColor.toUpperCase();
           const latest = blogItems.slice().sort((a,b) => Date.parse(b.publishedAt||0)-Date.parse(a.publishedAt||0))[0];
-          return `<button type="button" class="mission-blog-card" data-action="${blogLinked ? 'openBlogComments' : 'connectBlog'}">
-            <span class="mission-blog-copy">
-              <small>BLOG</small>
-              <strong>FROM DOC'S PORCH</strong>
-              <span>Behind-the-scenes updates from Doc Jaks &amp; Emberhold</span>
-            </span>
-            <span class="mission-blog-status">
-              <i class="mission-glance-light ${blogColor}" aria-hidden="true"></i>
-              <b>${blogLabel}</b>
-            </span>
-            <span class="mission-blog-metrics">
-              <span><small>Unanswered</small><b>${blogLinked ? blogUnanswered : 'N/A'}</b></span>
-              <span><small>Over 24h</small><b>${blogLinked ? blogOver24 : 'N/A'}</b></span>
-              <span><small>Latest activity</small><b>${latest ? esc(updatedText(latest.publishedAt)) : blogLinked ? 'None waiting' : 'Connect blog'}</b></span>
-            </span>
-            <span class="mission-attention-arrow">›</span>
-          </button>`;
+          return `<article class="mission-intel-card mission-porch-card">
+            <header class="mission-intel-card-head">
+              <div><small>BLOG · COMMUNITY</small><h3>From Doc&#39;s Porch</h3></div>
+              <span class="mission-intel-health">
+                <i class="gyr-light ${blogColor}" aria-hidden="true"></i>
+                <strong>${blogLabel}</strong>
+              </span>
+            </header>
+            <div class="mission-intel-meters mission-intel-3">
+              <span class="mission-intel-meter"><small>Unanswered</small><b>${blogLinked ? blogUnanswered : "N/A"}</b></span>
+              <span class="mission-intel-meter"><small>Over 24h</small><b>${blogLinked ? blogOver24 : "N/A"}</b></span>
+              <span class="mission-intel-meter"><small>Latest activity</small><b>${latest ? esc(updatedText(latest.publishedAt)) : blogLinked ? "None waiting" : "N/A"}</b></span>
+            </div>
+            <p class="mission-intel-muted">Behind-the-scenes updates from Doc Jaks &amp; Emberhold</p>
+            <div class="mission-intel-actions">
+              <button type="button" data-action="${blogLinked ? "openBlogComments" : "connectBlog"}">${blogLinked ? "Blog comments ›" : "Connect blog ›"}</button>
+            </div>
+          </article>`;
         })()}
       </section>
 
