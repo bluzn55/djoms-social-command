@@ -7827,3 +7827,81 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     transition:none;
   }
 }
+
+
+/* MISSION METER UPPER-RIGHT VERIFIED DELTA 2026-10-19.
+   + or - is the visitor trend for selected dates, NOT an invented business
+   growth score. Average stay is shown separately to explain a yellow gauge. */
+#connectionStrip .mission-direction-panel .mission-direction-meter-top {
+  align-items:flex-start;
+  margin-bottom:4px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-top > strong {
+  align-self:center;
+  padding-top:3px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-top .mission-direction-meter-delta {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  justify-content:center;
+  gap:1px;
+  min-width:78px;
+  white-space:nowrap;
+  text-align:right;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-delta > b {
+  font:900 23px/1.05 Arial,sans-serif;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.35px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-delta > small {
+  display:block;
+  color:#66543a;
+  font:900 10px/1.15 Arial,sans-serif;
+  letter-spacing:.65px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-top .mission-direction-meter-delta.up > b {
+  color:#237b42;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-top .mission-direction-meter-delta.down > b {
+  color:#b33e2d;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-top .mission-direction-meter-delta.steady > b {
+  color:#8e731b;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-top .mission-direction-meter-delta.unknown > b {
+  color:#6e6960;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-sub {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:4px 12px;
+  margin:2px 0 15px;
+  color:#775320;
+  font:900 12px/1.25 Arial,sans-serif;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter-sub > small {
+  color:#654c2c;
+  font:800 11px/1.2 Arial,sans-serif;
+  white-space:nowrap;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter.forward .mission-direction-meter-sub > span {
+  color:#24703d;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter.backward .mission-direction-meter-sub > span {
+  color:#a33b2d;
+}
+#connectionStrip .mission-direction-panel .mission-direction-meter.unknown .mission-direction-meter-sub > span {
+  color:#777064;
+}
+@media(max-width:440px) {
+  #connectionStrip .mission-direction-panel .mission-direction-meter-delta > b {
+    font-size:19px;
+  }
+  #connectionStrip .mission-direction-panel .mission-direction-meter-sub {
+    font-size:11px;
+  }
+}
