@@ -271,6 +271,32 @@
     repaint();
   }
 
+
+  // This needle uses only the Wix website trend already assessed in evaluate().
+  // Green: both visitors and average stay improving. Red: both declining.
+  // Yellow: mixed or inconclusive signals. Gray centered: insufficient data.
+  // Never represent these as confirmed profit or business growth.
+  function directionMeter(summary){
+    const signal=summary?.directionColor;
+    const category=signal==='green'?'forward':signal==='red'?'backward':
+      signal==='yellow'?'watch':'unknown';
+    const position=category==='forward'?16:category==='backward'?84:50;
+    const caption=category==='forward'?'IMPROVING':category==='backward'?'DECLINING':
+      category==='watch'?'WATCH · MIXED SIGNALS':'NOT ENOUGH DATA';
+    const meaning='Website momentum: '+caption+
+      '. Based on the selected-period comparison of Wix visitors and average stay. This does not establish business profit.';
+    return '<div class="mission-direction-meter '+category+'" role="img" aria-label="'+esc(meaning)+'">'+
+      '<div class="mission-direction-meter-top"><strong>WEBSITE MOMENTUM</strong>'+
+        '<span>'+esc(caption)+'</span></div>'+
+      '<div class="mission-direction-meter-rail" style="--mission-direction-needle:'+position+'%">'+
+        '<span class="mission-direction-meter-pointer" aria-hidden="true"></span>'+
+      '</div>'+
+      '<div class="mission-direction-meter-labels" aria-hidden="true">'+
+        '<span>FORWARD</span><span>WATCH</span><span>BACKWARD</span>'+
+      '</div>'+
+    '</div>';
+  }
+
   function paint(){
     const node=document.getElementById('missionDirectionPanel');
     if(!node)return;
@@ -281,9 +307,10 @@
     syncAttention(issueList(site,ga4,seo));
     const proof=summary.actionEvidence;
     node.innerHTML=
-      '<div class="mission-direction-header"><div>'+
+      '<div class="mission-direction-header"><div class="mission-direction-title-block">'+
         '<small>DOC JAKS · OWNER-FIRST BUSINESS INTELLIGENCE</small>'+
         '<h2>ARE WE MOVING FORWARD OR BACKWARD?</h2></div>'+
+        directionMeter(summary)+
         '<span class="mission-direction-verdict">NOT YET PROVEN</span>'+
       '</div>'+
       '<p class="mission-direction-webtrend">WEBSITE TREND: <b class="'+esc(summary.directionColor)+'">'+
