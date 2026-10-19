@@ -6201,3 +6201,210 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     gap:5px;
   }
 }
+
+
+/* GOOGLE SEARCH ONE COMBINED CHART WITH SIDE VALUES · 2026-10-19.
+   One SVG contains four differently colored lines. The actual y-axis scale
+   for each line (High, Mid, Low), and its exact corresponding KPI box
+   value, are printed on the right; the four top KPI boxes are untouched. */
+#connectionStrip .mission-seo-top .mission-seo-trends-combined {
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  justify-content:space-between;
+  padding:12px 13px 10px;
+}
+#connectionStrip .mission-seo-top .mission-seo-trends-combined .mission-seo-combined-layout {
+  display:grid;
+  grid-template-columns:minmax(0,1.24fr) minmax(0,1fr);
+  align-items:stretch;
+  gap:9px;
+  width:100%;
+  min-width:0;
+  margin:8px 0 0;
+}
+#connectionStrip .mission-seo-top .mission-seo-combined-main {
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  min-width:0;
+  min-height:302px;
+}
+#connectionStrip .mission-seo-top .mission-seo-combined-svg {
+  display:block;
+  flex:1 1 auto;
+  box-sizing:border-box;
+  width:100%;
+  height:292px;
+  min-height:265px;
+  overflow:visible;
+}
+#connectionStrip .mission-seo-top .mission-seo-combined-grid {
+  stroke:#71583a;
+  stroke-width:1;
+  vector-effect:non-scaling-stroke;
+}
+#connectionStrip .mission-seo-top .mission-seo-combined-series.mission-seo-plot-impressions {
+  --seo-line:#f5c76f;
+}
+#connectionStrip .mission-seo-top .mission-seo-combined-series.mission-seo-plot-clicks {
+  --seo-line:#73d1a2;
+}
+#connectionStrip .mission-seo-top .mission-seo-combined-series.mission-seo-plot-ctr {
+  --seo-line:#7bbcff;
+}
+#connectionStrip .mission-seo-top .mission-seo-combined-series.mission-seo-plot-position {
+  --seo-line:#d2a1ff;
+}
+#connectionStrip .mission-seo-top .mission-seo-combined-line {
+  fill:none;
+  stroke:var(--seo-line);
+  stroke-width:3;
+  vector-effect:non-scaling-stroke;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+#connectionStrip .mission-seo-top .mission-seo-plot-clicks .mission-seo-combined-line {
+  stroke-dasharray:10 4;
+}
+#connectionStrip .mission-seo-top .mission-seo-plot-ctr .mission-seo-combined-line {
+  stroke-dasharray:3 6;
+}
+#connectionStrip .mission-seo-top .mission-seo-combined-series circle {
+  fill:var(--seo-line);
+  stroke:#261c12;
+  stroke-width:1;
+}
+#connectionStrip .mission-seo-top .mission-seo-combined-empty {
+  display:flex;
+  flex:1 1 auto;
+  align-items:center;
+  justify-content:center;
+  min-height:265px;
+  padding:14px 10px;
+  color:#dec398;
+  font:800 14px/1.45 Arial,sans-serif;
+  text-align:center;
+}
+#connectionStrip .mission-seo-top .mission-seo-trends-combined .mission-seo-plot-dates {
+  margin-top:6px;
+  padding-top:5px;
+  border-top:1px solid #675034;
+  color:#e9d09f;
+}
+#connectionStrip .mission-seo-top .mission-seo-side-values {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:repeat(4,minmax(0,1fr));
+  gap:6px;
+  min-width:0;
+  min-height:302px;
+}
+#connectionStrip .mission-seo-top .mission-seo-side-row {
+  --seo-line:#f5c76f;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-areas:"name box" "scale scale" "match match";
+  align-items:center;
+  gap:3px 7px;
+  box-sizing:border-box;
+  min-width:0;
+  padding:8px 9px;
+  border:1px solid #745d3c;
+  border-left:4px solid var(--seo-line);
+  border-radius:6px;
+  background:#382a1a;
+}
+#connectionStrip .mission-seo-top .mission-seo-side-row.mission-seo-plot-impressions {--seo-line:#f5c76f}
+#connectionStrip .mission-seo-top .mission-seo-side-row.mission-seo-plot-clicks {--seo-line:#73d1a2}
+#connectionStrip .mission-seo-top .mission-seo-side-row.mission-seo-plot-ctr {--seo-line:#7bbcff}
+#connectionStrip .mission-seo-top .mission-seo-side-row.mission-seo-plot-position {--seo-line:#d2a1ff}
+#connectionStrip .mission-seo-top .mission-seo-side-row > strong {
+  grid-area:name;
+  display:flex;
+  align-items:center;
+  gap:5px;
+  min-width:0;
+  color:var(--seo-line);
+  font:900 13px/1.2 Arial,sans-serif;
+  overflow-wrap:anywhere;
+}
+#connectionStrip .mission-seo-top .mission-seo-side-row > strong i {
+  flex:0 0 8px;
+  width:8px;height:8px;
+  background:var(--seo-line);
+  border-radius:50%;
+}
+#connectionStrip .mission-seo-top .mission-seo-side-box {
+  grid-area:box;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:1px;
+}
+#connectionStrip .mission-seo-top .mission-seo-side-box small {
+  font:800 9px/1.05 Arial,sans-serif;
+  letter-spacing:.6px;
+  color:#dcc7a2;
+}
+#connectionStrip .mission-seo-top .mission-seo-side-box b {
+  color:#fff1ca;
+  font:900 19px/1.1 Arial,sans-serif;
+  font-variant-numeric:tabular-nums;
+}
+#connectionStrip .mission-seo-top .mission-seo-side-scale {
+  grid-area:scale;
+  display:flex;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:3px;
+  color:#e6d2ac;
+  font:700 11px/1.3 Arial,sans-serif;
+}
+#connectionStrip .mission-seo-top .mission-seo-side-match {
+  grid-area:match;
+  color:#9bd5b0;
+  font:800 11px/1.2 Arial,sans-serif;
+}
+#connectionStrip .mission-seo-top .mission-seo-side-match.differs {
+  color:#f2c06f;
+}
+#connectionStrip .mission-seo-top .mission-seo-reconcile {
+  padding:7px 9px;
+  margin:9px 0 0;
+  border-left:3px solid #e0ab61;
+  background:#4a3120;
+  color:#ffdea3;
+  font:800 12px/1.35 Arial,sans-serif;
+}
+#connectionStrip .mission-seo-top .mission-seo-trends-combined .mission-seo-trend-explainer {
+  margin-top:9px;
+}
+@media(max-width:1580px) and (min-width:1231px) {
+  #connectionStrip .mission-seo-top .mission-seo-trends-combined .mission-seo-combined-layout {
+    grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);
+    gap:7px;
+  }
+  #connectionStrip .mission-seo-top .mission-seo-side-row {
+    padding:6px 6px;
+  }
+  #connectionStrip .mission-seo-top .mission-seo-side-box b {
+    font-size:17px;
+  }
+  #connectionStrip .mission-seo-top .mission-seo-side-scale {
+    font-size:10px;
+  }
+}
+@media(max-width:640px) {
+  #connectionStrip .mission-seo-top .mission-seo-trends-combined .mission-seo-combined-layout {
+    grid-template-columns:minmax(0,1fr);
+  }
+  #connectionStrip .mission-seo-top .mission-seo-combined-main,
+  #connectionStrip .mission-seo-top .mission-seo-side-values {
+    min-height:210px;
+  }
+  #connectionStrip .mission-seo-top .mission-seo-side-values {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    grid-template-rows:auto;
+  }
+}
