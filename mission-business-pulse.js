@@ -106,6 +106,35 @@
   function meter(title, value, note = '') {
     return `<span class="mission-intel-meter"><small>${escape(title)}</small><b>${escape(value)}</b>${note ? '<em>'+escape(note)+'</em>' : ''}</span>`;
   }
+  // Only verified dated Wix page views or explicitly historical Radio.co data.
+  function pulseLineGraph(key) {
+    const titles={radio:'OUTLAW RADIO PAGE VIEWS',music:'MUSIC PAGE VIEWS',store:'TRADING POST PAGE VIEWS',book:'BOOK PAGE VIEWS'};
+    const dated=snapshot.interests.status==='ok'?snapshot.interests.data?.trend:null;
+    let points=[],source='',granularity='';
+    if(dated?.status==='reported'&&dated?.available?.[key]===true) {
+      points=(dated.points||[]).filter(p=>typeof p.date==='string'&&measurable(p[key])).map(p=>({date:p.date,value:p[key]}));
+      source='Wix page views · Selected dates · Not sales, music plays or listeners';
+      granularity=dated.granularity==='week'?'WEEKLY':'DAILY';
+    } else if(key==='radio'&&snapshot.radio.status==='ok') {
+      points=(snapshot.radio.data?.rows||[]).filter(p=>p.coverage==='daily-row'&&measurable(p.connections))
+        .map(p=>({date:p.date,value:p.connections}));
+      source='Radio.co imported CSV · UTC · Historical, not live · Different dates';
+      granularity='IMPORTED DAILY';
+    }
+    const title=key==='radio'&&source.startsWith('Radio.co')?'STREAM CONNECTIONS':titles[key];
+    const chart=points.length>=2&&typeof trendChart==='function'
+      ?trendChart(points.map(p=>p.value),title):'<div class="mission-pulse-empty"><b>N/A</b><span>At least two verified dated values needed</span></div>';
+    const dateLabel=value=>/^\d{4}-\d{2}-\d{2}$/.test(value)
+      ?new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',timeZone:'UTC'}).format(new Date(value+'T12:00:00Z')):value;
+    const first=points.length?dateLabel(points[0].date):'N/A';
+    const last=points.length?dateLabel(points[points.length-1].date):'N/A';
+    const axis=points.length>=2?'<div class="mission-pulse-axis"><span>'+escape(first)+'</span><b>'+escape(granularity)+'</b><span>'+escape(last)+'</span></div>':'';
+    return '<aside class="mission-pulse-line" aria-label="'+escape(title)+' historical trend">'
+      +'<div class="mission-pulse-line-head"><strong>'+escape(title)+'</strong><small>LINE GRAPH</small></div>'
+      +chart+axis+'<p class="mission-pulse-line-source">'+escape(source||'Wix historical page views not yet available · N/A')+'</p></aside>';
+  }
+
+
   function linked(path) {
     try {
       return new URL(String(path || ''), 'https://docjaks.com').pathname.replace(/\/+$/, '') || '/';
@@ -135,12 +164,16 @@
         <div><small>BOOK · CHAPTER 1</small><h3>The Wooden Token</h3></div>
         ${statusLight(color,color.toUpperCase())}
       </header>
+      <div class="mission-intel-overview">
       <div class="mission-intel-meters mission-intel-4">
         ${meter('Page views',show(interest?.views))}
         ${meter('Visitors',show(visitors))}
         ${meter('Chapter clicks',show(clicks))}
         ${meter('Wix book units',show(bookUnits))}
       </div>
+        ${pulseLineGraph('book')}
+      </div>
+
       <div class="mission-intel-actions">
         <button type="button" data-view="Website Analytics">Book details ›</button>
         <a href="https://www.docjaks.com/_files/ugd/cf21c8_27ee63f049e5479b8d37c885f638bb2b.pdf" target="_blank" rel="noopener noreferrer">Chapter 1 ↗</a>
@@ -173,12 +206,16 @@
         <div><small>MUSIC · ALBUMS &amp; SONGS</small><h3>Music</h3></div>
         ${statusLight(color,color.toUpperCase())}
       </header>
+      <div class="mission-intel-overview">
       <div class="mission-intel-meters">
         ${meter('Music page views',show(pageViews),'Excludes Outlaw Radio page')}
         ${meter('Music-only visitors','N/A','Not separately verified')}
         ${meter('Wix named album units',show(albumUnits),'Approved paid web orders')}
         ${meter('Song preview plays','N/A','Player tracking not connected')}
       </div>
+        ${pulseLineGraph('music')}
+      </div>
+
       <p class="mission-intel-muted">Page views do not prove music was played. Album units exclude unverified external sales and bundles not identifiable as albums.</p>
       <div class="mission-intel-actions">
         <button type="button" data-view="Website Analytics">Music website details ›</button>
@@ -201,11 +238,15 @@
         <div><small>STORE · WHAT SOLD</small><h3>Trading Post</h3></div>
         ${statusLight(color,color.toUpperCase())}
       </header>
+      <div class="mission-intel-overview">
       <div class="mission-intel-meters mission-intel-3">
         ${meter('Paid orders',show(ready?data.paidOrders:null))}
         ${meter('Items sold',show(ready?data.units:null))}
         ${meter('Item sales',money(ready?data.itemSalesCents:null))}
       </div>
+        ${pulseLineGraph('store')}
+      </div>
+
       ${products}
       <div class="mission-intel-actions">
         <button type="button" data-view="Website Analytics">Sales details ›</button>
@@ -265,12 +306,16 @@
         <div><small>RADIO · 51.50</small><h3>Outlaw Radio 5150</h3></div>
         ${statusLight(color,color.toUpperCase())}
       </header>
+      <div class="mission-intel-overview">
       <div class="mission-intel-meters">
         ${meter('Website page views',show(views))}
         ${meter('Station broadcast',liveText,liveNote)}
         ${meter('Stream connections',show(report?stats.connections:null),'Last imported CSV')}
         ${meter('Avg. listening time',audioTime(report?stats.averageDurationRaw:null),'Last imported CSV')}
       </div>
+        ${pulseLineGraph('radio')}
+      </div>
+
       ${playing}
       <p class="mission-intel-muted">Website visitors: <strong>${show(visitors)}</strong> · Live listener count: <strong>N/A</strong> (not connected)</p>
       ${snapshot.stationLive.status==='error'
