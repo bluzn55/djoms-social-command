@@ -162,35 +162,42 @@
         '<title>Google Search Console cumulative selected-period trends, four colored lines</title>'+
         grid+configs.map(renderSeries).join('')+'</svg>':
       '<div class="mission-seo-combined-empty">N/A · Need at least two Google-reported dates for one line graph.</div>';
+    // Compact color-keyed legend. Selected-period figures come from the same
+    // authoritative Google metrics used in the four boxes above.
     const side=configs.map(config=>{
       const scale=scales[config.key];
-      const average=(scale.low+scale.high)/2;
-      const boxLabel=scale.box!==null?config.format(scale.box):'N/A';
-      const matchLabel=scale.matches===true?'Matches box':scale.matches===false?'Daily totals differ':'Awaiting daily data';
-      return '<div class="mission-seo-side-row mission-seo-plot-'+config.style+'">'+
-        '<strong><i aria-hidden="true"></i>'+esc(config.label)+'</strong>'+
-        '<div class="mission-seo-side-box"><small>BOX</small><b>'+esc(boxLabel)+'</b></div>'+
-        '<div class="mission-seo-side-scale"><span>High '+esc(config.format(scale.high))+'</span>'+
-          '<span>Mid '+esc(config.format(average))+'</span>'+
-          '<span>Low '+esc(config.format(scale.low))+'</span></div>'+
-        '<small class="mission-seo-side-match'+(scale.matches===false?' differs':'')+'">'+esc(matchLabel)+'</small>'+
-      '</div>';
+      const boxLabel=scale.box===null?'N/A':config.format(scale.box);
+      const rangeLabel=scale.values.length?
+        'Line scale '+config.format(scale.low)+' to '+config.format(scale.high):
+        'No verified daily values';
+      return '<div class="mission-seo-wide-legend-item mission-seo-plot-'+config.style+'">'+
+        '<i class="mission-seo-wide-legend-color" aria-hidden="true"></i>'+
+        '<div class="mission-seo-wide-legend-copy"><strong>'+esc(config.label)+'</strong>'+
+          '<small>'+esc(rangeLabel)+'</small></div>'+
+        '<b class="mission-seo-wide-legend-value">'+esc(boxLabel)+'</b></div>';
     }).join('');
     const mismatch=configs.filter(config=>scales[config.key].matches===false);
     const reconcileNote=mismatch.length?
-      '<p class="mission-seo-reconcile">Google returned different daily and summary values for '+
-      esc(mismatch.map(config=>config.label).join(', '))+'. The line is not adjusted to fit the box.</p>':'';
-    return '<div class="mission-seo-trends mission-seo-trends-combined" role="group" aria-label="One combined Google Search graph with four actual-value scales">'+
-      '<div class="mission-seo-trends-heading"><strong>GOOGLE SEARCH · ONE GRAPH</strong><small>Selected-period progress</small></div>'+
+      '<p class="mission-seo-reconcile">Google daily values do not completely match the period totals for '+
+      esc(mismatch.map(config=>config.label).join(', '))+'. The graph uses reported daily history; '+
+      'the boxes retain Google’s summary figures.</p>':'';
+    return '<div class="mission-seo-trends mission-seo-trends-combined mission-seo-trends-wide" role="group" aria-label="Wide Google Search graph with four color-coded lines and selected-period values">'+
+      '<div class="mission-seo-trends-heading"><strong>GOOGLE SEARCH TRENDS</strong>'+
+        '<small>Same selected dates as the four boxes</small></div>'+
       '<div class="mission-seo-combined-layout">'+
-        '<div class="mission-seo-combined-main">'+sharedChart+
-          '<div class="mission-seo-plot-dates"><span>'+esc(formatDate(start))+'</span><span>'+esc(formatDate(end))+'</span></div>'+
+        '<div class="mission-seo-combined-main">'+
+          '<div class="mission-seo-wide-graph-caption">Four metrics · each line has its own scale</div>'+
+          sharedChart+
+          '<div class="mission-seo-plot-dates"><span>'+esc(formatDate(start))+'</span>'+
+            '<span>'+esc(formatDate(end))+'</span></div>'+
         '</div>'+
-        '<div class="mission-seo-side-values" aria-label="Colored line values, high middle low and box numbers">'+side+'</div>'+
+        '<div class="mission-seo-side-values mission-seo-wide-legend" aria-label="Four graph colors and Google selected-period values">'+
+          '<strong class="mission-seo-wide-legend-title">SELECTED PERIOD</strong>'+side+'</div>'+
       '</div>'+
       reconcileNote+
-      '<p class="mission-seo-trend-explainer">Count lines accumulate toward the box totals; CTR and position are running averages. '+
-        'Each color has a different value scale at right. Google may omit days; lower position is better.</p>'+
+      '<p class="mission-seo-trend-explainer">Faint lines mark relative levels for each color. '+
+        'Impressions and clicks accumulate; CTR and position are running averages. '+
+        'Flat zero lines can overlap. Google data may lag two days.</p>'+
     '</div>';
   }
 
@@ -229,7 +236,7 @@
           metric('Search CTR',connected?pct(metrics.ctr):'N/A')+
           metric('Avg. position',connected?dec(metrics.position):'N/A')+
        '</div>'+
-       (connected?'<div class="mission-seo-insights">'+searchTermPreview(report)+searchHistoryGraph(report)+'</div>':'')+
+       (connected?'<div class="mission-seo-insights mission-seo-insights-stacked">'+searchHistoryGraph(report)+searchTermPreview(report)+'</div>':'')+
        '<div class="mission-seo-actions">'+
          (connected?'<small>'+dataThrough+'</small>':'<small>'+esc(note)+'</small>')+
          (connected?'':'<a href="/api/meta/seo-connect" class="mission-seo-connect">Connect Search Console ↗</a>')+
