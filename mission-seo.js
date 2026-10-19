@@ -64,6 +64,72 @@
       '</p></section>';
   }
 
+  // Four genuine Google Search Console daily signals, each in its own band.
+  // Different units must not share an invented numeric Y axis.
+  function searchHistoryGraph(report) {
+    const rows=Array.isArray(report?.trend?.points)?report.trend.points:[];
+    const dayPattern=/^\d{4}-\d{2}-\d{2}$/;
+    const points=rows.filter(row=>row&&typeof row.date==='string'&&dayPattern.test(row.date))
+      .sort((a,b)=>a.date.localeCompare(b.date));
+    const first=points[0]?.date||null,last=points[points.length-1]?.date||null;
+    const dateLabel=value=>value?new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',timeZone:'UTC'})
+      .format(new Date(value+'T12:00:00Z')):'N/A';
+    const configs=[
+      {key:'impressions',label:'Impressions',style:'impressions',format:fmt},
+      {key:'clicks',label:'Google clicks',style:'clicks',format:fmt},
+      {key:'ctr',label:'Search CTR',style:'ctr',format:pct},
+      {key:'position',label:'Avg. position',style:'position',format:dec}
+    ];
+    const valid=v=>typeof v==='number'&&Number.isFinite(v)&&v>=0;
+    const totalDays=first&&last?Math.round((Date.parse(last+'T12:00:00Z')-Date.parse(first+'T12:00:00Z'))/86400000):0;
+    const chartWidth=428,chartHeight=55,pad=5,plotWidth=chartWidth-pad*2;
+    const graph=config=>{
+      const measurements=points.filter(row=>valid(row[config.key]));
+      if(totalDays<1||measurements.length<2)
+        return '<span class="mission-seo-plot-empty">N/A · insufficient daily history</span>';
+      const values=measurements.map(row=>row[config.key]);
+      const minimum=Math.min(...values),maximum=Math.max(...values);
+      const x=day=>pad+((Date.parse(day+'T12:00:00Z')-Date.parse(first+'T12:00:00Z'))/86400000)/totalDays*plotWidth;
+      const y=value=>maximum===minimum?chartHeight/2:
+        chartHeight-11-(value-minimum)/(maximum-minimum)*(chartHeight-22);
+      const segments=[];
+      let currentPoints=[],previousDate=null;
+      for(const row of measurements){
+        const dateTime=Date.parse(row.date+'T12:00:00Z');
+        if(previousDate!==null&&dateTime-previousDate>86400000){
+          if(currentPoints.length>1)segments.push(currentPoints);
+          currentPoints=[];
+        }
+        currentPoints.push([x(row.date),y(row[config.key])]);
+        previousDate=dateTime;
+      }
+      if(currentPoints.length>1)segments.push(currentPoints);
+      const seriesLines=segments.map(segment=>'<polyline points="'+segment.map(pair=>
+        pair.map(n=>n.toFixed(1)).join(',')).join(' ')+'"></polyline>').join('');
+      const lastPoint=measurements[measurements.length-1];
+      const lastX=x(lastPoint.date).toFixed(1),lastY=y(lastPoint[config.key]).toFixed(1);
+      const tip=esc(dateLabel(lastPoint.date)+' · '+config.label+': '+config.format(lastPoint[config.key]));
+      return '<svg class="mission-seo-plot-svg" viewBox="0 0 '+chartWidth+' '+chartHeight+'" preserveAspectRatio="none" aria-hidden="true">'+
+        '<line class="mission-seo-plot-grid" x1="5" y1="27.5" x2="423" y2="27.5"></line>'+
+        seriesLines+'<circle cx="'+lastX+'" cy="'+lastY+'" r="3.5"><title>'+tip+'</title></circle></svg>';
+    };
+    const lanes=configs.map(config=>{
+      const measurements=points.filter(row=>valid(row[config.key]));
+      const lastValue=measurements.length?measurements[measurements.length-1][config.key]:null;
+      return '<div class="mission-seo-plot-row mission-seo-plot-'+config.style+'">'+
+        '<div class="mission-seo-plot-label"><strong><i aria-hidden="true"></i>'+esc(config.label)+'</strong>'+
+        '<small>'+(lastValue===null?'N/A':'Latest day: '+esc(config.format(lastValue)))+'</small></div>'+
+        '<div class="mission-seo-plot-canvas">'+graph(config)+'</div></div>';
+    }).join('');
+    return '<aside class="mission-seo-trends" aria-label="Four verified Google Search daily line charts">'+
+      '<div class="mission-seo-trends-heading"><strong>GOOGLE SEARCH TRENDS</strong><small>4 colored daily lines</small></div>'+
+      '<div class="mission-seo-plot-rows">'+lanes+'</div>'+
+      '<div class="mission-seo-plot-dates"><span>'+esc(dateLabel(first))+'</span><span>'+esc(dateLabel(last))+'</span></div>'+
+      '<p class="mission-seo-trend-explainer">Each line has its own scale. Lower average position is better. '+
+        'Missing Google days are not counted as zero.</p>'+
+    '</aside>';
+  }
+
   function renderBar(element,report,selection,error) {
     const {light,label}=stateFor(report);
     const pending=!report&&!error;
@@ -99,7 +165,7 @@
           metric('Search CTR',connected?pct(metrics.ctr):'N/A')+
           metric('Avg. position',connected?dec(metrics.position):'N/A')+
        '</div>'+
-       (connected?searchTermPreview(report):'')+
+       (connected?'<div class="mission-seo-insights">'+searchTermPreview(report)+searchHistoryGraph(report)+'</div>':'')+
        '<div class="mission-seo-actions">'+
          (connected?'<small>'+dataThrough+'</small>':'<small>'+esc(note)+'</small>')+
          (connected?'':'<a href="/api/meta/seo-connect" class="mission-seo-connect">Connect Search Console ↗</a>')+
