@@ -7905,3 +7905,71 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     font-size:11px;
   }
 }
+
+
+/* LIVE BUSINESS RESULTS BADGE V1 · 2026-10-19.
+   Uses only verified paid online sales comparisons. Green/red do not claim
+   confirmed profit. Other business divisions are not required to qualify. */
+#connectionStrip .mission-direction-panel .mission-direction-verdict {
+  display:flex;
+  flex:0 1 264px;
+  flex-direction:column;
+  justify-content:center;
+  align-items:flex-start;
+  gap:4px;
+  min-width:195px;
+  max-width:290px;
+  box-sizing:border-box;
+  padding:10px 13px;
+  border:2px solid #c2a35c;
+  border-radius:8px;
+  background:#fff1cb;
+  color:#6b4b1e;
+  text-align:left;
+  white-space:normal;
+}
+#connectionStrip .mission-direction-panel .mission-direction-verdict small {
+  color:inherit;
+  font:900 11px/1.2 Arial,sans-serif;
+  letter-spacing:.7px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-verdict strong {
+  color:inherit;
+  font:900 18px/1.15 Arial,sans-serif;
+  overflow-wrap:anywhere;
+}
+#connectionStrip .mission-direction-panel .mission-direction-verdict span {
+  color:#705632;
+  font:800 11px/1.35 Arial,sans-serif;
+  overflow-wrap:anywhere;
+}
+#connectionStrip .mission-direction-panel .mission-direction-verdict.green {
+  border-color:#4e9662;
+  background:#e1f4e3;
+  color:#236b39;
+}
+#connectionStrip .mission-direction-panel .mission-direction-verdict.red {
+  border-color:#c46e5a;
+  background:#ffebdf;
+  color:#a03725;
+}
+#connectionStrip .mission-direction-panel .mission-direction-verdict.yellow {
+  border-color:#c2a35c;
+  background:#fff1cb;
+  color:#76541e;
+}
+@media(max-width:1120px){
+  #connectionStrip .mission-direction-panel .mission-direction-verdict {
+    flex:1 1 195px;
+    max-width:none;
+  }
+}
+@media(max-width:650px){
+  #connectionStrip .mission-direction-panel .mission-direction-verdict {
+    flex:1 1 100%;
+    min-width:0;
+    width:100%;
+    max-width:none;
+    order:3;
+  }
+}
