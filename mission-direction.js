@@ -186,6 +186,9 @@
     // reliable actions. Direction is limited to measured web momentum.
     return {overall:'BUSINESS RESULT NOT YET CONFIRMED',
       websiteDirection,directionColor,working,concern,next,nextHref,
+      // Percentages always come from the matching Wix reporting periods.
+      visitorDelta:isTrend(visitors)?visitors.percentChange:null,
+      stayDelta:isTrend(stay)?stay.percentChange:null,
       coverage,actionEvidence,warnings,
       notes:[
         'Visitor growth, time on site and search appearances are different measurements. No platform totals are added together.',
@@ -322,11 +325,23 @@
     const position=category==='forward'?16:category==='backward'?84:50;
     const caption=category==='forward'?'IMPROVING':category==='backward'?'DECLINING':
       category==='watch'?'WATCH · MIXED SIGNALS':'NOT ENOUGH DATA';
+    const visitorDelta=typeof summary?.visitorDelta==='number'&&
+      Number.isFinite(summary.visitorDelta)?summary.visitorDelta:null;
+    const stayDelta=typeof summary?.stayDelta==='number'&&
+      Number.isFinite(summary.stayDelta)?summary.stayDelta:null;
+    const deltaState=visitorDelta===null?'unknown':visitorDelta>0?'up':
+      visitorDelta<0?'down':'steady';
+    const visitorText=visitorDelta===null?'N/A':percent(visitorDelta);
+    const stayText=stayDelta===null?'N/A':percent(stayDelta);
     const meaning='Website momentum: '+caption+
-      '. Based on the selected-period comparison of Wix visitors and average stay. This does not establish business profit.';
+      '. Visitor change: '+visitorText+'. Average-stay change: '+stayText+
+      '. Compared with the preceding equal-length Wix reporting period. This does not establish business profit.';
     return '<div class="mission-direction-meter '+category+'" role="img" aria-label="'+esc(meaning)+'">'+
       '<div class="mission-direction-meter-top"><strong>WEBSITE MOMENTUM</strong>'+
-        '<span>'+esc(caption)+'</span></div>'+
+        '<span class="mission-direction-meter-delta '+deltaState+'">'+
+          '<b>'+esc(visitorText)+'</b><small>VISITORS</small></span></div>'+
+      '<div class="mission-direction-meter-sub"><span>'+esc(caption)+'</span>'+
+        '<small>AVG. STAY '+esc(stayText)+'</small></div>'+
       '<div class="mission-direction-meter-rail" style="--mission-direction-needle:'+position+'%">'+
         '<span class="mission-direction-meter-pointer" aria-hidden="true"></span>'+
       '</div>'+
