@@ -469,10 +469,16 @@ function renderConnectionStrip() {
             ? site.visitorTypes.find(row=>row?.type==='returning_visitor') : null;
           const returningVisitors=returningRow && validNumber(returningRow.visitors)
             ? returningRow.visitors : null;
+          // Average page views per distinct visitor across the selected dates.
+          // This is not the same measurement as pages per session.
+          const pagesPerVisitor=validNumber(site.visitors)&&site.visitors>0&&
+            validNumber(site.pageViews)
+            ?(site.pageViews/site.visitors).toFixed(2):'N/A';
           const counters=[
             ['Visitors',site.visitors,'visitors'],
             ['Returning visitors',returningVisitors,'returningVisitors'],
             ['Page views',site.pageViews,'pageViews'],
+            ['Pages / visitor',pagesPerVisitor,'pagesPerVisitor'],
             ['Avg. stay',validNumber(site.avgTimeSeconds) ? wTime(site.avgTimeSeconds) : 'N/A','avgTimeSeconds'],
             ['Bounce rate',validNumber(site.bounceRate) ? wPct(site.bounceRate) : 'N/A','bounceRate'],
             ['Contact Actions',leads,'contactActions']
@@ -499,9 +505,9 @@ function renderConnectionStrip() {
               <span>Wix tracks visitors and activity from Google, social media, direct links, and other sources.</span>
             </div>
             <div class="mission-web-gauges" aria-label="Website figures for ${esc(rangeCaption)}">
-              ${counters.map(([title,value,key])=>`<div class="mission-web-gauge mission-web-trend-${missionMetricTrendColor(site.metricComparisons?.[key]||(key==='visitors'?site.visitorComparison:null),title)}${title==='Bounce rate'?' mission-web-bounce':''}${title==='Visitors'?' mission-web-visitors':''}">
+              ${counters.map(([title,value,key])=>`<div class="mission-web-gauge mission-web-trend-${missionMetricTrendColor(site.metricComparisons?.[key]||(key==='visitors'?site.visitorComparison:null),title)}${title==='Bounce rate'?' mission-web-bounce':''}${title==='Visitors'?' mission-web-visitors':''}${title==='Pages / visitor'?' mission-web-depth':''}"${title==='Pages / visitor'?' title="Page views divided by unique visitors in the selected period"':''}>
                 <small>${esc(title)}</small>
-                <div class="mission-web-value-line"><strong>${esc(compactMetric(value))}</strong>${renderVisitorChangeGauge(site.metricComparisons?.[key]||(key==='visitors'?site.visitorComparison:null),title)}</div>
+                <div class="mission-web-value-line"><strong>${esc(compactMetric(value))}</strong>${title==='Pages / visitor'?'':renderVisitorChangeGauge(site.metricComparisons?.[key]||(key==='visitors'?site.visitorComparison:null),title)}</div>
                 ${title==='Bounce rate'?renderBounceMeter(site.bounceRate):''}
               </div>`).join('')}
             </div>
