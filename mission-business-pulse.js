@@ -107,6 +107,7 @@
     const value=snapshot.stories.status==='ok'?snapshot.stories.data?.blog:null;
     return value?.status==='connected'&&value.post?.title?value.post:null;
   }
+
   function syncPorchRecentPost(blog) {
     if(!blog)return;
     const meters=blog.querySelector('.mission-intel-meters');
@@ -120,7 +121,15 @@
       meters.append(tile);
     }
     const post=latestPorchPost();
-    tile.innerHTML='<small>Latest published post</small><b>'+
+    // The underlying verified Wix Blog view counter is a page-open metric,
+    // not a guarantee that the visitor read the entire article.
+    const third=meters.querySelector('.mission-intel-meter:nth-child(3)');
+    if(third) third.innerHTML='<small>Post views</small><b>'+
+      (Number.isSafeInteger(post?.views)&&post.views>=0?escape(show(post.views)):'N/A')+
+      '</b><em>Wix · Lifetime opens</em>';
+    const newLabel=post?.isNew===true
+      ?'<span class="mission-story-new" title="Published within the last 7 days">NEW POST</span>':'';
+    tile.innerHTML='<small>Latest published post '+newLabel+'</small><b>'+
       (post?escape(post.title):snapshot.stories.status==='loading'?'Checking…':'N/A')+
       '</b>'+(post?'<em>'+escape(storyDate(post.publishedAt))+'</em>':'');
     const actions=blog.querySelector('.mission-intel-actions');
@@ -149,16 +158,31 @@
     const source=snapshot.stories.status==='ok'?snapshot.stories.data?.emberHall:null;
     const ready=source?.status==='connected';
     const posts=ready&&Array.isArray(source.posts)?source.posts.slice(0,2):[];
-    const color=ready?'green':snapshot.stories.status==='error'?'red':'yellow';
-    const label=ready?'LIVE':snapshot.stories.status==='loading'?'CHECKING':'SETUP';
-    const body=posts.length?posts.map(item=>
-      '<div class="mission-ember-post">'+
-        '<small>'+escape(item.category||'Ember Hall')+' · '+escape(storyDate(item.publishedAt))+'</small>'+
-        '<strong>'+escape(item.title||'Untitled')+'</strong>'+
+    const pending=Number.isSafeInteger(source?.awaitingApproval)?source.awaitingApproval:null;
+    const newSubmissions=Number.isSafeInteger(source?.newSubmissions7d)?source.newSubmissions7d:null;
+    const color=ready?(pending!==null&&pending>0?'yellow':'green')
+      :snapshot.stories.status==='error'?'red':'yellow';
+    const label=ready?(pending!==null&&pending>0?'REVIEW':'LIVE'):
+      snapshot.stories.status==='loading'?'CHECKING':'SETUP';
+    const formatted=value=>Number.isSafeInteger(value)&&value>=0?show(value):'N/A';
+    const body=posts.length?posts.map(item=>{
+      const isNew=item.isNew===true
+        ?'<span class="mission-story-new" title="Published within the last 7 days">NEW POST</span>':'';
+      const link=typeof item.url==='string'&&
+        /^https:\/\/www\.docjaks\.com\/emberhallposts\/[a-z0-9-]+$/.test(item.url)
+        ?item.url:'https://www.docjaks.com/ember-hall';
+      return '<div class="mission-ember-post">'+
+        '<div class="mission-ember-post-top"><small>'+
+          escape(item.category||'Ember Hall')+' · '+escape(storyDate(item.publishedAt))+
+          '</small>'+isNew+'</div>'+
+        '<a class="mission-ember-post-title" target="_blank" rel="noopener noreferrer" href="'+escape(link)+'">'+
+          escape(item.title||'Untitled')+' ↗</a>'+
         '<span>By '+escape(item.author||'Contributor')+'</span>'+
         '<p>'+escape(item.excerpt||'No description provided.')+'</p>'+
-      '</div>'
-    ).join(''):
+        '<div class="mission-ember-views"><small>Post page views</small><b>'+formatted(item.views)+'</b>'+
+        '<span>'+escape(item.viewsPeriod||'Wix reporting unavailable')+'</span></div>'+
+      '</div>';
+    }).join(''):
       '<div class="mission-ember-empty">'+(ready?
         'No approved, published Ember Hall posts yet.':
         snapshot.stories.status==='loading'?'Checking approved Ember Hall posts…':
@@ -168,8 +192,12 @@
         '<div><small>COMMUNITY · LATEST STORIES</small><h3>Ember Hall</h3></div>'+
         statusLight(color,label)+
       '</header>'+
+      '<div class="mission-ember-approval-summary" aria-label="Ember Hall submission status">'+
+        '<span><strong>New submissions · 7d</strong><b>'+formatted(newSubmissions)+'</b></span>'+
+        '<span><strong>Awaiting approval</strong><b>'+formatted(pending)+'</b></span>'+
+      '</div>'+
       '<div class="mission-ember-grid">'+body+'</div>'+
-      '<p class="mission-intel-muted">Two most recent approved, published posts · All dates</p>'+
+      '<p class="mission-intel-muted">Latest two approved posts. NEW means published within 7 days. Page views do not prove a full read; N/A means no verified individual-page count.</p>'+
       '<div class="mission-intel-actions">'+
         '<a href="https://www.docjaks.com/ember-hall" target="_blank" rel="noopener noreferrer">Visit Ember Hall ↗</a>'+
       '</div>'+
