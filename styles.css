@@ -5952,3 +5952,39 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     padding:10px;
   }
 }
+
+
+/* EMBER HALL REVIEW LINK · pending count opens the exact Wix CMS collection. */
+#missionBusinessPulse .mission-ember-approval-summary > a.mission-ember-approval-link {
+  display:flex;
+  box-sizing:border-box;
+  min-width:0;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:11px 15px;
+  border:1px solid #bd8d3b;
+  border-radius:8px;
+  background:#fff8e6;
+  color:#503716;
+  text-decoration:none;
+  cursor:pointer;
+}
+#missionBusinessPulse .mission-ember-approval-summary > a.mission-ember-approval-link strong {
+  font:900 15px/1.25 Arial,sans-serif;
+  color:#503716;
+}
+#missionBusinessPulse .mission-ember-approval-summary > a.mission-ember-approval-link b {
+  font:900 23px/1 Arial,sans-serif;
+  color:#2d2016;
+  font-variant-numeric:tabular-nums;
+}
+#missionBusinessPulse .mission-ember-approval-summary > a.mission-ember-approval-link:hover {
+  background:#f5e0b7;
+  border-color:#99661a;
+  box-shadow:inset 0 0 0 1px #be8d42;
+}
+#missionBusinessPulse .mission-ember-approval-summary > a.mission-ember-approval-link:focus-visible {
+  outline:3px solid #26694c;
+  outline-offset:2px;
+}
