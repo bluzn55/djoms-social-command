@@ -34,24 +34,48 @@
     const last=first&&selectedEnd&&selectedEnd>=first?selectedEnd:reportedLast;
     const maxSpan=first&&last?Math.max(1,dayNum(last)-dayNum(first)):1;
     const xFor=date=>L+(Math.max(0,Math.min(maxSpan,dayNum(date)-dayNum(first)))/maxSpan)*plotWidth;
-    const W=1200,H=356,L=65,R=20,T=24,B=52;
+    const W=1200,H=456,L=72,R=22,T=24,B=54;
     const plotWidth=W-L-R,plotHeight=H-T-B;
     const measurements=configs.flatMap(config=>rows
       .map(row=>valid(row[config.key])?config.value(row[config.key]):null).filter(valid));
     const peak=Math.max(0,...measurements);
+    // Deliberately non-linear: 0..10 occupies slightly more than half the
+    // chart, allowing 1, 2, 3 etc. to be read even when bounce is near 100%.
+    // Above 10, the graph compresses the higher numbers in a clearly marked
+    // second scale. Every point uses the same piecewise mapping.
+    const expanded=peak>10;
     const increments=[10,20,50,100,200,500,1000,2000,5000,10000,20000,50000,100000,200000,500000,1000000];
-    const step=increments.find(v=>Math.ceil(peak/v)<=7)||
-      Math.ceil(peak/7000000)*1000000;
-    const limit=Math.max(step,Math.ceil(peak/step)*step);
-    const yFor=value=>T+plotHeight-(value/limit)*plotHeight;
+    const highStep=increments.find(v=>Math.ceil(Math.max(20,peak)/v)<=5)||
+      Math.ceil(peak/5000000)*1000000;
+    const highLimit=expanded?Math.max(20,Math.ceil(peak/highStep)*highStep):10;
+    const lowerHeight=plotHeight*(expanded?.58:1);
+    const upperHeight=plotHeight-lowerHeight;
+    const dividerY=T+upperHeight;
+    const yFor=value=>!expanded
+      ?T+plotHeight-(value/10)*plotHeight
+      :value<=10
+        ?dividerY+(10-value)/10*lowerHeight
+        :dividerY-(value-10)/(highLimit-10)*upperHeight;
     const num=value=>new Intl.NumberFormat('en-US',{maximumFractionDigits:0}).format(value);
     const yTicks=[];
-    for(let n=0;n<=limit+step/1000;n+=step) {
-      const y=yFor(n).toFixed(1);
-      yTicks.push('<g><line class="djoms-wix-chart-grid" x1="'+L+'" x2="'+(W-R)+
-        '" y1="'+y+'" y2="'+y+'"></line><text class="djoms-wix-chart-y-label" x="'+(L-12)+
-        '" y="'+(+y+5).toFixed(1)+'" text-anchor="end">'+num(n)+'</text></g>');
+    const tick=(value,kind)=>{
+      const y=yFor(value).toFixed(1);
+      yTicks.push('<g><line class="djoms-wix-chart-grid djoms-wix-chart-'+kind+
+        '" x1="'+L+'" x2="'+(W-R)+'" y1="'+y+'" y2="'+y+'"></line>'+
+        '<text class="djoms-wix-chart-y-label'+(value===10?' djoms-wix-chart-ten':'')+
+        '" x="'+(L-12)+'" y="'+(+y+5).toFixed(1)+'" text-anchor="end">'+num(value)+
+        '</text></g>');
+    };
+    for(let n=0;n<=10;n++)tick(n,n%2===0?'low-major':'low-minor');
+    if(expanded)for(let n=highStep;n<=highLimit+highStep/1000;n+=highStep) {
+      if(n>10)tick(n,'high');
     }
+    const tintedBand=expanded?
+      '<rect class="djoms-wix-chart-low-zone" x="'+L+'" y="'+dividerY.toFixed(1)+
+      '" width="'+plotWidth+'" height="'+lowerHeight.toFixed(1)+'"></rect>':'';
+    const scaleDivider=expanded?
+      '<line class="djoms-wix-chart-zoom-divider" x1="'+L+'" x2="'+(W-R)+
+      '" y1="'+dividerY.toFixed(1)+'" y2="'+dividerY.toFixed(1)+'"></line>':'';
     const xTicks=[];
     if(first&&last) {
       const span=Math.max(0,dayNum(last)-dayNum(first));
@@ -93,7 +117,11 @@
           '" text-anchor="'+anchor+'">'+esc(label)+'</text></g>');
       });
     }
-    const curves=configs.map(config=>{
+    // Paint page views last so the yellow curve stays on top when two
+    // metrics have identical values (as on Oct 14-16).
+    const paintingOrder=configs.filter(c=>c.key!=='pageViews')
+      .concat(configs.filter(c=>c.key==='pageViews'));
+    const curves=paintingOrder.map(config=>{
       const sections=[];
       let part=[],previous=null,lastPoint=null;
       const interval=granularity==='week'?7:1;
@@ -119,21 +147,32 @@
           ' '+yFor(point.value).toFixed(1)).join(' ');
         return '<path class="djoms-wix-chart-line" d="'+path+'"></path>';
       }).join('');
-      const dot=lastPoint?'<circle cx="'+xFor(lastPoint.date).toFixed(1)+
-        '" cy="'+yFor(lastPoint.value).toFixed(1)+'" r="4"><title>'+
-        esc(config.name+' · '+dateText(lastPoint.date)+' · '+
-          (config.key==='bounceRate'?(lastPoint.value).toFixed(1)+'%':
-           config.key==='avgStaySeconds'?(lastPoint.value).toFixed(0)+' sec':num(lastPoint.value)))+
+      const dot=config.key!=='pageViews'&&lastPoint?'<circle cx="'+
+        xFor(lastPoint.date).toFixed(1)+'" cy="'+yFor(lastPoint.value).toFixed(1)+
+        '" r="4"><title>'+esc(config.name+' · '+dateText(lastPoint.date)+' · '+
+          (config.key==='bounceRate'?lastPoint.value.toFixed(1)+'%':
+           config.key==='avgStaySeconds'?lastPoint.value.toFixed(0)+' sec':num(lastPoint.value)))+
         '</title></circle>':'';
+      const views=config.key==='pageViews'?rows.filter(row=>valid(row.pageViews)):[];
+      const every=Math.max(1,Math.ceil(views.length/14));
+      const viewPoints=views.map((point,index)=>{
+        const px=xFor(point.date).toFixed(1),py=yFor(point.pageViews).toFixed(1);
+        const label=index%every===0||index===views.length-1
+          ?'<text class="djoms-wix-chart-view-number" x="'+px+'" y="'+
+            (Number(py)-12).toFixed(1)+'" text-anchor="middle">'+num(point.pageViews)+'</text>':'';
+        return '<circle class="djoms-wix-chart-view-dot" cx="'+px+'" cy="'+py+
+          '" r="5"><title>'+esc(dateText(point.date)+' · Page views: '+num(point.pageViews))+
+          '</title></circle>'+label;
+      }).join('');
       return '<g class="djoms-wix-chart-series djoms-wix-chart-'+config.style+'">'+
-        paths+dot+'</g>';
+        paths+dot+viewPoints+'</g>';
     }).join('');
     const ready=trend.status==='reported'&&rows.length>=2;
     const illustration=ready?
       '<svg class="djoms-wix-chart-svg" viewBox="0 0 '+W+' '+H+
-        '" preserveAspectRatio="none" role="img" aria-label="Wix website visitors, returning visitors, page views, average stay and bounce rate against actual calendar dates">'+
-        '<title>Wix website activity by '+granularity+'; shared numbered scale. Visitor counts are specific to each period.</title>'+
-        yTicks.join('')+
+        '" preserveAspectRatio="none" role="img" aria-label="Wix website activity with expanded vertical values from zero to ten, and compressed larger values. Yellow page views are labeled at each marked date.">'+
+        '<title>Wix website activity by '+granularity+'; vertical scale expands values 0 through 10, then changes above 10. Visitor counts are specific to each period.</title>'+
+        tintedBand+yTicks.join('')+scaleDivider+
         '<line class="djoms-wix-chart-axis" x1="'+L+'" y1="'+T+'" x2="'+L+'" y2="'+(H-B)+'"></line>'+
         '<line class="djoms-wix-chart-axis" x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'"></line>'+
         xTicks.join('')+curves+'</svg>':
@@ -145,13 +184,15 @@
     return '<div class="djoms-wix-chart" role="group" aria-label="Full-width dated Wix website activity graph">'+
       '<div class="djoms-wix-chart-header"><strong>WIX WEBSITE ACTIVITY · TRENDS</strong>'+
         '<small>'+esc(granularity==='week'?'Weekly measurements':'Daily measurements')+
-        ' · numbered scale: '+num(step)+' per line</small></div>'+
+        (expanded?' · 0–10 expanded (steps of 1); above 10 in steps of '+num(highStep):
+          ' · 0–10 scale (steps of 1)')+'</small></div>'+
       '<div class="djoms-wix-chart-legend-row">'+legend+
         '<span class="djoms-wix-chart-not-plotted">Contact Actions: no dated series</span></div>'+
       '<div class="djoms-wix-chart-scroll">'+illustration+'</div>'+
-      '<p class="djoms-wix-chart-note">Shared vertical scale: people, page views, seconds of average stay, and bounce percentage points. '+
-        'These have different units. A day or week measures its own visitors; do not add them to calculate unique visitors for the entire selected period. '+
-        'Unavailable points are not shown as zero.</p>'+
+      '<p class="djoms-wix-chart-note"><strong>Expanded 0–10 scale:</strong> The bottom section has extra height so small values are readable. '+
+        'The scale changes at 10, so the spacing is intentionally not uniform. Yellow labels are actual Page Views for each date. '+
+        'The lines use different units (visitors, views, seconds, %); never add date-bucket visitors to claim unique visitors for the whole period. '+
+        'Missing observations are not shown as zero.</p>'+
     '</div>';
   }
   window.djomsRenderWixChart=chart;
