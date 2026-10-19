@@ -64,7 +64,7 @@
         if(dates[dates.length-1]!==last)dates.push(last);
       }else {
         dates.push(first);
-        const month=new Date(Date.UTC(Number(first.slice(0,4)),Number(first.slice(5,7)),1));
+        const month=new Date(Date.UTC(Number(first.slice(0,4)),Number(first.slice(5,7))-1,1));
         month.setUTCMonth(month.getUTCMonth()+1);
         for(let i=0;i<14;i++) {
           const candidate=month.toISOString().slice(0,10);
