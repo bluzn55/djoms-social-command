@@ -6641,3 +6641,122 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     font-size:11px;
   }
 }
+
+
+/* DJOMS GOOGLE SEO NUMBERED AXES WITHOUT SIDEBAR · October 2026
+   One full-width graph, one honest shared numerical axis, dated ticks.
+   No duplicated KPI value column or right-hand sidebar. */
+#connectionStrip .mission-seo-top .mission-seo-trends-axis .mission-seo-combined-layout {
+  display:block !important;
+  grid-template-columns:minmax(0,1fr) !important;
+  width:100% !important;
+  min-height:0 !important;
+  gap:0 !important;
+  margin:8px 0 0 !important;
+}
+#connectionStrip .mission-seo-top .mission-seo-trends-axis .mission-seo-combined-main {
+  display:block !important;
+  width:100% !important;
+  max-width:none !important;
+  min-height:0 !important;
+  padding:0 !important;
+}
+#connectionStrip .mission-seo-top .mission-seo-trends-axis .mission-seo-axis-scroll {
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  margin:0;
+  padding:0;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scrollbar-color:#967547 #2a2016;
+}
+#connectionStrip .mission-seo-top .mission-seo-trends-axis .mission-seo-numbered-chart {
+  display:block !important;
+  box-sizing:border-box;
+  flex:none !important;
+  width:100% !important;
+  min-width:0;
+  min-height:360px !important;
+  height:360px !important;
+  margin:0 !important;
+  overflow:visible;
+}
+#connectionStrip .mission-seo-top .mission-seo-numbered-chart .mission-seo-y-axis-label {
+  fill:#e9d5aa;
+  font:800 14px/1.2 Arial,sans-serif;
+}
+#connectionStrip .mission-seo-top .mission-seo-numbered-chart .mission-seo-x-axis-label {
+  fill:#e1c795;
+  font:800 13px/1.2 Arial,sans-serif;
+}
+#connectionStrip .mission-seo-top .mission-seo-numbered-chart .mission-seo-chart-axis {
+  stroke:#b69a6c;
+  stroke-width:1.4;
+  vector-effect:non-scaling-stroke;
+}
+#connectionStrip .mission-seo-top .mission-seo-numbered-chart .mission-seo-date-tick {
+  stroke:#967b55;
+  stroke-width:1;
+  vector-effect:non-scaling-stroke;
+}
+#connectionStrip .mission-seo-top .mission-seo-numbered-chart .mission-seo-combined-grid {
+  stroke:#867052;
+  stroke-opacity:.55;
+  stroke-width:1;
+  vector-effect:non-scaling-stroke;
+}
+#connectionStrip .mission-seo-top .mission-seo-trends-axis .mission-seo-inline-keys {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:center;
+  gap:9px 24px;
+  min-width:0;
+  margin:4px 0 7px;
+  padding:10px 0 6px;
+  border-bottom:1px solid #59472f;
+}
+#connectionStrip .mission-seo-top .mission-seo-trends-axis .mission-seo-inline-key {
+  --seo-line:#f5c76f;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  color:var(--seo-line);
+  font:900 14px/1.2 Arial,sans-serif;
+  white-space:nowrap;
+}
+#connectionStrip .mission-seo-top .mission-seo-trends-axis .mission-seo-inline-key i {
+  display:inline-block;
+  flex:0 0 11px;
+  width:11px;
+  height:11px;
+  border-radius:50%;
+  background:var(--seo-line);
+}
+#connectionStrip .mission-seo-top .mission-seo-trends-axis .mission-seo-inline-key.mission-seo-plot-impressions {--seo-line:#f5c76f}
+#connectionStrip .mission-seo-top .mission-seo-trends-axis .mission-seo-inline-key.mission-seo-plot-clicks {--seo-line:#73d1a2}
+#connectionStrip .mission-seo-top .mission-seo-trends-axis .mission-seo-inline-key.mission-seo-plot-ctr {--seo-line:#7bbcff}
+#connectionStrip .mission-seo-top .mission-seo-trends-axis .mission-seo-inline-key.mission-seo-plot-position {--seo-line:#d2a1ff}
+#connectionStrip .mission-seo-top .mission-seo-trends-axis .mission-seo-trend-explainer {
+  margin-top:4px;
+  font-size:12px;
+  line-height:1.45;
+}
+@media(max-width:900px) {
+  #connectionStrip .mission-seo-top .mission-seo-trends-axis .mission-seo-numbered-chart {
+    min-width:840px !important;
+    min-height:305px !important;
+    height:305px !important;
+  }
+  #connectionStrip .mission-seo-top .mission-seo-trends-axis .mission-seo-inline-keys {
+    justify-content:flex-start;
+    gap:10px 18px;
+  }
+}
+@media(max-width:640px) {
+  #connectionStrip .mission-seo-top .mission-seo-trends-axis .mission-seo-inline-key {
+    font-size:12px;
+  }
+}
