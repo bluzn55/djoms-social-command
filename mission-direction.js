@@ -54,6 +54,35 @@
     const gaBlocked=ga4&&ga4.status!=='connected';
     const phoneActions=good(site?.contactClicks)&&good(site?.formsSubmitted)
       ?site.contactClicks+site.formsSubmitted:null;
+    // Display an actual observed action signal, not merely a connected GA4
+    // event-reporting feed. All action counts are events or clicks, not people,
+    // purchases, confirmed Pit Krewe signups, or Radio.co listening sessions.
+    const actionCounts=actualActions?.counts||{};
+    const observedAction=()=>{
+      if(good(phoneActions)&&phoneActions>0)return {
+        state:'yellow',headline:fmt(phoneActions)+' CONTACT ACTION'+(phoneActions===1?'':'S'),
+        note:'Wix contact clicks/forms, not confirmed members. Radio listeners: N/A.'
+      };
+      if(good(actionCounts.formSubmit)&&actionCounts.formSubmit>0)return {
+        state:'yellow',headline:fmt(actionCounts.formSubmit)+' FORM EVENT'+(actionCounts.formSubmit===1?'':'S'),
+        note:'GA4 form events only. Confirmed members and radio listeners: N/A.'
+      };
+      if(good(actionCounts.fileDownload)&&actionCounts.fileDownload>0)return {
+        state:'yellow',headline:fmt(actionCounts.fileDownload)+' DOWNLOAD EVENT'+(actionCounts.fileDownload===1?'':'S'),
+        note:'GA4 file-download events, not proven sales or members. Radio listeners: N/A.'
+      };
+      if(good(actionCounts.signUp)&&actionCounts.signUp>0)return {
+        state:'yellow',headline:fmt(actionCounts.signUp)+' SIGN-UP EVENT'+(actionCounts.signUp===1?'':'S'),
+        note:'GA4 sign-up events. Confirmed Pit Krewe members and radio listeners: N/A.'
+      };
+      return {
+        state:'unknown',headline:'NOT YET VERIFIED',
+        note:actualActions
+          ?'GA4 events are tracked, but confirmed Pit Krewe members and radio listeners are N/A.'
+          :'GA4 action counts, confirmed Pit Krewe members and radio listeners are N/A.'
+      };
+    };
+    const meaningfulAction=observedAction();
     const warnings=[];
     if(ga4Gap(site,ga4))warnings.push('Wix and Google Analytics session counts differ substantially. Verify the GA4 tag, cookie consent and bot filtering; do not assume GA4 sees every visit.');
     if(gaIssue)warnings.push('GA4 Data API needs enabling.');
@@ -127,9 +156,8 @@
       proof('ENGAGEMENT',stayTrend==='up'?'green':stayTrend==='down'?'red':'neutral',
         available?time(site.avgTimeSeconds):'N/A',
         isTrend(stay)?percent(stay.percentChange)+' average-stay change':'Engagement comparison pending'),
-      proof('MEANINGFUL ACTIONS','neutral',
-        actualActions?'GA4 events measured': 'NOT FULLY MEASURED',
-        'Radio listening and Pit Krewe membership are not yet verified'),
+      proof('MEANINGFUL ACTIONS',meaningfulAction.state,
+        meaningfulAction.headline,meaningfulAction.note),
       proof('ONLINE SALES',salesReady?'neutral':'unknown',
         salesReady?fmt(sales.paidOrders)+' paid orders':'N/A',
         salesReady?money(sales.itemSalesCents)+' item sales (not profit)':'Paid order report unavailable'),
