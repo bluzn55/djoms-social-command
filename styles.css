@@ -6956,3 +6956,68 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     font-size:12px;
   }
 }
+
+
+/* WIX CHART EXPANDED LOWER TEN UNIT ZONE · October 2026.
+   0-10 gets ~58% of the plot height; values >10 use the remaining 42%.
+   The visible dashed rule at 10 and note mark this non-linear scale.
+   Yellow Page Views are painted above other curves with actual date values. */
+#connectionStrip .mission-website-section .djoms-wix-chart-svg {
+  height:460px !important;
+  min-height:460px !important;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-low-zone {
+  fill:#f6d395;
+  fill-opacity:.065;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-zoom-divider {
+  stroke:#ecd198;
+  stroke-opacity:.8;
+  stroke-width:2;
+  stroke-dasharray:7 5;
+  vector-effect:non-scaling-stroke;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-low-minor {
+  stroke-opacity:.24;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-low-major {
+  stroke-opacity:.49;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-high {
+  stroke-opacity:.48;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-ten {
+  fill:#ffdb91;
+  font-weight:900;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-views .djoms-wix-chart-line {
+  stroke-width:5;
+  filter:drop-shadow(0 0 1.8px #1c130d);
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-views .djoms-wix-chart-view-dot {
+  fill:#ffe293;
+  stroke:#352417;
+  stroke-width:2.25;
+  vector-effect:non-scaling-stroke;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-view-number {
+  fill:#ffe6a2;
+  font:900 17px Arial,sans-serif;
+  paint-order:stroke fill;
+  stroke:#2b1c10;
+  stroke-width:3.5;
+  stroke-linejoin:round;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-legend.djoms-wix-chart-views {
+  font-weight:900;
+}
+#connectionStrip .mission-website-section .djoms-wix-chart-note strong {
+  color:#ffdb96;
+}
+@media(max-width:900px) {
+  #connectionStrip .mission-website-section .djoms-wix-chart-svg {
+    min-width:850px !important;
+    height:430px !important;
+    min-height:430px !important;
+  }
+}
