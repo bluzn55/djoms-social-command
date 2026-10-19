@@ -448,12 +448,24 @@ function renderConnectionStrip() {
         <h3>BUSINESS DIRECTION</h3><p>Checking actual performance and reporting coverage…</p>
       </section>
 
-      <section id="missionSeoPanel" class="mission-seo-panel mission-seo-top" aria-label="Step 1: Google Search SEO performance">
-        <div class="mission-seo-loading"><strong>STEP 1 · GOOGLE SEARCH</strong><span>Checking connection…</span></div>
-      </section>
-
-      <section id="missionGa4Panel" class="mission-ga4-panel" aria-label="Step 2: Google Analytics traffic channels">
-        <div class="mission-ga4-loading"><strong>STEP 2 · GOOGLE ANALYTICS</strong><span>Checking connection…</span></div>
+      <section class="mission-google-performance" aria-label="Google Performance: Google Search and Google Analytics combined">
+        <header class="mission-google-performance-header">
+          <div class="mission-google-performance-heading">
+            <small>STEPS 1 + 2 · GOOGLE</small>
+            <h2>GOOGLE PERFORMANCE</h2>
+            <p>How people find Doc Jaks, then what happens when they arrive.</p>
+          </div>
+          <div class="mission-google-performance-period" aria-label="Shared reporting dates">
+            <strong>${esc(({today:'Day','7d':'Week','30d':'Month','365d':'Year',custom:'Custom dates'})[websiteRange]||'Selected dates')}</strong>
+            <small>Uses Reporting Period above</small>
+          </div>
+        </header>
+        <section id="missionSeoPanel" class="mission-seo-panel mission-seo-top" aria-label="Google Search: search discovery before the visit">
+          <div class="mission-seo-loading"><strong>STEP 1 · GOOGLE SEARCH</strong><span>Checking connection…</span></div>
+        </section>
+        <section id="missionGa4Panel" class="mission-ga4-panel" aria-label="Google Analytics: traffic and behavior after arrival">
+          <div class="mission-ga4-loading"><strong>STEP 2 · GOOGLE ANALYTICS</strong><span>Checking connection…</span></div>
+        </section>
       </section>
 
       <section class="mission-website-section" aria-label="DOCJAKS.COM website connection and activity">
