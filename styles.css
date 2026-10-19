@@ -7053,3 +7053,369 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     grid-template-columns:repeat(2,minmax(0,1fr)) !important;
   }
 }
+
+
+/* DJOMS UNIFIED GOOGLE PERFORMANCE PANEL 2026-10-19
+   Combine Google Search Console + Google Analytics visually without ever
+   combining independent API metrics, statuses, historical series or sign-ins.
+   Their original stable IDs stay in the DOM for the existing async renderers.
+   SEO graph gets the whole row; queries and GA4 sources share the final row. */
+#connectionStrip > .mission-google-performance {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-template-rows:auto auto auto auto auto auto auto;
+  align-items:stretch;
+  column-gap:22px;
+  row-gap:12px;
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  margin:10px 0 13px;
+  padding:17px 21px 18px;
+  border:2px solid #bc8e3e;
+  border-radius:11px;
+  background:linear-gradient(125deg,#211911,#362819 55%,#251b13);
+  color:#ffe8b7;
+  box-shadow:inset 0 0 0 2px #574024,0 3px 10px #26190c1a;
+}
+#connectionStrip .mission-google-performance .mission-google-performance-header {
+  grid-column:1/-1;
+  grid-row:1;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px 18px;
+  flex-wrap:wrap;
+  min-width:0;
+  padding:0 3px 15px;
+  margin:0 0 4px;
+  border-bottom:1px solid #8d703f;
+}
+#connectionStrip .mission-google-performance .mission-google-performance-heading {
+  flex:1 1 310px;
+  min-width:0;
+}
+#connectionStrip .mission-google-performance .mission-google-performance-heading > small {
+  display:block;
+  color:#e1b66b;
+  font:900 12px/1.3 Arial,sans-serif;
+  letter-spacing:1.1px;
+}
+#connectionStrip .mission-google-performance .mission-google-performance-heading > h2 {
+  margin:4px 0 4px;
+  color:#ffe4a2;
+  font:900 clamp(23px,2vw,31px)/1.17 Georgia,serif;
+  letter-spacing:.45px;
+}
+#connectionStrip .mission-google-performance .mission-google-performance-heading > p {
+  margin:0;
+  color:#e7d2ac;
+  font:700 14px/1.35 Arial,sans-serif;
+}
+#connectionStrip .mission-google-performance .mission-google-performance-period {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:4px;
+  color:#f6ddaa;
+  text-align:right;
+}
+#connectionStrip .mission-google-performance .mission-google-performance-period strong {
+  font:900 19px/1.2 Arial,sans-serif;
+}
+#connectionStrip .mission-google-performance .mission-google-performance-period small {
+  font:700 12px/1.2 Arial,sans-serif;
+  color:#d2b889;
+}
+/* The owner-only Search and GA4 scripts each replace their own section's
+   innerHTML. Flatten only for layout, preserving those stable render targets. */
+#connectionStrip .mission-google-performance > #missionSeoPanel,
+#connectionStrip .mission-google-performance > #missionGa4Panel {
+  display:contents !important;
+}
+#connectionStrip .mission-google-performance #missionSeoPanel > .mission-seo-insights {
+  display:contents !important;
+}
+#connectionStrip .mission-google-performance #missionSeoPanel > .mission-seo-head {
+  grid-column:1;
+  grid-row:2;
+  align-self:end;
+  justify-content:space-between;
+  min-width:0;
+  margin:0;
+  padding:9px 11px;
+  border-bottom:1px solid #785c39;
+}
+#connectionStrip .mission-google-performance #missionGa4Panel > .mission-ga4-head {
+  grid-column:2;
+  grid-row:2;
+  align-self:end;
+  justify-content:space-between;
+  min-width:0;
+  margin:0;
+  padding:9px 11px;
+  border-bottom:1px solid #785c39;
+}
+#connectionStrip .mission-google-performance .mission-seo-title,
+#connectionStrip .mission-google-performance .mission-ga4-title {
+  justify-content:flex-start;
+  text-align:left;
+}
+#connectionStrip .mission-google-performance .mission-seo-path {
+  grid-column:1;
+  grid-row:3;
+  min-width:0;
+  margin:0;
+  padding:9px 10px;
+  justify-content:center;
+  align-self:stretch;
+  background:#322517;
+  border-radius:6px;
+}
+#connectionStrip .mission-google-performance .mission-ga4-intro {
+  grid-column:2;
+  grid-row:3;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-width:0;
+  margin:0;
+  padding:10px;
+  border-radius:6px;
+  background:#322517;
+  font:700 14px/1.45 Arial,sans-serif;
+}
+#connectionStrip .mission-google-performance #missionSeoPanel > .mission-seo-metrics {
+  grid-column:1;
+  grid-row:4;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  width:100%;
+  min-width:0;
+  align-self:stretch;
+}
+#connectionStrip .mission-google-performance #missionGa4Panel > .mission-ga4-stats {
+  grid-column:2;
+  grid-row:4;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  width:100%;
+  min-width:0;
+  align-self:stretch;
+}
+#connectionStrip .mission-google-performance .mission-seo-metric,
+#connectionStrip .mission-google-performance .mission-ga4-stat {
+  min-height:94px;
+  padding:12px 8px;
+}
+#connectionStrip .mission-google-performance .mission-seo-metric small,
+#connectionStrip .mission-google-performance .mission-ga4-stat small {
+  font-size:14px;
+}
+#connectionStrip .mission-google-performance .mission-seo-metric strong,
+#connectionStrip .mission-google-performance .mission-ga4-stat strong {
+  font-size:clamp(21px,1.45vw,28px);
+}
+#connectionStrip .mission-google-performance #missionSeoPanel .mission-seo-insights > .mission-seo-trends-wide {
+  grid-column:1/-1 !important;
+  grid-row:5 !important;
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  max-width:none;
+  margin:9px 0 0;
+}
+#connectionStrip .mission-google-performance #missionSeoPanel .mission-seo-insights > .mission-seo-queries {
+  grid-column:1 !important;
+  grid-row:6 !important;
+  align-self:start;
+  min-width:0;
+  width:100%;
+  margin:0;
+  padding:14px 11px 10px;
+  border:1px solid #82663c;
+  border-radius:8px;
+  background:#291f15;
+}
+#connectionStrip .mission-google-performance #missionGa4Panel > .mission-ga4-sources {
+  grid-column:2 !important;
+  grid-row:6 !important;
+  align-self:stretch;
+  width:100%;
+  min-width:0;
+  margin:0;
+  padding:14px 12px 11px;
+  border:1px solid #82663c;
+  border-radius:8px;
+  background:#291f15;
+}
+#connectionStrip .mission-google-performance .mission-ga4-channels {
+  grid-template-columns:minmax(0,1fr);
+  gap:6px;
+}
+#connectionStrip .mission-google-performance .mission-ga4-channel {
+  padding:9px 12px;
+}
+#connectionStrip .mission-google-performance .mission-seo-insights-stacked .mission-seo-queries-head {
+  padding:0 0 10px;
+}
+#connectionStrip .mission-google-performance .mission-seo-query-table {
+  width:100%;
+}
+#connectionStrip .mission-google-performance .mission-seo-query-table th,
+#connectionStrip .mission-google-performance .mission-seo-query-table td {
+  padding:9px 7px;
+}
+#connectionStrip .mission-google-performance .mission-seo-query-table th:nth-child(2),
+#connectionStrip .mission-google-performance .mission-seo-query-table th:nth-child(3),
+#connectionStrip .mission-google-performance .mission-seo-query-table td:nth-child(2),
+#connectionStrip .mission-google-performance .mission-seo-query-table td:nth-child(3) {
+  width:92px;
+}
+#connectionStrip .mission-google-performance #missionSeoPanel > .mission-seo-actions {
+  grid-column:1;
+  grid-row:7;
+  justify-content:flex-start;
+  align-self:start;
+  min-width:0;
+  margin:0;
+  padding:5px 10px;
+}
+#connectionStrip .mission-google-performance #missionGa4Panel > .mission-ga4-footer {
+  grid-column:2;
+  grid-row:7;
+  justify-content:flex-start;
+  align-self:start;
+  min-width:0;
+  margin:0;
+  padding:5px 10px;
+}
+#connectionStrip .mission-google-performance #missionGa4Panel > .mission-ga4-action-details {
+  grid-column:2;
+  grid-row:8;
+  min-width:0;
+}
+#connectionStrip .mission-google-performance #missionGa4Panel > .mission-ga4-footnote {
+  grid-column:2;
+  grid-row:9;
+  min-width:0;
+  margin:0;
+}
+#connectionStrip .mission-google-performance:not(:has(.mission-ga4-sources))
+  #missionSeoPanel .mission-seo-insights > .mission-seo-queries {
+  grid-column:1/-1 !important;
+}
+#connectionStrip .mission-google-performance .mission-seo-loading {
+  grid-column:1;
+  grid-row:2;
+  align-self:center;
+  min-height:52px;
+}
+#connectionStrip .mission-google-performance .mission-ga4-loading {
+  grid-column:2;
+  grid-row:2;
+  align-self:center;
+  min-height:52px;
+}
+/* Resize without squeezing KPI labels. The Google graph stays full-width. */
+@media(max-width:1280px) {
+  #connectionStrip .mission-google-performance {
+    column-gap:12px;
+    padding:14px 12px;
+  }
+  #connectionStrip .mission-google-performance .mission-seo-metric,
+  #connectionStrip .mission-google-performance .mission-ga4-stat {
+    padding:10px 5px;
+  }
+  #connectionStrip .mission-google-performance .mission-seo-metric small,
+  #connectionStrip .mission-google-performance .mission-ga4-stat small {
+    font-size:12px;
+  }
+  #connectionStrip .mission-google-performance .mission-seo-metric strong,
+  #connectionStrip .mission-google-performance .mission-ga4-stat strong {
+    font-size:21px;
+  }
+}
+@media(max-width:1040px) {
+  #connectionStrip .mission-google-performance {
+    grid-template-columns:minmax(0,1fr);
+    row-gap:10px;
+  }
+  #connectionStrip .mission-google-performance #missionSeoPanel > .mission-seo-head {
+    grid-column:1;grid-row:2;
+  }
+  #connectionStrip .mission-google-performance .mission-seo-path {
+    grid-column:1;grid-row:3;
+  }
+  #connectionStrip .mission-google-performance #missionSeoPanel > .mission-seo-metrics {
+    grid-column:1;grid-row:4;
+  }
+  #connectionStrip .mission-google-performance #missionGa4Panel > .mission-ga4-head {
+    grid-column:1;grid-row:5;
+    margin-top:8px;
+  }
+  #connectionStrip .mission-google-performance .mission-ga4-intro {
+    grid-column:1;grid-row:6;
+  }
+  #connectionStrip .mission-google-performance #missionGa4Panel > .mission-ga4-stats {
+    grid-column:1;grid-row:7;
+  }
+  #connectionStrip .mission-google-performance #missionSeoPanel .mission-seo-insights > .mission-seo-trends-wide {
+    grid-column:1 !important;grid-row:8 !important;
+  }
+  #connectionStrip .mission-google-performance #missionSeoPanel .mission-seo-insights > .mission-seo-queries {
+    grid-column:1 !important;grid-row:9 !important;
+  }
+  #connectionStrip .mission-google-performance #missionGa4Panel > .mission-ga4-sources {
+    grid-column:1 !important;grid-row:10 !important;
+  }
+  #connectionStrip .mission-google-performance #missionSeoPanel > .mission-seo-actions {
+    grid-column:1;grid-row:11;
+  }
+  #connectionStrip .mission-google-performance #missionGa4Panel > .mission-ga4-footer {
+    grid-column:1;grid-row:12;
+  }
+  #connectionStrip .mission-google-performance #missionGa4Panel > .mission-ga4-action-details {
+    grid-column:1;grid-row:13;
+  }
+  #connectionStrip .mission-google-performance #missionGa4Panel > .mission-ga4-footnote {
+    grid-column:1;grid-row:14;
+  }
+  #connectionStrip .mission-google-performance .mission-ga4-loading {
+    grid-column:1;grid-row:5;
+  }
+  #connectionStrip .mission-google-performance .mission-seo-loading {
+    grid-column:1;grid-row:2;
+  }
+}
+@media(max-width:640px) {
+  #connectionStrip .mission-google-performance {
+    padding:12px 10px;
+    row-gap:9px;
+  }
+  #connectionStrip .mission-google-performance .mission-google-performance-period {
+    align-items:flex-start;
+    text-align:left;
+  }
+  #connectionStrip .mission-google-performance #missionSeoPanel > .mission-seo-metrics,
+  #connectionStrip .mission-google-performance #missionGa4Panel > .mission-ga4-stats {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  #connectionStrip .mission-google-performance .mission-seo-metric,
+  #connectionStrip .mission-google-performance .mission-ga4-stat {
+    min-height:77px;
+  }
+  #connectionStrip .mission-google-performance .mission-seo-head,
+  #connectionStrip .mission-google-performance .mission-ga4-head {
+    flex-wrap:wrap;
+    padding:8px 5px;
+  }
+  #connectionStrip .mission-google-performance .mission-ga4-channel {
+    padding:8px 6px;
+    flex-wrap:wrap;
+  }
+  #connectionStrip .mission-google-performance .mission-seo-query-table th:nth-child(2),
+  #connectionStrip .mission-google-performance .mission-seo-query-table th:nth-child(3),
+  #connectionStrip .mission-google-performance .mission-seo-query-table td:nth-child(2),
+  #connectionStrip .mission-google-performance .mission-seo-query-table td:nth-child(3) {
+    width:73px;
+  }
+}
