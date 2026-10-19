@@ -121,13 +121,13 @@
         '<small>'+(lastValue===null?'N/A':'Latest day: '+esc(config.format(lastValue)))+'</small></div>'+
         '<div class="mission-seo-plot-canvas">'+graph(config)+'</div></div>';
     }).join('');
-    return '<aside class="mission-seo-trends" aria-label="Four verified Google Search daily line charts">'+
+    return '<div class="mission-seo-trends" role="group" aria-label="Four verified Google Search daily line charts">'+
       '<div class="mission-seo-trends-heading"><strong>GOOGLE SEARCH TRENDS</strong><small>4 colored daily lines</small></div>'+
       '<div class="mission-seo-plot-rows">'+lanes+'</div>'+
       '<div class="mission-seo-plot-dates"><span>'+esc(dateLabel(first))+'</span><span>'+esc(dateLabel(last))+'</span></div>'+
       '<p class="mission-seo-trend-explainer">Each line has its own scale. Lower average position is better. '+
         'Missing Google days are not counted as zero.</p>'+
-    '</aside>';
+    '</div>';
   }
 
   function renderBar(element,report,selection,error) {
