@@ -505,6 +505,11 @@ function renderConnectionStrip() {
                 ${title==='Bounce rate'?renderBounceMeter(site.bounceRate):''}
               </div>`).join('')}
             </div>
+            <div class="mission-web-chart" aria-label="Wix website activity chart between metrics and page lists">
+              ${typeof window.djomsRenderWixChart==='function'
+                ?window.djomsRenderWixChart(site)
+                :'<p class="mission-web-empty">Website history chart unavailable · N/A</p>'}
+            </div>
             ${(() => {
               const health=calculateWebsiteHealth(site);
               return `<div class="mission-website-health" role="group" aria-label="Overall website health indicators">
