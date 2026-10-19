@@ -165,6 +165,7 @@
     const label=ready?(pending!==null&&pending>0?'REVIEW':'LIVE'):
       snapshot.stories.status==='loading'?'CHECKING':'SETUP';
     const formatted=value=>Number.isSafeInteger(value)&&value>=0?show(value):'N/A';
+    const reviewUrl='https://manage.wix.com/dashboard/6e5a4b9f-f175-4869-83d5-fecdaf5ad976/wix-cms/data/EmberHallPosts';
     const body=posts.length?posts.map(item=>{
       const isNew=item.isNew===true
         ?'<span class="mission-story-new" title="Published within the last 7 days">NEW POST</span>':'';
@@ -194,11 +195,13 @@
       '</header>'+
       '<div class="mission-ember-approval-summary" aria-label="Ember Hall submission status">'+
         '<span><strong>New submissions · 7d</strong><b>'+formatted(newSubmissions)+'</b></span>'+
-        '<span><strong>Awaiting approval</strong><b>'+formatted(pending)+'</b></span>'+
+        '<a class="mission-ember-approval-link" href="'+reviewUrl+'" target="_blank" rel="noopener noreferrer" aria-label="Open Ember Hall collection in Wix CMS to review pending posts">'+
+        '<strong>Awaiting approval ↗</strong><b>'+formatted(pending)+'</b></a>'+
       '</div>'+
       '<div class="mission-ember-grid">'+body+'</div>'+
       '<p class="mission-intel-muted">Latest two approved posts. NEW means published within 7 days. Page views do not prove a full read; N/A means no verified individual-page count.</p>'+
       '<div class="mission-intel-actions">'+
+        '<a href="'+reviewUrl+'" target="_blank" rel="noopener noreferrer">Review pending posts ↗</a>'+ 
         '<a href="https://www.docjaks.com/ember-hall" target="_blank" rel="noopener noreferrer">Visit Ember Hall ↗</a>'+
       '</div>'+
     '</article>';
