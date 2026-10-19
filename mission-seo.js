@@ -98,9 +98,10 @@
         return index===0||day===1?shortDate(date):String(day);
       }
       if(daySpan<=180)return shortDate(date);
-      return new Intl.DateTimeFormat('en-US',{
-        timeZone:'UTC',month:'short',year:'2-digit'
-      }).format(dateObject);
+      const monthName=new Intl.DateTimeFormat('en-US',{timeZone:'UTC',month:'short'})
+        .format(dateObject);
+      return index===0||date.slice(5,7)==='01'
+        ?monthName+" '"+date.slice(2,4):monthName;
     };
     let cumulativeViews=0,cumulativeClicks=0,weightedPosition=0;
     let viewsComplete=true,clicksComplete=true,positionComplete=true;
@@ -168,7 +169,12 @@
           if(date>start)candidates.push(date);
           monthDate.setUTCMonth(monthDate.getUTCMonth()+1);
         }
-        if(candidates[candidates.length-1]!==end)candidates.push(end);
+        if(candidates[candidates.length-1]!==end) {
+          // Avoid two almost overlapping labels for the final month.
+          const remaining=dayNumber(end)-dayNumber(candidates[candidates.length-1]);
+          if(candidates.length>1&&remaining<21)candidates[candidates.length-1]=end;
+          else candidates.push(end);
+        }
       }
       candidates.forEach((date,index)=>{
         const gx=x(date).toFixed(1);
