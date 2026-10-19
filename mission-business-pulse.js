@@ -5,7 +5,8 @@
     chapter:{status:'idle',data:null,error:null},
     sales:{status:'idle',data:null,error:null},
     radio:{status:'idle',data:null,error:null},
-    stationLive:{status:'idle',data:null,error:null}
+    stationLive:{status:'idle',data:null,error:null},
+    stories:{status:'idle',data:null,error:null}
   };
   const ENDPOINTS = {
     interests:'website-interests',
@@ -83,6 +84,96 @@
        ||value.listenerCountAvailable!==false)
       throw new Error('Radio.co has not verified public broadcast status.');
     return value;
+  }
+
+  async function getLatestStories() {
+    const response=await fetch('/api/meta/latest-stories',{
+      credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(35000)
+    });
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(response.status===401?'Sign in to view recent stories.':'Latest Wix stories unavailable.');
+    if(!data||!data.blog||!data.emberHall||!Array.isArray(data.emberHall.posts))
+      throw new Error('The Wix stories response was incomplete.');
+    return data;
+  }
+  function storyDate(when) {
+    const stamp=Date.parse(when||'');
+    if(!Number.isFinite(stamp))return 'N/A';
+    return new Intl.DateTimeFormat('en-US',{
+      month:'short',day:'numeric',year:'numeric',timeZone:'America/Chicago'
+    }).format(new Date(stamp));
+  }
+  function latestPorchPost() {
+    const value=snapshot.stories.status==='ok'?snapshot.stories.data?.blog:null;
+    return value?.status==='connected'&&value.post?.title?value.post:null;
+  }
+  function syncPorchRecentPost(blog) {
+    if(!blog)return;
+    const meters=blog.querySelector('.mission-intel-meters');
+    if(!meters)return;
+    meters.classList.remove('mission-intel-3');
+    meters.classList.add('mission-intel-4');
+    let tile=meters.querySelector('.mission-porch-latest');
+    if(!tile) {
+      tile=document.createElement('span');
+      tile.className='mission-intel-meter mission-porch-latest';
+      meters.append(tile);
+    }
+    const post=latestPorchPost();
+    tile.innerHTML='<small>Latest published post</small><b>'+
+      (post?escape(post.title):snapshot.stories.status==='loading'?'Checking…':'N/A')+
+      '</b>'+(post?'<em>'+escape(storyDate(post.publishedAt))+'</em>':'');
+    const actions=blog.querySelector('.mission-intel-actions');
+    if(!actions)return;
+    let read=actions.querySelector('.mission-porch-read-post');
+    let href=null;
+    if(typeof post?.url==='string') {
+      try {
+        const value=new URL(post.url);
+        if(value.protocol==='https:'&&['docjaks.com','www.docjaks.com'].includes(value.hostname)
+          &&value.pathname.startsWith('/post/'))href=value.href;
+      } catch(_) {}
+    }
+    if(!href){if(read)read.remove();return;}
+    if(!read) {
+      read=document.createElement('a');
+      read.className='mission-porch-read-post';
+      read.textContent='Read latest post ↗';
+      read.target='_blank';
+      read.rel='noopener noreferrer';
+      actions.append(read);
+    }
+    read.href=href;
+  }
+  function emberHallCard() {
+    const source=snapshot.stories.status==='ok'?snapshot.stories.data?.emberHall:null;
+    const ready=source?.status==='connected';
+    const posts=ready&&Array.isArray(source.posts)?source.posts.slice(0,2):[];
+    const color=ready?'green':snapshot.stories.status==='error'?'red':'yellow';
+    const label=ready?'LIVE':snapshot.stories.status==='loading'?'CHECKING':'SETUP';
+    const body=posts.length?posts.map(item=>
+      '<div class="mission-ember-post">'+
+        '<small>'+escape(item.category||'Ember Hall')+' · '+escape(storyDate(item.publishedAt))+'</small>'+
+        '<strong>'+escape(item.title||'Untitled')+'</strong>'+
+        '<span>By '+escape(item.author||'Contributor')+'</span>'+
+        '<p>'+escape(item.excerpt||'No description provided.')+'</p>'+
+      '</div>'
+    ).join(''):
+      '<div class="mission-ember-empty">'+(ready?
+        'No approved, published Ember Hall posts yet.':
+        snapshot.stories.status==='loading'?'Checking approved Ember Hall posts…':
+        'Approved Ember Hall posts unavailable · N/A')+'</div>';
+    return '<article class="mission-intel-card mission-ember-hall-card">'+
+      '<header class="mission-intel-card-head">'+
+        '<div><small>COMMUNITY · LATEST STORIES</small><h3>Ember Hall</h3></div>'+
+        statusLight(color,label)+
+      '</header>'+
+      '<div class="mission-ember-grid">'+body+'</div>'+
+      '<p class="mission-intel-muted">Two most recent approved, published posts · All dates</p>'+
+      '<div class="mission-intel-actions">'+
+        '<a href="https://www.docjaks.com/ember-hall" target="_blank" rel="noopener noreferrer">Visit Ember Hall ↗</a>'+
+      '</div>'+
+    '</article>';
   }
 
   function audioTime(value) {
@@ -348,13 +439,17 @@
         <button type="button" data-mission-pulse-refresh="1" aria-label="Refresh radio, music, Trading Post and book website statistics">Check activity</button>
       </div>
       <div class="mission-intel-grid">${radioCard()}${musicCard()}${storeCard()}${bookCard()}</div>
+      <section class="mission-ember-hall-section" aria-label="Ember Hall latest approved posts">${emberHallCard()}</section>
       <details class="mission-intel-data-notes">
         <summary>About these numbers</summary>
         <p>Selected Wix dates: ${escape(selected.start)} through ${escape(selected.endInclusive)}. Missing data stays unavailable. Chapter clicks do not prove reading. Wix paid store sales exclude tax and shipping, refunds and outside channels. Radio webpage views are not listener counts. Music-page views exclude the station page but are not confirmed song plays. The Music panel uses named Wix album products, not outside sales. The Radio.co historical export uses its own explicitly labelled UTC dates and is not live or filtered by Wix selection. Current station status and song come from Radio.co's public API, but listener counts do not. Testing traffic may be included.</p>
       </details>`;
     // Keep the Blog on its own full-width row immediately below The Wooden Token.
     // The source section is physically moved, not duplicated.
-    if(blog) panel.querySelector('.mission-intel-grid')?.after(blog);
+    if(blog) {
+      syncPorchRecentPost(blog);
+      panel.querySelector('.mission-intel-grid')?.after(blog);
+    }
   }
   function refresh(force = false) {
     if(typeof owner==='undefined' || !owner) return;
@@ -366,7 +461,17 @@
     for(const key of Object.keys(ENDPOINTS)) snapshot[key]={status:'loading',data:null,error:null};
     snapshot.radio={status:'loading',data:null,error:null};
     snapshot.stationLive={status:'loading',data:null,error:null};
+    snapshot.stories={status:'loading',data:null,error:null};
     paint();
+    getLatestStories().then(data=>{
+      if(ticket!==sequence)return;
+      snapshot.stories={status:'ok',data,error:null};
+      paint();
+    }).catch(error=>{
+      if(ticket!==sequence)return;
+      snapshot.stories={status:'error',data:null,error:String(error.message||'Latest Wix stories unavailable.')};
+      paint();
+    });
     getRadioLiveStatus().then(data=>{
       if(ticket!==sequence)return;
       snapshot.stationLive={status:'ok',data,error:null};
