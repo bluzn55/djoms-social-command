@@ -34,6 +34,58 @@
     good(site.sessions)&&site.sessions>=10&&good(ga4?.metrics?.sessions)&&
     ga4.metrics.sessions<site.sessions/2;
 
+  // Business indicator is independent of the website momentum needle.
+  // Only two *complete*, identically scoped Wix paid WEB-order reports can
+  // turn it green or red. Sales ≠ contribution margin or profit. Other
+  // divisions can be added later when their own business KPIs are verified.
+  function assessBusiness(sales,period){
+    const base={
+      state:'yellow',headline:'NOT YET PROVEN',scope:'WEB SALES',
+      detail:'Waiting for verified paid sales comparisons.',
+      explanation:'Business momentum not yet established. Sales and costs need verified period comparisons.'
+    };
+    if(sales?.connected!==true||sales?.complete!==true||
+      period?.start!==sales.range?.start||period?.end!==sales.range?.end)
+      return base;
+    const cmp=sales.salesComparison;
+    const integer=n=>Number.isSafeInteger(n)&&n>=0;
+    const present=cmp?.current||{},previous=cmp?.previous||{};
+    if(cmp?.status!=='reported'||cmp?.previousRange?.end!==sales.range.start||
+      ![present.paidOrders,present.itemSalesCents,
+        previous.paidOrders,previous.itemSalesCents].every(integer)||
+      present.paidOrders!==sales.paidOrders||present.itemSalesCents!==sales.itemSalesCents){
+      return {...base,headline:'COMPARISON PENDING',
+        detail:'Current Wix web orders verified; previous matching period N/A.',
+        explanation:'The comparison cannot be verified for both reporting periods.'};
+    }
+    const o=present.paidOrders,p=previous.paidOrders;
+    const revenue=present.itemSalesCents,prior=previous.itemSalesCents;
+    const shared=money(revenue)+' vs '+money(prior)+' · PROFIT N/A';
+    const orders=o+' paid '+(o===1?'order':'orders')+' versus '+p+' in the prior period';
+    if(revenue>prior&&o>=p)
+      return {state:'green',headline:'WEB SALES UP',scope:'WEB SALES',
+        detail:shared,
+        explanation:'Verified web item sales improved: '+money(revenue)+' versus '+money(prior)+
+          ', with '+orders+'. Contribution margin and overall profit remain unverified.'};
+    if(revenue<prior&&o<=p)
+      return {state:'red',headline:'WEB SALES DOWN',scope:'WEB SALES',
+        detail:shared,
+        explanation:'Verified web item sales declined: '+money(revenue)+' versus '+money(prior)+
+          ', with '+orders+'. Contribution margin and overall profit remain unverified.'};
+    if(revenue===prior&&o===p)
+      return {state:'yellow',headline:o===0?'NO PAID SALES YET':'SALES HOLDING',
+        scope:'WEB SALES',detail:shared,
+        explanation:o===0?
+          'Zero verified paid web orders in both comparable periods. No growth or decline has been established.':
+          'Verified web sales are unchanged at '+money(revenue)+' and '+o+
+            ' paid orders in both periods. Profit remains unverified.'};
+    return {state:'yellow',headline:'MIXED SALES',scope:'WEB SALES',
+      detail:shared,
+      explanation:'Verified web sales and paid-order count moved in different directions ('+
+        money(revenue)+' versus '+money(prior)+'; '+orders+
+        '). The business verdict stays yellow until the results agree.'};
+  }
+
   function evaluate(site,ga4,seo,sales,period){
     const available=site?.connected===true;
     const comparisons=available?site?.metricComparisons||{}:{};
@@ -48,6 +100,7 @@
     const currentVisitors=good(site?.visitors)?site.visitors:visitors?.currentVisitors;
     const previousVisitors=good(visitors?.previousVisitors)?visitors.previousVisitors:null;
     const salesReady=sales?.connected===true&&sales?.complete===true&&Number.isSafeInteger(sales.paidOrders);
+    const businessStatus=assessBusiness(sales,period);
     const actualActions=ga4?.connected===true&&ga4?.actions?.status==='reported'
       ?ga4.actions:null;
     const gaIssue=ga4?.status==='enable-api';
@@ -169,7 +222,7 @@
         isTrend(stay)?percent(stay.percentChange)+' average-stay change':'Engagement comparison pending'),
       proof('MEANINGFUL ACTIONS',meaningfulAction.state,
         meaningfulAction.headline,meaningfulAction.note),
-      proof('ONLINE SALES',salesReady?'neutral':'unknown',
+      proof('ONLINE SALES',salesReady?businessStatus.state:'unknown',
         salesReady?fmt(sales.paidOrders)+' paid orders':'N/A',
         salesReady?money(sales.itemSalesCents)+' item sales (not profit)':'Paid order report unavailable'),
       proof('CONTRIBUTION MARGIN','unknown','NOT MEASURED',
@@ -184,7 +237,7 @@
     };
     // Never call the whole business FORWARD without contribution margin and
     // reliable actions. Direction is limited to measured web momentum.
-    return {overall:'BUSINESS RESULT NOT YET CONFIRMED',
+    return {overall:businessStatus.explanation,businessStatus,
       websiteDirection,directionColor,working,concern,next,nextHref,
       // Percentages always come from the matching Wix reporting periods.
       visitorDelta:isTrend(visitors)?visitors.percentChange:null,
@@ -192,7 +245,7 @@
       coverage,actionEvidence,warnings,
       notes:[
         'Visitor growth, time on site and search appearances are different measurements. No platform totals are added together.',
-        'Site bounces and outgoing clicks do not prove radio listening. Sales are not profit.',
+        'Site bounces and outgoing clicks do not prove radio listening. Verified web-sales growth does not prove profit or overall business health.',
         'Comparisons are against the preceding equal-length reporting period, not a different week or year.',
         smallSample?'Small comparison base: a few visitors may swing these percentages.':null,
         periodCaution
@@ -365,7 +418,11 @@
         '<small>DOC JAKS · OWNER-FIRST BUSINESS INTELLIGENCE</small>'+
         '<h2>ARE WE MOVING FORWARD OR BACKWARD?</h2></div>'+
         directionMeter(summary)+
-        '<span class="mission-direction-verdict">NOT YET PROVEN</span>'+
+        '<div class="mission-direction-verdict '+esc(summary.businessStatus.state)+'" role="status" '+
+          'title="'+esc(summary.businessStatus.explanation)+'">'+
+          '<small>BUSINESS RESULTS</small>'+
+          '<strong>'+esc(summary.businessStatus.headline)+'</strong>'+
+          '<span>'+esc(summary.businessStatus.detail)+'</span></div>'+
       '</div>'+
       '<p class="mission-direction-webtrend">WEBSITE TREND: <b class="'+esc(summary.directionColor)+'">'+
         esc(summary.websiteDirection)+'</b></p>'+
