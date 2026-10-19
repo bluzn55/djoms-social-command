@@ -30,6 +30,76 @@
     return {color:'yellow',label:'AUTHORIZE'};
   };
   const sameRange=(report,period)=>report?.range?.start===period?.start&&report?.range?.end===period?.end;
+
+  // Complete fixed source rows, independent Wix and Google Analytics sessions.
+  // N/A = not verified; zero only follows a complete source report.
+  const originOrder=[
+    ['direct','Direct'],['facebook','Facebook'],['instagram','Instagram'],
+    ['x','X / Twitter'],['youtube','YouTube'],['google','Google Search'],
+    ['other-search','Other search engines'],['other-social','Other social platforms'],
+    ['email','Email'],['ads','Paid advertising'],
+    ['referral','Other websites / referrals'],['other','Other / unassigned']
+  ];
+  const validCount=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0;
+  function originKind(name,category='') {
+    const raw=String(name||'').trim().toLowerCase();
+    const cat=String(category||'').trim().toLowerCase();
+    const parts=raw.split(/\s+\/\s+/),base=parts[0]||'',medium=(parts[1]||'').trim();
+    const text=raw+' '+cat;
+    if(/(?:^|[^a-z])(?:cpc|ppc|paid|cpm|display|advertising|ads)(?:$|[^a-z])/.test(medium+' '+cat))return 'ads';
+    if(cat==='direct'||base==='(direct)'||base==='direct')return 'direct';
+    if(/facebook|fb\.me|\bfb\b/.test(text))return 'facebook';
+    if(/instagram|ig\.me|\binsta\b/.test(text))return 'instagram';
+    if(/twitter|t\.co(?:\s|$)|x\.com/.test(text)||base==='x')return 'x';
+    if(/youtube|youtu\.be/.test(text))return 'youtube';
+    if(/newsletter|email|e-mail/.test(text))return 'email';
+    if((base==='google'||base==='google.com'||base==='www.google.com')&&
+       (cat.includes('organic_search')||cat.includes('organic search')||
+        medium==='organic'||medium==='organic_search'))return 'google';
+    if(cat.includes('search')||medium==='organic')return 'other-search';
+    if(/tiktok|pinterest|reddit|linkedin|snapchat|threads|social/.test(text))return 'other-social';
+    if(cat.includes('referral')||medium==='referral')return 'referral';
+    return 'other';
+  }
+  const sourceCount=(key,entries,complete)=>{
+    const found=entries.filter(item=>item.kind===key);
+    return found.length?found.reduce((sum,item)=>sum+item.sessions,0):complete?0:null;
+  };
+  function sourceSummary(report) {
+    const wix=typeof websiteSnapshot==='function'?websiteSnapshot():null;
+    const wixAvailable=wix?.connected===true&&Array.isArray(wix.trafficSources);
+    const wixEntries=wixAvailable?wix.trafficSources
+      .filter(item=>validCount(item?.sessions))
+      .map(item=>({kind:originKind(item.source,item.category),sessions:item.sessions})):[];
+    const wixComplete=wixAvailable&&wix.trafficSourcesComplete===true;
+    const ga4Available=report?.status==='connected'&&report?.sourceDetails?.status==='reported'&&
+      Array.isArray(report.sourceDetails.rows);
+    const ga4Entries=ga4Available?report.sourceDetails.rows
+      .filter(item=>validCount(item?.sessions))
+      .map(item=>({kind:originKind(item.sourceMedium),sessions:item.sessions})):[];
+    const rows=originOrder.map(([key,label],i)=>
+      '<tr><th scope="row"><em>'+(i+1)+'.</em> '+esc(label)+'</th>'+
+      '<td>'+esc(fmt(sourceCount(key,wixEntries,wixComplete)))+'</td>'+
+      '<td>'+esc(fmt(sourceCount(key,ga4Entries,ga4Available)))+'</td></tr>'
+    ).join('');
+    const total=entries=>entries.reduce((sum,item)=>sum+item.sessions,0);
+    const wixTotal=wixComplete?total(wixEntries):null;
+    const ga4Total=ga4Available?total(ga4Entries):null;
+    return '<div class="mission-ga4-sources mission-ga4-sources-breakdown" aria-label="Where website traffic sessions came from">'+
+      '<div class="mission-ga4-origin-heading"><strong>WHERE VISITS CAME FROM</strong>'+
+      '<small>Source attribution · selected reporting dates</small></div>'+
+      '<div class="mission-ga4-origin-table-scroll"><table class="mission-ga4-origin-table">'+
+      '<thead><tr><th scope="col">Source</th><th scope="col">Wix sessions</th>'+
+      '<th scope="col">GA4 sessions</th></tr></thead>'+
+      '<tbody>'+rows+'</tbody>'+
+      '<tfoot><tr><th scope="row">Reported source total</th>'+
+      '<td>'+esc(fmt(wixTotal))+'</td><td>'+esc(fmt(ga4Total))+'</td></tr></tfoot>'+
+      '</table></div>'+
+      (!wixComplete||!ga4Available?'<p class="mission-ga4-origin-coverage">N/A means the source has not been individually verified; a 0 means a complete report recorded none.</p>':'')+
+      '<p class="mission-ga4-origin-note">Sessions are visits, not unique people. Wix and GA4 use separate tracking, so their figures need not match. Do not add the two columns together.</p>'+
+    '</div>';
+  }
+
   function show(panel,report,period,error){
     const {color,label}=classify(report);
     const connected=report?.status==='connected';
@@ -38,7 +108,7 @@
     const stateColor=pending?'yellow':error?'red':color;
     const data=report?.metrics||{};
     const message=error||report?.message||'Checking whether Google Analytics reports are authorized.';
-    const channels=Array.isArray(report?.channels)?report.channels.slice(0,5):[];
+    const channels=Array.isArray(report?.channels)?report.channels.slice(0,8):[];
     if(report) {
       window.djomsVerifiedReports ||= {};
       const old=window.djomsVerifiedReports.ga4;
@@ -61,16 +131,15 @@
         stat('Engagement rate',connected?pct(data.engagementRate):'N/A')+
         stat('Avg. session',connected?duration(data.averageSessionDuration):'N/A')+
       '</div>'+
-      (connected?
-        '<div class="mission-ga4-sources">'+
-        '<strong>WHERE SESSIONS CAME FROM</strong>'+
-        (channels.length?'<div class="mission-ga4-channels">'+
-          channels.map((channel,index)=>
+
+      sourceSummary(report)+
+      (connected&&channels.length
+        ?'<details class="mission-ga4-channel-details"><summary>Original GA4 channel groups</summary>'+
+          '<div class="mission-ga4-channels">'+channels.map((channel,index)=>
             '<div class="mission-ga4-channel"><span><em>'+(index+1)+'.</em> '+
-            esc(channel.name||'Unassigned')+'</span><b>'+esc(fmt(channel.sessions))+' sessions</b></div>'
-          ).join('')+'</div>':
-          '<p class="mission-ga4-no-data">No traffic channels reported for these dates yet.</p>')+
-        '</div>':'')+
+            esc(channel.name||'Unassigned')+'</span><b>'+esc(fmt(channel.sessions))+
+            ' sessions</b></div>').join('')+'</div></details>'
+        :'')+
       '<div class="mission-ga4-footer">'+
         '<small>'+esc(message)+'</small>'+
         (connected?
