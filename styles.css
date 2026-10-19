@@ -5785,3 +5785,105 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     grid-template-columns:minmax(0,1fr) !important;
   }
 }
+
+
+/* DJOMS NEW POST + VIEW SIGNALS · owner-only Porch & Ember Hall */
+#missionBusinessPulse .mission-story-new {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-left:7px;
+  padding:4px 8px;
+  border:1px solid #b3812f;
+  border-radius:5px;
+  background:#f5df9e;
+  color:#3e280e;
+  font:900 12px/1.1 Arial,sans-serif;
+  letter-spacing:.25px;
+  white-space:nowrap;
+  vertical-align:middle;
+}
+#missionBusinessPulse .mission-porch-latest small {
+  line-height:1.55 !important;
+}
+#missionBusinessPulse .mission-ember-approval-summary {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:stretch;
+  gap:11px;
+  margin:0;
+  padding:14px 18px 2px;
+}
+#missionBusinessPulse .mission-ember-approval-summary > span {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  min-width:0;
+  gap:10px;
+  padding:11px 15px;
+  border:1px solid #c9aa70;
+  border-radius:8px;
+  background:#fffdf7;
+}
+#missionBusinessPulse .mission-ember-approval-summary strong {
+  color:#503716;
+  font:900 15px/1.25 Arial,sans-serif;
+}
+#missionBusinessPulse .mission-ember-approval-summary b {
+  color:#2d2016;
+  font:900 23px/1 Arial,sans-serif;
+  font-variant-numeric:tabular-nums;
+}
+#missionBusinessPulse .mission-ember-post-top {
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  justify-content:space-between;
+  gap:6px;
+}
+#missionBusinessPulse .mission-ember-post-top small {
+  color:#785628;
+  font:900 13px/1.3 Arial,sans-serif;
+  text-transform:uppercase;
+}
+#missionBusinessPulse a.mission-ember-post-title {
+  color:#24180e;
+  font:900 clamp(18px,1.5vw,24px)/1.18 Georgia,serif;
+  overflow-wrap:anywhere;
+  text-decoration:underline;
+  text-decoration-color:#c39a58;
+  text-underline-offset:3px;
+}
+#missionBusinessPulse a.mission-ember-post-title:hover {
+  color:#75501d;
+  text-decoration-color:currentColor;
+}
+#missionBusinessPulse .mission-ember-views {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:auto;
+  padding-top:13px;
+  border-top:1px solid #e6d8b8;
+  flex-wrap:wrap;
+}
+#missionBusinessPulse .mission-ember-views small {
+  color:#6d532d;
+  font:900 14px/1.2 Arial,sans-serif;
+}
+#missionBusinessPulse .mission-ember-views b {
+  color:#2b1c11;
+  font:900 23px/1.1 Arial,sans-serif;
+  font-variant-numeric:tabular-nums;
+}
+#missionBusinessPulse .mission-ember-views span {
+  margin-left:auto;
+  color:#806d4b;
+  font:800 12px/1.2 Arial,sans-serif;
+}
+@media(max-width:720px){
+  #missionBusinessPulse .mission-ember-approval-summary {
+    grid-template-columns:minmax(0,1fr);
+    padding:11px 10px 2px;
+  }
+}
