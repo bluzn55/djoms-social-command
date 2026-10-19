@@ -128,7 +128,8 @@
       ?new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',timeZone:'UTC'}).format(new Date(value+'T12:00:00Z')):value;
     const first=points.length?dateLabel(points[0].date):'N/A';
     const last=points.length?dateLabel(points[points.length-1].date):'N/A';
-    const axis=points.length>=2?'<div class="mission-pulse-axis"><span>'+escape(first)+'</span><b>'+escape(granularity)+'</b><span>'+escape(last)+'</span></div>':'';
+    const peak=points.length>=2?Math.max(...points.map(p=>p.value)):null;
+    const axis=points.length>=2?'<div class="mission-pulse-axis"><span>'+escape(first)+'</span><b>'+escape(granularity+' · PEAK '+show(peak))+'</b><span>'+escape(last)+'</span></div>':'';
     return '<aside class="mission-pulse-line" aria-label="'+escape(title)+' historical trend">'
       +'<div class="mission-pulse-line-head"><strong>'+escape(title)+'</strong><small>LINE GRAPH</small></div>'
       +chart+axis+'<p class="mission-pulse-line-source">'+escape(source||'Wix historical page views not yet available · N/A')+'</p></aside>';
