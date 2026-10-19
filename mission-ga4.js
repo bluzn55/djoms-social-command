@@ -5,6 +5,7 @@
   const delay=120000;
   const reports=new Map();
   const inFlight=new Map();
+  let tagCheck={checkedAt:0,status:'checking',message:'',inFlight:null};
   const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
   }[c]));
@@ -105,6 +106,54 @@
     '</div>';
   }
 
+
+  function paintTagCheck(){
+    const node=document.querySelector('#missionGa4Panel .mission-ga4-identity-status');
+    if(!node)return;
+    const checking=!!tagCheck.inFlight;
+    const status=tagCheck.status||'checking';
+    node.className='mission-ga4-identity-status '+status;
+    node.textContent=checking?'Checking Google Analytics web stream…':
+      status==='matched'?'Wix GA4 tag matches this Google Analytics property.':
+      status==='mismatch'?'TRACKING SETUP NEEDS ATTENTION: Wix tag and GA4 property do not match.':
+      tagCheck.message||'Tracking setup has not yet been verified.';
+    node.title=tagCheck.message||'The tag identity check does not count sessions.';
+  }
+  function verifyTag(force=false){
+    if(tagCheck.inFlight)return tagCheck.inFlight;
+    if(!force&&tagCheck.checkedAt&&Date.now()-tagCheck.checkedAt<10*60*1000){
+      paintTagCheck();
+      return Promise.resolve(tagCheck);
+    }
+    const task=(async()=>{
+      let result;
+      try{
+        const response=await fetch('/api/meta/ga4-verify',{
+          credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(16000)
+        });
+        result=await response.json().catch(()=>({}));
+        if(!response.ok)throw new Error(result.error||'Google setup check was unavailable.');
+        if(!['matched','mismatch','unavailable'].includes(result.status))
+          throw new Error('Google setup check did not return a verified status.');
+      }catch(error){
+        result={status:'unavailable',
+          message:error?.name==='TimeoutError'?'Google setup check timed out.':
+            String(error.message||'Google tracking setup could not be checked.')};
+      }
+      const previous=tagCheck.status;
+      tagCheck.status=result.status;
+      tagCheck.message=result.message||'';
+      tagCheck.checkedAt=Date.now();
+      window.djomsGa4Verification=result;
+      if(previous!==result.status)
+        document.dispatchEvent(new CustomEvent('djoms:verified-report',{detail:{source:'ga4-verify'}}));
+      return tagCheck;
+    })().finally(()=>{tagCheck.inFlight=null;paintTagCheck();});
+    tagCheck.inFlight=task;
+    paintTagCheck();
+    return task;
+  }
+
   function show(panel,report,period,error){
     const {color,label}=classify(report);
     const connected=report?.status==='connected';
@@ -129,7 +178,9 @@
         '<span class="mission-ga4-status"><i class="gyr-light '+stateColor+'" aria-hidden="true"></i>'+
           '<b>'+esc(state)+'</b></span>'+
       '</div>'+
-      '<p class="mission-ga4-intro">After someone reaches the website, GA4 shows which channels brought them here.</p>'+
+      '<p class="mission-ga4-intro">After someone reaches the website, GA4 shows which channels brought them here.'+
+        '<span class="mission-ga4-identity-status" role="status">Checking whether Wix and Google Analytics use the same tag...</span>'+
+        '<button type="button" data-ga4-verify="1" class="mission-ga4-verify-btn">Check tracking setup</button></p>'+
       '<div class="mission-ga4-stats">'+
         stat('Sessions',connected?fmt(data.sessions):'N/A')+
         stat('Active users',connected?fmt(data.activeUsers):'N/A')+
@@ -170,6 +221,7 @@
           .join('')+'</div><p>These are GA4 events, not unique people or confirmed orders. Radio-related clicks are not actual listening. Use verified Wix paid orders for sales.</p></details>'
         :'')+
       (connected?'<p class="mission-ga4-footnote">GA4 sessions and Wix visitors use different measurement methods; do not add these numbers together. Google Analytics data may take time to finalize.</p>':'');
+    paintTagCheck();
   }
   async function load(period,force=false){
     if(!period?.query||!period?.start||!period?.end)return null;
@@ -207,6 +259,7 @@
     const key=period.query;
     const cached=reports.get(key);
     show(panel,cached?.value||null,period,cached?.error);
+    void verifyTag(false);
     void load(period,force).then(result=>{
       if(!panel.isConnected||current()?.query!==key)return;
       show(panel,result?.value||null,period,result?.error);
@@ -221,6 +274,8 @@
     };
   }
   document.addEventListener('click',event=>{
+    const verifyButton=event.target.closest('[data-ga4-verify]');
+    if(verifyButton){event.preventDefault();void verifyTag(true);return;}
     const target=event.target.closest('[data-ga4-refresh]');
     if(!target)return;
     event.preventDefault();
