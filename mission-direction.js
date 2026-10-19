@@ -116,7 +116,18 @@
       :seo?.status==='connected'&&good(seo.metrics?.impressions)
         ?'Google showed DOCJAKS.COM '+fmt(seo.metrics.impressions)+' times. Search ranking growth is not yet established.'
         :'We need a verified current and previous period before calling discovery growth.';
-    const working=discovering;
+    // 'What is working' must not turn a declining traffic metric into a win.
+    // Highlight a supported positive signal instead; show mixed outcomes
+    // honestly when average stay improves but fewer people visit.
+    const working=stayTrend==='up'&&isTrend(stay)
+      ?'Average time on site increased '+percent(stay.percentChange)+
+        ' versus the preceding period'+(visitorsTrend==='down'?', although visitor traffic declined.':'.')
+      :visitorsTrend==='up'&&isTrend(visitors)
+        ?'Wix reports '+fmt(currentVisitors)+' visitors, '+percent(visitors.percentChange)+
+          ' versus the preceding period.'
+        :visitorsTrend==='steady'&&stayTrend==='steady'
+          ?'Website traffic and average stay remained roughly steady.'
+          :'No positive improvement is confirmed for these dates. '+discovering;
     let concern=ga4Gap(site,ga4)?'Wix reports '+fmt(site.sessions)+' sessions but GA4 shows '+fmt(ga4.metrics.sessions)+'. Some sessions may be excluded by consent, blockers, bot filtering, or a tracking setup issue.'
       :gaIssue?'Google Analytics is authorized, but its Data API is disabled. Website action data is unavailable in Social Command.'
       :stayTrend==='down'
@@ -129,7 +140,7 @@
     let next='Measure actual radio listening and meaningful actions before grading customer growth.';
     let nextHref='';
     if(ga4Gap(site,ga4)){
-      next='Verify that the Google Analytics web stream matches the Wix tag, then test a fresh visit in GA4 Realtime before relying on those session totals.';
+      next='The Wix GA4 tag has been matched and a live phone visit was recorded. Compare future completed reporting periods, and investigate consent and bot filtering to explain the remaining Wix-versus-GA4 gap.';
       nextHref='https://analytics.google.com/';
     }else if(gaIssue){
       next='Enable the Google Analytics Data API in the Doc Jaks Social Command Google Cloud project, then check GA4 again.';
