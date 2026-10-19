@@ -71,6 +71,9 @@
   // Counts accumulate through the selected period; CTR and position are
   // running weighted results. The main KPI totals remain Google's authority.
   function searchHistoryGraph(report) {
+    // One actual-value vertical scale for the four lines, with ten-unit
+    // steps for smaller ranges. Larger ranges use readable multiples of 10.
+    // CTR is shown as percentage points; all other measurements are numbers.
     const valid=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0;
     const dayPattern=/^\d{4}-\d{2}-\d{2}$/;
     const rows=(Array.isArray(report?.trend?.points)?report.trend.points:[])
@@ -80,124 +83,163 @@
     const configs=[
       {key:'impressions',style:'impressions',label:'Impressions',format:fmt},
       {key:'clicks',style:'clicks',label:'Google clicks',format:fmt},
-      {key:'ctr',style:'ctr',label:'Search CTR',format:pct},
+      {key:'ctr',style:'ctr',label:'Search CTR (%)',format:pct},
       {key:'position',style:'position',label:'Avg. position',format:dec}
     ];
     const dayNumber=date=>Date.parse(date+'T12:00:00Z')/86400000;
-    const formatDate=date=>date?new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',timeZone:'UTC'})
-      .format(new Date(date+'T12:00:00Z')):'N/A';
-    let cumulativeViews=0,cumulativeClicks=0,weightedPosition=0;
-    let viewComplete=true,clickComplete=true,positionComplete=true;
-    const history=rows.map(day=>{
-      const hasImpressions=valid(day.impressions),hasClicks=valid(day.clicks);
-      if(!hasImpressions)viewComplete=false;
-      if(!hasClicks)clickComplete=false;
-      if(viewComplete)cumulativeViews+=day.impressions;
-      if(clickComplete)cumulativeClicks+=day.clicks;
-      if(!hasImpressions||(day.impressions>0&&!valid(day.position)))positionComplete=false;
-      if(positionComplete&&hasImpressions&&day.impressions>0)
-        weightedPosition+=day.impressions*day.position;
-      const impressionValue=viewComplete?cumulativeViews:null;
-      const clickValue=clickComplete?cumulativeClicks:null;
-      return {date:day.date,
-        impressions:impressionValue,clicks:clickValue,
-        ctr:valid(impressionValue)&&impressionValue>0&&valid(clickValue)?clickValue/impressionValue:null,
-        position:positionComplete&&valid(impressionValue)&&impressionValue>0?
-          weightedPosition/impressionValue:null
-      };
-    });
-    const start=dayPattern.test(report?.range?.start||'')?report.range.start:history[0]?.date;
-    const end=dayPattern.test(report?.reportedThrough||'')?report.reportedThrough:history[history.length-1]?.date;
-    const span=start&&end?Math.max(1,dayNumber(end)-dayNumber(start)):1;
-    const W=520,H=245,L=32,R=10,T=12,B=13,plotW=W-L-R,plotH=H-T-B;
-    const x=date=>L+(dayNumber(date)-dayNumber(start))/span*plotW;
-    const scales={};
-    for(const config of configs){
-      const values=history.map(row=>row[config.key]).filter(valid);
-      const box=valid(head[config.key])?head[config.key]:null;
-      let low=config.key==='position'&&values.length?Math.min(...values):0;
-      let high=values.length?Math.max(...values):0;
-      if(box!==null){high=Math.max(high,box);if(config.key==='position')low=Math.min(low,box);}
-      if(config.key!=='position')low=0;
-      const observed=history.length&&valid(history[history.length-1]?.[config.key])?
-        history[history.length-1][config.key]:null;
-      const matches=box!==null&&observed!==null?
-        config.format(box)===config.format(observed):null;
-      scales[config.key]={low,high,box,observed,matches,values};
-    }
-    const y=(value,config)=>{
-      const scale=scales[config.key];
-      if(scale.high===scale.low)return config.key==='position'?T+plotH/2:T+plotH;
-      return T+plotH-(value-scale.low)/(scale.high-scale.low)*plotH;
-    };
-    const grid=[0,.25,.5,.75,1].map(fraction=>{
-      const gy=(T+(1-fraction)*plotH).toFixed(1);
-      return '<line class="mission-seo-combined-grid" x1="'+L+'" x2="'+(W-R)+'" y1="'+gy+'" y2="'+gy+'"></line>';
-    }).join('');
-    const dateLines=history.length>1&&report?.trend?.status==='reported';
-    const renderSeries=config=>{
-      const observed=history.filter(row=>valid(row[config.key]));
-      if(!dateLines||!observed.length)return '';
-      const segments=[];
-      let series=[],previous=null;
-      for(const row of history){
-        if(!valid(row[config.key])){if(series.length>1)segments.push(series);series=[];previous=null;continue;}
-        const tick=dayNumber(row.date);
-        if(previous!==null&&tick-previous>1){if(series.length>1)segments.push(series);series=[];}
-        series.push({date:row.date,value:row[config.key]});
-        previous=tick;
+    const toDate=n=>new Date(n*86400000).toISOString().slice(0,10);
+    const shortDate=date=>new Intl.DateTimeFormat('en-US',{
+      timeZone:'UTC',month:'short',day:'numeric'
+    }).format(new Date(date+'T12:00:00Z'));
+    const tickLabel=(date,index,daySpan)=>{
+      const dateObject=new Date(date+'T12:00:00Z');
+      if(daySpan<=32) {
+        const day=dateObject.getUTCDate();
+        return index===0||day===1?shortDate(date):String(day);
       }
-      if(series.length>1)segments.push(series);
-      const paths=segments.map(segment=>{
-        const d=segment.map((row,i)=>(i?'L':'M')+x(row.date).toFixed(1)+' '+y(row.value,config).toFixed(1)).join(' ');
-        return '<path class="mission-seo-combined-line" d="'+d+'"></path>';
-      }).join('');
-      const last=observed[observed.length-1];
-      const tip=esc(config.label+' · '+formatDate(last.date)+' · '+config.format(last[config.key]));
-      return '<g class="mission-seo-combined-series mission-seo-plot-'+config.style+'">'+paths+
-        '<circle cx="'+x(last.date).toFixed(1)+'" cy="'+y(last[config.key],config).toFixed(1)+'" r="4"><title>'+tip+'</title></circle></g>';
+      if(daySpan<=180)return shortDate(date);
+      return new Intl.DateTimeFormat('en-US',{
+        timeZone:'UTC',month:'short',year:'2-digit'
+      }).format(dateObject);
     };
-    const sharedChart=dateLines?
-      '<svg class="mission-seo-combined-svg" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="One graph with impressions, clicks, click-through rate and average position trends, each with its own labeled scale">'+
-        '<title>Google Search Console cumulative selected-period trends, four colored lines</title>'+
-        grid+configs.map(renderSeries).join('')+'</svg>':
-      '<div class="mission-seo-combined-empty">N/A · Need at least two Google-reported dates for one line graph.</div>';
-    // Compact color-keyed legend. Selected-period figures come from the same
-    // authoritative Google metrics used in the four boxes above.
-    const side=configs.map(config=>{
-      const scale=scales[config.key];
-      const boxLabel=scale.box===null?'N/A':config.format(scale.box);
-      const rangeLabel=scale.values.length?
-        'Line scale '+config.format(scale.low)+' to '+config.format(scale.high):
-        'No verified daily values';
-      return '<div class="mission-seo-wide-legend-item mission-seo-plot-'+config.style+'">'+
-        '<i class="mission-seo-wide-legend-color" aria-hidden="true"></i>'+
-        '<div class="mission-seo-wide-legend-copy"><strong>'+esc(config.label)+'</strong>'+
-          '<small>'+esc(rangeLabel)+'</small></div>'+
-        '<b class="mission-seo-wide-legend-value">'+esc(boxLabel)+'</b></div>';
+    let cumulativeViews=0,cumulativeClicks=0,weightedPosition=0;
+    let viewsComplete=true,clicksComplete=true,positionComplete=true;
+    const history=rows.map(day=>{
+      const hasViews=valid(day.impressions),hasClicks=valid(day.clicks);
+      if(!hasViews)viewsComplete=false;
+      if(!hasClicks)clicksComplete=false;
+      if(viewsComplete)cumulativeViews+=day.impressions;
+      if(clicksComplete)cumulativeClicks+=day.clicks;
+      if(!hasViews||(day.impressions>0&&!valid(day.position)))positionComplete=false;
+      if(positionComplete&&hasViews&&day.impressions>0)
+        weightedPosition+=day.impressions*day.position;
+      const views=viewsComplete?cumulativeViews:null;
+      const clicks=clicksComplete?cumulativeClicks:null;
+      return {date:day.date,impressions:views,clicks,
+        ctr:valid(views)&&views>0&&valid(clicks)?clicks/views:null,
+        position:positionComplete&&valid(views)&&views>0?weightedPosition/views:null};
+    });
+    const first=history[0]?.date;
+    const start=dayPattern.test(report?.range?.start||'')?report.range.start:first;
+    const statedEnd=dayPattern.test(report?.reportedThrough||'')?report.reportedThrough:
+      history[history.length-1]?.date;
+    const end=start&&statedEnd&&statedEnd>=start?statedEnd:start;
+    const span=start&&end?Math.max(1,dayNumber(end)-dayNumber(start)):1;
+    const W=1200,H=354,L=59,R=19,T=22,B=44,plotW=W-L-R,plotH=H-T-B;
+    const x=date=>L+(dayNumber(date)-dayNumber(start))/span*plotW;
+    const nativeValue=(row,key)=>valid(row?.[key])
+      ?key==='ctr'?row[key]*100:row[key]:null;
+    const observedValues=configs.flatMap(config=>history
+      .map(row=>nativeValue(row,config.key)).filter(valid));
+    const boxValues=configs.map(config=>nativeValue(head,config.key)).filter(valid);
+    const peak=Math.max(0,...observedValues,...boxValues);
+    const ticks=[10,20,50,100,200,500,1000,2000,5000,10000,20000,50000,100000,
+      200000,500000,1000000];
+    const step=ticks.find(n=>Math.ceil(peak/n)<=7)||
+      Math.ceil(peak/7000000)*1000000;
+    const ceiling=Math.max(step,Math.ceil(peak/step)*step);
+    const y=value=>T+plotH-(value/ceiling)*plotH;
+    const numberLabel=n=>new Intl.NumberFormat('en-US',{maximumFractionDigits:0}).format(n);
+    const yTicks=[];
+    for(let n=0;n<=ceiling+step/1000;n+=step) {
+      const gy=y(n).toFixed(1);
+      yTicks.push('<g><line class="mission-seo-combined-grid" x1="'+L+'" x2="'+(W-R)+
+        '" y1="'+gy+'" y2="'+gy+'"></line>'+
+        '<text class="mission-seo-y-axis-label" x="'+(L-10)+'" y="'+(+gy+5).toFixed(1)+
+        '" text-anchor="end">'+numberLabel(n)+'</text></g>');
+    }
+    const dateTicks=[];
+    if(start&&end) {
+      const daySpan=Math.max(0,dayNumber(end)-dayNumber(start));
+      const candidates=[];
+      if(daySpan<=32) {
+        for(let day=dayNumber(start);day<=dayNumber(end);day++)candidates.push(toDate(day));
+      }else if(daySpan<=180) {
+        const every=daySpan<=90?7:14;
+        for(let day=dayNumber(start);day<=dayNumber(end);day+=every)candidates.push(toDate(day));
+        if(candidates[candidates.length-1]!==end)candidates.push(end);
+      }else{
+        candidates.push(start);
+        const year=Number(start.slice(0,4)),month=Number(start.slice(5,7));
+        let monthDate=new Date(Date.UTC(year,month,1));
+        for(let count=0;count<14;count++){
+          const date=monthDate.toISOString().slice(0,10);
+          if(date>end)break;
+          if(date>start)candidates.push(date);
+          monthDate.setUTCMonth(monthDate.getUTCMonth()+1);
+        }
+        if(candidates[candidates.length-1]!==end)candidates.push(end);
+      }
+      candidates.forEach((date,index)=>{
+        const gx=x(date).toFixed(1);
+        const anchor=index===0?'start':index===candidates.length-1?'end':'middle';
+        dateTicks.push('<g><line class="mission-seo-date-tick" x1="'+gx+'" x2="'+gx+
+          '" y1="'+(H-B)+'" y2="'+(H-B+6)+'"></line>'+
+          '<text class="mission-seo-x-axis-label" x="'+gx+'" y="'+(H-12)+
+          '" text-anchor="'+anchor+'">'+esc(tickLabel(date,index,daySpan))+'</text></g>');
+      });
+    }
+    const dateLines=history.length>=2&&report?.trend?.status==='reported';
+    const lines=configs.map(config=>{
+      if(!dateLines)return '';
+      const groups=[];
+      let group=[],previous=null;
+      for(const item of history) {
+        const value=nativeValue(item,config.key);
+        if(!valid(value)) {
+          if(group.length>=2)groups.push(group);
+          group=[];previous=null;continue;
+        }
+        const when=dayNumber(item.date);
+        if(previous!==null&&when-previous>1) {
+          if(group.length>=2)groups.push(group);
+          group=[];
+        }
+        group.push({date:item.date,value,raw:item[config.key]});
+        previous=when;
+      }
+      if(group.length>=2)groups.push(group);
+      const paths=groups.map(nodes=>'<path class="mission-seo-combined-line" d="'+
+        nodes.map((item,index)=>(index?'L':'M')+x(item.date).toFixed(1)+' '+
+          y(item.value).toFixed(1)).join(' ')+'"></path>').join('');
+      const all=history.filter(item=>valid(nativeValue(item,config.key)));
+      if(!all.length)return '';
+      const last=all[all.length-1];
+      const label=shortDate(last.date)+' · '+config.label+': '+config.format(last[config.key]);
+      return '<g class="mission-seo-combined-series mission-seo-plot-'+config.style+'">'+
+        paths+'<circle cx="'+x(last.date).toFixed(1)+'" cy="'+y(nativeValue(last,config.key)).toFixed(1)+
+        '" r="4"><title>'+esc(label)+'</title></circle></g>';
     }).join('');
-    const mismatch=configs.filter(config=>scales[config.key].matches===false);
-    const reconcileNote=mismatch.length?
-      '<p class="mission-seo-reconcile">Google daily values do not completely match the period totals for '+
-      esc(mismatch.map(config=>config.label).join(', '))+'. The graph uses reported daily history; '+
-      'the boxes retain Google’s summary figures.</p>':'';
-    return '<div class="mission-seo-trends mission-seo-trends-combined mission-seo-trends-wide" role="group" aria-label="Wide Google Search graph with four color-coded lines and selected-period values">'+
+    const svg=dateLines?
+      '<svg class="mission-seo-combined-svg mission-seo-numbered-chart" viewBox="0 0 '+W+' '+H+
+        '" preserveAspectRatio="none" role="img" aria-label="Google Search trends with one numbered vertical scale and dates under the graph">'+
+        '<title>Google Search trends. Shared vertical scale of counts, CTR percentage points, and average position; dates are along the bottom.</title>'+
+        yTicks.join('')+
+        '<line class="mission-seo-chart-axis" x1="'+L+'" y1="'+T+'" x2="'+L+'" y2="'+(H-B)+'"></line>'+
+        '<line class="mission-seo-chart-axis" x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'"></line>'+
+        dateTicks.join('')+lines+'</svg>':
+      '<div class="mission-seo-combined-empty">N/A · Two or more Google-reported dates are needed to draw trends.</div>';
+    const colorKey=configs.map(config=>'<span class="mission-seo-inline-key mission-seo-plot-'+config.style+
+      '"><i aria-hidden="true"></i>'+esc(config.label)+'</span>').join('');
+    const mismatched=configs.filter(config=>{
+      const endRow=history[history.length-1];
+      const box=head[config.key],observed=endRow?.[config.key];
+      return valid(box)&&valid(observed)&&config.format(box)!==config.format(observed);
+    });
+    const warning=mismatched.length?
+      '<p class="mission-seo-reconcile">Daily search history and Google’s period summary differ for '+
+        esc(mismatched.map(c=>c.label).join(', '))+'. The main boxes use the verified period summary.</p>':'';
+    return '<div class="mission-seo-trends mission-seo-trends-combined mission-seo-trends-wide mission-seo-trends-axis" role="group" aria-label="Google Search trends with dated x axis and numeric y axis">'+
       '<div class="mission-seo-trends-heading"><strong>GOOGLE SEARCH TRENDS</strong>'+
-        '<small>Same selected dates as the four boxes</small></div>'+
+        '<small>Value scale in steps of '+numberLabel(step)+'</small></div>'+
+      '<div class="mission-seo-inline-keys" aria-label="Color key for the four metrics">'+colorKey+'</div>'+
       '<div class="mission-seo-combined-layout">'+
         '<div class="mission-seo-combined-main">'+
-          '<div class="mission-seo-wide-graph-caption">Four metrics · each line has its own scale</div>'+
-          sharedChart+
-          '<div class="mission-seo-plot-dates"><span>'+esc(formatDate(start))+'</span>'+
-            '<span>'+esc(formatDate(end))+'</span></div>'+
+          '<div class="mission-seo-axis-scroll">'+svg+'</div>'+
         '</div>'+
-        '<div class="mission-seo-side-values mission-seo-wide-legend" aria-label="Four graph colors and Google selected-period values">'+
-          '<strong class="mission-seo-wide-legend-title">SELECTED PERIOD</strong>'+side+'</div>'+
-      '</div>'+
-      reconcileNote+
-      '<p class="mission-seo-trend-explainer">Faint lines mark relative levels for each color. '+
-        'Impressions and clicks accumulate; CTR and position are running averages. '+
-        'Flat zero lines can overlap. Google data may lag two days.</p>'+
+      '</div>'+warning+
+      '<p class="mission-seo-trend-explainer">Numbers at left use one shared scale: counts for impressions/clicks, percentage points for CTR, and position for ranking. '+
+        'Count lines accumulate within the selected period; Google may report days late. Zero-valued lines can overlap.</p>'+
     '</div>';
   }
 
