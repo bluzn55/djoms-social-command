@@ -7625,3 +7625,53 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     min-width:18px;
   }
 }
+
+
+/* GOOGLE ANALYTICS WIX TAG INTEGRITY · 2026-10-19.
+   Read-only property/data-stream identity, not a promise of full capture.
+   Existing Google Analytics number boxes and combined Google grid remain. */
+#connectionStrip .mission-google-performance .mission-ga4-intro {
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+  line-height:1.4;
+}
+#connectionStrip .mission-google-performance .mission-ga4-identity-status {
+  display:block;
+  width:100%;
+  color:#f5dc9a;
+  font:800 12px/1.35 Arial,sans-serif;
+  text-align:center;
+  overflow-wrap:anywhere;
+}
+#connectionStrip .mission-google-performance .mission-ga4-identity-status.matched {
+  color:#8be2ac;
+}
+#connectionStrip .mission-google-performance .mission-ga4-identity-status.mismatch {
+  color:#ffb08b;
+}
+#connectionStrip .mission-google-performance .mission-ga4-identity-status.unavailable {
+  color:#e6c78e;
+}
+#connectionStrip .mission-google-performance .mission-ga4-verify-btn {
+  display:inline-flex;
+  justify-content:center;
+  align-items:center;
+  cursor:pointer;
+  padding:6px 13px;
+  border:1px solid #d1ab66;
+  border-radius:5px;
+  background:#e6cb96;
+  color:#301e0c;
+  font:900 12px/1.2 Arial,sans-serif;
+}
+#connectionStrip .mission-google-performance .mission-ga4-verify-btn:hover {
+  background:#f9e5b5;
+}
+#connectionStrip .mission-google-performance .mission-ga4-verify-btn:focus-visible {
+  outline:3px solid #80d2b1;
+  outline-offset:2px;
+}
