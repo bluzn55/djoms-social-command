@@ -5534,3 +5534,113 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     max-width:none !important;
   }
 }
+
+/* BUSINESS PULSE VERIFIED LINE GRAPHS · original four rows stay stacked.
+   On Jay's widescreen, four Wix-style gauge boxes are left of the line chart.
+   Narrower windows put the graph below them instead of shrinking the figures. */
+#missionBusinessPulse .mission-intel-overview {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  align-items:stretch;
+  gap:12px;
+  min-width:0;
+  padding:14px 18px 5px;
+}
+#missionBusinessPulse .mission-intel-overview > .mission-intel-meters,
+#missionBusinessPulse .mission-intel-overview > .mission-intel-meters.mission-intel-3,
+#missionBusinessPulse .mission-intel-overview > .mission-intel-meters.mission-intel-4 {
+  min-width:0;
+  width:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+  align-self:stretch !important;
+}
+#missionBusinessPulse .mission-intel-overview > .mission-intel-meters > .mission-intel-meter {
+  min-height:142px !important;
+}
+#missionBusinessPulse .mission-pulse-line {
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  min-height:142px;
+  min-width:0;
+  padding:10px 15px 8px;
+  border:1px solid #b9a276;
+  border-radius:9px;
+  background:#fffdf7;
+  color:#2d3f37;
+  text-align:left;
+}
+#missionBusinessPulse .mission-pulse-line-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:6px;
+  border-bottom:1px solid #eee0c7;
+  padding-bottom:5px;
+}
+#missionBusinessPulse .mission-pulse-line-head strong {
+  font:900 15px/1.25 Arial,sans-serif;
+  color:#47341c;
+  letter-spacing:.25px;
+}
+#missionBusinessPulse .mission-pulse-line-head small {
+  color:#796447;
+  font:800 12px/1.2 Arial,sans-serif;
+}
+#missionBusinessPulse .mission-pulse-line .trend-chart,
+#missionBusinessPulse .mission-pulse-line .trend-chart svg {
+  height:103px !important;
+  min-height:0;
+  margin:4px 0 0;
+}
+#missionBusinessPulse .mission-pulse-line .trend-polyline {
+  stroke:#287a5c;
+  stroke-width:3;
+}
+#missionBusinessPulse .mission-pulse-line .trend-chart circle {fill:#287a5c}
+#missionBusinessPulse .mission-pulse-line .trend-gridline {stroke:#ded1b9}
+/* Chart dates and granularity appear in the label immediately below.
+   Hide the generic START/YEAR/NOW labels that assume a social-media range. */
+#missionBusinessPulse .mission-pulse-line .trend-axis {display:none}
+#missionBusinessPulse .mission-pulse-axis {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+  color:#654c29;
+  font:800 12px/1.3 Arial,sans-serif;
+}
+#missionBusinessPulse .mission-pulse-axis b {
+  color:#286648;
+  text-align:center;
+}
+#missionBusinessPulse .mission-pulse-line-source {
+  margin:5px 0 0;
+  color:#6a593d;
+  font:700 12px/1.3 Arial,sans-serif;
+}
+#missionBusinessPulse .mission-pulse-empty {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  min-height:80px;
+  color:#6a593d;
+}
+#missionBusinessPulse .mission-pulse-empty b {font:900 25px/1 Arial,sans-serif}
+#missionBusinessPulse .mission-pulse-empty span {font:700 13px/1.3 Arial,sans-serif}
+@media(min-width:1680px) {
+  #missionBusinessPulse .mission-intel-overview {
+    grid-template-columns:minmax(0,3.1fr) minmax(335px,1.05fr);
+  }
+}
+@media(max-width:680px) {
+  #missionBusinessPulse .mission-intel-overview {padding:10px;gap:10px}
+  #missionBusinessPulse .mission-pulse-line {padding:11px;min-height:138px}
+  #missionBusinessPulse .mission-intel-overview > .mission-intel-meters > .mission-intel-meter {
+    min-height:106px !important;
+  }
+}
