@@ -8779,3 +8779,54 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     grid-template-columns:minmax(0,1fr) !important;
   }
 }
+
+
+/* BOOK CHAPTER SOURCE-VERIFIED ENGAGEMENT · 2026-10-20
+   Two separate sources: GA4 download events and Wix Library page time.
+   Neither implies completed reading of a PDF in a browser viewer. */
+#missionBusinessPulse .mission-chapter-file-evidence {
+  margin:10px 0 7px;
+  padding:9px 11px;
+  background:#fff8eb;
+  border:1px solid #dec59e;
+  border-radius:6px;
+  color:#51402a;
+}
+#missionBusinessPulse .mission-chapter-file-evidence > summary {
+  font:900 14px/1.35 Arial,sans-serif;
+  color:#745026;
+  cursor:pointer;
+}
+#missionBusinessPulse .mission-chapter-file-evidence > summary:focus-visible {
+  outline:3px solid #2b7e48;
+  outline-offset:2px;
+}
+#missionBusinessPulse .mission-chapter-files {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:0;
+  margin:8px 0;
+}
+#missionBusinessPulse .mission-chapter-files > div {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:8px 12px;
+  align-items:center;
+  padding:7px 0;
+  border-bottom:1px solid #e2d0b5;
+}
+#missionBusinessPulse .mission-chapter-files > div > span {
+  overflow-wrap:anywhere;
+  color:#50381c;
+  font:700 14px/1.35 Arial,sans-serif;
+}
+#missionBusinessPulse .mission-chapter-files > div > strong {
+  font:900 19px/1.15 Arial,sans-serif;
+  font-variant-numeric:tabular-nums;
+  color:#3c2a15;
+}
+#missionBusinessPulse .mission-chapter-file-evidence p {
+  font:700 13px/1.45 Arial,sans-serif;
+  color:#6d5637;
+  margin:6px 0;
+}
