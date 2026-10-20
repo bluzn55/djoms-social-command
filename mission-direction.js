@@ -86,6 +86,34 @@
         '). The business verdict stays yellow until the results agree.'};
   }
 
+  // Fast, categorical direction. No fictitious combined percentage.
+  // When visits and time-on-site disagree, the pointer leans with visits.
+  function quickNeedle(visitorTrend,stayTrend){
+    if(visitorTrend==='unknown'||stayTrend==='unknown')
+      return {kind:'unknown',label:'NOT ENOUGH DATA',angle:0,
+        explanation:'Both comparable visit and time-on-site trends are needed.'};
+    if(visitorTrend==='up'&&stayTrend==='up')
+      return {kind:'up',label:'GOING UP',angle:-19,
+        explanation:'Visits and time on site are both increasing.'};
+    if(visitorTrend==='down'&&stayTrend==='down')
+      return {kind:'down',label:'GOING DOWN',angle:19,
+        explanation:'Visits and time on site are both declining.'};
+    if(visitorTrend==='down')
+      return {kind:'lean-down',label:'LEANING DOWN',angle:11,
+        explanation:'Visits fell while time on site improved or stayed steady.'};
+    if(visitorTrend==='up')
+      return {kind:'lean-up',label:'LEANING UP',angle:-11,
+        explanation:'Visits rose while time on site declined or stayed steady.'};
+    if(stayTrend==='up')
+      return {kind:'lean-up',label:'LEANING UP',angle:-8,
+        explanation:'Visits were steady while time on site improved.'};
+    if(stayTrend==='down')
+      return {kind:'lean-down',label:'LEANING DOWN',angle:8,
+        explanation:'Visits were steady while time on site declined.'};
+    return {kind:'hold',label:'HOLDING STEADY',angle:0,
+      explanation:'Visits and average stay changed less than five percent.'};
+  }
+
   function evaluate(site,ga4,seo,sales,period){
     const available=site?.connected===true;
     const comparisons=available?site?.metricComparisons||{}:{};
@@ -97,6 +125,7 @@
     const stayTrend=trend(stay);
     const bounceTrend=trend(bounced,false);
     const returnTrend=trend(returns);
+    const needle=quickNeedle(visitorsTrend,stayTrend);
     const currentVisitors=good(site?.visitors)?site.visitors:visitors?.currentVisitors;
     const previousVisitors=good(visitors?.previousVisitors)?visitors.previousVisitors:null;
     const salesReady=sales?.connected===true&&sales?.complete===true&&Number.isSafeInteger(sales.paidOrders);
@@ -145,9 +174,9 @@
 
     let websiteDirection='NOT ENOUGH DATA',directionColor='unknown';
     if(visitorsTrend==='up'&&stayTrend==='down'){
-      websiteDirection='MIXED: TRAFFIC UP, ENGAGEMENT DOWN';directionColor='yellow';
+      websiteDirection='LEANING UP · VISITS UP, ENGAGEMENT DOWN';directionColor='yellow';
     } else if(visitorsTrend==='down'&&stayTrend==='up'){
-      websiteDirection='MIXED: TRAFFIC DOWN, ENGAGEMENT UP';directionColor='yellow';
+      websiteDirection='LEANING DOWN · VISITS DOWN, ENGAGEMENT UP';directionColor='yellow';
     } else if(visitorsTrend==='up'&&stayTrend==='up'){
       websiteDirection='WEB MOMENTUM IMPROVING';directionColor='green';
     } else if(visitorsTrend==='down'&&stayTrend==='down'){
@@ -158,6 +187,10 @@
       websiteDirection='VISITORS DECREASING, OUTCOME UNPROVEN';directionColor='yellow';
     } else if(visitorsTrend==='steady'&&stayTrend==='steady'){
       websiteDirection='WEB TRAFFIC ABOUT STEADY';directionColor='yellow';
+    }else if(visitorsTrend==='steady'&&stayTrend==='up'){
+      websiteDirection='LEANING UP · VISITS STEADY, ENGAGEMENT UP';directionColor='yellow';
+    }else if(visitorsTrend==='steady'&&stayTrend==='down'){
+      websiteDirection='LEANING DOWN · VISITS STEADY, ENGAGEMENT DOWN';directionColor='yellow';
     }
 
     const discovering=available&&isTrend(visitors)
@@ -173,15 +206,23 @@
     // Highlight a supported positive signal instead; show mixed outcomes
     // honestly when average stay improves but fewer people visit.
     const working=stayTrend==='up'&&isTrend(stay)
-      ?'Average time on site increased '+percent(stay.percentChange)+
-        ' versus the preceding period'+(visitorsTrend==='down'?', although visitor traffic declined.':'.')
+      ?'Average time on site is '+time(site.avgTimeSeconds)+' ('+
+        percent(stay.percentChange)+' versus the prior period). '+
+        (visitorsTrend==='down'?'People who arrive are staying longer, even while visits are down.':
+          'Visitors are spending more time on the site.')
       :visitorsTrend==='up'&&isTrend(visitors)
         ?'Wix reports '+fmt(currentVisitors)+' visitors, '+percent(visitors.percentChange)+
           ' versus the preceding period.'
         :visitorsTrend==='steady'&&stayTrend==='steady'
           ?'Website traffic and average stay remained roughly steady.'
           :'No positive improvement is confirmed for these dates. '+discovering;
-    let concern=ga4Gap(site,ga4)?'Wix reports '+fmt(site.sessions)+' sessions but GA4 shows '+fmt(ga4.metrics.sessions)+'. Some sessions may be excluded by consent, blockers, bot filtering, or a tracking setup issue.'
+    let concern=visitorsTrend==='down'&&isTrend(visitors)
+      ?'Visits fell '+Math.abs(visitors.percentChange).toFixed(1)+'% to '+fmt(currentVisitors)+
+        (good(previousVisitors)?' (from '+fmt(previousVisitors)+').':'.')+
+        ' The needle leans down because fewer people came. '+
+        (ga4Gap(site,ga4)?'Wix shows '+fmt(site.sessions)+' sessions versus GA4 '+fmt(ga4.metrics.sessions)+
+          '; tracking coverage also needs checking.':'Compare source channels to see where visits declined.')
+      :ga4Gap(site,ga4)?'Wix reports '+fmt(site.sessions)+' sessions but GA4 shows '+fmt(ga4.metrics.sessions)+'. Some sessions may be excluded by consent, blockers, bot filtering, or a tracking setup issue.'
       :gaIssue?'Google Analytics is authorized, but its Data API is disabled. Website action data is unavailable in Social Command.'
       :stayTrend==='down'
         ?'Average time on site decreased '+Math.abs(stay.percentChange).toFixed(1)+'%. We have not yet separated actual radio listening from exits.'
@@ -192,7 +233,13 @@
             :'We still need measured listening, membership actions and costs to tell whether attention creates business value.';
     let next='Measure actual radio listening and meaningful actions before grading customer growth.';
     let nextHref='';
-    if(ga4Gap(site,ga4)){
+    if(visitorsTrend==='down'&&isTrend(visitors)&&available){
+      next='Bring visits back up: compare verified Direct, Google, Facebook and Instagram sources to see what dropped. Keep the pages holding attention.';
+      if(ga4Gap(site,ga4)){
+        next+=' Also check the Wix-versus-GA4 session gap before relying on source totals.';
+        nextHref='https://analytics.google.com/';
+      }
+    }else if(ga4Gap(site,ga4)){
       next='The Wix GA4 tag has been matched and a live phone visit was recorded. Compare future completed reporting periods, and investigate consent and bot filtering to explain the remaining Wix-versus-GA4 gap.';
       nextHref='https://analytics.google.com/';
     }else if(gaIssue){
@@ -238,12 +285,13 @@
     // Never call the whole business FORWARD without contribution margin and
     // reliable actions. Direction is limited to measured web momentum.
     return {overall:businessStatus.explanation,businessStatus,
-      websiteDirection,directionColor,working,concern,next,nextHref,
+      websiteDirection,directionColor,needle,working,concern,next,nextHref,
       // Percentages always come from the matching Wix reporting periods.
       visitorDelta:isTrend(visitors)?visitors.percentChange:null,
       stayDelta:isTrend(stay)?stay.percentChange:null,
       coverage,actionEvidence,warnings,
       notes:[
+        'This needle is a quick direction reading, not a composite percentage: both improving signals point up, both declining signals point down, and mixed signals lean with visitor trend.',
         'Visitor growth, time on site and search appearances are different measurements. No platform totals are added together.',
         'Site bounces and outgoing clicks do not prove radio listening. Verified web-sales growth does not prove profit or overall business health.',
         'Comparisons are against the preceding equal-length reporting period, not a different week or year.',
@@ -499,17 +547,10 @@
   }
 
 
-  // This needle uses only the Wix website trend already assessed in evaluate().
-  // Green: both visitors and average stay improving. Red: both declining.
-  // Yellow: mixed or inconclusive signals. Gray centered: insufficient data.
-  // Never represent these as confirmed profit or business growth.
+  // A short arm hinged on the left: center = holding, above = better,
+  // below = worse. Angles are categorical, not numeric business scores.
   function directionMeter(summary){
-    const signal=summary?.directionColor;
-    const category=signal==='green'?'forward':signal==='red'?'backward':
-      signal==='yellow'?'watch':'unknown';
-    const position=category==='forward'?16:category==='backward'?84:50;
-    const caption=category==='forward'?'IMPROVING':category==='backward'?'DECLINING':
-      category==='watch'?'WATCH · MIXED SIGNALS':'NOT ENOUGH DATA';
+    const needle=summary?.needle||quickNeedle('unknown','unknown');
     const visitorDelta=typeof summary?.visitorDelta==='number'&&
       Number.isFinite(summary.visitorDelta)?summary.visitorDelta:null;
     const stayDelta=typeof summary?.stayDelta==='number'&&
@@ -518,21 +559,25 @@
       visitorDelta<0?'down':'steady';
     const visitorText=visitorDelta===null?'N/A':percent(visitorDelta);
     const stayText=stayDelta===null?'N/A':percent(stayDelta);
-    const meaning='Website momentum: '+caption+
-      '. Visitor change: '+visitorText+'. Average-stay change: '+stayText+
-      '. Compared with the preceding equal-length Wix reporting period. This does not establish business profit.';
-    return '<div class="mission-direction-meter '+category+'" role="img" aria-label="'+esc(meaning)+'">'+
+    const meaning='Website direction: '+needle.label+'. '+needle.explanation+
+      ' Visitor change: '+visitorText+'. Average-stay change: '+stayText+
+      '. Website-only comparison, not confirmed profit or overall business growth.';
+    return '<div class="mission-direction-meter swing-meter '+esc(needle.kind)+
+      '" role="img" aria-label="'+esc(meaning)+'">'+
       '<div class="mission-direction-meter-top"><strong>WEBSITE MOMENTUM</strong>'+
         '<span class="mission-direction-meter-delta '+deltaState+'">'+
           '<b>'+esc(visitorText)+'</b><small>VISITORS</small></span></div>'+
-      '<div class="mission-direction-meter-sub"><span>'+esc(caption)+'</span>'+
+      '<div class="mission-direction-meter-sub">'+
+        '<span class="mission-swing-result">'+esc(needle.label)+'</span>'+
         '<small>AVG. STAY '+esc(stayText)+'</small></div>'+
-      '<div class="mission-direction-meter-rail" style="--mission-direction-needle:'+position+'%">'+
-        '<span class="mission-direction-meter-pointer" aria-hidden="true"></span>'+
+      '<div class="mission-swing-stage" style="--mission-swing-angle:'+needle.angle+'deg" aria-hidden="true">'+
+        '<span class="mission-swing-zero"></span>'+
+        '<span class="mission-swing-needle"></span>'+
+        '<span class="mission-swing-pivot"></span>'+
+        '<div class="mission-swing-side-labels"><span>↑ UP</span>'+
+          '<span>— HOLD</span><span>↓ DOWN</span></div>'+
       '</div>'+
-      '<div class="mission-direction-meter-labels" aria-hidden="true">'+
-        '<span>FORWARD</span><span>WATCH</span><span>BACKWARD</span>'+
-      '</div>'+
+      '<small class="mission-swing-caption">Mixed readings lean with visits, not profit</small>'+
     '</div>';
   }
 
