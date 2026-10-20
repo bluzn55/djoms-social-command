@@ -410,13 +410,16 @@
   function meaningfulActionsCard(site,ga4,sales,period){
     const ordersVerified=sales?.connected===true&&sales?.complete===true&&
       sales?.range?.start===period?.start&&sales?.range?.end===period?.end&&
-      Number.isSafeInteger(sales.paidOrders)&&sales.paidOrders>=0;
-    const orders=ordersVerified?sales.paidOrders:null;
+      Number.isSafeInteger(sales.paidOrders)&&sales.paidOrders>=0&&
+      Number.isSafeInteger(sales.itemSalesCents)&&sales.itemSalesCents>=0;
+    // The current verified source is paid Wix WEB item sales, before tax
+    // and shipping. Offline sales are not available to this card.
+    const webItemSales=ordersVerified?sales.itemSalesCents:null;
     const gaActions=ga4?.connected===true&&ga4?.actions?.status==='reported'?
       ga4.actions:null;
     const downloads=good(gaActions?.counts?.fileDownload)?gaActions.counts.fileDownload:null;
     const rows=[
-      {id:'orders',label:'1. Paid Sales',value:orders},
+      {id:'orders',label:'1. Gross Sales',value:webItemSales,monetary:true},
       {id:'krewe',label:'2. Pit Krewe Members',value:null},
       {id:'contacts',label:'3. Customer Inquiries',value:null},
       {id:'radio',label:'4. Radio Listeners',value:null},
@@ -433,7 +436,8 @@
           '" aria-expanded="'+(expanded?'true':'false')+
           '" aria-controls="missionActionDetails" title="See '+
           esc(item.label.replace(/^[0-9]+\. /,''))+' details">'+
-          '<span>'+esc(item.label)+'</span><strong>'+esc(count(item.value))+'</strong>'+
+          '<span>'+esc(item.label)+'</span><strong>'+
+          esc(item.monetary?money(item.value):count(item.value))+'</strong>'+
           '<i aria-hidden="true">›</i></button>';
       }).join('')+'</div>'+
       '<button type="button" class="mission-action-compact-toggle" data-direction-actions-toggle="1"'+
@@ -450,10 +454,12 @@
     const contacts=contactsKnown?site.contactClicks+site.formsSubmitted:null;
     const verifiedOrders=sales?.connected===true&&sales?.complete===true&&
       sales?.range?.start===period?.start&&sales?.range?.end===period?.end&&
-      Number.isSafeInteger(sales.paidOrders)&&sales.paidOrders>=0;
+      Number.isSafeInteger(sales.paidOrders)&&sales.paidOrders>=0&&
+      Number.isSafeInteger(sales.itemSalesCents)&&sales.itemSalesCents>=0;
     const orders=verifiedOrders?sales.paidOrders:null;
     const tabs=[
-      {id:'orders',label:'PAID SALES',value:count(orders),sub:'Verified Wix web orders'},
+      {id:'orders',label:'GROSS SALES',value:verifiedOrders?money(sales.itemSalesCents):'N/A',
+        sub:'Wix paid web items · before tax/shipping'},
       {id:'krewe',label:'PIT KREWE MEMBERS',value:'N/A',sub:'GA4 sign-up events: '+count(counts.signUp)},
       {id:'contacts',label:'CUSTOMER INQUIRIES',value:'N/A',sub:'Wix contact actions: '+count(contacts)},
       {id:'radio',label:'RADIO LISTENERS',value:'N/A',sub:'Radio link clicks: '+count(actions?.radioLinkClicks)},
@@ -515,9 +521,12 @@
           (row.linkUrl?'<small class="mission-action-url">'+esc(row.linkUrl)+'</small>':'')+
           '</td><td>'+esc(count(row.clicks))+'</td></tr>'));
     } else if(selectedAction==='orders'){
-      detail='<h4>PAID ONLINE ORDERS</h4>'+
-        '<p>Verified Wix paid orders: <b>'+esc(count(orders))+'</b>. Item sales: <b>'+
-        esc(verifiedOrders?money(sales.itemSalesCents):'N/A')+'</b> (not profit).</p>'+
+      detail='<h4>GROSS SALES · WIX WEB</h4>'+
+        '<p>Paid web item sales, before tax and shipping: <b>'+
+        esc(verifiedOrders?money(sales.itemSalesCents):'N/A')+'</b>. Paid orders: <b>'+
+        esc(count(orders))+'</b>.</p>'+
+        '<p>This is the verified Wix website portion only, not total company-wide gross sales. '+
+        'Offline sales are not connected, and this amount is not profit.</p>'+
         '<p>GA4 add-to-cart events: <b>'+esc(count(counts.addToCart))+
         '</b>; checkout starts: <b>'+esc(count(counts.beginCheckout))+
         '</b>. Events do not count as paid orders.</p>'+
