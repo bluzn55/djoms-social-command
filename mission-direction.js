@@ -331,11 +331,13 @@
     const files=ga4?.actions?.downloadFiles;
     if(files?.status!=='reported'||!Array.isArray(files.rows))return '';
     const rows=files.rows.filter(row=>good(row.events)&&verifiedUrl(row.linkUrl));
-    if(!rows.length)return '';
+    if(!rows.length)return '<div class="mission-action-card-files">'+
+      '<small>DIRECT FILE LINKS: N/A</small>'+
+      '<em>Open details to inspect available download evidence.</em></div>';
     return '<div class="mission-action-card-files"><small>OPEN FILE DIRECTLY</small>'+
-      rows.slice(0,2).map(row=>fileLink(row.linkUrl,
+      rows.slice(0,3).map(row=>fileLink(row.linkUrl,
         row.fileName&&row.fileName!=='(not set)'?row.fileName:'Open file')).join('')+
-      (rows.length>2?'<em>+'+(rows.length-2)+' more in details</em>':'')+'</div>';
+      (rows.length>3?'<em>+'+(rows.length-3)+' more in details</em>':'')+'</div>';
   }
   function actionTable(headers,rows){
     return rows.length?'<div class="mission-action-table-scroll"><table class="mission-action-table">'+
