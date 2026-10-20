@@ -8485,3 +8485,19 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     min-height:35px;
   }
 }
+
+
+/* MISSION CONTROL: TWO FINANCIAL BOXES MOVED TO CCC / INCOME */
+#connectionStrip .mission-direction-panel .mission-direction-evidence {
+  grid-template-columns:repeat(4,minmax(0,1fr));
+}
+@media(max-width:1250px) {
+  #connectionStrip .mission-direction-panel .mission-direction-evidence {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:600px) {
+  #connectionStrip .mission-direction-panel .mission-direction-evidence {
+    grid-template-columns:1fr;
+  }
+}
