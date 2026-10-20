@@ -8271,3 +8271,29 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     transition:none;
   }
 }
+
+
+/* SHORT VISITS AND ENGAGEMENT TREND CARDS · 2026-10-20
+   Numeric value and percent share the true signed direction; not the
+   5% smoothing threshold used for overall website momentum. */
+#connectionStrip .mission-direction-panel .mission-direction-signal.trend-metric > strong {
+  font:900 clamp(16px,1.35vw,23px)/1.14 Arial,sans-serif;
+  margin:7px 0 6px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-signal.trend-metric > span {
+  display:block;
+  font:900 clamp(18px,1.5vw,25px)/1.18 Arial,sans-serif;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:.15px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-signal.trend-metric.green > strong,
+#connectionStrip .mission-direction-panel .mission-direction-signal.trend-metric.green > span {
+  color:#237641;
+}
+#connectionStrip .mission-direction-panel .mission-direction-signal.trend-metric.red > strong,
+#connectionStrip .mission-direction-panel .mission-direction-signal.trend-metric.red > span {
+  color:#b23929;
+}
+#connectionStrip .mission-direction-panel .mission-direction-signal.trend-metric.neutral > span {
+  color:#6e675b;
+}
