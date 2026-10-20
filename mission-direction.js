@@ -279,9 +279,7 @@
         meaningfulAction.headline,meaningfulAction.note),
       proof('ONLINE SALES',salesReady?businessStatus.state:'unknown',
         salesReady?fmt(sales.paidOrders)+' paid orders':'N/A',
-        salesReady?money(sales.itemSalesCents)+' item sales (not profit)':'Paid order report unavailable'),
-      proof('CONTRIBUTION MARGIN','unknown','NOT MEASURED',
-        'Variable costs, fees and offline sales are not yet combined')
+        salesReady?money(sales.itemSalesCents)+' item sales (not profit)':'Paid order report unavailable')
     ];
     const actionEvidence={
       contacts:phoneActions,
@@ -646,11 +644,6 @@
         '<small>DOC JAKS · OWNER-FIRST BUSINESS INTELLIGENCE</small>'+
         '<h2>ARE WE MOVING FORWARD OR BACKWARD?</h2></div>'+
         directionMeter(summary)+
-        '<div class="mission-direction-verdict '+esc(summary.businessStatus.state)+'" role="status" '+
-          'title="'+esc(summary.businessStatus.explanation)+'">'+
-          '<small>BUSINESS RESULTS</small>'+
-          '<strong>'+esc(summary.businessStatus.headline)+'</strong>'+
-          '<span>'+esc(summary.businessStatus.detail)+'</span></div>'+
       '</div>'+
       '<p class="mission-direction-webtrend">WEBSITE TREND: <b class="'+esc(summary.directionColor)+'">'+
         esc(summary.websiteDirection)+'</b></p>'+
@@ -676,8 +669,7 @@
       '<details class="mission-direction-details"><summary class="mission-direction-details-toggle">'+
         '<span class="mission-detail-show">Show Details</span>'+
         '<span class="mission-detail-hide">Hide Details</span></summary>'+
-        '<p><b>Business result:</b> '+esc(summary.overall)+
-          '. Website movement is not the same as business profit.</p>'+
+        '<p>Website direction describes activity, not business profit. Financial results belong in CCC and Income.</p>'+
         '<div class="mission-direction-action-evidence">'+
           measure('Wix contact actions',fmt(proof.contacts),'Measured contact clicks plus forms, where available')+
           measure('Paid Wix orders',fmt(proof.purchases),'Refunded and unpaid orders excluded')+
