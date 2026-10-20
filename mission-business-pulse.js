@@ -307,6 +307,18 @@
       ?p.avgTimeSeconds:null;
   }
 
+  // New /read-chapter-one is tracked only after the Wix Editor page exists.
+  // Wix's page_time metric is webpage stay, not proof the PDF was read.
+  function readerPageStats(interest){
+    const item=Array.isArray(interest?.pages)?
+      interest.pages.find(row=>linked(row.path)==='/read-chapter-one'):null;
+    return {
+      views:item&&measurable(item.views)?item.views:null,
+      avgTimeSeconds:item&&measurable(item.views)&&item.views>0&&
+        measurable(item.avgTimeSeconds)?item.avgTimeSeconds:null
+    };
+  }
+
   function bookCard() {
     const interest=findGroup('book');
     const chapter=snapshot.chapter.status==='ok' ? snapshot.chapter.data : null;
@@ -319,6 +331,7 @@
     const clicks=chapter?.status==='reported' && measurable(chapter.clicks) ? chapter.clicks : null;
     const pdf=chapterPdfEvents();
     const pageStay=libraryPageStay(interest);
+    const reader=readerPageStats(interest);
     const problems=[snapshot.interests,snapshot.chapter,snapshot.sales].filter(x=>x.status==='error').length;
     const color=problems===3?'red':problems || !interest?.verified || chapter?.status!=='reported' || !store?.complete?'yellow':'green';
     const warnings=[snapshot.interests.error,snapshot.chapter.error,snapshot.sales.error].filter(Boolean);
@@ -335,10 +348,12 @@
         ${meter('Wix book units',show(bookUnits))}
         ${meter('Chapter PDF events',show(pdf.events),'GA4 · 2 Chapter 1 files')}
         ${meter('Avg. Library page stay',audioTime(pageStay),'Wix page · not PDF')}
+        ${meter('Free chapter page views',show(reader.views),'New /read-chapter-one page')}
+        ${meter('Avg. chapter page stay',audioTime(reader.avgTimeSeconds),'Wix page · not confirmed reading')}
       </div>
         ${pulseLineGraph('book')}
       </div>
-      <p class="mission-intel-muted">PDF reading time: <strong>N/A</strong>. Wix tracks average stay on Emberhold Library, not how long a visitor reads an opened PDF.</p>
+      <p class="mission-intel-muted">Actual PDF reading time: <strong>N/A</strong>. Average stay on the new Chapter 1 webpage will appear after it is published and Wix reports activity. Page stay does not prove someone read every word.</p>
       ${pdf.status==='reported'?
         '<details class="mission-intel-data-notes mission-chapter-file-evidence"><summary>Chapter 1 PDF breakdown</summary>'+
         '<div class="mission-chapter-files">'+pdf.files.map(file=>
