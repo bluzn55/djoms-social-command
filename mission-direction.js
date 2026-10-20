@@ -191,7 +191,7 @@
         visitorsTrend==='up'&&stayTrend==='down'?
         ' · VISITORS UP, AVG. STAY DOWN':'';
       websiteDirection=(needle.kind==='up'?'UP':needle.kind==='down'?'DOWN':'HOLD')+
-        ' '+signedChange(needle.changePercent)+' · EQUAL-WEIGHT WEB INDICATOR'+signals;
+        ' '+signedChange(needle.changePercent)+''+signals;
       directionColor=needle.kind==='up'?'green':needle.kind==='down'?'red':'yellow';
     }
 
@@ -211,7 +211,7 @@
       ?'Average time on site is '+time(site.avgTimeSeconds)+' ('+
         signedChange(stay.percentChange)+' versus the preceding period). '+
         (visitorsTrend==='down'
-          ?'Better engagement offsets fewer visitors in the equal-weight indicator ('+
+          ?'Longer visits help website momentum despite fewer visitors ('+
             signedChange(needle.changePercent)+').'
           :'People are spending more time on the site.')
       :visitorsTrend==='up'&&isTrend(visitors)
@@ -238,7 +238,7 @@
     let next='Measure actual radio listening and meaningful actions before grading customer growth.';
     let nextHref='';
     if(visitorsTrend==='down'&&isTrend(visitors)&&available){
-      next='Improve traffic: compare Direct, Google, Facebook and Instagram to see what declined. Keep what holds attention. The score is an index, not verified sales or profit.';
+      next='Improve traffic: compare Direct, Google, Facebook and Instagram to see what declined. Keep what holds attention.';
       if(ga4Gap(site,ga4)){
         next+=' Also check the Wix-versus-GA4 session gap before relying on source totals.';
         nextHref='https://analytics.google.com/';
@@ -562,25 +562,20 @@
     const sd=typeof summary?.stayDelta==='number'&&
       Number.isFinite(summary.stayDelta)?summary.stayDelta:null;
     const shown=signedChange(needle.changePercent);
-    const message='Equal-weight website direction: '+shown+'. '+needle.explanation+
-      ' The visual position is magnified near zero so tiny movements are visible.';
+    const message='Website momentum: '+shown+'. '+needle.explanation;
     return '<div class="mission-direction-meter score-meter '+esc(needle.kind)+
       '" role="img" aria-label="'+esc(message)+'">'+
         '<div class="mission-direction-meter-top"><strong>WEBSITE MOMENTUM</strong>'+
-          '<div class="mission-score-summary"><b>'+esc(shown)+'</b>'+
-            '<small>'+esc(needle.label)+'</small></div></div>'+
+          '<div class="mission-score-summary"><b>'+esc(shown)+'</b></div></div>'+
         '<div class="mission-score-vertical" style="--mission-score-y:'+
           esc(needle.position.toFixed(2))+'%" aria-hidden="true">'+
           '<div class="mission-score-scale">'+
             '<span class="mission-score-center-line"></span></div>'+
-          '<div class="mission-score-pointer"><strong>'+esc(shown)+'</strong></div>'+
-          '<div class="mission-score-axis-labels">'+
-            '<span>UP</span><span>0% HOLD</span><span>DOWN</span>'+
-          '</div></div>'+
+          '<div class="mission-score-pointer"></div></div>'+
         '<div class="mission-score-breakdown">'+
           '<span>VISITS <b>'+esc(signedChange(vd))+'</b></span>'+
           '<span>AVG. STAY <b>'+esc(signedChange(sd))+'</b></span></div>'+
-        '<small class="mission-score-caption">Equal weight · Needle exaggerates tiny moves for visibility</small>'+
+        ''+
       '</div>';
   }
 
