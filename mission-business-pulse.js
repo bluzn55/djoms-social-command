@@ -363,7 +363,9 @@
 
       <div class="mission-intel-actions">
         <button type="button" data-view="Website Analytics">Book details ›</button>
-        <a href="https://www.docjaks.com/_files/ugd/cf21c8_27ee63f049e5479b8d37c885f638bb2b.pdf" target="_blank" rel="noopener noreferrer">Chapter 1 ↗</a>
+        ${reader.views!==null
+          ?'<a href="https://www.docjaks.com/read-chapter-one" target="_blank" rel="noopener noreferrer">Read Chapter 1 online ↗</a>'
+          :'<a href="https://www.docjaks.com/_files/ugd/cf21c8_27ee63f049e5479b8d37c885f638bb2b.pdf" target="_blank" rel="noopener noreferrer">Chapter 1 PDF ↗</a>'}
       </div>
       ${warnings.length?'<p class="mission-intel-error">'+escape(warnings.join(' · '))+'</p>':''}
     </article>`;
