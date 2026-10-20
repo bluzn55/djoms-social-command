@@ -328,12 +328,15 @@
     return fileLink(row.linkUrl,label)||'<strong>'+esc(label)+'</strong>';
   };
   function inlineFileLinks(ga4){
+    const total=ga4?.actions?.counts?.fileDownload;
+    if(!good(total)||total===0)return '';
     const files=ga4?.actions?.downloadFiles;
-    if(files?.status!=='reported'||!Array.isArray(files.rows))return '';
-    const rows=files.rows.filter(row=>good(row.events)&&verifiedUrl(row.linkUrl));
-    if(!rows.length)return '<div class="mission-action-card-files">'+
+    const unavailable='<div class="mission-action-card-files">'+
       '<small>DIRECT FILE LINKS: N/A</small>'+
       '<em>Open details to inspect available download evidence.</em></div>';
+    if(files?.status!=='reported'||!Array.isArray(files.rows))return unavailable;
+    const rows=files.rows.filter(row=>good(row.events)&&verifiedUrl(row.linkUrl));
+    if(!rows.length)return unavailable;
     return '<div class="mission-action-card-files"><small>OPEN FILE DIRECTLY</small>'+
       rows.slice(0,3).map(row=>fileLink(row.linkUrl,
         row.fileName&&row.fileName!=='(not set)'?row.fileName:'Open file')).join('')+
