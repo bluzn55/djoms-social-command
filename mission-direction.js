@@ -275,11 +275,11 @@
       proof('ENGAGEMENT',available&&good(site?.avgTimeSeconds)?changeColor(stay):'neutral',
         available?time(site.avgTimeSeconds):'N/A',
         available&&good(site?.avgTimeSeconds)&&isTrend(stay)?signedChange(stay.percentChange):'N/A'),
-      proof('MEANINGFUL ACTIONS',meaningfulAction.state,
-        meaningfulAction.headline,meaningfulAction.note),
       proof('ONLINE SALES',salesReady?businessStatus.state:'unknown',
         salesReady?fmt(sales.paidOrders)+' paid orders':'N/A',
-        salesReady?money(sales.itemSalesCents)+' item sales (not profit)':'Paid order report unavailable')
+        salesReady?money(sales.itemSalesCents)+' item sales (not profit)':'Paid order report unavailable'),
+      proof('MEANINGFUL ACTIONS',meaningfulAction.state,
+        meaningfulAction.headline,meaningfulAction.note)
     ];
     const actionEvidence={
       contacts:phoneActions,
@@ -704,9 +704,12 @@
     const summary=evaluate(site,ga4,seo,sales,period);
     syncAttention(issueList(site,ga4,seo));
     const proof=summary.actionEvidence;
-    // Left: headline and the three activity KPIs. Right: narrow momentum meter.
-    const leading=summary.coverage.filter(item=>item.label!=='ONLINE SALES');
+    // Left: heading, Visitors, Engagement, Online Sales and Meaningful Actions.
+    // Right: the existing narrow Website Momentum gauge.
+    const leading=summary.coverage;
     const leadingCards=leading.map(item=>{
+      if(item.label==='ONLINE SALES')
+        return onlineSalesCard(sales,period);
       if(item.label==='MEANINGFUL ACTIONS')
         return meaningfulActionsCard(site,ga4,sales,period);
       return '<div class="mission-direction-signal '+esc(item.state)+
@@ -727,7 +730,7 @@
       '</div>'+
       '<p class="mission-direction-webtrend">WEBSITE TREND: <b class="'+esc(summary.directionColor)+'">'+
         esc(summary.websiteDirection)+'</b></p>'+
-      '<div class="mission-direction-sales-row">'+onlineSalesCard(sales,period)+'</div>'+
+
       '<section id="missionActionDetails" class="mission-action-panel"'+
         (actionDetailsOpen?'':' hidden')+'>'+
         (actionDetailsOpen?actionsDetail(site,ga4,sales,period):'')+'</section>'+
