@@ -306,6 +306,133 @@
     return '<div class="mission-direction-measure"><small>'+esc(label)+'</small>'+
       '<strong>'+esc(content)+'</strong><span>'+esc(comment)+'</span></div>';
   }
+
+  // Clickable owner dashboard evidence. Counts are separate measurements:
+  // a download is not a sale, a sign_up event is not a Pit Krewe membership,
+  // and outbound clicks are not confirmed Radio.co listening sessions.
+  let actionDetailsOpen=false;
+  let selectedAction='downloads';
+  const verifiedUrl=(value)=>{
+    try {
+      const url=new URL(String(value||''));
+      return ['https:','http:'].includes(url.protocol)?url.href:null;
+    } catch {return null;}
+  };
+  const fileLink=(url,label)=>{
+    const destination=verifiedUrl(url);
+    return destination?'<a href="'+esc(destination)+'" target="_blank" rel="noopener noreferrer" title="Open original link in a new tab">'+esc(label)+' ↗</a>':'';
+  };
+  const count=value=>good(value)?fmt(value):'N/A';
+  const evidenceRowLink=(row)=>{
+    const label=row.fileName&&row.fileName!=='(not set)'?row.fileName:'Filename N/A';
+    return fileLink(row.linkUrl,label)||'<strong>'+esc(label)+'</strong>';
+  };
+  function inlineFileLinks(ga4){
+    const files=ga4?.actions?.downloadFiles;
+    if(files?.status!=='reported'||!Array.isArray(files.rows))return '';
+    const rows=files.rows.filter(row=>good(row.events)&&verifiedUrl(row.linkUrl));
+    if(!rows.length)return '';
+    return '<div class="mission-action-card-files"><small>OPEN FILE DIRECTLY</small>'+
+      rows.slice(0,2).map(row=>fileLink(row.linkUrl,
+        row.fileName&&row.fileName!=='(not set)'?row.fileName:'Open file')).join('')+
+      (rows.length>2?'<em>+'+(rows.length-2)+' more in details</em>':'')+'</div>';
+  }
+  function actionTable(headers,rows){
+    return rows.length?'<div class="mission-action-table-scroll"><table class="mission-action-table">'+
+      '<thead><tr>'+headers.map(t=>'<th scope="col">'+esc(t)+'</th>').join('')+
+      '</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>':'';
+  }
+  function actionsDetail(site,ga4,sales,period){
+    const actions=ga4?.connected===true&&ga4?.actions?.status==='reported'?ga4.actions:null;
+    const counts=actions?.counts||{};
+    const contactsKnown=good(site?.contactClicks)&&good(site?.formsSubmitted)&&site?.connected===true;
+    const contacts=contactsKnown?site.contactClicks+site.formsSubmitted:null;
+    const verifiedOrders=sales?.connected===true&&sales?.complete===true&&
+      sales?.range?.start===period?.start&&sales?.range?.end===period?.end&&
+      Number.isSafeInteger(sales.paidOrders)&&sales.paidOrders>=0;
+    const orders=verifiedOrders?sales.paidOrders:null;
+    const tabs=[
+      {id:'downloads',label:'FILE DOWNLOADS',value:count(counts.fileDownload),sub:'GA4 events'},
+      {id:'krewe',label:'PIT KREWE MEMBERS',value:'N/A',sub:'GA4 sign-up events: '+count(counts.signUp)},
+      {id:'contacts',label:'CONTACT ACTIONS',value:count(contacts),sub:'Measured Wix clicks + forms'},
+      {id:'radio',label:'RADIO LISTENERS',value:'N/A',sub:'Radio link clicks: '+count(actions?.radioLinkClicks)},
+      {id:'orders',label:'PAID WEB ORDERS',value:count(orders),sub:'Verified Wix transactions'}
+    ];
+    let detail='';
+    if(selectedAction==='downloads'){
+      const fileData=actions?.downloadFiles;
+      const rows=Array.isArray(fileData?.rows)?fileData.rows.filter(r=>good(r.events)):[];
+      detail='<h4>DOWNLOADS BY FILE</h4>'+
+        '<p>GA4 recorded <b>'+esc(count(counts.fileDownload))+
+        '</b> download events for these dates. A download event is not necessarily a successful transfer or a unique visitor.</p>'+
+        (fileData?.status==='reported'?
+          '<p class="mission-action-good">File-by-file totals match the GA4 download event count.</p>':
+          '<p class="mission-action-warning">File details are N/A or incomplete'+
+            (fileData?.status==='mismatch'?' (totals do not reconcile)':'')+'. The GA4 total above remains separate.</p>')+
+        actionTable(['FILE / OPEN ORIGINAL','EVENTS'],rows.map(row=>
+          '<tr><td>'+evidenceRowLink(row)+
+          (row.extension&&row.extension!=='(not set)'?'<small>Type: '+esc(row.extension)+'</small>':'')+
+          (row.linkUrl&&verifiedUrl(row.linkUrl)?'<small class="mission-action-url">'+esc(row.linkUrl)+'</small>':
+            '<small>Direct link N/A</small>')+
+          '</td><td>'+esc(count(row.events))+'</td></tr>'))+
+        (rows.length===0?'<p>No individual files were returned for these dates.</p>':'')+
+        '<p>Links open the original website file. Your browser or Wix may preview it, require access, or start a download.</p>'+
+        fileLink('https://analytics.google.com/','Open Google Analytics');
+    } else if(selectedAction==='krewe'){
+      const info=actions?.eventPages;
+      const rows=Array.isArray(info?.rows)?info.rows.filter(r=>r.eventName==='sign_up'&&good(r.events)):[];
+      detail='<h4>PIT KREWE REGISTRATIONS</h4>'+
+        '<p><b>Confirmed new members: N/A.</b> Wix membership records are not linked to this scorecard yet.</p>'+
+        '<p>GA4 sign_up events: <b>'+esc(count(counts.signUp))+
+        '</b>. These events do not prove a completed Pit Krewe registration.</p>'+
+        (info?.status!=='reported'?'<p class="mission-action-warning">Page-level evidence incomplete or N/A.</p>':'')+
+        actionTable(['PAGE WITH SIGN-UP EVENT','EVENTS'],rows.map(row=>
+          '<tr><td>'+esc(row.pagePath||'N/A')+'</td><td>'+esc(count(row.events))+'</td></tr>'));
+    } else if(selectedAction==='contacts'){
+      const info=actions?.eventPages;
+      const rows=Array.isArray(info?.rows)?info.rows.filter(r=>r.eventName==='form_submit'&&good(r.events)):[];
+      detail='<h4>CONTACTS AND FORMS</h4>'+
+        '<p>Wix contact clicks: <b>'+esc(count(site?.connected===true?site.contactClicks:null))+
+        '</b>; Wix submitted forms: <b>'+esc(count(site?.connected===true?site.formsSubmitted:null))+
+        '</b>. Combined Wix contact actions: <b>'+esc(count(contacts))+'</b>.</p>'+
+        '<p>GA4 form_submit events: <b>'+esc(count(counts.formSubmit))+
+        '</b>. This is independent of Wix and is not added to the Wix total.</p>'+
+        (info?.status!=='reported'?'<p class="mission-action-warning">Page-level evidence incomplete or N/A.</p>':'')+
+        actionTable(['PAGE WITH FORM EVENT','EVENTS'],rows.map(row=>
+          '<tr><td>'+esc(row.pagePath||'N/A')+'</td><td>'+esc(count(row.events))+'</td></tr>'));
+    } else if(selectedAction==='radio'){
+      const info=actions?.radioLinks;
+      const rows=Array.isArray(info?.rows)?info.rows.filter(r=>good(r.clicks)):[];
+      detail='<h4>OUTLAW RADIO 5150</h4>'+
+        '<p><b>Confirmed listening sessions: N/A.</b> Radio.co listener data is not linked to this scorecard.</p>'+
+        '<p>GA4 radio-related outbound link clicks: <b>'+esc(count(actions?.radioLinkClicks))+
+        '</b>. Clicking a player link is not proof of listening.</p>'+
+        (info?.status!=='reported'?'<p class="mission-action-warning">Individual radio link URLs incomplete or N/A.</p>':'')+
+        actionTable(['RADIO LINK','CLICKS'],rows.map(row=>
+          '<tr><td>'+fileLink(row.linkUrl,row.domain||'Open radio link')+
+          (row.linkUrl?'<small class="mission-action-url">'+esc(row.linkUrl)+'</small>':'')+
+          '</td><td>'+esc(count(row.clicks))+'</td></tr>'));
+    } else if(selectedAction==='orders'){
+      detail='<h4>PAID ONLINE ORDERS</h4>'+
+        '<p>Verified Wix paid orders: <b>'+esc(count(orders))+'</b>. Item sales: <b>'+
+        esc(verifiedOrders?money(sales.itemSalesCents):'N/A')+'</b> (not profit).</p>'+
+        '<p>GA4 add-to-cart events: <b>'+esc(count(counts.addToCart))+
+        '</b>; checkout starts: <b>'+esc(count(counts.beginCheckout))+
+        '</b>. Events do not count as paid orders.</p>'+
+        '<p>'+fileLink('https://manage.wix.com/','Open Wix to inspect transactions')+'</p>';
+    }
+    return '<div class="mission-action-head"><div><strong>MEANINGFUL ACTIONS · REAL EVIDENCE</strong>'+
+      '<small>'+esc(periodName(period))+' · N/A = not verified</small></div>'+
+      '<button type="button" data-direction-actions-toggle="1">Close ×</button></div>'+
+      '<div class="mission-action-tabs" role="group" aria-label="Meaningful actions">'+
+        tabs.map(tab=>'<button type="button" data-direction-action="'+tab.id+
+          '" aria-pressed="'+(selectedAction===tab.id)+'" class="mission-action-tab'+
+          (selectedAction===tab.id?' selected':'')+'"><small>'+esc(tab.label)+
+          '</small><strong>'+esc(tab.value)+'</strong><span>'+esc(tab.sub)+
+          '</span></button>').join('')+
+      '</div><div class="mission-action-body">'+detail+'</div>';
+  }
+
   // The existing Wix report API already compares with the preceding equal
   // period. Fetch 90 days only on owner request: no duplicate source and no
   // extra API cost on every dashboard load.
@@ -426,10 +553,21 @@
       '</div>'+
       '<p class="mission-direction-webtrend">WEBSITE TREND: <b class="'+esc(summary.directionColor)+'">'+
         esc(summary.websiteDirection)+'</b></p>'+
-      '<div class="mission-direction-evidence">'+summary.coverage.map(item=>
-        '<div class="mission-direction-signal '+esc(item.state)+'">'+
-        '<small>'+esc(item.label)+'</small><strong>'+esc(item.headline)+'</strong>'+
-        '<span>'+esc(item.note)+'</span></div>').join('')+'</div>'+
+      '<div class="mission-direction-evidence">'+summary.coverage.map(item=>{
+        if(item.label!=='MEANINGFUL ACTIONS')
+          return '<div class="mission-direction-signal '+esc(item.state)+'">'+
+            '<small>'+esc(item.label)+'</small><strong>'+esc(item.headline)+'</strong>'+
+            '<span>'+esc(item.note)+'</span></div>';
+        return '<div class="mission-direction-signal '+esc(item.state)+'">'+
+          '<small>'+esc(item.label)+'</small>'+
+          '<button type="button" class="mission-action-open" data-direction-actions-toggle="1"'+
+          ' aria-expanded="'+(actionDetailsOpen?'true':'false')+'" aria-controls="missionActionDetails">'+
+          esc(item.headline)+'<em>'+ (actionDetailsOpen?'HIDE DETAILS ▲':'VIEW DETAILS ▼')+'</em></button>'+
+          '<span>'+esc(item.note)+'</span>'+inlineFileLinks(ga4)+'</div>';
+      }).join('')+'</div>'+
+      '<section id="missionActionDetails" class="mission-action-panel"'+
+        (actionDetailsOpen?'':' hidden')+'>'+
+        (actionDetailsOpen?actionsDetail(site,ga4,sales,period):'')+'</section>'+
       '<div class="mission-direction-brief">'+
         measure('WHAT IS WORKING',summary.working,'Verified data, not a guess')+
         measure('WHAT NEEDS ATTENTION',summary.concern,'An exception to investigate')+
@@ -470,6 +608,25 @@
     if(typeof activeView!=='undefined'&&activeView==='Mission Control')repaint();
   });
   document.addEventListener('click',event=>{
+    const toggle=event.target.closest('[data-direction-actions-toggle]');
+    if(toggle){
+      event.preventDefault();
+      actionDetailsOpen=!actionDetailsOpen;
+      if(actionDetailsOpen&&selectedAction==='downloads')selectedAction='downloads';
+      repaint();
+      if(actionDetailsOpen)document.getElementById('missionActionDetails')?.scrollIntoView({
+        block:'nearest',behavior:'smooth'
+      });
+      return;
+    }
+    const tab=event.target.closest('[data-direction-action]');
+    if(tab){
+      event.preventDefault();
+      selectedAction=tab.dataset.directionAction||'downloads';
+      repaint();
+      document.querySelector('#missionActionDetails [data-direction-action="'+selectedAction+'"]')?.focus({preventScroll:true});
+      return;
+    }
     const button=event.target.closest('[data-direction-90]');
     if(!button)return;
     event.preventDefault();
