@@ -644,7 +644,7 @@
     const categories=sales?.onlineCategories;
     const expected=['food','swag','music','books','bundles','review'];
     const groups=Array.isArray(categories?.groups)?categories.groups:[];
-    const known=ready&&categories?.status==='reported'&&
+    const known=ready&&['reported','partial'].includes(categories?.status)&&
       categories.itemSalesCents===sales.itemSalesCents&&
       groups.length===expected.length&&
       groups.every((g,i)=>g?.id===expected[i]&&
@@ -655,7 +655,9 @@
           Number.isSafeInteger(p.units)&&p.units>=0))&&
       groups.reduce((n,g)=>n+g.itemSalesCents,0)===sales.itemSalesCents;
     const partial=ready&&categories&&categories.status!=='reported';
-    const categoriesHtml=known?'<div class="mission-online-groups">'+groups.map(group=>
+    const categoriesHtml=known?
+      (categories.status==='partial'?'<p class="mission-online-pending">Unclassified items appear under Needs Review. Category totals still match the verified online total.</p>':'')+
+      '<div class="mission-online-groups">'+groups.map(group=>
       '<details class="mission-online-category"><summary>'+
         '<span>'+esc(group.label)+'</span><strong>'+esc(money(group.itemSalesCents))+'</strong>'+
         '<small>'+esc(fmt(group.units))+' units</small></summary>'+
