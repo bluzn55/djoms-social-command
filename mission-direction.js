@@ -86,32 +86,44 @@
         '). The business verdict stays yellow until the results agree.'};
   }
 
-  // Each input uses the preceding comparable period as 100 points.
-  // E.g. visits -39.2% => 60.8, average stay +195.4% => 295.4.
-  // The combined result is the arithmetic MEAN, giving equal weight to each.
-  // Score 100 is the center line. This is a website-only relative index,
-  // not a probability, profit figure, visitor count, or capped percentage.
+  // WEBSITE DIRECTION ONLY: equally weight the change in Wix visitors
+  // and the change in average time on site. Their percentage changes
+  // come from the preceding equally long period. No profit is inferred.
+  // A 1% or 2% change must be visible. The pointer's position is
+  // intentionally nonlinear near zero; the numeric percent stays exact.
+  const signedChange=(value)=>{
+    if(typeof value!=='number'||!Number.isFinite(value))return 'N/A';
+    const decimals=Math.abs(value)>0&&Math.abs(value)<0.1?2:1;
+    const shown=value.toFixed(decimals);
+    return (value>0?'+':'')+shown+'%';
+  };
   function quickNeedle(visitorComparison,stayComparison){
+    const empty=(message)=>({kind:'unknown',label:'N/A',score:null,
+      changePercent:null,visitsPoints:null,stayPoints:null,
+      position:50,explanation:message});
     if(!isTrend(visitorComparison)||!isTrend(stayComparison))
-      return {kind:'unknown',label:'N/A',score:null,visitsPoints:null,
-        stayPoints:null,position:50,explanation:'Both comparable Wix trends are required.'};
-    const visitsPoints=100+visitorComparison.percentChange;
-    const stayPoints=100+stayComparison.percentChange;
-    // Reported percentage changes are finite, but cannot generate a
-    // meaningful index if a source returns an impossible negative baseline.
+      return empty('Both comparable Wix trends are required.');
+    const visitsChange=visitorComparison.percentChange;
+    const stayChange=stayComparison.percentChange;
+    const visitsPoints=100+visitsChange;
+    const stayPoints=100+stayChange;
     if(!good(visitsPoints)||!good(stayPoints))
-      return {kind:'unknown',label:'N/A',score:null,visitsPoints:null,
-        stayPoints:null,position:50,explanation:'Invalid comparison values.'};
-    const score=(visitsPoints+stayPoints)/2;
-    const kind=score>100.05?'up':score<99.95?'down':'hold';
+      return empty('Invalid source comparison values.');
+    const changePercent=(visitsChange+stayChange)/2;
+    if(!Number.isFinite(changePercent))return empty('Combined change is not finite.');
+    const score=100+changePercent;
+    const kind=changePercent>0?'up':changePercent<0?'down':'hold';
     const label=kind==='up'?'UP':kind==='down'?'DOWN':'HOLD';
-    // Exact score is shown; only the on-screen pointer is capped so it
-    // always stays visible even if average stay grows more than 200%.
-    const position=Math.min(95,Math.max(5,100-Math.min(200,Math.max(0,score))/2));
-    return {kind,label,score,visitsPoints,stayPoints,position,
-      explanation:'Visits '+visitsPoints.toFixed(1)+' points and average stay '+
-        stayPoints.toFixed(1)+' points. Equal average '+score.toFixed(1)+
-        '; 100 is the prior-period baseline.'};
+    const magnitude=Math.abs(changePercent);
+    // A slight change still moves the pointer clearly away from center.
+    // The signed percentage shown beside it is the actual calculated value.
+    const distance=magnitude===0?0:9+35*magnitude/(magnitude+20);
+    const position=Math.min(94,Math.max(6,50-Math.sign(changePercent)*distance));
+    return {kind,label,score,changePercent,visitsPoints,stayPoints,position,
+      explanation:'Equal-weight direction from visit change '+signedChange(visitsChange)+
+        ' and average-stay change '+signedChange(stayChange)+
+        '. Composite '+signedChange(changePercent)+
+        '. This is an indicator, not actual sales or profit growth.'};
   }
 
   function evaluate(site,ga4,seo,sales,period){
@@ -179,7 +191,7 @@
         visitorsTrend==='up'&&stayTrend==='down'?
         ' · VISITORS UP, AVG. STAY DOWN':'';
       websiteDirection=(needle.kind==='up'?'UP':needle.kind==='down'?'DOWN':'HOLD')+
-        ' BY EQUAL-POINT SCORE'+signals;
+        ' '+signedChange(needle.changePercent)+' · EQUAL-WEIGHT WEB INDICATOR'+signals;
       directionColor=needle.kind==='up'?'green':needle.kind==='down'?'red':'yellow';
     }
 
@@ -196,13 +208,12 @@
     // Highlight a supported positive signal instead; show mixed outcomes
     // honestly when average stay improves but fewer people visit.
     const working=stayTrend==='up'&&isTrend(stay)
-      ?'Average stay is '+time(site.avgTimeSeconds)+' ('+
-        percent(stay.percentChange)+'). Engagement earns '+
-        (needle.stayPoints===null?'N/A':needle.stayPoints.toFixed(1))+
-        ' points against its previous 100, '+(visitorsTrend==='down'?
-          'enough to outweigh the visitor decline in the equal-point average.':
-          'a positive signal for the website index.')
-
+      ?'Average time on site is '+time(site.avgTimeSeconds)+' ('+
+        signedChange(stay.percentChange)+' versus the preceding period). '+
+        (visitorsTrend==='down'
+          ?'Better engagement offsets fewer visitors in the equal-weight indicator ('+
+            signedChange(needle.changePercent)+').'
+          :'People are spending more time on the site.')
       :visitorsTrend==='up'&&isTrend(visitors)
         ?'Wix reports '+fmt(currentVisitors)+' visitors, '+percent(visitors.percentChange)+
           ' versus the preceding period.'
@@ -212,7 +223,7 @@
     let concern=visitorsTrend==='down'&&isTrend(visitors)
       ?'Visits fell '+Math.abs(visitors.percentChange).toFixed(1)+'% to '+fmt(currentVisitors)+
         (good(previousVisitors)?' (from '+fmt(previousVisitors)+').':'.')+
-        ' The visitor score is below 100; the combined score can still be up when average stay improves more. '+
+        ' This needs attention even if the combined needle points up. '+
         (ga4Gap(site,ga4)?'Wix shows '+fmt(site.sessions)+' sessions versus GA4 '+fmt(ga4.metrics.sessions)+
           '; tracking coverage also needs checking.':'Compare source channels to see where visits declined.')
       :ga4Gap(site,ga4)?'Wix reports '+fmt(site.sessions)+' sessions but GA4 shows '+fmt(ga4.metrics.sessions)+'. Some sessions may be excluded by consent, blockers, bot filtering, or a tracking setup issue.'
@@ -284,8 +295,8 @@
       stayDelta:isTrend(stay)?stay.percentChange:null,
       coverage,actionEvidence,warnings,
       notes:[
-        'Equal-weight website index: prior-period visitors = 100 points and prior-period average stay = 100 points; the needle uses their arithmetic average. Above 100 is up, below 100 down.',
-        'This index averages two separate relative change indices, not visitor counts, unique people, GA4 sessions, or money. Exceptional changes in average stay can outweigh a decline in visitors.',
+        'The displayed direction change is the average of the visits percentage change and average-stay percentage change, each weighted equally. Positive is up, negative down, zero hold.',
+        'The direction percent is a combined indicator, NOT the actual percentage growth of visits, sales or profit. Large average-stay gains can outweigh a fall in visitors.',
         'Visitor growth, time on site and search appearances are otherwise different measurements.',
         'Site bounces and outgoing clicks do not prove radio listening. Verified web-sales growth does not prove profit or overall business health.',
         'Comparisons are against the preceding equal-length reporting period, not a different week or year.',
@@ -541,38 +552,35 @@
   }
 
 
-  // Single vertical scale, green above the 100-point middle,
-  // red below it. The needle is a horizontal arm aimed at the score.
+  // Vertical centerline, with a horizontal pointer aimed at the score.
+  // Zero is the middle; green/up at the top, red/down at the bottom.
+  // For a small nonzero change, amplify the pointer offset for readability.
   function directionMeter(summary){
     const needle=summary?.needle||quickNeedle(null,null);
     const vd=typeof summary?.visitorDelta==='number'&&
       Number.isFinite(summary.visitorDelta)?summary.visitorDelta:null;
     const sd=typeof summary?.stayDelta==='number'&&
       Number.isFinite(summary.stayDelta)?summary.stayDelta:null;
-    const scoreText=needle.score===null?'N/A':needle.score.toFixed(1);
-    const label=needle.kind==='unknown'?'N/A':needle.label;
-    const meaning='Website momentum score: '+scoreText+'. '+needle.explanation+
-      ' Compared with the preceding equal-length reporting period. '+
-      'This is not business profit.';
+    const shown=signedChange(needle.changePercent);
+    const message='Equal-weight website direction: '+shown+'. '+needle.explanation+
+      ' The visual position is magnified near zero so tiny movements are visible.';
     return '<div class="mission-direction-meter score-meter '+esc(needle.kind)+
-      '" role="img" aria-label="'+esc(meaning)+'">'+
+      '" role="img" aria-label="'+esc(message)+'">'+
         '<div class="mission-direction-meter-top"><strong>WEBSITE MOMENTUM</strong>'+
-          '<div class="mission-score-summary"><b>'+esc(scoreText)+'</b>'+
-          '<small>POINTS · '+esc(label)+'</small></div></div>'+
+          '<div class="mission-score-summary"><b>'+esc(shown)+'</b>'+
+            '<small>'+esc(needle.label)+'</small></div></div>'+
         '<div class="mission-score-vertical" style="--mission-score-y:'+
-          esc(needle.position.toFixed(1))+'%" aria-hidden="true">'+
+          esc(needle.position.toFixed(2))+'%" aria-hidden="true">'+
           '<div class="mission-score-scale">'+
             '<span class="mission-score-center-line"></span></div>'+
-          '<div class="mission-score-pointer"></div>'+
+          '<div class="mission-score-pointer"><strong>'+esc(shown)+'</strong></div>'+
           '<div class="mission-score-axis-labels">'+
-            '<span>GREEN · UP</span><span>100 · HOLD</span><span>RED · DOWN</span>'+
+            '<span>UP</span><span>0% HOLD</span><span>DOWN</span>'+
           '</div></div>'+
         '<div class="mission-score-breakdown">'+
-          '<span>VISITS <b>'+esc(needle.visitsPoints===null?'N/A':needle.visitsPoints.toFixed(1))+
-            ' pts</b> <small>('+esc(percent(vd))+')</small></span>'+
-          '<span>ENGAGEMENT <b>'+esc(needle.stayPoints===null?'N/A':needle.stayPoints.toFixed(1))+
-            ' pts</b> <small>('+esc(percent(sd))+')</small></span></div>'+
-        '<small class="mission-score-caption">Each starts at 100; average determines pointer</small>'+
+          '<span>VISITS <b>'+esc(signedChange(vd))+'</b></span>'+
+          '<span>AVG. STAY <b>'+esc(signedChange(sd))+'</b></span></div>'+
+        '<small class="mission-score-caption">Equal weight · Needle exaggerates tiny moves for visibility</small>'+
       '</div>';
   }
 
