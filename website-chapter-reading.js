@@ -11,21 +11,21 @@
       : Math.floor(s / 60) + 'm ' + String(Math.floor(s % 60)).padStart(2, '0') + 's')
     : 'N/A';
   const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  const CSS = \`
-.\${ROOT_CLASS} {margin:16px 0 8px;padding:15px 0;border-top:2px solid #aa8244;min-width:0}
-.\${ROOT_CLASS} .dj-reader-head {display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:11px}
-.\${ROOT_CLASS} h4 {margin:0;font:800 18px/1.3 Arial,sans-serif;letter-spacing:.025em}
-.\${ROOT_CLASS} .dj-reader-source {font-size:12px;opacity:.75;font-weight:700}
-.\${ROOT_CLASS} .dj-reader-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
-.\${ROOT_CLASS} .dj-reader-grid>div {border:1px solid #bd9e66;background:#f5ebd5;color:#3b2d1b;border-radius:7px;min-width:0;padding:10px}
-.\${ROOT_CLASS} .dj-reader-grid small {display:block;font:700 13px/1.25 Arial,sans-serif;color:#705832}
-.\${ROOT_CLASS} .dj-reader-grid strong {display:block;font:800 23px/1.2 Arial,sans-serif;margin:5px 0;overflow-wrap:anywhere}
-.\${ROOT_CLASS} .dj-reader-note {font:400 13px/1.45 Arial,sans-serif;margin:10px 0 0}
-.\${ROOT_CLASS} .dj-reader-warning {font:700 15px/1.4 Arial,sans-serif;margin:9px 0}
-.\${ROOT_CLASS} .dj-reader-refresh {background:#6c4621;color:#fff9df;border:1px solid #c4a46a;border-radius:6px;font:700 13px Arial,sans-serif;padding:8px 13px;margin-top:10px;cursor:pointer}
-.\${ROOT_CLASS} .dj-reader-refresh:focus-visible {outline:3px solid #edc570}
-@media(max-width:720px) {.\${ROOT_CLASS} .dj-reader-grid {grid-template-columns:repeat(2,minmax(0,1fr))}.\${ROOT_CLASS} h4 {font-size:16px}.\${ROOT_CLASS} .dj-reader-grid strong {font-size:20px}}
-\`;
+  const CSS = `
+.${ROOT_CLASS} {margin:16px 0 8px;padding:15px 0;border-top:2px solid #aa8244;min-width:0}
+.${ROOT_CLASS} .dj-reader-head {display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:11px}
+.${ROOT_CLASS} h4 {margin:0;font:800 18px/1.3 Arial,sans-serif;letter-spacing:.025em}
+.${ROOT_CLASS} .dj-reader-source {font-size:12px;opacity:.75;font-weight:700}
+.${ROOT_CLASS} .dj-reader-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.${ROOT_CLASS} .dj-reader-grid>div {border:1px solid #bd9e66;background:#f5ebd5;color:#3b2d1b;border-radius:7px;min-width:0;padding:10px}
+.${ROOT_CLASS} .dj-reader-grid small {display:block;font:700 13px/1.25 Arial,sans-serif;color:#705832}
+.${ROOT_CLASS} .dj-reader-grid strong {display:block;font:800 23px/1.2 Arial,sans-serif;margin:5px 0;overflow-wrap:anywhere}
+.${ROOT_CLASS} .dj-reader-note {font:400 13px/1.45 Arial,sans-serif;margin:10px 0 0}
+.${ROOT_CLASS} .dj-reader-warning {font:700 15px/1.4 Arial,sans-serif;margin:9px 0}
+.${ROOT_CLASS} .dj-reader-refresh {background:#6c4621;color:#fff9df;border:1px solid #c4a46a;border-radius:6px;font:700 13px Arial,sans-serif;padding:8px 13px;margin-top:10px;cursor:pointer}
+.${ROOT_CLASS} .dj-reader-refresh:focus-visible {outline:3px solid #edc570}
+@media(max-width:720px) {.${ROOT_CLASS} .dj-reader-grid {grid-template-columns:repeat(2,minmax(0,1fr))}.${ROOT_CLASS} h4 {font-size:16px}.${ROOT_CLASS} .dj-reader-grid strong {font-size:20px}}
+`;
   let key='', pending=false, sequence=0, loadedAt=0, response=null, error=null;
   function selected() {
     try {
