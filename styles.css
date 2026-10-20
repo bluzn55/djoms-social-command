@@ -8390,3 +8390,98 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     font-size:14px;
   }
 }
+
+
+/* COMPACT FIVE BOXES AND SHORT DETAILS LABELS · OCT 20 2026
+   Less blank vertical space, while keeping all five cards aligned.
+   Touch-sized action rows remain larger at mobile widths. */
+#connectionStrip .mission-direction-panel .mission-direction-evidence > .mission-direction-signal {
+  padding:7px 8px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-evidence > .mission-direction-signal > strong {
+  margin:3px 0;
+}
+#connectionStrip .mission-direction-panel .action-summary-card > small {
+  margin-bottom:3px;
+}
+#connectionStrip .mission-direction-panel .mission-action-compact-row {
+  min-height:27px;
+  padding:2px 0;
+  gap:3px;
+}
+#connectionStrip .mission-direction-panel .mission-action-compact-row > span {
+  font:800 13px/1.25 Arial,sans-serif;
+}
+#connectionStrip .mission-direction-panel .mission-action-compact-row > strong {
+  font:900 16px/1.1 Arial,sans-serif;
+}
+#connectionStrip .mission-direction-panel .mission-action-compact-row.secondary {
+  margin-top:2px;
+  padding-top:4px;
+}
+#connectionStrip .mission-direction-panel .mission-action-compact-toggle {
+  display:inline-flex;
+  align-items:center;
+  justify-content:flex-start;
+  margin:5px 0 0;
+  padding:2px 0;
+  border:0;
+  background:transparent;
+  color:#795321;
+  font:900 12px/1.25 Arial,sans-serif;
+  cursor:pointer;
+}
+#connectionStrip .mission-direction-panel .mission-action-compact-toggle:hover {
+  color:#9c6121;
+  text-decoration:underline;
+}
+#connectionStrip .mission-direction-panel .mission-action-compact-toggle:focus-visible {
+  outline:3px solid #277644;
+  outline-offset:3px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-details-toggle {
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:3px 1px;
+  list-style:none;
+  cursor:pointer;
+  color:#795321;
+  font:900 13px/1.35 Arial,sans-serif;
+}
+#connectionStrip .mission-direction-panel .mission-direction-details-toggle::-webkit-details-marker {
+  display:none;
+}
+#connectionStrip .mission-direction-panel .mission-direction-details-toggle::before {
+  content:"▸";
+  font-size:15px;
+  line-height:1;
+}
+#connectionStrip .mission-direction-panel .mission-direction-details[open] > .mission-direction-details-toggle::before {
+  content:"▾";
+}
+#connectionStrip .mission-direction-panel .mission-direction-details-toggle .mission-detail-hide {
+  display:none;
+}
+#connectionStrip .mission-direction-panel .mission-direction-details[open] > .mission-direction-details-toggle .mission-detail-show {
+  display:none;
+}
+#connectionStrip .mission-direction-panel .mission-direction-details[open] > .mission-direction-details-toggle .mission-detail-hide {
+  display:inline;
+}
+#connectionStrip .mission-direction-panel .mission-direction-details-toggle:focus-visible {
+  outline:3px solid #277644;
+  outline-offset:3px;
+}
+@media(max-width:750px) {
+  #connectionStrip .mission-direction-panel .mission-action-compact-row {
+    min-height:39px;
+    padding:5px 0;
+  }
+  #connectionStrip .mission-direction-panel .mission-action-compact-row > span {
+    font-size:14px;
+  }
+  #connectionStrip .mission-direction-panel .mission-action-compact-toggle {
+    min-height:35px;
+  }
+}
