@@ -269,6 +269,44 @@
     return result?.groups?.find(group => group.id === key) || null;
   }
 
+
+  // Both IDs were verified against Wix Media Manager. PDF file_download
+  // events cannot measure actual PDF reading duration.
+  const FREE_CHAPTER_FILES=[
+    {id:'cf21c8_27ee63f049e5479b8d37c885f638bb2b',
+      title:'The Wooden Token - Free Chapter 1 Collector Edition.pdf'},
+    {id:'cf21c8_820e9d8324194c49ba99ba918f145fe4',
+      title:'Free Collection Edition Chapter 1 Master (1).pdf'}
+  ];
+  function chapterPdfEvents(){
+    const unavailable={status:'unavailable',events:null,files:[]};
+    const reportEntry=window.djomsVerifiedReports?.ga4;
+    if(reportEntry?.query!==period().query)return unavailable;
+    const r=reportEntry.data,actions=r?.actions,details=actions?.downloadFiles;
+    if(r?.connected!==true||r?.status!=='connected'||
+       actions?.status!=='reported'||details?.status!=='reported'||
+       !measurable(actions.counts?.fileDownload)||!measurable(details.subtotal)||
+       !Array.isArray(details.rows)||details.subtotal!==actions.counts.fileDownload)
+      return unavailable;
+    // Do not call missing, truncated, or ambiguous file evidence "zero".
+    if(details.rows.some(row=>!measurable(row.events)||
+      (!String(row.fileName||'').trim()&&!String(row.linkUrl||'').trim())||
+      (row.fileName==='(not set)'&&!row.linkUrl)))return unavailable;
+    const files=FREE_CHAPTER_FILES.map(file=>({
+      name:file.title,
+      events:details.rows.filter(row=>(String(row.fileName||'')+' '+String(row.linkUrl||''))
+        .toLowerCase().includes(file.id)).reduce((total,row)=>total+row.events,0)
+    }));
+    const events=files.reduce((total,file)=>total+file.events,0);
+    return events<=details.subtotal?{status:'reported',events,files}:unavailable;
+  }
+  function libraryPageStay(interest){
+    const p=Array.isArray(interest?.pages)?
+      interest.pages.find(row=>linked(row.path)==='/emberhold-library'):null;
+    return p&&measurable(p.views)&&p.views>0&&measurable(p.avgTimeSeconds)
+      ?p.avgTimeSeconds:null;
+  }
+
   function bookCard() {
     const interest=findGroup('book');
     const chapter=snapshot.chapter.status==='ok' ? snapshot.chapter.data : null;
@@ -279,6 +317,8 @@
       : null;
     const visitors=interest?.verified ? interest.visitors : null;
     const clicks=chapter?.status==='reported' && measurable(chapter.clicks) ? chapter.clicks : null;
+    const pdf=chapterPdfEvents();
+    const pageStay=libraryPageStay(interest);
     const problems=[snapshot.interests,snapshot.chapter,snapshot.sales].filter(x=>x.status==='error').length;
     const color=problems===3?'red':problems || !interest?.verified || chapter?.status!=='reported' || !store?.complete?'yellow':'green';
     const warnings=[snapshot.interests.error,snapshot.chapter.error,snapshot.sales.error].filter(Boolean);
@@ -293,9 +333,18 @@
         ${meter('Visitors',show(visitors))}
         ${meter('Chapter clicks',show(clicks))}
         ${meter('Wix book units',show(bookUnits))}
+        ${meter('Chapter PDF events',show(pdf.events),'GA4 · 2 Chapter 1 files')}
+        ${meter('Avg. Library page stay',audioTime(pageStay),'Wix page · not PDF')}
       </div>
         ${pulseLineGraph('book')}
       </div>
+      <p class="mission-intel-muted">PDF reading time: <strong>N/A</strong>. Wix tracks average stay on Emberhold Library, not how long a visitor reads an opened PDF.</p>
+      ${pdf.status==='reported'?
+        '<details class="mission-intel-data-notes mission-chapter-file-evidence"><summary>Chapter 1 PDF breakdown</summary>'+
+        '<div class="mission-chapter-files">'+pdf.files.map(file=>
+          '<div><span>'+escape(file.name)+'</span><strong>'+show(file.events)+'</strong></div>'
+        ).join('')+'</div><p>Events, not distinct readers or completed reads.</p></details>'
+        :'<p class="mission-intel-muted">Individual PDF counts: N/A until GA4 verifies the filenames.</p>'}
 
       <div class="mission-intel-actions">
         <button type="button" data-view="Website Analytics">Book details ›</button>
@@ -565,6 +614,11 @@
     refresh(false);
     return value;
   };
+  document.addEventListener('djoms:verified-report',event=>{
+    if(event.detail?.source==='ga4'&&typeof owner!=='undefined'&&owner&&
+       typeof activeView!=='undefined'&&activeView==='Mission Control'&&
+       document.getElementById('missionBusinessPulse'))paint();
+  });
   document.addEventListener('click',event=>{
     const b=event.target.closest('[data-mission-pulse-refresh]');
     if(!b) return;
