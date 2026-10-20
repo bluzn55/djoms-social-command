@@ -630,6 +630,69 @@
       '</div>';
   }
 
+
+  // The Online Sales total comes from approved, fully PAID WEB orders,
+  // excluding refunds and in-person orders. Categories come from the
+  // optional verified Wix V3 catalog lookup, never product-name guesses.
+  function onlineSalesCard(sales,period){
+    const ready=sales?.connected===true&&sales?.complete===true&&
+      sales?.range?.start===period?.start&&sales?.range?.end===period?.end&&
+      Number.isSafeInteger(sales.paidOrders)&&sales.paidOrders>=0&&
+      Number.isSafeInteger(sales.itemSalesCents)&&sales.itemSalesCents>=0;
+    const amount=ready?money(sales.itemSalesCents):'N/A';
+    const orders=ready?fmt(sales.paidOrders):'N/A';
+    const categories=sales?.onlineCategories;
+    const expected=['food','swag','music','books','bundles','review'];
+    const groups=Array.isArray(categories?.groups)?categories.groups:[];
+    const known=ready&&categories?.status==='reported'&&
+      categories.itemSalesCents===sales.itemSalesCents&&
+      groups.length===expected.length&&
+      groups.every((g,i)=>g?.id===expected[i]&&
+        Number.isSafeInteger(g.itemSalesCents)&&g.itemSalesCents>=0&&
+        Number.isSafeInteger(g.units)&&g.units>=0&&
+        Array.isArray(g.products)&&g.products.every(p=>
+          Number.isSafeInteger(p.itemSalesCents)&&p.itemSalesCents>=0&&
+          Number.isSafeInteger(p.units)&&p.units>=0))&&
+      groups.reduce((n,g)=>n+g.itemSalesCents,0)===sales.itemSalesCents;
+    const partial=ready&&categories&&categories.status!=='reported';
+    const categoriesHtml=known?'<div class="mission-online-groups">'+groups.map(group=>
+      '<details class="mission-online-category"><summary>'+
+        '<span>'+esc(group.label)+'</span><strong>'+esc(money(group.itemSalesCents))+'</strong>'+
+        '<small>'+esc(fmt(group.units))+' units</small></summary>'+
+        (group.products.length?
+          '<div class="mission-online-items"><table><thead><tr>'+
+          '<th scope="col">Item</th><th scope="col">Qty</th><th scope="col">Sales</th>'+
+          '</tr></thead><tbody>'+group.products.map(product=>
+            '<tr><td>'+esc(product.name||'Item N/A')+
+              (product.sku?'<small>SKU: '+esc(product.sku)+'</small>':'')+
+              '</td><td>'+esc(fmt(product.units))+'</td>'+
+              '<td>'+esc(money(product.itemSalesCents))+'</td></tr>'
+          ).join('')+'</tbody></table></div>':
+          '<p class="mission-online-empty">No sales recorded in this category.</p>')+
+      '</details>').join('')+'</div>':
+      '<p class="mission-online-pending">'+
+        (ready?
+          'Product-category breakdown: N/A. The verified online total remains available.'+
+          (partial?' Wix category lookup is incomplete or unavailable.':'')
+          :'Paid online sales have not been verified for these dates.')+
+      '</p>';
+    return '<section class="mission-direction-signal mission-online-summary">'+
+      '<div class="mission-online-summary-top"><div>'+
+        '<small>ONLINE SALES</small>'+
+        '<strong>'+esc(orders)+' paid '+(ready&&sales.paidOrders===1?'order':'orders')+'</strong>'+
+        '<span>'+esc(amount)+' web item sales (not profit)</span>'+
+      '</div><span class="mission-online-source">Wix web orders only</span></div>'+
+      '<details class="mission-online-breakdown">'+
+        '<summary><span class="mission-online-show">Show Categories ▸</span>'+
+          '<span class="mission-online-hide">Hide Categories ▾</span></summary>'+
+        '<div class="mission-online-breakdown-inner">'+
+          '<p class="mission-online-description">Paid website store products only. Tax, shipping, market and event sales are excluded. Bundles are counted once.</p>'+
+          categoriesHtml+
+        '</div>'+
+      '</details>'+
+    '</section>';
+  }
+
   function paint(){
     const node=document.getElementById('missionDirectionPanel');
     if(!node)return;
@@ -639,22 +702,30 @@
     const summary=evaluate(site,ga4,seo,sales,period);
     syncAttention(issueList(site,ga4,seo));
     const proof=summary.actionEvidence;
+    // Left: headline and the three activity KPIs. Right: narrow momentum meter.
+    const leading=summary.coverage.filter(item=>item.label!=='ONLINE SALES');
+    const leadingCards=leading.map(item=>{
+      if(item.label==='MEANINGFUL ACTIONS')
+        return meaningfulActionsCard(site,ga4,sales,period);
+      return '<div class="mission-direction-signal '+esc(item.state)+
+        (item.label==='VISITORS'||item.label==='ENGAGEMENT'?' trend-metric':'')+'">'+
+        '<small>'+esc(item.label)+'</small><strong>'+esc(item.headline)+'</strong>'+
+        '<span>'+esc(item.note)+'</span></div>';
+    }).join('');
     node.innerHTML=
-      '<div class="mission-direction-header"><div class="mission-direction-title-block">'+
-        '<small>DOC JAKS · OWNER-FIRST BUSINESS INTELLIGENCE</small>'+
-        '<h2>ARE WE MOVING FORWARD OR BACKWARD?</h2></div>'+
-        directionMeter(summary)+
+      '<div class="mission-direction-overview">'+
+        '<div class="mission-direction-overview-main">'+
+          '<div class="mission-direction-title-block">'+
+            '<small>DOC JAKS · OWNER-FIRST BUSINESS INTELLIGENCE</small>'+
+            '<h2>ARE WE MOVING FORWARD OR BACKWARD?</h2></div>'+
+          '<div class="mission-direction-evidence mission-direction-top-evidence">'+
+            leadingCards+'</div>'+
+        '</div>'+
+        '<div class="mission-direction-gauge-aside">'+directionMeter(summary)+'</div>'+
       '</div>'+
       '<p class="mission-direction-webtrend">WEBSITE TREND: <b class="'+esc(summary.directionColor)+'">'+
         esc(summary.websiteDirection)+'</b></p>'+
-      '<div class="mission-direction-evidence">'+summary.coverage.map(item=>{
-        if(item.label!=='MEANINGFUL ACTIONS')
-          return '<div class="mission-direction-signal '+esc(item.state)+
-            (item.label==='VISITORS'||item.label==='ENGAGEMENT'?' trend-metric':'')+'">'+
-            '<small>'+esc(item.label)+'</small><strong>'+esc(item.headline)+'</strong>'+
-            '<span>'+esc(item.note)+'</span></div>';
-        return meaningfulActionsCard(site,ga4,sales,period);
-      }).join('')+'</div>'+
+      '<div class="mission-direction-sales-row">'+onlineSalesCard(sales,period)+'</div>'+
       '<section id="missionActionDetails" class="mission-action-panel"'+
         (actionDetailsOpen?'':' hidden')+'>'+
         (actionDetailsOpen?actionsDetail(site,ga4,sales,period):'')+'</section>'+
