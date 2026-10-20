@@ -8297,3 +8297,96 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 #connectionStrip .mission-direction-panel .mission-direction-signal.trend-metric.neutral > span {
   color:#6e675b;
 }
+
+
+/* RANKED MEANINGFUL ACTIONS · 2026-10-20
+   Distinct owner-first results, ranked by importance. Each row opens
+   source evidence; N/A is intentionally different from verified zero. */
+#connectionStrip .mission-direction-panel .action-summary-card {
+  padding:10px 10px 9px;
+  border-top-color:#af8335;
+}
+#connectionStrip .mission-direction-panel .action-summary-card > small {
+  display:block;
+  margin-bottom:6px;
+  color:#60431f;
+  font:900 13px/1.3 Arial,sans-serif;
+  letter-spacing:.1px;
+}
+#connectionStrip .mission-direction-panel .mission-action-compact-rows {
+  display:flex;
+  flex-direction:column;
+  width:100%;
+  min-width:0;
+}
+#connectionStrip .mission-direction-panel .mission-action-compact-row {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto 8px;
+  align-items:center;
+  gap:4px;
+  width:100%;
+  min-height:33px;
+  padding:5px 0;
+  border:0;
+  border-bottom:1px solid #dfd0b0;
+  background:transparent;
+  color:#392716;
+  text-align:left;
+  cursor:pointer;
+  font-family:Arial,sans-serif;
+}
+#connectionStrip .mission-direction-panel .mission-action-compact-row > span {
+  display:block;
+  min-width:0;
+  color:inherit;
+  font:800 13px/1.3 Arial,sans-serif;
+  overflow-wrap:break-word;
+}
+#connectionStrip .mission-direction-panel .mission-action-compact-row > strong {
+  display:block;
+  margin:0;
+  color:#372511;
+  font:900 18px/1.1 Arial,sans-serif;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+#connectionStrip .mission-direction-panel .mission-action-compact-row > i {
+  display:block;
+  color:#a47b3a;
+  font:900 18px/1 Arial,sans-serif;
+  font-style:normal;
+}
+#connectionStrip .mission-direction-panel .mission-action-compact-row.secondary {
+  margin-top:4px;
+  padding-top:8px;
+  border-top:2px solid #b89b6b;
+  border-bottom:0;
+}
+#connectionStrip .mission-direction-panel .mission-action-compact-row.selected,
+#connectionStrip .mission-direction-panel .mission-action-compact-row:hover {
+  color:#6a4714;
+  background:#f7ecd5;
+}
+#connectionStrip .mission-direction-panel .mission-action-compact-row:focus-visible {
+  outline:3px solid #237345;
+  outline-offset:2px;
+  border-radius:3px;
+}
+#connectionStrip .mission-direction-panel .mission-action-compact-foot {
+  display:block;
+  margin:5px 0 0;
+  color:#786647;
+  font:700 11px/1.4 Arial,sans-serif;
+}
+#connectionStrip .mission-direction-panel .action-summary-card .mission-action-card-files {
+  padding-top:7px;
+  margin-top:7px;
+}
+@media(max-width:750px){
+  #connectionStrip .mission-direction-panel .mission-action-compact-row {
+    min-height:37px;
+  }
+  #connectionStrip .mission-direction-panel .mission-action-compact-row > span {
+    font-size:14px;
+  }
+}
