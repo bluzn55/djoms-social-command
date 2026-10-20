@@ -436,7 +436,9 @@
           '<span>'+esc(item.label)+'</span><strong>'+esc(count(item.value))+'</strong>'+
           '<i aria-hidden="true">›</i></button>';
       }).join('')+'</div>'+
-      '<p class="mission-action-compact-foot">N/A = not verified · Downloads are events</p>'+
+      '<button type="button" class="mission-action-compact-toggle" data-direction-actions-toggle="1"'+
+        ' aria-expanded="'+(actionDetailsOpen?'true':'false')+'" aria-controls="missionActionDetails">'+
+        (actionDetailsOpen?'Hide Details ▾':'Show Details ▸')+'</button>'+
       fileLinks+
     '</div>';
   }
@@ -662,7 +664,9 @@
           (summary.nextHref?'<a href="'+esc(summary.nextHref)+'" target="_blank" rel="noopener noreferrer">Open next step ↗</a>':'')+
         '</div>'+
       '</div>'+
-      '<details class="mission-direction-details"><summary>Evidence, meaningful actions and counting rules</summary>'+
+      '<details class="mission-direction-details"><summary class="mission-direction-details-toggle">'+
+        '<span class="mission-detail-show">Show Details</span>'+
+        '<span class="mission-detail-hide">Hide Details</span></summary>'+
         '<p><b>Business result:</b> '+esc(summary.overall)+
           '. Website movement is not the same as business profit.</p>'+
         '<div class="mission-direction-action-evidence">'+
