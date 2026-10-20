@@ -8644,3 +8644,65 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   grid-template-columns:minmax(0,1fr);
  }
 }
+
+
+/* TIGHT TOP KPIS AFTER HEADING OCT 2026
+   The prior 390px flex-basis became empty vertical space in this column. */
+#connectionStrip .mission-direction-panel .mission-direction-overview-main {
+  display:flex;flex-direction:column;justify-content:flex-start;
+  align-items:stretch;gap:8px;min-height:0;height:auto;
+}
+#connectionStrip .mission-direction-panel .mission-direction-overview .mission-direction-title-block {
+  flex:0 0 auto !important;
+  height:auto !important;
+  min-height:0 !important;
+  align-self:stretch;margin:0 !important;padding:0 !important;
+}
+#connectionStrip .mission-direction-panel .mission-direction-overview .mission-direction-title-block > h2 {
+  margin:2px 0 0;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence {
+  grid-template-columns:minmax(0,188px) minmax(0,188px) minmax(290px,1fr) !important;
+  align-items:start;align-self:stretch;margin:0 !important;padding:0 !important;
+}
+/* Two compact boxes, centered numbers and percentages. Action list stays its own height. */
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence > .mission-direction-signal.trend-metric {
+  box-sizing:border-box;display:flex;flex-direction:column;
+  justify-content:center;align-items:center;text-align:center;
+  align-self:start;width:100%;min-width:0;
+  min-height:122px;height:122px;padding:9px 7px;gap:4px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence > .mission-direction-signal.trend-metric > small {
+  display:block;font:900 12px/1.2 Arial,sans-serif;letter-spacing:.15px;color:#654724;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence > .mission-direction-signal.trend-metric > strong {
+  display:block;margin:1px 0;font:900 21px/1.15 Arial,sans-serif;
+  white-space:nowrap;font-variant-numeric:tabular-nums;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence > .mission-direction-signal.trend-metric > span {
+  display:block;margin:0;font:900 20px/1.15 Arial,sans-serif;
+  white-space:nowrap;font-variant-numeric:tabular-nums;
+}
+@media(max-width:1220px) {
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence {
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence > .action-summary-card {
+    grid-column:1/-1;
+  }
+}
+@media(max-width:520px) {
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence {
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence > .mission-direction-signal.trend-metric {
+    min-height:115px;height:115px;padding:8px 4px;
+  }
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence > .mission-direction-signal.trend-metric > strong,
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence > .mission-direction-signal.trend-metric > span {
+    font-size:18px;
+  }
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence > .action-summary-card {
+    grid-column:1/-1;
+  }
+}
