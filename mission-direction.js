@@ -269,8 +269,8 @@
     const periodCaution=period?.range==='today'?'Today is incomplete; compare full days before drawing conclusions.'
       :period?.includesToday!==false?'This reporting window includes an unfinished day.':'';
     const coverage=[
-      proof('VISITS',available?changeColor(visitors):'neutral',
-        available&&good(currentVisitors)?fmt(currentVisitors)+' visitors':'N/A',
+      proof('VISITORS',available?changeColor(visitors):'neutral',
+        available&&good(currentVisitors)?fmt(currentVisitors):'N/A',
         available&&isTrend(visitors)?signedChange(visitors.percentChange):'N/A'),
       proof('ENGAGEMENT',available&&good(site?.avgTimeSeconds)?changeColor(stay):'neutral',
         available?time(site.avgTimeSeconds):'N/A',
@@ -608,7 +608,7 @@
       '<div class="mission-direction-evidence">'+summary.coverage.map(item=>{
         if(item.label!=='MEANINGFUL ACTIONS')
           return '<div class="mission-direction-signal '+esc(item.state)+
-            (item.label==='VISITS'||item.label==='ENGAGEMENT'?' trend-metric':'')+'">'+
+            (item.label==='VISITORS'||item.label==='ENGAGEMENT'?' trend-metric':'')+'">'+
             '<small>'+esc(item.label)+'</small><strong>'+esc(item.headline)+'</strong>'+
             '<span>'+esc(item.note)+'</span></div>';
         return '<div class="mission-direction-signal '+esc(item.state)+'">'+
