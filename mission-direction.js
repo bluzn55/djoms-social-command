@@ -214,12 +214,12 @@
     const periodCaution=period?.range==='today'?'Today is incomplete; compare full days before drawing conclusions.'
       :period?.includesToday!==false?'This reporting window includes an unfinished day.':'';
     const coverage=[
-      proof('DISCOVERY',visitorsTrend==='up'?'green':visitorsTrend==='down'?'red':'neutral',
+      proof('VISITS',visitorsTrend==='up'?'green':visitorsTrend==='down'?'red':'neutral',
         available&&good(currentVisitors)?fmt(currentVisitors)+' visitors':'N/A',
         isTrend(visitors)?percent(visitors.percentChange)+' vs preceding period':'Previous-period comparison pending'),
       proof('ENGAGEMENT',stayTrend==='up'?'green':stayTrend==='down'?'red':'neutral',
         available?time(site.avgTimeSeconds):'N/A',
-        isTrend(stay)?percent(stay.percentChange)+' average-stay change':'Engagement comparison pending'),
+        isTrend(stay)?'Avg. time on site '+percent(stay.percentChange)+' vs preceding period':'Avg. time on site; comparison pending'),
       proof('MEANINGFUL ACTIONS',meaningfulAction.state,
         meaningfulAction.headline,meaningfulAction.note),
       proof('ONLINE SALES',salesReady?businessStatus.state:'unknown',
