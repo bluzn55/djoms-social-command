@@ -8706,3 +8706,76 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     grid-column:1/-1;
   }
 }
+
+
+/* FOUR KPIS INLINE: SALES BETWEEN ENGAGEMENT AND ACTIONS · 2026-10-20
+   Keep the centered Visitors / Engagement cards small. Online Sales lives
+   only here, with its verified Wix category and item dropdown preserved. */
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence {
+  grid-template-columns:
+    minmax(0,188px) minmax(0,188px) minmax(205px,260px) minmax(285px,1fr) !important;
+  align-items:start;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence > .mission-online-summary {
+  min-width:0;
+  padding:8px 9px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-online-summary-top {
+  display:block;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-online-summary-top > div {
+  min-width:0;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-online-summary-top strong {
+  font-size:19px;
+  margin:7px 0 5px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-online-summary-top span {
+  display:block;
+  font-size:12px;
+  overflow-wrap:anywhere;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-online-summary-top .mission-online-source {
+  display:block;
+  margin-top:6px;
+  font-size:11px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-online-groups {
+  grid-template-columns:minmax(0,1fr) !important;
+  gap:6px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-online-category > summary {
+  padding:7px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-online-category > summary span,
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-online-category > summary strong {
+  font-size:14px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-online-items table {
+  font-size:12px;
+}
+@media(max-width:1250px) {
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence {
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence > .action-summary-card {
+    grid-column:auto;
+  }
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-online-groups {
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+}
+@media(max-width:650px) {
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence {
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence > .mission-online-summary,
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence > .action-summary-card {
+    grid-column:1/-1;
+  }
+}
+@media(max-width:420px) {
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-online-groups {
+    grid-template-columns:minmax(0,1fr) !important;
+  }
+}
