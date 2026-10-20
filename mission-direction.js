@@ -404,6 +404,43 @@
       '<thead><tr>'+headers.map(t=>'<th scope="col">'+esc(t)+'</th>').join('')+
       '</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>':'';
   }
+
+  // Four genuine outcomes in priority order, then separate GA4 download
+  // interest. Counts are different things; never sum them into one total.
+  function meaningfulActionsCard(site,ga4,sales,period){
+    const ordersVerified=sales?.connected===true&&sales?.complete===true&&
+      sales?.range?.start===period?.start&&sales?.range?.end===period?.end&&
+      Number.isSafeInteger(sales.paidOrders)&&sales.paidOrders>=0;
+    const orders=ordersVerified?sales.paidOrders:null;
+    const gaActions=ga4?.connected===true&&ga4?.actions?.status==='reported'?
+      ga4.actions:null;
+    const downloads=good(gaActions?.counts?.fileDownload)?gaActions.counts.fileDownload:null;
+    const rows=[
+      {id:'orders',label:'1. Paid Sales',value:orders},
+      {id:'krewe',label:'2. Pit Krewe Members',value:null},
+      {id:'contacts',label:'3. Customer Inquiries',value:null},
+      {id:'radio',label:'4. Radio Listeners',value:null},
+      {id:'downloads',label:'File Downloads',value:downloads,secondary:true}
+    ];
+    const fileLinks=gaActions?.downloadFiles?.status==='reported'?inlineFileLinks(ga4):'';
+    return '<div class="mission-direction-signal action-summary-card">'+
+      '<small>MEANINGFUL ACTIONS</small>'+
+      '<div class="mission-action-compact-rows">'+rows.map(item=>{
+        const expanded=actionDetailsOpen&&selectedAction===item.id;
+        return '<button type="button" class="mission-action-compact-row'+
+          (item.secondary?' secondary':'')+(expanded?' selected':'')+
+          '" data-direction-action-open="'+item.id+
+          '" aria-expanded="'+(expanded?'true':'false')+
+          '" aria-controls="missionActionDetails" title="See '+
+          esc(item.label.replace(/^[0-9]+\. /,''))+' details">'+
+          '<span>'+esc(item.label)+'</span><strong>'+esc(count(item.value))+'</strong>'+
+          '<i aria-hidden="true">›</i></button>';
+      }).join('')+'</div>'+
+      '<p class="mission-action-compact-foot">N/A = not verified · Downloads are events</p>'+
+      fileLinks+
+    '</div>';
+  }
+
   function actionsDetail(site,ga4,sales,period){
     const actions=ga4?.connected===true&&ga4?.actions?.status==='reported'?ga4.actions:null;
     const counts=actions?.counts||{};
@@ -453,7 +490,8 @@
     } else if(selectedAction==='contacts'){
       const info=actions?.eventPages;
       const rows=Array.isArray(info?.rows)?info.rows.filter(r=>r.eventName==='form_submit'&&good(r.events)):[];
-      detail='<h4>CONTACTS AND FORMS</h4>'+
+      detail='<h4>CUSTOMER INQUIRIES</h4>'+
+        '<p><b>Verified customer inquiries: N/A.</b> Contact actions and submitted forms have not yet been classified as qualified business inquiries.</p>'+
         '<p>Wix contact clicks: <b>'+esc(count(site?.connected===true?site.contactClicks:null))+
         '</b>; Wix submitted forms: <b>'+esc(count(site?.connected===true?site.formsSubmitted:null))+
         '</b>. Combined Wix contact actions: <b>'+esc(count(contacts))+'</b>.</p>'+
@@ -611,12 +649,7 @@
             (item.label==='VISITORS'||item.label==='ENGAGEMENT'?' trend-metric':'')+'">'+
             '<small>'+esc(item.label)+'</small><strong>'+esc(item.headline)+'</strong>'+
             '<span>'+esc(item.note)+'</span></div>';
-        return '<div class="mission-direction-signal '+esc(item.state)+'">'+
-          '<small>'+esc(item.label)+'</small>'+
-          '<button type="button" class="mission-action-open" data-direction-actions-toggle="1"'+
-          ' aria-expanded="'+(actionDetailsOpen?'true':'false')+'" aria-controls="missionActionDetails">'+
-          esc(item.headline)+'<em>'+ (actionDetailsOpen?'HIDE DETAILS ▲':'VIEW DETAILS ▼')+'</em></button>'+
-          '<span>'+esc(item.note)+'</span>'+inlineFileLinks(ga4)+'</div>';
+        return meaningfulActionsCard(site,ga4,sales,period);
       }).join('')+'</div>'+
       '<section id="missionActionDetails" class="mission-action-panel"'+
         (actionDetailsOpen?'':' hidden')+'>'+
@@ -661,6 +694,20 @@
     if(typeof activeView!=='undefined'&&activeView==='Mission Control')repaint();
   });
   document.addEventListener('click',event=>{
+    const clickedRow=event.target.closest('[data-direction-action-open]');
+    if(clickedRow){
+      event.preventDefault();
+      const chosen=clickedRow.dataset.directionActionOpen;
+      if(!['orders','krewe','contacts','radio','downloads'].includes(chosen))return;
+      const wasOpen=actionDetailsOpen&&selectedAction===chosen;
+      selectedAction=chosen;
+      actionDetailsOpen=!wasOpen;
+      repaint();
+      if(actionDetailsOpen)document.getElementById('missionActionDetails')?.scrollIntoView({
+        block:'nearest',behavior:'smooth'
+      });
+      return;
+    }
     const toggle=event.target.closest('[data-direction-actions-toggle]');
     if(toggle){
       event.preventDefault();
