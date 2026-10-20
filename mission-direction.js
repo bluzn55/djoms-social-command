@@ -30,6 +30,10 @@
   const periodName=period=>period?.range==='custom'
     ?'Custom dates':({today:'Today','7d':'Last 7 days','30d':'Last 30 days','365d':'Last 365 days'})[period?.range]||'Selected dates';
   const proof=(label,state,headline,note)=>({label,state,headline,note});
+  // These two cards use the exact signed percentage, not the +/-5%
+  // smoothing used for the larger website momentum assessment.
+  const changeColor=comparison=>!isTrend(comparison)?'neutral':
+    comparison.percentChange>0?'green':comparison.percentChange<0?'red':'neutral';
   const ga4Gap=(site,ga4)=>site?.connected===true&&ga4?.status==='connected'&&
     good(site.sessions)&&site.sessions>=10&&good(ga4?.metrics?.sessions)&&
     ga4.metrics.sessions<site.sessions/2;
@@ -265,12 +269,12 @@
     const periodCaution=period?.range==='today'?'Today is incomplete; compare full days before drawing conclusions.'
       :period?.includesToday!==false?'This reporting window includes an unfinished day.':'';
     const coverage=[
-      proof('VISITS',visitorsTrend==='up'?'green':visitorsTrend==='down'?'red':'neutral',
+      proof('VISITS',available?changeColor(visitors):'neutral',
         available&&good(currentVisitors)?fmt(currentVisitors)+' visitors':'N/A',
-        isTrend(visitors)?percent(visitors.percentChange)+' vs preceding period':'Previous-period comparison pending'),
-      proof('ENGAGEMENT',stayTrend==='up'?'green':stayTrend==='down'?'red':'neutral',
+        available&&isTrend(visitors)?signedChange(visitors.percentChange):'N/A'),
+      proof('ENGAGEMENT',available&&good(site?.avgTimeSeconds)?changeColor(stay):'neutral',
         available?time(site.avgTimeSeconds):'N/A',
-        isTrend(stay)?'Avg. time on site '+percent(stay.percentChange)+' vs preceding period':'Avg. time on site; comparison pending'),
+        available&&good(site?.avgTimeSeconds)&&isTrend(stay)?signedChange(stay.percentChange):'N/A'),
       proof('MEANINGFUL ACTIONS',meaningfulAction.state,
         meaningfulAction.headline,meaningfulAction.note),
       proof('ONLINE SALES',salesReady?businessStatus.state:'unknown',
@@ -603,7 +607,8 @@
         esc(summary.websiteDirection)+'</b></p>'+
       '<div class="mission-direction-evidence">'+summary.coverage.map(item=>{
         if(item.label!=='MEANINGFUL ACTIONS')
-          return '<div class="mission-direction-signal '+esc(item.state)+'">'+
+          return '<div class="mission-direction-signal '+esc(item.state)+
+            (item.label==='VISITS'||item.label==='ENGAGEMENT'?' trend-metric':'')+'">'+
             '<small>'+esc(item.label)+'</small><strong>'+esc(item.headline)+'</strong>'+
             '<span>'+esc(item.note)+'</span></div>';
         return '<div class="mission-direction-signal '+esc(item.state)+'">'+
