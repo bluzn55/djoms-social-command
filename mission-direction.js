@@ -451,11 +451,11 @@
       Number.isSafeInteger(sales.paidOrders)&&sales.paidOrders>=0;
     const orders=verifiedOrders?sales.paidOrders:null;
     const tabs=[
-      {id:'downloads',label:'FILE DOWNLOADS',value:count(counts.fileDownload),sub:'GA4 events'},
+      {id:'orders',label:'PAID SALES',value:count(orders),sub:'Verified Wix web orders'},
       {id:'krewe',label:'PIT KREWE MEMBERS',value:'N/A',sub:'GA4 sign-up events: '+count(counts.signUp)},
-      {id:'contacts',label:'CONTACT ACTIONS',value:count(contacts),sub:'Measured Wix clicks + forms'},
+      {id:'contacts',label:'CUSTOMER INQUIRIES',value:'N/A',sub:'Wix contact actions: '+count(contacts)},
       {id:'radio',label:'RADIO LISTENERS',value:'N/A',sub:'Radio link clicks: '+count(actions?.radioLinkClicks)},
-      {id:'orders',label:'PAID WEB ORDERS',value:count(orders),sub:'Verified Wix transactions'}
+      {id:'downloads',label:'FILE DOWNLOADS',value:count(counts.fileDownload),sub:'GA4 download events'}
     ];
     let detail='';
     if(selectedAction==='downloads'){
