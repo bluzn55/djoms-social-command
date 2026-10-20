@@ -8183,22 +8183,22 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 /* Arrow movement is intentionally amplified near zero; the exact
    percentage is printed. Center=0, top=up, bottom=down. */
 #connectionStrip .mission-direction-panel .mission-direction-meter.score-meter {
-  display:flex;flex:0 0 238px;flex-direction:column;box-sizing:border-box;
-  min-width:220px;max-width:238px;padding:10px 12px;
+  display:flex;flex:0 0 128px;flex-direction:column;box-sizing:border-box;
+  min-width:126px;max-width:128px;padding:8px 7px;
 }
 #connectionStrip .mission-direction-panel .score-meter .mission-direction-meter-top {
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-  margin:0 0 8px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  margin:0 0 6px;text-align:center;
 }
 #connectionStrip .mission-direction-panel .score-meter .mission-direction-meter-top > strong {
-  font:900 12px/1.25 Arial,sans-serif;letter-spacing:.5px;color:#65431e;
+  font:900 10px/1.15 Arial,sans-serif;letter-spacing:.1px;color:#65431e;
 }
 #connectionStrip .mission-direction-panel .score-meter .mission-score-summary {
   display:flex;flex-direction:column;align-items:center;gap:1px;
   min-width:0;text-align:center;
 }
 #connectionStrip .mission-direction-panel .score-meter .mission-score-summary b {
-  display:block;font:900 25px/1.05 Arial,sans-serif;
+  display:block;font:900 22px/1.05 Arial,sans-serif;
   font-variant-numeric:tabular-nums;white-space:nowrap;
 }
 #connectionStrip .mission-direction-panel .score-meter .mission-score-summary small {
@@ -8210,14 +8210,14 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 #connectionStrip .mission-direction-panel .score-meter.unknown .mission-score-summary {color:#756f65}
 #connectionStrip .mission-direction-panel .score-meter .mission-score-vertical {
   position:relative;isolation:isolate;display:block;box-sizing:border-box;
-  width:100%;height:142px;min-height:142px;overflow:hidden;
+  width:100%;height:122px;min-height:122px;overflow:hidden;
   border:1px solid #c9aa73;border-radius:7px;
   background:linear-gradient(180deg,#e9f2e5 0%,#eff3e3 44%,#f7f0dd 49%,
     #f7f0dd 51%,#f7e8df 56%,#f3dfd6 100%);
   box-shadow:inset 0 2px 5px #5b431c20;
 }
 #connectionStrip .mission-direction-panel .score-meter .mission-score-scale {
-  position:absolute;left:50%;top:6px;bottom:6px;width:18px;z-index:1;
+  position:absolute;left:50%;top:6px;bottom:6px;width:14px;z-index:1;
   transform:translateX(-50%);box-sizing:border-box;
   border:2px solid #614622;border-radius:5px;
   background:linear-gradient(180deg,#218d4e 0%,#4fb06a 43%,
@@ -8225,45 +8225,45 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   box-shadow:inset 1px 0 3px #50321e47,0 0 0 1px #f7dfb0;
 }
 #connectionStrip .mission-direction-panel .score-meter .mission-score-center-line {
-  position:absolute;top:calc(50% - 1px);left:-110px;width:220px;height:0;
+  position:absolute;top:calc(50% - 1px);left:-60px;width:120px;height:0;
   border-top:2px dashed #907552;z-index:2;pointer-events:none;
 }
 #connectionStrip .mission-direction-panel .score-meter .mission-score-pointer {
   --needle-ink:#997123;
-  position:absolute;top:var(--mission-score-y,50%);left:calc(50% - 58px);
-  z-index:4;width:48px;height:5px;box-sizing:border-box;
+  position:absolute;top:var(--mission-score-y,50%);left:calc(50% - 36px);
+  z-index:4;width:27px;height:5px;box-sizing:border-box;
   border:1px solid #fff1d4;border-radius:3px;
   background:var(--needle-ink);box-shadow:0 1px 3px #41290f80;
   transform:translateY(-50%);transition:top .35s ease-out;
 }
 #connectionStrip .mission-direction-panel .score-meter .mission-score-pointer::after {
-  content:"";position:absolute;top:-6px;right:-14px;width:0;height:0;
-  border-top:8px solid transparent;border-bottom:8px solid transparent;
-  border-left:14px solid var(--needle-ink);
+  content:"";position:absolute;top:-5px;right:-10px;width:0;height:0;
+  border-top:7px solid transparent;border-bottom:7px solid transparent;
+  border-left:10px solid var(--needle-ink);
 }
 #connectionStrip .mission-direction-panel .score-meter.up .mission-score-pointer {--needle-ink:#288448}
 #connectionStrip .mission-direction-panel .score-meter.down .mission-score-pointer {--needle-ink:#b13c2e}
 #connectionStrip .mission-direction-panel .score-meter.hold .mission-score-pointer {--needle-ink:#9d7928}
 #connectionStrip .mission-direction-panel .score-meter.unknown .mission-score-pointer {--needle-ink:#797064}
 #connectionStrip .mission-direction-panel .score-meter .mission-score-breakdown {
-  display:flex;flex-direction:column;gap:5px;padding:8px 0 0;
+  display:flex;flex-direction:column;gap:5px;padding:7px 0 0;
 }
 #connectionStrip .mission-direction-panel .score-meter .mission-score-breakdown span {
-  display:flex;align-items:baseline;justify-content:space-between;
-  flex-wrap:wrap;gap:4px;color:#664b2c;
-  font:900 12px/1.3 Arial,sans-serif;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex-wrap:nowrap;gap:1px;color:#664b2c;
+  font:900 11px/1.25 Arial,sans-serif;
 }
 #connectionStrip .mission-direction-panel .score-meter .mission-score-breakdown b {
-  color:#332418;font:900 16px/1.15 Arial,sans-serif;font-variant-numeric:tabular-nums;
+  color:#332418;font:900 15px/1.15 Arial,sans-serif;font-variant-numeric:tabular-nums;
 }
 @media(max-width:1120px) {
   #connectionStrip .mission-direction-panel .mission-direction-meter.score-meter {
-    flex:0 0 238px;max-width:238px;
+    flex:0 0 128px;max-width:128px;
   }
 }
 @media(max-width:650px) {
   #connectionStrip .mission-direction-panel .mission-direction-meter.score-meter {
-    flex:0 1 238px;min-width:0;max-width:238px;width:100%;order:2;align-self:center;
+    flex:0 1 128px;min-width:0;max-width:128px;width:100%;order:2;align-self:center;
   }
 }
 @media(prefers-reduced-motion:reduce) {
