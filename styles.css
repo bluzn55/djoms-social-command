@@ -9303,3 +9303,29 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     font-size:14px;
   }
 }
+
+
+/* Secondary proof directly under previous/current visitor and stay totals. */
+#connectionStrip .mission-direction-panel .mission-stage-extras {
+  width:100%;
+  margin-top:auto;
+  padding-top:9px;
+  border-top:1px solid #e1d3b6;
+}
+#connectionStrip .mission-direction-panel .mission-stage-extra {
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:10px;
+  margin:4px 0;
+  width:100%;
+  color:#191510;
+  font:800 clamp(13px,.9vw,15px)/1.35 Arial,sans-serif;
+}
+#connectionStrip .mission-direction-panel .mission-stage-extra > strong {
+  margin:0;
+  color:#14110d;
+  font:900 clamp(14px,.95vw,17px)/1.25 Arial,sans-serif;
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
