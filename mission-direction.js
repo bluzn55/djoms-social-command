@@ -277,12 +277,69 @@
       '<div class="mission-story-heading"><h3>THE WHOLE STORY · FOUR DRIVERS</h3>'+
       '<p>Selected reporting dates apply throughout. Green = improving, red = declining, N/A = unverified. Different sources are not added together.</p></div>'+
       '<div class="mission-story-grid">'+
-        storyCard('1. GOOGLE DISCOVERY',score.google,googleRows.join(''),googleNote)+
-        storyCard('2. WEBSITE TRAFFIC',score.traffic,trafficRows.join(''),trafficNote)+
-        storyCard('3. VISITOR ENGAGEMENT',score.engagement,engagementRows.join(''),engagementNote)+
-        storyCard('4. BUSINESS RESULTS',score.business,businessRows.join(''),businessNote)+
+        storyCard('GOOGLE DISCOVERY',score.google,googleRows.join(''),googleNote)+
+        storyCard('WEBSITE TRAFFIC & SOURCES',score.traffic,trafficRows.join(''),trafficNote)+
+        storyCard('VISITOR ENGAGEMENT',score.engagement,engagementRows.join(''),engagementNote)+
+        storyCard('ACTIONS & BUSINESS RESULTS',score.business,businessRows.join(''),businessNote)+
       '</div><p class="mission-story-coverage">'+esc(score.note)+'</p></section>';
   }
+
+  // Owner customer journey. Google Search exposure and Wix-attributed
+  // traffic describe different steps, not additive audience totals.
+  function searchStageCard(seo,score){
+    const valid=seo?.status==='connected',m=valid?seo.metrics||{}:{};
+    const previous=valid&&seo.comparison?.status==='reported'?seo.comparison:null;
+    const delta=c=>Number.isFinite(c?.percentChange)?
+      signedChange(c.percentChange):'N/A';
+    const status=safeMotion(score?.google);
+    const direction=status==='unknown'?'N/A':status.toUpperCase();
+    return '<article class="mission-direction-signal mission-stage-card mission-stage-google">'+
+      '<div class="mission-stage-head"><small>1. GOOGLE SEARCH</small>'+
+      '<b class="mission-stage-tag story-'+status+'">'+direction+'</b></div>'+
+      '<div class="mission-stage-rows">'+
+        storyRow('Search appearances',storyNumber(m.impressions))+
+        storyRow('Impression change',delta(previous?.impressions),score?.googleImpressions)+
+        storyRow('Search clicks',storyNumber(m.clicks))+
+        storyRow('Clicks change',delta(previous?.clicks),score?.googleClicks)+
+        storyRow('Search CTR',measureRatio(m.ctr))+
+      '</div><p class="mission-stage-foot">CTR = percentage who clicked after seeing us. '+
+        'Search Console final-day figures, sometimes delayed.</p></article>';
+  }
+  function sourceStageCard(site){
+    const connected=site?.connected===true;
+    const rows=connected&&Array.isArray(site.trafficSources)?site.trafficSources:[];
+    const totals={direct:0,google:0,facebook:0,instagram:0,x:0,youtube:0,other:0};
+    const found=new Set();
+    let summed=0;
+    for(const item of rows){
+      if(!good(item?.sessions))continue;
+      const name=(String(item.source||'')+' '+String(item.category||'')).toLowerCase();
+      let key='other';
+      if(/facebook|fb\.me|\bfb\b/.test(name))key='facebook';
+      else if(/instagram|ig\.me|\binsta\b/.test(name))key='instagram';
+      else if(/youtube|youtu\.be/.test(name))key='youtube';
+      else if(/twitter|t\.co|x\.com/.test(name))key='x';
+      else if(/google/.test(name))key='google';
+      else if(/\bdirect\b|\(direct\)/.test(name))key='direct';
+      totals[key]+=item.sessions;found.add(key);summed+=item.sessions;
+    }
+    const complete=connected&&site.trafficSourcesComplete===true&&
+      (!good(site.sessions)||summed===site.sessions);
+    const num=key=>connected&&(found.has(key)||complete)?fmt(totals[key]):'N/A';
+    const names=[['direct','Direct'],['google','Google referrals'],
+      ['facebook','Facebook'],['instagram','Instagram'],['x','X / Twitter'],
+      ['youtube','YouTube'],['other','Other sources']];
+    return '<article class="mission-direction-signal mission-stage-card mission-stage-sources">'+
+      '<div class="mission-stage-head"><small>2. HOW THEY ARRIVED</small>'+
+      '<b class="mission-stage-tag">TREND N/A</b></div>'+
+      '<div class="mission-stage-rows">'+
+        storyRow('Wix sessions',storyNumber(connected?site.sessions:null))+
+        names.map(([key,label])=>storyRow(label,num(key))).join('')+
+      '</div><p class="mission-stage-foot">These are Wix sessions, not unique visitors. '+
+      'Source trends remain N/A until prior-channel comparisons are verified.'+
+      (complete?'':' Some source counts may be incomplete.')+'</p></article>';
+  }
+
   function periodKpi(item,site){
     const visits=item.label==='VISITORS';
     const comparison=site?.connected===true?
@@ -292,7 +349,7 @@
     const format=visits?storyNumber:time;
     const change=changeMotion(comparison);
     return '<div class="mission-direction-signal trend-metric '+esc(item.state)+'">'+
-      '<small>'+esc(item.label)+'</small>'+
+      '<small>'+esc(visits?'3. WEBSITE VISITORS':'4. VISITOR ENGAGEMENT')+'</small>'+
       '<div class="mission-period-pair" role="group" aria-label="Previous and current matching periods">'+
       '<div><small>LAST</small><strong>'+esc(format(previous))+'</strong></div>'+
       '<div><small>CURRENT</small><strong>'+esc(format(current))+'</strong></div></div>'+
@@ -580,14 +637,13 @@
       ga4.actions:null;
     const downloads=good(gaActions?.counts?.fileDownload)?gaActions.counts.fileDownload:null;
     const rows=[
-      {id:'orders',label:'1. Gross Sales',value:webItemSales,monetary:true},
-      {id:'krewe',label:'2. Pit Krewe Members',value:null},
-      {id:'contacts',label:'3. Customer Inquiries',value:null},
-      {id:'radio',label:'4. Radio Listeners',value:null},
+      {id:'contacts',label:'Customer Inquiries',value:null},
+      {id:'krewe',label:'Pit Krewe Members',value:null},
+      {id:'radio',label:'Radio Listeners',value:null},
       {id:'downloads',label:'File Downloads',value:downloads,secondary:true}
     ];
     return '<div class="mission-direction-signal action-summary-card">'+
-      '<small>MEANINGFUL ACTIONS</small>'+
+      '<small>5. MEANINGFUL ACTIONS</small>'+
       '<div class="mission-action-compact-rows">'+rows.map(item=>{
         const expanded=actionDetailsOpen&&selectedAction===item.id;
         return '<button type="button" class="mission-action-compact-row'+
@@ -846,7 +902,7 @@
       '</p>';
     return '<section class="mission-direction-signal mission-online-summary">'+
       '<div class="mission-online-summary-top"><div>'+
-        '<small>ONLINE SALES</small>'+
+        '<small>6. PAID WEB SALES</small>'+
         '<strong>'+esc(orders)+' paid '+(ready&&sales.paidOrders===1?'order':'orders')+'</strong>'+
         '<span>'+esc(amount)+' web item sales (not profit)</span>'+
       '</div><span class="mission-online-source">Wix web orders only</span></div>'+
@@ -870,26 +926,25 @@
     const summary=evaluate(site,ga4,seo,sales,period);
     syncAttention(issueList(site,ga4,seo));
     const proof=summary.actionEvidence;
-    // Left: heading, Visitors, Engagement, Online Sales and Meaningful Actions.
-    // Right: the existing narrow Website Momentum gauge.
-    const leading=summary.coverage;
-    const leadingCards=leading.map(item=>{
-      if(item.label==='ONLINE SALES')
-        return onlineSalesCard(sales,period);
-      if(item.label==='MEANINGFUL ACTIONS')
-        return meaningfulActionsCard(site,ga4,sales,period);
-      if(item.label==='VISITORS'||item.label==='ENGAGEMENT')
-        return periodKpi(item,site);
-      return '<div class="mission-direction-signal '+esc(item.state)+'">'+
-        '<small>'+esc(item.label)+'</small><strong>'+esc(item.headline)+'</strong>'+
-        '<span>'+esc(item.note)+'</span></div>';
-    }).join('');
+    // Six stages in the order a person reaches and interacts with Doc Jaks.
+    const visitors=summary.coverage.find(item=>item.label==='VISITORS');
+    const engagement=summary.coverage.find(item=>item.label==='ENGAGEMENT');
+    const leadingCards=[
+      searchStageCard(seo,summary.momentum),
+      sourceStageCard(site),
+      periodKpi(visitors,site),
+      periodKpi(engagement,site),
+      meaningfulActionsCard(site,ga4,sales,period),
+      onlineSalesCard(sales,period)
+    ].join('');
     node.innerHTML=
       '<div class="mission-direction-overview">'+
         '<div class="mission-direction-overview-main">'+
           '<div class="mission-direction-title-block">'+
             '<small>DOC JAKS · OWNER-FIRST BUSINESS INTELLIGENCE</small>'+
             '<h2>ARE WE MOVING FORWARD OR BACKWARD?</h2></div>'+
+          '<p class="mission-stage-journey">THE CUSTOMER JOURNEY: '+
+            'FIND US → ARRIVE → VISIT → ENGAGE → TAKE ACTION → BUY</p>'+
           '<div class="mission-direction-evidence mission-direction-top-evidence">'+
             leadingCards+'</div>'+
         '</div>'+
