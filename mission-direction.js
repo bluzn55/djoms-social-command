@@ -394,7 +394,7 @@
   const count=value=>good(value)?fmt(value):'N/A';
   const evidenceRowLink=(row)=>{
     const label=row.fileName&&row.fileName!=='(not set)'?row.fileName:'Filename N/A';
-    return fileLink(row.linkUrl,label)||'<strong>'+esc(label)+'</strong>';
+    return '<strong>'+esc(label)+'</strong>';
   };
   function actionTable(headers,rows){
     return rows.length?'<div class="mission-action-table-scroll"><table class="mission-action-table">'+
@@ -471,14 +471,11 @@
           '<p class="mission-action-good">File-by-file totals match the GA4 download event count.</p>':
           '<p class="mission-action-warning">File details are N/A or incomplete'+
             (fileData?.status==='mismatch'?' (totals do not reconcile)':'')+'. The GA4 total above remains separate.</p>')+
-        actionTable(['FILE / OPEN ORIGINAL','EVENTS'],rows.map(row=>
+        actionTable(['FILE','EVENTS'],rows.map(row=>
           '<tr><td>'+evidenceRowLink(row)+
           (row.extension&&row.extension!=='(not set)'?'<small>Type: '+esc(row.extension)+'</small>':'')+
-          (row.linkUrl&&verifiedUrl(row.linkUrl)?'<small class="mission-action-url">'+esc(row.linkUrl)+'</small>':
-            '<small>Direct link N/A</small>')+
           '</td><td>'+esc(count(row.events))+'</td></tr>'))+
         (rows.length===0?'<p>No individual files were returned for these dates.</p>':'')+
-        '<p>Links open the original website file. Your browser or Wix may preview it, require access, or start a download.</p>'+
         fileLink('https://analytics.google.com/','Open Google Analytics');
     } else if(selectedAction==='krewe'){
       const info=actions?.eventPages;
