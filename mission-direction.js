@@ -212,26 +212,6 @@
     const priorCtr=good(googleLast('impressions'))&&googleLast('impressions')>0&&good(googleLast('clicks'))
       ?googleLast('clicks')/googleLast('impressions'):null;
     const pair=storyPairRow;
-    const googleRows=[
-      pair('Search appearances',storyNumber(googleLast('impressions')),storyNumber(g.impressions),score.googleImpressions),
-      pair('Search clicks',storyNumber(googleLast('clicks')),storyNumber(g.clicks),score.googleClicks),
-      pair('Click-through rate',measureRatio(priorCtr),measureRatio(g.ctr)),
-      pair('Average search position',good(googleLast('position'))?googleLast('position').toFixed(1):'N/A',
-        good(g.position)?g.position.toFixed(1):'N/A')
-    ];
-    if(google&&Array.isArray(seo.topQueries)){
-      const terms=seo.topQueries.filter(q=>typeof q.query==='string'&&q.query.trim()).slice(0,3);
-      if(terms.length){
-        googleRows.push('<div class="mission-story-subhead">TOP GOOGLE SEARCHES</div>');
-        for(const t of terms)googleRows.push(pair(t.query,'N/A',
-          storyNumber(t.impressions)+' imp · '+storyNumber(t.clicks)+' clicks'));
-      }
-    }
-    const googleNote=gc?
-      'Search Console final-day comparison: '+gc.currentRange.start+' to '+gc.currentRange.end+
-      ' versus '+gc.previousRange.start+' to '+gc.previousRange.end+
-      '. Recent days may not yet be reported by Google.':
-      'Google Search Console reports current available days. Previous matched dates stay N/A until verified.';
     const trafficRows=[
       pair('Visitors',storyNumber(cmp.visitors?.previousVisitors),storyNumber(wix?site.visitors:null),score.traffic),
       pair('Page views',storyNumber(cmp.pageViews?.previous),storyNumber(wix?site.pageViews:null),
@@ -282,12 +262,16 @@
       pair('Gross web item sales',money(prior?.itemSalesCents),money(ordersReady?sales.itemSalesCents:null))
     ];
     const businessNote='Only verified paid Wix web orders count as online sales. Downloads and link clicks do not prove customers, memberships or listening.';
-    return '<section class="mission-story" aria-label="Complete traffic, Google, engagement and actions breakdown">'+
-      '<div class="mission-story-heading"><h3>THE WHOLE STORY · FOUR DRIVERS</h3>'+
-      '<p>Every metric shows LAST (L) and CURRENT (C) on one line. Green = improving, red = declining, N/A = unverified. Different sources are not added together.</p></div>'+
-      '<div class="mission-story-grid">'+
+    const discovery=typeof window.djomsSourceSpreadsheet==='function'?
+      window.djomsSourceSpreadsheet({site,ga4,seo,period}):
+      '<p class="mission-sheet-note">Search comparison is not loaded. Refresh this page.</p>';
+    return '<section class="mission-story mission-story-spreadsheet" '+
+      'aria-label="Full-width discovery spreadsheet with website details underneath">'+
+      discovery+
+      '<div class="mission-story-website">'+
         storyCard('WEBSITE TRAFFIC & SOURCES',score.traffic,trafficRows.join(''),trafficNote)+
-        storyCard('GOOGLE DISCOVERY',score.google,googleRows.join(''),googleNote)+
+      '</div>'+
+      '<div class="mission-story-grid mission-story-grid-supporting">'+
         storyCard('VISITOR ENGAGEMENT',score.engagement,engagementRows.join(''),engagementNote)+
         storyCard('ACTIONS & ONLINE SALES',score.business,businessRows.join(''),businessNote)+
       '</div><p class="mission-story-coverage">'+esc(score.note)+'</p></section>';
