@@ -312,7 +312,7 @@
     const stayTrend=trend(stay);
     const bounceTrend=trend(bounced,false);
     const returnTrend=trend(returns);
-    const needle=quickNeedle(visitors,stay);
+    const momentum=momentumScore(site,seo,sales,period);
     const currentVisitors=good(site?.visitors)?site.visitors:visitors?.currentVisitors;
     const previousVisitors=good(visitors?.previousVisitors)?visitors.previousVisitors:null;
     const salesReady=sales?.connected===true&&sales?.complete===true&&Number.isSafeInteger(sales.paidOrders);
@@ -359,16 +359,9 @@
     if(!salesReady)warnings.push('Verified online order totals are not available for these dates.');
     warnings.push('Actual Radio.co listening and contribution margin are not connected.');
 
-    let websiteDirection='NOT ENOUGH DATA',directionColor='unknown';
-    if(needle.kind!=='unknown'){
-      const signals=visitorsTrend==='down'&&stayTrend==='up'?
-        ' · VISITORS DOWN, AVG. STAY UP':
-        visitorsTrend==='up'&&stayTrend==='down'?
-        ' · VISITORS UP, AVG. STAY DOWN':'';
-      websiteDirection=(needle.kind==='up'?'UP':needle.kind==='down'?'DOWN':'HOLD')+
-        ' '+signedChange(needle.changePercent)+''+signals;
-      directionColor=needle.kind==='up'?'green':needle.kind==='down'?'red':'yellow';
-    }
+    const websiteDirection=momentum.verdict;
+    const directionColor=momentum.kind==='up'?'green':
+      momentum.kind==='down'?'red':momentum.kind==='unknown'?'unknown':'yellow';
 
     const discovering=available&&isTrend(visitors)
       ?(visitorsTrend==='up'
@@ -386,8 +379,7 @@
       ?'Average time on site is '+time(site.avgTimeSeconds)+' ('+
         signedChange(stay.percentChange)+' versus the preceding period). '+
         (visitorsTrend==='down'
-          ?'Longer visits help website momentum despite fewer visitors ('+
-            signedChange(needle.changePercent)+').'
+          ?'Average stay improved, but visitor traffic fell. The overall verdict must consider both.'
           :'People are spending more time on the site.')
       :visitorsTrend==='up'&&isTrend(visitors)
         ?'Wix reports '+fmt(currentVisitors)+' visitors, '+percent(visitors.percentChange)+
@@ -398,7 +390,7 @@
     let concern=visitorsTrend==='down'&&isTrend(visitors)
       ?'Visits fell '+Math.abs(visitors.percentChange).toFixed(1)+'% to '+fmt(currentVisitors)+
         (good(previousVisitors)?' (from '+fmt(previousVisitors)+').':'.')+
-        ' This needs attention even if the combined needle points up. '+
+        ' This needs attention even while average stay improves. '+
         (ga4Gap(site,ga4)?'Wix shows '+fmt(site.sessions)+' sessions versus GA4 '+fmt(ga4.metrics.sessions)+
           '; tracking coverage also needs checking.':'Compare source channels to see where visits declined.')
       :ga4Gap(site,ga4)?'Wix reports '+fmt(site.sessions)+' sessions but GA4 shows '+fmt(ga4.metrics.sessions)+'. Some sessions may be excluded by consent, blockers, bot filtering, or a tracking setup issue.'
@@ -462,15 +454,15 @@
     // Never call the whole business FORWARD without contribution margin and
     // reliable actions. Direction is limited to measured web momentum.
     return {overall:businessStatus.explanation,businessStatus,
-      websiteDirection,directionColor,needle,working,concern,next,nextHref,
+      websiteDirection,directionColor,momentum,working,concern,next,nextHref,
       // Percentages always come from the matching Wix reporting periods.
       visitorDelta:isTrend(visitors)?visitors.percentChange:null,
       stayDelta:isTrend(stay)?stay.percentChange:null,
       coverage,actionEvidence,warnings,
       notes:[
-        'The displayed direction change is the average of the visits percentage change and average-stay percentage change, each weighted equally. Positive is up, negative down, zero hold.',
-        'The direction percent is a combined indicator, NOT the actual percentage growth of visits, sales or profit. Large average-stay gains can outweigh a fall in visitors.',
-        'Visitor growth, time on site and search appearances are otherwise different measurements.',
+        'The overall verdict checks four distinct drivers: Google discovery, website traffic, engagement and verified paid web sales.',
+        'A FORWARD or BACKWARD verdict needs at least three verified drivers and two signals in the same direction with no opposite signal; mixed signals remain MIXED.',
+        'Visitor counts, site time, Google search impressions, GA4 sessions and business sales are different measurements. No percentages are averaged into a business growth rate.',
         'Site bounces and outgoing clicks do not prove radio listening. Verified web-sales growth does not prove profit or overall business health.',
         'Comparisons are against the preceding equal-length reporting period, not a different week or year.',
         smallSample?'Small comparison base: a few visitors may swing these percentages.':null,
@@ -534,17 +526,18 @@
   }
 
 
-  // The combined direction and the component signals can disagree. Color each
-  // component from its own measured direction (e.g. visits down, stay up).
+  // Overall text is categorical. The four statuses stay individually colored.
   const directionClass=value=>Number.isFinite(value)?(value>0?'up':value<0?'down':'flat'):'unknown';
   function websiteTrendMarkup(summary){
-    const segments=String(summary?.websiteDirection||'NOT ENOUGH DATA').split(' · ');
-    const primary=segments.shift()||'NOT ENOUGH DATA';
-    const parts=segments.join(' · ').split(', ').filter(Boolean);
-    const tone=summary?.directionColor==='green'?'up':summary?.directionColor==='red'?'down':'flat';
-    const colored=(value,color)=>'<b class="mission-trend-'+color+'">'+esc(value)+'</b>';
-    return colored(primary,tone)+(parts.length?' <span aria-hidden="true">·</span> '+
-      parts.map(value=>colored(value,/\bDOWN\b/.test(value)?'down':/\bUP\b/.test(value)?'up':'flat')).join(', '):'');
+    const score=summary?.momentum;
+    if(!score)return '<b>NOT YET PROVEN</b>';
+    const tone=status=>status==='up'?'up':status==='down'?'down':'flat';
+    const word=status=>status==='unknown'?'N/A':status.toUpperCase();
+    const primary='<b class="mission-trend-'+tone(score.kind)+'">'+
+      esc(score.verdict)+'</b>';
+    return primary+' <span aria-hidden="true"> · </span> '+
+      score.parts.map(p=>'<b class="mission-trend-'+tone(p.status)+'">'+
+        esc(p.name+' '+word(p.status))+'</b>').join(' <span aria-hidden="true"> · </span> ');
   }
 
   // Clickable owner dashboard evidence. Counts are separate measurements:
@@ -772,29 +765,37 @@
   // Zero is the middle; green/up at the top, red/down at the bottom.
   // For a small nonzero change, amplify the pointer offset for readability.
   function directionMeter(summary){
-    const needle=summary?.needle||quickNeedle(null,null);
-    const vd=typeof summary?.visitorDelta==='number'&&
-      Number.isFinite(summary.visitorDelta)?summary.visitorDelta:null;
-    const sd=typeof summary?.stayDelta==='number'&&
-      Number.isFinite(summary.stayDelta)?summary.stayDelta:null;
-    const shown=signedChange(needle.changePercent);
-    const message='Website momentum: '+shown+'. '+needle.explanation;
-    return '<div class="mission-direction-meter score-meter '+esc(needle.kind)+
+    const score=summary?.momentum;
+    const verdict=score?.verdict||'UNPROVEN';
+    const kind=score?.kind||'unknown';
+    const y=typeof score?.position==='number'?score.position:50;
+    const readableStatus=value=>value==='unknown'?'N/A':value.toUpperCase();
+    const visitor=Number.isFinite(summary?.visitorDelta)?
+      signedChange(summary.visitorDelta):'N/A';
+    const stay=Number.isFinite(summary?.stayDelta)?
+      signedChange(summary.stayDelta):'N/A';
+    const indicators=[
+      ['GOOGLE',readableStatus(score?.google),score?.google],
+      ['TRAFFIC',visitor,score?.traffic],
+      ['ENGAGE',score?.engagement==='mixed'?'MIXED':stay,score?.engagement],
+      ['BUSINESS',readableStatus(score?.business),score?.business]
+    ];
+    const message='Overall momentum: '+verdict+'. '+
+      indicators.map(x=>x[0]+' '+x[1]).join('; ')+
+      '. This is a categorical direction, not a profit growth percentage.';
+    return '<div class="mission-direction-meter score-meter '+esc(kind)+
       '" role="img" aria-label="'+esc(message)+'">'+
-        '<div class="mission-direction-meter-top"><strong>WEBSITE MOMENTUM</strong>'+
-          '<div class="mission-score-summary"><b>'+esc(shown)+'</b></div></div>'+
-        '<div class="mission-score-vertical" style="--mission-score-y:'+
-          esc(needle.position.toFixed(2))+'%" aria-hidden="true">'+
-          '<div class="mission-score-scale">'+
-            '<span class="mission-score-center-line"></span></div>'+
-          '<div class="mission-score-pointer"></div></div>'+
-        '<div class="mission-score-breakdown">'+
-          '<span class="component-'+directionClass(vd)+'">VISITS <b>'+esc(signedChange(vd))+'</b></span>'+
-          '<span class="component-'+directionClass(sd)+'">AVG. STAY <b>'+esc(signedChange(sd))+'</b></span></div>'+
-        ''+
-      '</div>';
+      '<div class="mission-direction-meter-top"><strong>OVERALL MOMENTUM</strong>'+
+        '<div class="mission-score-summary"><b>'+esc(verdict)+'</b></div></div>'+
+      '<div class="mission-score-vertical" style="--mission-score-y:'+esc(y.toFixed(2))+
+        '%" aria-hidden="true"><div class="mission-score-scale">'+
+        '<span class="mission-score-center-line"></span></div>'+
+        '<div class="mission-score-pointer"></div></div>'+
+      '<div class="mission-score-breakdown">'+
+        indicators.map(x=>'<span class="component-'+safeMotion(x[2])+'">'+
+        esc(x[0])+' <b>'+esc(x[1])+'</b></span>').join('')+
+      '</div></div>';
   }
-
 
   // The Online Sales total comes from approved, fully PAID WEB orders,
   // excluding refunds and in-person orders. Categories come from the
@@ -877,8 +878,9 @@
         return onlineSalesCard(sales,period);
       if(item.label==='MEANINGFUL ACTIONS')
         return meaningfulActionsCard(site,ga4,sales,period);
-      return '<div class="mission-direction-signal '+esc(item.state)+
-        (item.label==='VISITORS'||item.label==='ENGAGEMENT'?' trend-metric':'')+'">'+
+      if(item.label==='VISITORS'||item.label==='ENGAGEMENT')
+        return periodKpi(item,site);
+      return '<div class="mission-direction-signal '+esc(item.state)+'">'+
         '<small>'+esc(item.label)+'</small><strong>'+esc(item.headline)+'</strong>'+
         '<span>'+esc(item.note)+'</span></div>';
     }).join('');
@@ -893,9 +895,11 @@
         '</div>'+
         '<div class="mission-direction-gauge-aside">'+directionMeter(summary)+'</div>'+
       '</div>'+
-      '<p class="mission-direction-webtrend">WEBSITE TREND: '+
+      '<p class="mission-period-context">LAST = the preceding equal-length reporting period; CURRENT = selected dates ('+
+        esc(periodName(period))+'). For Week this means the previous seven days versus the current seven days.</p>'+
+      '<p class="mission-direction-webtrend">OVERALL DIRECTION: '+
         websiteTrendMarkup(summary)+'</p>'+
-
+      momentumBreakdown(site,ga4,seo,sales,period,summary.momentum)+
       '<section id="missionActionDetails" class="mission-action-panel"'+
         (actionDetailsOpen?'':' hidden')+'>'+
         (actionDetailsOpen?actionsDetail(site,ga4,sales,period):'')+'</section>'+
@@ -910,7 +914,7 @@
       '<details class="mission-direction-details"><summary class="mission-direction-details-toggle">'+
         '<span class="mission-detail-show">Show Details</span>'+
         '<span class="mission-detail-hide">Hide Details</span></summary>'+
-        '<p>Website direction describes activity, not business profit. Financial results belong in CCC and Income.</p>'+
+        '<p>Business direction evaluates multiple independent sources. Website direction is only one part; no website percentage implies business profit.</p>'+
         '<div class="mission-direction-action-evidence">'+
           measure('Wix contact actions',fmt(proof.contacts),'Measured contact clicks plus forms, where available')+
           measure('Paid Wix orders',fmt(proof.purchases),'Refunded and unpaid orders excluded')+
