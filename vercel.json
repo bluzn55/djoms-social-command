@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/dashboard",
+      "destination": "/index.html"
+    },
+    {
       "source": "/api/meta/:path*",
       "destination": "https://djoms-meta-bridge.vercel.app/api/meta/:path*"
     },
@@ -50,6 +54,42 @@
     },
     {
       "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/dashboard",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/mission-direction.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/owner-file-block-cleanup.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/styles.css",
       "headers": [
         {
           "key": "Cache-Control",
