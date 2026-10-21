@@ -161,7 +161,7 @@
       salesVerdict.state==='red'?'down':
       ['NO PAID SALES YET','SALES HOLDING'].includes(salesVerdict.headline)?'hold':
       salesVerdict.headline==='MIXED SALES'?'mixed':'unknown';
-    const parts=[{name:'GOOGLE',status:google},{name:'TRAFFIC',status:traffic},
+    const parts=[{name:'TRAFFIC',status:traffic},{name:'GOOGLE',status:google},
       {name:'ENGAGEMENT',status:engagement},{name:'BUSINESS',status:business}];
     const known=parts.filter(p=>p.status!=='unknown').length;
     const ups=parts.filter(p=>p.status==='up').length;
@@ -554,7 +554,7 @@
       stayDelta:isTrend(stay)?stay.percentChange:null,
       coverage,actionEvidence,warnings,
       notes:[
-        'The overall verdict checks four distinct drivers: Google discovery, website traffic, engagement and verified paid web sales.',
+        'The overall verdict checks four distinct drivers: website traffic, Google discovery, engagement and verified paid web sales.',
         'A FORWARD or BACKWARD verdict needs at least three verified drivers and two signals in the same direction with no opposite signal; mixed signals remain MIXED.',
         'Visitor counts, site time, Google search impressions, GA4 sessions and business sales are different measurements. No percentages are averaged into a business growth rate.',
         'Site bounces and outgoing clicks do not prove radio listening. Verified web-sales growth does not prove profit or overall business health.',
@@ -861,8 +861,8 @@
     const stay=Number.isFinite(summary?.stayDelta)?
       signedChange(summary.stayDelta):'N/A';
     const indicators=[
-      ['GOOGLE',readableStatus(score?.google),score?.google],
       ['TRAFFIC',visitor,score?.traffic],
+      ['GOOGLE',readableStatus(score?.google),score?.google],
       ['ENGAGE',score?.engagement==='mixed'?'MIXED':stay,score?.engagement],
       ['BUSINESS',readableStatus(score?.business),score?.business]
     ];
