@@ -8830,3 +8830,67 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   color:#6d5637;
   margin:6px 0;
 }
+
+
+/* OWNER-FIRST DIRECTION READABILITY · 2026-10-21
+   Bold black readable text, with real rising/falling deltas in green/red. */
+#connectionStrip .mission-direction-panel .mission-direction-title-block > small,
+#connectionStrip .mission-direction-panel .mission-direction-title-block > h2,
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-direction-signal > small,
+#connectionStrip .mission-direction-panel .mission-online-summary-top strong,
+#connectionStrip .mission-direction-panel .mission-online-summary-top span,
+#connectionStrip .mission-direction-panel .mission-online-summary-top .mission-online-source,
+#connectionStrip .mission-direction-panel .mission-online-breakdown > summary,
+#connectionStrip .mission-direction-panel .mission-online-description,
+#connectionStrip .mission-direction-panel .mission-action-compact-row,
+#connectionStrip .mission-direction-panel .mission-action-compact-row > strong,
+#connectionStrip .mission-direction-panel .mission-action-compact-toggle,
+#connectionStrip .mission-direction-panel .mission-direction-details-toggle,
+#connectionStrip .mission-direction-panel .mission-direction-webtrend,
+#connectionStrip .mission-direction-panel .score-meter .mission-direction-meter-top > strong,
+#connectionStrip .mission-direction-panel .score-meter .mission-score-breakdown > span {
+  color:#101010;
+}
+#connectionStrip .mission-direction-panel .mission-direction-webtrend {
+  font-weight:900;
+  font-size:clamp(16px,1.15vw,19px);
+  line-height:1.5;
+}
+#connectionStrip .mission-direction-panel .mission-direction-webtrend .mission-trend-up {color:#146f35}
+#connectionStrip .mission-direction-panel .mission-direction-webtrend .mission-trend-down {color:#ae3026}
+#connectionStrip .mission-direction-panel .mission-direction-webtrend .mission-trend-flat {color:#101010}
+#connectionStrip .mission-direction-panel .score-meter .mission-score-breakdown .component-up > b {color:#146f35}
+#connectionStrip .mission-direction-panel .score-meter .mission-score-breakdown .component-down > b {color:#ae3026}
+#connectionStrip .mission-direction-panel .score-meter .mission-score-breakdown .component-flat > b,
+#connectionStrip .mission-direction-panel .score-meter .mission-score-breakdown .component-unknown > b {color:#101010}
+#connectionStrip .mission-direction-panel .mission-direction-brief > .mission-direction-measure {
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  gap:8px;
+  padding:19px 17px;
+  min-height:188px;
+  color:#101010;
+}
+#connectionStrip .mission-direction-panel .mission-direction-brief > .mission-direction-measure > small {
+  color:#101010;
+  font:900 clamp(16px,1.08vw,19px)/1.3 Arial,sans-serif;
+}
+#connectionStrip .mission-direction-panel .mission-direction-brief > .mission-direction-measure > strong {
+  margin:0;
+  color:#101010;
+  font:900 clamp(17px,1.16vw,21px)/1.42 Arial,sans-serif;
+}
+#connectionStrip .mission-direction-panel .mission-direction-brief > .mission-direction-measure > span {
+  color:#101010;
+  font:800 clamp(14px,.92vw,16px)/1.38 Arial,sans-serif;
+}
+#connectionStrip .mission-direction-panel .mission-direction-brief > .mission-direction-measure > a {color:#101010}
+@media(max-width:750px){
+  #connectionStrip .mission-direction-panel .mission-direction-brief > .mission-direction-measure {
+    min-height:0;
+    padding:16px 14px;
+  }
+}
