@@ -9430,3 +9430,201 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     gap:7px;
   }
 }
+
+
+/* 22-SOURCE FULL-WIDTH DISCOVERY WORKBOOK · OCT 21 2026 */
+#connectionStrip .mission-direction-panel .mission-story-spreadsheet,
+#connectionStrip .mission-direction-panel .mission-source-sheet {
+  display:block;width:100%;max-width:none;min-width:0;box-sizing:border-box;
+}
+#connectionStrip .mission-direction-panel .mission-source-sheet {
+  border:2px solid #aa854a;border-radius:9px;padding:15px 13px 12px;
+  background:#fffdf8;box-shadow:0 1px 3px #39291116;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-heading {
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:8px 16px;margin:0 0 9px;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-heading h3 {
+  margin:0 0 3px;color:#101010;
+  font:900 clamp(21px,1.4vw,27px)/1.22 Georgia,serif;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-heading p {
+  margin:0;color:#161616;font:800 15px/1.35 Arial,sans-serif;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-heading>strong {
+  white-space:nowrap;color:#18120b;border:1px solid #c9a876;
+  background:#f3e5ca;padding:7px 10px;border-radius:5px;
+  font:900 14px/1.2 Arial,sans-serif;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-scroll-hint {
+  margin:7px 0 9px;color:#5b3b17;
+  font:900 14px/1.45 Arial,sans-serif;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-scroll {
+  display:block;box-sizing:border-box;max-width:100%;width:100%;
+  overflow-x:auto;overflow-y:visible;
+  border:2px solid #9e7d44;border-radius:7px;background:#fffcf5;
+  scrollbar-width:auto;scrollbar-color:#997133 #efe5d3;
+  overscroll-behavior-x:contain;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-scroll:focus-visible {
+  outline:3px solid #287949;outline-offset:2px;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table {
+  border-spacing:0;border-collapse:separate;
+  table-layout:fixed;width:max-content;min-width:100%;
+  color:#111;font-family:Arial,sans-serif;font-variant-numeric:tabular-nums;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table th,
+#connectionStrip .mission-direction-panel .mission-sheet-table td {
+  box-sizing:border-box;
+  border-right:1px solid #d8c49d;
+  border-bottom:1px solid #dbcaa9;
+  vertical-align:middle;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table thead th {
+  padding:12px 9px;text-align:center;height:70px;
+  background:#ddc8a5;color:#15110c;
+  font:900 14px/1.25 Arial,sans-serif;letter-spacing:.15px;
+  white-space:normal;overflow-wrap:break-word;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table thead th.mission-sheet-source {
+  width:154px;min-width:154px;max-width:154px;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table thead .mission-sheet-google {
+  background:#cadbbf;border-bottom-color:#a2b492;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table thead .mission-sheet-source>span {
+  color:#644514;font-weight:900;margin-right:2px;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table th.mission-sheet-metric {
+  position:sticky;left:0;z-index:3;
+  width:234px;min-width:234px;max-width:234px;
+  background:#f0e2c5;color:#101010;
+  text-align:left;white-space:normal;
+  font:900 15px/1.3 Arial,sans-serif;
+  padding:11px 12px;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table th.mission-sheet-period {
+  position:sticky;left:234px;z-index:3;
+  width:95px;min-width:95px;max-width:95px;
+  padding:9px 6px;text-align:center;
+  background:#f8efdf;color:#101010;
+  font:900 14px/1.3 Arial,sans-serif;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table thead th.mission-sheet-metric {
+  z-index:5;background:#cfb486;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table thead th.mission-sheet-period {
+  z-index:5;background:#cfb486;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table tbody .mission-sheet-last td {
+  background:#fffdf7;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table tbody .mission-sheet-current td {
+  background:#f7f6f1;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table tbody .mission-sheet-current th.mission-sheet-period {
+  background:#eaf1e4;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table tbody tr:last-child td,
+#connectionStrip .mission-direction-panel .mission-sheet-table tbody tr:last-child th {
+  border-bottom:0;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table td.mission-sheet-number {
+  width:154px;min-width:154px;max-width:154px;
+  height:39px;padding:8px 10px;text-align:center;
+  white-space:nowrap;
+  font:900 clamp(15px,1vw,18px)/1.24 Arial,sans-serif;
+  color:#101010;
+  letter-spacing:.05px;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table td.mission-sheet-up {
+  color:#106d36;background:#e8f3e6;font-weight:900;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table td.mission-sheet-down {
+  color:#a93227;background:#fbece8;font-weight:900;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table td.mission-sheet-na {
+  color:#6e6558;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-note {
+  margin:10px 0 0;font:750 13px/1.48 Arial,sans-serif;color:#42372b;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-queries {
+  margin-top:9px;border-top:1px solid #dfcb9e;padding-top:8px;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-queries>summary {
+  cursor:pointer;color:#12100c;
+  font:900 15px/1.3 Arial,sans-serif;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-queries>summary:focus-visible {
+  outline:3px solid #267546;outline-offset:3px;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-query-rows {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px 20px;margin-top:10px;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-query-rows>div {
+  display:flex;justify-content:space-between;align-items:baseline;
+  gap:12px;border-bottom:1px solid #e0d1b5;padding:6px 0;
+  color:#141414;font:800 14px/1.35 Arial,sans-serif;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-query-rows>div strong {
+  overflow-wrap:anywhere;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-query-rows>div span {
+  white-space:nowrap;
+}
+#connectionStrip .mission-direction-panel .mission-story-website {
+  margin:18px 0 0;width:100%;min-width:0;
+}
+#connectionStrip .mission-direction-panel .mission-story-website>.mission-story-card {
+  width:100%;box-sizing:border-box;
+}
+#connectionStrip .mission-direction-panel .mission-story-website .mission-story-rows {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:0 26px;align-items:start;
+}
+#connectionStrip .mission-direction-panel .mission-story-grid-supporting {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:12px;margin-top:12px;
+}
+@media(max-width:1020px) {
+  #connectionStrip .mission-direction-panel .mission-story-website .mission-story-rows {
+    grid-template-columns:1fr;
+  }
+}
+@media(max-width:780px) {
+  #connectionStrip .mission-direction-panel .mission-sheet-table th.mission-sheet-metric {
+    width:180px;min-width:180px;max-width:180px;font-size:13px;
+  }
+  #connectionStrip .mission-direction-panel .mission-sheet-table th.mission-sheet-period {
+    left:180px;width:75px;min-width:75px;max-width:75px;font-size:12px;
+  }
+  #connectionStrip .mission-direction-panel .mission-sheet-table td.mission-sheet-number,
+  #connectionStrip .mission-direction-panel .mission-sheet-table thead th.mission-sheet-source {
+    width:135px;min-width:135px;max-width:135px;
+  }
+  #connectionStrip .mission-direction-panel .mission-story-grid-supporting,
+  #connectionStrip .mission-direction-panel .mission-sheet-query-rows {
+    grid-template-columns:1fr !important;
+  }
+}
+@media(max-width:510px){
+  #connectionStrip .mission-direction-panel .mission-source-sheet {padding:10px 8px;}
+  #connectionStrip .mission-direction-panel .mission-sheet-table th.mission-sheet-metric {
+    width:148px;min-width:148px;max-width:148px;
+    padding:8px 7px;font-size:12px;
+  }
+  #connectionStrip .mission-direction-panel .mission-sheet-table th.mission-sheet-period {
+    left:148px;width:66px;min-width:66px;max-width:66px;
+    padding:8px 3px;font-size:11px;
+  }
+  #connectionStrip .mission-direction-panel .mission-sheet-table td.mission-sheet-number,
+  #connectionStrip .mission-direction-panel .mission-sheet-table thead th.mission-sheet-source {
+    width:123px;min-width:123px;max-width:123px;
+    padding:8px 4px;font-size:13px;
+  }
+}
