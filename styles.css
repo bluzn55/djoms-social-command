@@ -9644,3 +9644,43 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 .mission-sheet-table tbody tr.mission-sheet-current:not(:last-child) > td.mission-sheet-number {
   border-bottom: 3px solid #111 !important;
 }
+
+
+/* DISCOVERY CURRENT-CELL RELATIVE MOVEMENT · OCT 21 2026 */
+/* Preserve the original 12-row grid. Current cells get a legible second
+   line for the verified change, while salmon vertical rules and black
+   measure-pair dividers remain untouched. */
+#connectionStrip .mission-direction-panel .mission-sheet-table tbody tr.mission-sheet-current > td.mission-sheet-number {
+  height:57px;
+  padding-top:7px;
+  padding-bottom:7px;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table .mission-sheet-main {
+  display:block;
+  white-space:nowrap;
+  line-height:1.2;
+  color:inherit;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table .mission-sheet-delta {
+  display:block;
+  width:100%;
+  margin-top:4px;
+  white-space:nowrap;
+  text-align:center;
+  font:900 clamp(13px,.9vw,16px)/1.15 Arial,sans-serif;
+  letter-spacing:0;
+  font-variant-numeric:tabular-nums;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table td .mission-sheet-delta.mission-sheet-up {
+  color:#116b35 !important;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table td .mission-sheet-delta.mission-sheet-down {
+  color:#af3027 !important;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table td .mission-sheet-delta.mission-sheet-flat {
+  color:#171717 !important;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table td .mission-sheet-delta.mission-sheet-unknown {
+  color:#68635c !important;
+  font-size:12px;
+}
