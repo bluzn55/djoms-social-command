@@ -9628,3 +9628,18 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     padding:8px 4px;font-size:13px;
   }
 }
+
+
+/* BLACK DIVIDERS BETWEEN DISCOVERY MEASUREMENT PAIRS · OCT 21 2026 */
+/* Only the boundary between distinct measures is heavy.
+   LAST/CURRENT inside a measure retain their thin original rule.
+   The row-spanning frozen measurement label must have the same border
+   as the CURRENT period column and all 22 source cells. */
+#connectionStrip .mission-direction-panel
+.mission-sheet-table tbody tr.mission-sheet-last:not(:nth-last-child(2)) > th.mission-sheet-metric,
+#connectionStrip .mission-direction-panel
+.mission-sheet-table tbody tr.mission-sheet-current:not(:last-child) > th.mission-sheet-period,
+#connectionStrip .mission-direction-panel
+.mission-sheet-table tbody tr.mission-sheet-current:not(:last-child) > td.mission-sheet-number {
+  border-bottom: 3px solid #111 !important;
+}
