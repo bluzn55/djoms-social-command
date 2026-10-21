@@ -10,7 +10,7 @@
   const fmt=value=>good(value)?new Intl.NumberFormat('en-US').format(value):'N/A';
   const percent=value=>typeof value==='number'&&Number.isFinite(value)
     ?(value>0?'+':'')+value.toFixed(1)+'%':'N/A';
-  const time=value=>good(value)?Math.floor(value/60)+'m '+Math.round(value%60)+'s':'N/A';
+  const time=value=>good(value)?Math.floor(Math.round(value)/60)+'m '+(Math.round(value)%60)+'s':'N/A';
   const money=cents=>Number.isSafeInteger(cents)&&cents>=0
     ?new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(cents/100):'N/A';
   const isTrend=value=>value&&typeof value.percentChange==='number'&&Number.isFinite(value.percentChange);
@@ -128,6 +128,177 @@
         ' and average-stay change '+signedChange(stayChange)+
         '. Composite '+signedChange(changePercent)+
         '. This is an indicator, not actual sales or profit growth.'};
+  }
+
+
+  // Four independent drivers. Never average Google, traffic, engagement
+  // and sales percentages into a fictional business-growth percentage.
+  const changeMotion=(comparison,inverse=false)=>{
+    if(!comparison||!Number.isFinite(comparison.percentChange))return 'unknown';
+    const direction=(inverse?-1:1)*comparison.percentChange;
+    return direction>0?'up':direction<0?'down':'hold';
+  };
+  const safeMotion=value=>['up','down','hold','mixed'].includes(value)?value:'unknown';
+  const measureRatio=value=>good(value)&&value<=1?(value*100).toFixed(1)+'%':'N/A';
+  function momentumScore(site,seo,sales,period){
+    const comparisons=site?.connected===true?site.metricComparisons||{}:{};
+    const traffic=changeMotion(comparisons.visitors);
+    const stay=changeMotion(comparisons.avgTimeSeconds);
+    const bounce=changeMotion(comparisons.bounceRate,true);
+    const engagement=stay!=='unknown'&&bounce!=='unknown'&&
+      stay!==bounce&&stay!=='hold'&&bounce!=='hold'?'mixed':
+      stay!=='unknown'?stay:bounce;
+    const search=seo?.status==='connected'&&seo?.comparison?.status==='reported'?seo.comparison:null;
+    const googleClicks=changeMotion(search?.clicks);
+    const googleImpressions=changeMotion(search?.impressions);
+    const google=googleClicks==='unknown'?googleImpressions:
+      googleImpressions==='unknown'?googleClicks:
+      googleClicks===googleImpressions?googleClicks:
+      googleClicks==='hold'?googleImpressions:
+      googleImpressions==='hold'?googleClicks:'mixed';
+    const salesVerdict=assessBusiness(sales,period);
+    const business=salesVerdict.state==='green'?'up':
+      salesVerdict.state==='red'?'down':
+      ['NO PAID SALES YET','SALES HOLDING'].includes(salesVerdict.headline)?'hold':
+      salesVerdict.headline==='MIXED SALES'?'mixed':'unknown';
+    const parts=[{name:'GOOGLE',status:google},{name:'TRAFFIC',status:traffic},
+      {name:'ENGAGEMENT',status:engagement},{name:'BUSINESS',status:business}];
+    const known=parts.filter(p=>p.status!=='unknown').length;
+    const ups=parts.filter(p=>p.status==='up').length;
+    const downs=parts.filter(p=>p.status==='down').length;
+    const mixed=parts.some(p=>p.status==='mixed');
+    let verdict='UNPROVEN',kind='unknown',position=50;
+    if(mixed||(ups>0&&downs>0)){verdict='MIXED';kind='hold';}
+    else if(known>=3&&ups>=2&&!downs){verdict='FORWARD';kind='up';position=26;}
+    else if(known>=3&&downs>=2&&!ups){verdict='BACKWARD';kind='down';position=74;}
+    else if(known>=3&&!ups&&!downs){verdict='HOLDING';kind='hold';}
+    return {verdict,kind,position,parts,known,google,googleClicks,googleImpressions,
+      traffic,engagement,business,salesVerdict,
+      note:known<3?'Only '+known+' of four drivers have verified period-to-period directions.':
+        'Verified independent signals, not an average of unlike percentages.'};
+  }
+  const storyNumber=value=>good(value)?fmt(value):'N/A';
+  function storyRow(label,value,direction='unknown'){
+    return '<div class="mission-story-row"><span>'+esc(label)+'</span><strong class="story-'+
+      safeMotion(direction)+'">'+esc(value)+'</strong></div>';
+  }
+  function storyCard(title,direction,body,note){
+    const status={up:'UP',down:'DOWN',hold:'HOLD',mixed:'MIXED',unknown:'N/A'};
+    return '<article class="mission-story-card story-'+safeMotion(direction)+'">'+
+      '<header><h4>'+esc(title)+'</h4><strong>'+status[safeMotion(direction)]+'</strong></header>'+
+      '<div class="mission-story-rows">'+body+'</div><p class="mission-story-note">'+esc(note)+'</p></article>';
+  }
+  function momentumBreakdown(site,ga4,seo,sales,period,score){
+    const wix=site?.connected===true,google=seo?.status==='connected',
+      ga=ga4?.status==='connected',g=google?seo.metrics||{}:{},
+      gm=ga?ga4.metrics||{}:{},cmp=wix?site.metricComparisons||{}:{},
+      actions=ga&&ga4.actions?.status==='reported'?ga4.actions:null;
+    const gc=google&&seo.comparison?.status==='reported'?seo.comparison:null;
+    const delta=entry=>Number.isFinite(entry?.percentChange)?
+      signedChange(entry.percentChange):'N/A';
+    const row=storyRow;
+    const googleRows=[
+      row('Search appearances',storyNumber(g.impressions)),
+      row('Search clicks',storyNumber(g.clicks)),
+      row('Click-through rate',measureRatio(g.ctr)),
+      row('Average search position',good(g.position)?g.position.toFixed(1):'N/A'),
+      row('Impressions vs last',delta(gc?.impressions),score.googleImpressions),
+      row('Clicks vs last',delta(gc?.clicks),score.googleClicks)
+    ];
+    if(google&&Array.isArray(seo.topQueries)){
+      const terms=seo.topQueries.filter(q=>typeof q.query==='string'&&q.query.trim()).slice(0,3);
+      if(terms.length){
+        googleRows.push('<div class="mission-story-subhead">TOP GOOGLE SEARCHES</div>');
+        for(const t of terms)googleRows.push(row(t.query,storyNumber(t.impressions)+' views · '+
+          storyNumber(t.clicks)+' clicks'));
+      }
+    }
+    const googleNote=gc?
+      'Search Console final-day comparison: '+gc.currentRange.start+' to '+gc.currentRange.end+
+      ' versus '+gc.previousRange.start+' to '+gc.previousRange.end+
+      '. Recent days may not yet be reported by Google.':
+      'Google Search Console reports current available days. Previous matched dates stay N/A until verified.';
+    const trafficRows=[
+      row('Visitors · last',storyNumber(cmp.visitors?.previousVisitors)),
+      row('Visitors · current',storyNumber(wix?site.visitors:null)),
+      row('Visitor change',delta(cmp.visitors),score.traffic),
+      row('Page views · last',storyNumber(cmp.pageViews?.previous)),
+      row('Page views · current',storyNumber(wix?site.pageViews:null)),
+      row('Wix sessions',storyNumber(wix?site.sessions:null)),
+      row('GA4 sessions (independent)',storyNumber(ga?gm.sessions:null))
+    ];
+    const sources=wix&&Array.isArray(site.trafficSources)?
+      site.trafficSources.filter(s=>good(s.sessions)&&String(s.source||s.category||'').trim())
+        .sort((a,b)=>b.sessions-a.sessions).slice(0,8):[];
+    if(sources.length){
+      trafficRows.push('<div class="mission-story-subhead">WIX VISIT SOURCES · SESSIONS</div>');
+      for(const s of sources)
+        trafficRows.push(row(String(s.source||s.category).replace(/_/g,' '),fmt(s.sessions)));
+    }
+    const trafficNote=(wix&&site.trafficSourcesComplete!==true?
+      'Some source rows may be incomplete. ':'')+
+      'Wix visitors are not the same as sessions. GA4 sessions use another method; never add Wix and GA4 totals.';
+    const engagementRows=[
+      row('Average stay · last',time(cmp.avgTimeSeconds?.previous)),
+      row('Average stay · current',time(wix?site.avgTimeSeconds:null)),
+      row('Average stay change',delta(cmp.avgTimeSeconds),changeMotion(cmp.avgTimeSeconds)),
+      row('Bounce rate · last',measureRatio(cmp.bounceRate?.previous)),
+      row('Bounce rate · current',measureRatio(wix?site.bounceRate:null)),
+      row('Bounce-rate change',delta(cmp.bounceRate),changeMotion(cmp.bounceRate,true)),
+      row('Pages per session',good(wix?site.pagesPerSession:null)?site.pagesPerSession.toFixed(2):'N/A'),
+      row('Returning visitors · last',storyNumber(cmp.returningVisitors?.previous)),
+      row('Returning visitors · current',storyNumber(cmp.returningVisitors?.current)),
+      row('GA4 engagement rate (independent)',measureRatio(ga?gm.engagementRate:null))
+    ];
+    const engagementNote='Higher average stay is encouraging, but bounce rate and repeat visits matter too. Radio listening cannot be inferred from website time.';
+    const ordersReady=sales?.connected===true&&sales?.complete===true&&
+      sales.range?.start===period?.start&&sales.range?.end===period?.end&&
+      Number.isSafeInteger(sales.paidOrders)&&sales.paidOrders>=0&&
+      Number.isSafeInteger(sales.itemSalesCents)&&sales.itemSalesCents>=0;
+    const prior=sales?.salesComparison?.status==='reported'?
+      sales.salesComparison.previous:null;
+    const contacts=wix&&good(site.contactClicks)&&good(site.formsSubmitted)?
+      site.contactClicks+site.formsSubmitted:null;
+    const businessRows=[
+      row('Paid web orders · last',storyNumber(prior?.paidOrders)),
+      row('Paid web orders · current',storyNumber(ordersReady?sales.paidOrders:null)),
+      row('Web item sales · last',money(prior?.itemSalesCents)),
+      row('Web item sales · current',money(ordersReady?sales.itemSalesCents:null)),
+      row('Wix contact actions',storyNumber(contacts)),
+      row('Confirmed customer inquiries','N/A'),
+      row('Confirmed Pit Krewe members','N/A'),
+      row('GA4 download events',storyNumber(actions?.counts?.fileDownload)),
+      row('GA4 radio link clicks',storyNumber(actions?.radioLinkClicks)),
+      row('Actual radio listeners','N/A'),
+      row('Contribution margin / profit','N/A')
+    ];
+    const businessNote='Only verified paid Wix web orders count as sales. Contact actions, downloads and radio link clicks do not prove customers, members or listening.';
+    return '<section class="mission-story" aria-label="Complete Google, traffic, engagement and business breakdown">'+
+      '<div class="mission-story-heading"><h3>THE WHOLE STORY · FOUR DRIVERS</h3>'+
+      '<p>Selected reporting dates apply throughout. Green = improving, red = declining, N/A = unverified. Different sources are not added together.</p></div>'+
+      '<div class="mission-story-grid">'+
+        storyCard('1. GOOGLE DISCOVERY',score.google,googleRows.join(''),googleNote)+
+        storyCard('2. WEBSITE TRAFFIC',score.traffic,trafficRows.join(''),trafficNote)+
+        storyCard('3. VISITOR ENGAGEMENT',score.engagement,engagementRows.join(''),engagementNote)+
+        storyCard('4. BUSINESS RESULTS',score.business,businessRows.join(''),businessNote)+
+      '</div><p class="mission-story-coverage">'+esc(score.note)+'</p></section>';
+  }
+  function periodKpi(item,site){
+    const visits=item.label==='VISITORS';
+    const comparison=site?.connected===true?
+      site.metricComparisons?.[visits?'visitors':'avgTimeSeconds']:null;
+    const previous=visits?comparison?.previousVisitors:comparison?.previous;
+    const current=visits?comparison?.currentVisitors:comparison?.current;
+    const format=visits?storyNumber:time;
+    const change=changeMotion(comparison);
+    return '<div class="mission-direction-signal trend-metric '+esc(item.state)+'">'+
+      '<small>'+esc(item.label)+'</small>'+
+      '<div class="mission-period-pair" role="group" aria-label="Previous and current matching periods">'+
+      '<div><small>LAST</small><strong>'+esc(format(previous))+'</strong></div>'+
+      '<div><small>CURRENT</small><strong>'+esc(format(current))+'</strong></div></div>'+
+      '<span class="mission-period-change story-'+safeMotion(change)+'">'+
+      esc(Number.isFinite(comparison?.percentChange)?
+        signedChange(comparison.percentChange):'N/A')+'</span></div>';
   }
 
   function evaluate(site,ga4,seo,sales,period){
