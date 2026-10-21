@@ -362,6 +362,20 @@
       '<strong>'+esc(content)+'</strong><span>'+esc(comment)+'</span></div>';
   }
 
+
+  // The combined direction and the component signals can disagree. Color each
+  // component from its own measured direction (e.g. visits down, stay up).
+  const directionClass=value=>Number.isFinite(value)?(value>0?'up':value<0?'down':'flat'):'unknown';
+  function websiteTrendMarkup(summary){
+    const segments=String(summary?.websiteDirection||'NOT ENOUGH DATA').split(' · ');
+    const primary=segments.shift()||'NOT ENOUGH DATA';
+    const parts=segments.join(' · ').split(', ').filter(Boolean);
+    const tone=summary?.directionColor==='green'?'up':summary?.directionColor==='red'?'down':'flat';
+    const colored=(value,color)=>'<b class="mission-trend-'+color+'">'+esc(value)+'</b>';
+    return colored(primary,tone)+(parts.length?' <span aria-hidden="true">·</span> '+
+      parts.map(value=>colored(value,/\bDOWN\b/.test(value)?'down':/\bUP\b/.test(value)?'up':'flat')).join(', '):'');
+  }
+
   // Clickable owner dashboard evidence. Counts are separate measurements:
   // a download is not a sale, a sign_up event is not a Pit Krewe membership,
   // and outbound clicks are not confirmed Radio.co listening sessions.
@@ -382,21 +396,6 @@
     const label=row.fileName&&row.fileName!=='(not set)'?row.fileName:'Filename N/A';
     return fileLink(row.linkUrl,label)||'<strong>'+esc(label)+'</strong>';
   };
-  function inlineFileLinks(ga4){
-    const total=ga4?.actions?.counts?.fileDownload;
-    if(!good(total)||total===0)return '';
-    const files=ga4?.actions?.downloadFiles;
-    const unavailable='<div class="mission-action-card-files">'+
-      '<small>DIRECT FILE LINKS: N/A</small>'+
-      '<em>Open details to inspect available download evidence.</em></div>';
-    if(files?.status!=='reported'||!Array.isArray(files.rows))return unavailable;
-    const rows=files.rows.filter(row=>good(row.events)&&verifiedUrl(row.linkUrl));
-    if(!rows.length)return unavailable;
-    return '<div class="mission-action-card-files"><small>OPEN FILE DIRECTLY</small>'+
-      rows.slice(0,3).map(row=>fileLink(row.linkUrl,
-        row.fileName&&row.fileName!=='(not set)'?row.fileName:'Open file')).join('')+
-      (rows.length>3?'<em>+'+(rows.length-3)+' more in details</em>':'')+'</div>';
-  }
   function actionTable(headers,rows){
     return rows.length?'<div class="mission-action-table-scroll"><table class="mission-action-table">'+
       '<thead><tr>'+headers.map(t=>'<th scope="col">'+esc(t)+'</th>').join('')+
@@ -423,7 +422,6 @@
       {id:'radio',label:'4. Radio Listeners',value:null},
       {id:'downloads',label:'File Downloads',value:downloads,secondary:true}
     ];
-    const fileLinks=gaActions?.downloadFiles?.status==='reported'?inlineFileLinks(ga4):'';
     return '<div class="mission-direction-signal action-summary-card">'+
       '<small>MEANINGFUL ACTIONS</small>'+
       '<div class="mission-action-compact-rows">'+rows.map(item=>{
@@ -441,7 +439,6 @@
       '<button type="button" class="mission-action-compact-toggle" data-direction-actions-toggle="1"'+
         ' aria-expanded="'+(actionDetailsOpen?'true':'false')+'" aria-controls="missionActionDetails">'+
         (actionDetailsOpen?'Hide Details ▾':'Show Details ▸')+'</button>'+
-      fileLinks+
     '</div>';
   }
 
@@ -624,8 +621,8 @@
             '<span class="mission-score-center-line"></span></div>'+
           '<div class="mission-score-pointer"></div></div>'+
         '<div class="mission-score-breakdown">'+
-          '<span>VISITS <b>'+esc(signedChange(vd))+'</b></span>'+
-          '<span>AVG. STAY <b>'+esc(signedChange(sd))+'</b></span></div>'+
+          '<span class="component-'+directionClass(vd)+'">VISITS <b>'+esc(signedChange(vd))+'</b></span>'+
+          '<span class="component-'+directionClass(sd)+'">AVG. STAY <b>'+esc(signedChange(sd))+'</b></span></div>'+
         ''+
       '</div>';
   }
@@ -728,8 +725,8 @@
         '</div>'+
         '<div class="mission-direction-gauge-aside">'+directionMeter(summary)+'</div>'+
       '</div>'+
-      '<p class="mission-direction-webtrend">WEBSITE TREND: <b class="'+esc(summary.directionColor)+'">'+
-        esc(summary.websiteDirection)+'</b></p>'+
+      '<p class="mission-direction-webtrend">WEBSITE TREND: '+
+        websiteTrendMarkup(summary)+'</p>'+
 
       '<section id="missionActionDetails" class="mission-action-panel"'+
         (actionDetailsOpen?'':' hidden')+'>'+
