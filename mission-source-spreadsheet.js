@@ -172,7 +172,8 @@
       pastSearch('clicks')/pastSearch('impressions'):null;
     const wix=wixReport(site),ga=ga4Report(ga4);
     const current=wix&&(wix.complete||Object.keys(wix.buckets).length)?wix:ga||wix;
-    const last=priorSourceData(period);
+    // Do not compare prior Wix attribution against present GA4 attribution.
+    const last=current===wix&&current?priorSourceData(period):null;
     function raw(measure,source,which){
       if(measure==='visits'||measure==='stay')
         return sourceNumber(which==='last'?last:current,source,measure);
