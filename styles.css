@@ -8894,3 +8894,11 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     padding:16px 14px;
   }
 }
+
+
+/* 2026-10-21: Legacy direct-file block must never appear in owner scorecard.
+   Preserve the actionable File Downloads row and its expandable GA4 counts. */
+#missionDirectionPanel .mission-action-card-files,
+#connectionStrip .mission-direction-panel .mission-action-card-files {
+  display: none !important;
+}
