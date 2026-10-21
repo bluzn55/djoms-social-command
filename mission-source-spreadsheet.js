@@ -139,6 +139,27 @@
     const up=measure==='position'?current<previous:current>previous;
     return up?' mission-sheet-up':' mission-sheet-down';
   }
+  // A compact trend under each CURRENT amount. Green means improving;
+  // average search position improves when its numeric value decreases.
+  function changeBadge(measure,previous,current){
+    if(!good(current))return '';
+    if(!good(previous))return '<span class="mission-sheet-delta mission-sheet-unknown" title="No verified preceding period">CHANGE N/A</span>';
+    if(previous===current)return '<span class="mission-sheet-delta mission-sheet-flat">0.0%</span>';
+    if(previous===0){
+      return '<span class="mission-sheet-delta mission-sheet-up" title="Previous value is zero; relative percent is undefined">↑ NEW</span>';
+    }
+    const delta=(current-previous)/previous*100;
+    if(!Number.isFinite(delta))return '';
+    const abs=Math.abs(delta);
+    const places=abs>0&&abs<0.1?2:1;
+    const arrow=delta>0?'↑':'↓';
+    const improving=measure==='position'?delta<0:delta>0;
+    const tone=improving?'mission-sheet-up':'mission-sheet-down';
+    return '<span class="mission-sheet-delta '+tone+
+      '" title="Versus verified last period'+
+      (measure==='position'?'; a lower search position is better':'')+'">'+
+      arrow+abs.toFixed(places)+'%</span>';
+  }
   function draw({site,ga4,seo,period}={}){
     const google=seo?.status==='connected';
     const search=google?seo.metrics||{}:{};
@@ -174,7 +195,8 @@
         const color=which==='current'?signal(metric,old,now):'';
         return '<td class="mission-sheet-number'+color+
           (!good(value)?' mission-sheet-na':'')+'">'+
-          esc(nice(metric,value))+'</td>';
+          '<span class="mission-sheet-main">'+esc(nice(metric,value))+'</span>'+
+          (which==='current'?changeBadge(metric,old,now):'')+'</td>';
       }).join('');
       return '<tr class="mission-sheet-data-row mission-sheet-last">'+
         '<th rowspan="2" scope="rowgroup" class="mission-sheet-metric">'+esc(label)+'</th>'+
@@ -195,7 +217,7 @@
       current===ga&&current?'Google Analytics':'N/A';
     return '<section class="mission-source-sheet" aria-label="Twenty-two traffic sources, six measures, twelve last-current data rows">'+
       '<div class="mission-sheet-heading"><div><h3>SEARCH & DISCOVERY · 22 SOURCES</h3>'+
-      '<p>Six measurements with Last and Current on their own rows.</p></div>'+
+      '<p>Six measurements; each CURRENT value shows verified percentage movement.</p></div>'+
       '<strong>22 COLUMNS · 12 ROWS</strong></div>'+
       '<p class="mission-sheet-scroll-hint">SCROLL RIGHT TO SEE ALL SOURCES → The two left columns stay visible.</p>'+
       '<div class="mission-sheet-scroll" tabindex="0" role="region" aria-label="Horizontal source comparison spreadsheet">'+
@@ -204,7 +226,8 @@
       '<p class="mission-sheet-note">Google Search Console supplies search appearances, clicks, CTR and average position for Google only. '+
         'Website visits are attributed sessions from '+esc(provider)+
         ' and are not unique visitors. Previous source sessions use the preceding equal-length Wix report when available. '+
-        'Wix and GA4 are never combined. N/A means not applicable or not verified; zero requires a complete source report.</p>'+
+        'Wix and GA4 are never combined. Relative percent changes compare matching periods; lower average search position is better. '+
+        'NEW is used instead of a percentage when the last value was zero. N/A means not applicable or unverified.</p>'+
       queryDetails+'</section>';
   }
   window.djomsSourceSpreadsheet=draw;
