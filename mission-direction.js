@@ -348,6 +348,18 @@
     const current=visits?comparison?.currentVisitors:comparison?.current;
     const format=visits?storyNumber:time;
     const change=changeMotion(comparison);
+    const returning=site?.connected===true?site.metricComparisons?.returningVisitors:null;
+    const bounce=site?.connected===true?site.metricComparisons?.bounceRate:null;
+    const supporting=visits?
+      '<div class="mission-stage-extra"><span>Returning visitors</span><strong>'+
+        esc(storyNumber(returning?.previous))+' → '+
+        esc(storyNumber(returning?.current))+'</strong></div>':
+      '<div class="mission-stage-extra"><span>Bounce rate</span><strong>'+
+        esc(measureRatio(bounce?.previous))+' → '+
+        esc(measureRatio(bounce?.current))+'</strong></div>'+
+      '<div class="mission-stage-extra"><span>Pages per session</span><strong>'+
+        esc(good(site?.pagesPerSession)?site.pagesPerSession.toFixed(2):'N/A')+
+      '</strong></div>';
     return '<div class="mission-direction-signal trend-metric '+esc(item.state)+'">'+
       '<small>'+esc(visits?'3. WEBSITE VISITORS':'4. VISITOR ENGAGEMENT')+'</small>'+
       '<div class="mission-period-pair" role="group" aria-label="Previous and current matching periods">'+
@@ -355,7 +367,8 @@
       '<div><small>CURRENT</small><strong>'+esc(format(current))+'</strong></div></div>'+
       '<span class="mission-period-change story-'+safeMotion(change)+'">'+
       esc(Number.isFinite(comparison?.percentChange)?
-        signedChange(comparison.percentChange):'N/A')+'</span></div>';
+        signedChange(comparison.percentChange):'N/A')+'</span>'+
+      '<div class="mission-stage-extras">'+supporting+'</div></div>';
   }
 
   function evaluate(site,ga4,seo,sales,period){
@@ -626,13 +639,6 @@
   // Four genuine outcomes in priority order, then separate GA4 download
   // interest. Counts are different things; never sum them into one total.
   function meaningfulActionsCard(site,ga4,sales,period){
-    const ordersVerified=sales?.connected===true&&sales?.complete===true&&
-      sales?.range?.start===period?.start&&sales?.range?.end===period?.end&&
-      Number.isSafeInteger(sales.paidOrders)&&sales.paidOrders>=0&&
-      Number.isSafeInteger(sales.itemSalesCents)&&sales.itemSalesCents>=0;
-    // The current verified source is paid Wix WEB item sales, before tax
-    // and shipping. Offline sales are not available to this card.
-    const webItemSales=ordersVerified?sales.itemSalesCents:null;
     const gaActions=ga4?.connected===true&&ga4?.actions?.status==='reported'?
       ga4.actions:null;
     const downloads=good(gaActions?.counts?.fileDownload)?gaActions.counts.fileDownload:null;
