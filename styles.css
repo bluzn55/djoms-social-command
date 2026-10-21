@@ -9479,7 +9479,8 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 #connectionStrip .mission-direction-panel .mission-sheet-table th,
 #connectionStrip .mission-direction-panel .mission-sheet-table td {
   box-sizing:border-box;
-  border-right:1px solid #d8c49d;
+  /* Uniform high-contrast salmon dividers between every column. */
+  border-right:2px solid #c78a7b;
   border-bottom:1px solid #dbcaa9;
   vertical-align:middle;
 }
