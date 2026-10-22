@@ -184,27 +184,37 @@
     }
     const head='<thead><tr>'+
       '<th scope="col" class="mission-sheet-metric">MEASUREMENT</th>'+
-      '<th scope="col" class="mission-sheet-period">L / C</th>'+
+      '<th scope="col" class="mission-sheet-period">PERIOD</th>'+
       columns.map(([id,label],i)=>
         '<th scope="col" class="mission-sheet-source'+(id==='google'?' mission-sheet-google':'')+
         '"><span>'+(i+1)+'.</span> '+esc(label)+'</th>').join('')+
       '</tr></thead>';
     const body=measures.map(([metric,label])=>{
       const cells=which=>columns.map(([id])=>{
-        const old=raw(metric,id,'last'),now=raw(metric,id,'current');
-        const value=which==='last'?old:now;
-        const color=which==='current'?signal(metric,old,now):'';
-        return '<td class="mission-sheet-number'+color+
+        const previous=raw(metric,id,'last'),current=raw(metric,id,'current');
+        const value=which==='last'?previous:current;
+        const tone=which==='current'?signal(metric,previous,current):'';
+        return '<td class="mission-sheet-number'+tone+
           (!good(value)?' mission-sheet-na':'')+'">'+
-          '<span class="mission-sheet-main">'+esc(nice(metric,value))+'</span>'+
-          (which==='current'?changeBadge(metric,old,now):'')+'</td>';
+          '<span class="mission-sheet-main">'+esc(nice(metric,value))+'</span></td>';
+      }).join('');
+      const changes=columns.map(([id])=>{
+        const previous=raw(metric,id,'last'),current=raw(metric,id,'current');
+        const tone=signal(metric,previous,current);
+        return '<td class="mission-sheet-number mission-sheet-change-cell'+tone+'">'+
+          (good(current)?changeBadge(metric,previous,current):
+            '<span class="mission-sheet-delta mission-sheet-unknown">N/A</span>')+
+          '</td>';
       }).join('');
       return '<tr class="mission-sheet-data-row mission-sheet-last">'+
-        '<th rowspan="2" scope="rowgroup" class="mission-sheet-metric">'+esc(label)+'</th>'+
+        '<th rowspan="3" scope="rowgroup" class="mission-sheet-metric">'+esc(label)+'</th>'+
         '<th scope="row" class="mission-sheet-period">LAST</th>'+cells('last')+'</tr>'+
         '<tr class="mission-sheet-data-row mission-sheet-current">'+
         '<th scope="row" class="mission-sheet-period">CURRENT</th>'+
-        cells('current')+'</tr>';
+        cells('current')+'</tr>'+
+        '<tr class="mission-sheet-data-row mission-sheet-change">'+
+        '<th scope="row" class="mission-sheet-period">% CHANGE</th>'+
+        changes+'</tr>';
     }).join('');
     const queries=google&&Array.isArray(seo.topQueries)?
       seo.topQueries.filter(row=>typeof row?.query==='string'&&row.query.trim()).slice(0,5):[];
@@ -216,10 +226,10 @@
       ).join('')+'</div></details>':'';
     const provider=current===wix&&current?'Wix':
       current===ga&&current?'Google Analytics':'N/A';
-    return '<section class="mission-source-sheet" aria-label="Twenty-two traffic sources, six measures, twelve last-current data rows">'+
+    return '<section class="mission-source-sheet" aria-label="Twenty-two traffic sources, six measures, eighteen Last Current and Percent Change data rows">'+
       '<div class="mission-sheet-heading"><div><h3>SEARCH & DISCOVERY · 22 SOURCES</h3>'+
-      '<p>Six measurements; each CURRENT value shows verified percentage movement.</p></div>'+
-      '<strong>22 COLUMNS · 12 ROWS</strong></div>'+
+      '<p>Six measurements with LAST, CURRENT and % CHANGE on separate rows.</p></div>'+
+      '<strong>22 COLUMNS · 18 ROWS</strong></div>'+
       '<p class="mission-sheet-scroll-hint">SCROLL RIGHT TO SEE ALL SOURCES → The two left columns stay visible.</p>'+
       '<div class="mission-sheet-scroll" tabindex="0" role="region" aria-label="Horizontal source comparison spreadsheet">'+
         '<table class="mission-sheet-table">'+head+'<tbody>'+body+'</tbody></table>'+
