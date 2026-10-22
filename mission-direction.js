@@ -831,37 +831,92 @@
   // Vertical centerline, with a horizontal pointer aimed at the score.
   // Zero is the middle; green/up at the top, red/down at the bottom.
   // For a small nonzero change, amplify the pointer offset for readability.
+  // 100 = hold (yellow), 101+ = forward (green), 99- = backward
+  // (red). Do not change these thresholds based on arbitrary +/-5% bands.
   function directionMeter(summary){
-    const score=summary?.momentum;
-    const verdict=score?.verdict||'UNPROVEN';
-    const kind=score?.kind||'unknown';
-    const y=typeof score?.position==='number'?score.position:50;
-    const readableStatus=value=>value==='unknown'?'N/A':value.toUpperCase();
-    const visitor=Number.isFinite(summary?.visitorDelta)?
-      signedChange(summary.visitorDelta):'N/A';
-    const stay=Number.isFinite(summary?.stayDelta)?
-      signedChange(summary.stayDelta):'N/A';
-    const indicators=[
-      ['TRAFFIC',visitor,score?.traffic],
-      ['GOOGLE',readableStatus(score?.google),score?.google],
-      ['ENGAGE',score?.engagement==='mixed'?'MIXED':stay,score?.engagement],
-      ['BUSINESS',readableStatus(score?.business),score?.business]
-    ];
-    const message='Overall momentum: '+verdict+'. '+
-      indicators.map(x=>x[0]+' '+x[1]).join('; ')+
-      '. This is a categorical direction, not a profit growth percentage.';
-    return '<div class="mission-direction-meter score-meter '+esc(kind)+
-      '" role="img" aria-label="'+esc(message)+'">'+
-      '<div class="mission-direction-meter-top"><strong>OVERALL MOMENTUM</strong>'+
-        '<div class="mission-score-summary"><b>'+esc(verdict)+'</b></div></div>'+
-      '<div class="mission-score-vertical" style="--mission-score-y:'+esc(y.toFixed(2))+
-        '%" aria-hidden="true"><div class="mission-score-scale">'+
-        '<span class="mission-score-center-line"></span></div>'+
+    const model=summary?.momentum;
+    const number=Number.isInteger(model?.score)?model.score:null;
+    const status=model?.kind||'unknown';
+    const verdict=number===null?'UNVERIFIED':number>100?'FORWARD':
+      number<100?'BACKWARD':'HOLDING';
+    const pointer=typeof model?.position==='number'?model.position:50;
+    const stages=Array.isArray(model?.stages)?model.stages:[];
+    const message='Tracked online direction index: '+
+      (number===null?'unverified':number+' points, '+verdict)+
+      '. Baseline 100; 101 and above green, 100 yellow, 99 and below red. '+
+      stages.map(v=>v.name+' '+(Number.isInteger(v.score)?v.score:'N/A')+
+        ', influence '+v.weight+' points').join('; ')+
+      '. This is NOT total business profit or revenue growth.';
+    return '<div class="mission-direction-meter score-meter '+esc(status)+
+      '" role="group" aria-label="'+esc(message)+'">'+
+      '<div class="mission-direction-meter-top"><strong>OWNER DIRECTION</strong>'+
+      '<div class="mission-score-summary">'+
+        '<b class="mission-owner-number" data-mission-score="'+
+        (number===null?'na':number)+'">'+(number===null?'N/A':number)+'</b>'+
+        '<small>'+esc(verdict)+'</small>'+
+      '</div></div>'+
+      '<div class="mission-score-vertical" style="--mission-score-y:'+
+        esc(pointer.toFixed(2))+'%" aria-hidden="true">'+
+        '<div class="mission-score-scale"><span class="mission-score-center-line"></span></div>'+
         '<div class="mission-score-pointer"></div></div>'+
+      '<p class="mission-score-boundaries"><b>101+ GREEN</b><b>100 YELLOW</b><b>99− RED</b></p>'+
       '<div class="mission-score-breakdown">'+
-        indicators.map(x=>'<span class="component-'+safeMotion(x[2])+'">'+
-        esc(x[0])+' <b>'+esc(x[1])+'</b></span>').join('')+
-      '</div></div>';
+        stages.map(item=>'<span class="component-'+safeMotion(item.status)+
+        '" title="'+esc(item.name+': weight '+item.weight+
+          ' points. '+item.measured+' verified comparison metrics.')+'">'+
+          '<span class="mission-score-component-name">'+esc(item.name)+
+          '<small>'+item.weight+' pts</small></span>'+
+          '<b>'+esc(Number.isInteger(item.score)?item.score:'N/A')+'</b>'+
+        '</span>').join('')+
+      '</div>'+
+      '<p class="mission-score-coverage">'+esc((model?.covered??0)+
+      '/6 verified sections · '+(model?.availableWeight??0)+
+      '/100 weight. N/A excluded.')+'</p>'+
+    '</div>';
+  }
+  function ownerDigest(summary){
+    const score=summary?.momentum;
+    const scoreText=Number.isInteger(score?.score)?
+      score.score+' POINTS · '+score.verdict:'INSUFFICIENT DATA';
+    const sections=[
+      ['WHAT IS WORKING',summary.working,'working'],
+      ['WHAT NEEDS ATTENTION',summary.concern,'attention'],
+      ['WHAT TO DO NEXT',summary.next,'next']
+    ];
+    return '<section class="mission-owner-digest" aria-label="What happened and next steps">'+
+      '<div class="mission-owner-digest-heading"><strong>OWNER SUMMARY</strong>'+
+        '<span>'+esc(scoreText)+'</span></div>'+
+      '<div class="mission-owner-digest-grid">'+sections.map(([title,value,style])=>
+        '<article class="mission-owner-digest-item '+style+'">'+
+        '<strong>'+esc(title)+'</strong><p>'+esc(value)+'</p></article>').join('')+
+      '</div>'+
+      '<p class="mission-owner-digest-caution">Scores measure change in tracked online signals, '+
+      'not business profit, actual radio listening or confirmed Pit Krewe memberships.</p>'+
+    '</section>';
+  }
+  function ownerScoreMethod(summary){
+    const score=summary?.momentum;
+    const stages=score?.stages||[];
+    return '<details class="mission-owner-method">'+
+      '<summary>HOW THE 100-POINT SCORES ARE CALCULATED ▸</summary>'+
+      '<p>Each of six stages starts at 100. Scores 101 and above are green (forward); '+
+        '100 is yellow (holding); 99 and below are red (backward). '+
+        'The stages have different importance weights, totaling 100 points.</p>'+
+      '<div class="mission-owner-weight-grid">'+stages.map(stage=>
+        '<span><b>'+esc(stage.name)+'</b><strong>'+stage.weight+
+          ' POINTS</strong><small>SCORE '+
+          esc(Number.isInteger(stage.score)?stage.score:'N/A')+'</small></span>').join('')+
+      '</div>'+
+      '<p>Inside each section, verified period-to-period changes are weighted and '+
+        'limited to 40 points above or below baseline, preventing one large percentage '+
+        'from drowning out other evidence. Unverified Last/Current metrics remain N/A. '+
+        'Unverified sections are excluded and the remaining section weights are '+
+        'rebalanced; the owner meter needs at least 50 of the 100 importance points '+
+        'measured before making a direction call.</p>'+
+      '<p>Sales use paid Wix web orders and gross item sales only. Actions are '+
+        'measured GA4 events, not proven customers or Pit Krewe memberships. '+
+        'The index is a diagnostic signal, not a measured financial return.</p>'+
+      '</details>';
   }
 
   // The Online Sales total comes from approved, fully PAID WEB orders,
