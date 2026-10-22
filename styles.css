@@ -9896,16 +9896,23 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 }
 
 
-/* OTHER SOCIAL CLEAN LAST/CURRENT/% ROWS + SINGLE-LINE TRIPADVISOR · OCT 22 2026 */
-/* Keep Tripadvisor within its existing 96px source slot. No wrapping. */
+/* OTHER SOCIAL CLEAN LAST/CURRENT/% ROWS + TWO-LINE TRIPADVISOR · OCT 22 2026 */
+/* Keep TRIP and ADVISOR centered on separate lines within the same source slot. */
 #connectionStrip .mission-direction-panel .mission-sheet-table thead th.mission-sheet-tripadvisor {
-  font-size:11px !important;
-  letter-spacing:-.32px;
-  white-space:nowrap !important;
+  font-size:14px !important;
+  letter-spacing:0;
+  white-space:normal !important;
   overflow-wrap:normal !important;
   word-break:keep-all !important;
   padding-left:1px;
   padding-right:1px;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table .mission-sheet-tripadvisor-lines {
+  display:inline-flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:2px;line-height:1.12;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table .mission-sheet-tripadvisor-lines b {
+  display:block;font-weight:900;white-space:nowrap;
 }
 /* The 'Other Social' group is a single three-row measurement. Hide
    internal LAST/CURRENT dividers, keep the heavy black measure boundary. */
@@ -9920,10 +9927,10 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 #connectionStrip .mission-direction-panel .mission-sheet-table tbody td.mission-social-group {
   box-shadow:inset 1px 0 0 #ba9a67,inset -1px 0 0 #ba9a67;
 }
-/* Keep mobile fonts just small enough for the complete TRIPADVISOR name. */
+/* Keep both words readable on compact screens without wrapping either word. */
 @media(max-width:780px){
   #connectionStrip .mission-direction-panel .mission-sheet-table thead th.mission-sheet-tripadvisor{
-    font-size:10px !important;
-    letter-spacing:-.45px;
+    font-size:12px !important;
+    letter-spacing:0;
   }
 }
