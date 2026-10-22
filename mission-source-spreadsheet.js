@@ -1,4 +1,4 @@
-/* DJOMS · Owner discovery spreadsheet · 22 sources, six measurements, 12 rows.
+/* DJOMS · Owner discovery spreadsheet · 22 sources plus totals, six measurements, 18 rows.
    Read-only; never treat unrelated providers' numbers as additive. */
 (function discoveryWorkbook(){
   'use strict';
@@ -89,6 +89,17 @@
     if(measure==='visits')return bucket.sessions;
     return bucket.sessions>0&&bucket.stayComplete?
       bucket.weightedStay/bucket.sessions:null;
+  }
+  // Complete-source fallback is only used for like-for-like Wix attribution.
+  // Session durations are weighted by sessions; rates/positions are not summed.
+  function completeSourceTotal(data,measure){
+    if(!data?.complete)return null;
+    const buckets=Object.values(data.buckets||{});
+    const sessionTotal=buckets.reduce((sum,b)=>sum+b.sessions,0);
+    if(measure==='visits')return sessionTotal;
+    if(measure==='stay'&&sessionTotal>0&&buckets.every(b=>b.stayComplete))
+      return buckets.reduce((sum,b)=>sum+b.weightedStay,0)/sessionTotal;
+    return null;
   }
   // The existing read-only Wix range endpoint can provide an equal-length
   // prior period. A failure is N/A, never a fabricated zero.
@@ -182,14 +193,64 @@
         measure==='appearances'?'impressions':measure);
       return measure==='appearances'?search.impressions:search[measure];
     }
+    // Search Console currently verifies Google Search only. Calling that a
+    // worldwide all-engine total would mislead the owner, so explain scope.
+    // Wix and GA4 are never blended, including historical comparisons.
+    const totalValue=(measure,which)=>{
+      if(measure==='appearances'||measure==='clicks'||measure==='ctr'||measure==='position')
+        return raw(measure,'google',which);
+      if(current===wix&&current){
+        if(which==='current'){
+          if(measure==='visits'&&good(site?.sessions))return site.sessions;
+          if(measure==='stay'&&good(site?.avgTimeSeconds))return site.avgTimeSeconds;
+        }else{
+          const metric=measure==='visits'?'sessions':'avgTimeSeconds';
+          const previous=site?.metricComparisons?.[metric]?.previous;
+          if(good(previous))return previous;
+        }
+        return completeSourceTotal(which==='last'?last:current,measure);
+      }
+      if(current===ga&&current&&which==='current'){
+        if(measure==='visits'&&good(ga4?.metrics?.sessions))return ga4.metrics.sessions;
+        if(measure==='stay'&&good(ga4?.metrics?.averageSessionDuration))
+          return ga4.metrics.averageSessionDuration;
+        return completeSourceTotal(current,measure);
+      }
+      return null;
+    };
+    const headerName=(id,label,i)=>
+      id==='maps'
+      ?'<span class="mission-sheet-maps-heading"><span class="mission-sheet-map-num">'+
+        (i+1)+'.</span><span class="mission-sheet-maps-words"><b>GOOGLE</b><b>MAPS</b></span></span>'
+      :'<span>'+(i+1)+'.</span> '+esc(label);
     const head='<thead><tr>'+
       '<th scope="col" class="mission-sheet-metric">MEASUREMENT</th>'+
+      '<th scope="col" class="mission-sheet-total" title="Verified overall measure; Google-only for Search Console">TOTAL</th>'+
       '<th scope="col" class="mission-sheet-period">PERIOD</th>'+
       columns.map(([id,label],i)=>
         '<th scope="col" class="mission-sheet-source'+(id==='google'?' mission-sheet-google':'')+
-        '"><span>'+(i+1)+'.</span> '+(id==='maps'?'GOOGLE<br>MAPS':esc(label))+'</th>').join('')+
+        '">'+headerName(id,label,i)+'</th>').join('')+
       '</tr></thead>';
     const body=measures.map(([metric,label])=>{
+      const totalPrevious=totalValue(metric,'last');
+      const totalCurrent=totalValue(metric,'current');
+      const totalCell=which=>{
+        const value=which==='last'?totalPrevious:totalCurrent;
+        const isChange=which==='change';
+        const tone=which==='last'?'':signal(metric,totalPrevious,totalCurrent);
+        const mark=isChange
+          ?(good(totalCurrent)?changeBadge(metric,totalPrevious,totalCurrent):
+            '<span class="mission-sheet-delta mission-sheet-unknown">N/A</span>')
+          :'<span class="mission-sheet-main">'+esc(nice(metric,value))+'</span>';
+        const scope=metric==='appearances'||metric==='clicks'||metric==='ctr'||metric==='position'
+          ?'Google Search Console only; other search sources not measured'
+          :'Overall '+(current===wix?'Wix':current===ga?'Google Analytics':'unverified')+
+            ' measure; not the sum of incomplete source categories';
+        return '<td class="mission-sheet-number mission-sheet-total-cell'+tone+
+          (isChange?' mission-sheet-change-cell':'')+
+          (!isChange&&!good(value)?' mission-sheet-na':'')+
+          '" title="'+esc(scope)+'">'+mark+'</td>';
+      };
       const cells=which=>columns.map(([id])=>{
         const previous=raw(metric,id,'last'),current=raw(metric,id,'current');
         const value=which==='last'?previous:current;
@@ -208,11 +269,14 @@
       }).join('');
       return '<tr class="mission-sheet-data-row mission-sheet-last">'+
         '<th rowspan="3" scope="rowgroup" class="mission-sheet-metric">'+esc(label)+'</th>'+
+        totalCell('last')+
         '<th scope="row" class="mission-sheet-period">LAST</th>'+cells('last')+'</tr>'+
         '<tr class="mission-sheet-data-row mission-sheet-current">'+
+        totalCell('current')+
         '<th scope="row" class="mission-sheet-period">CURRENT</th>'+
         cells('current')+'</tr>'+
         '<tr class="mission-sheet-data-row mission-sheet-change">'+
+        totalCell('change')+
         '<th scope="row" class="mission-sheet-period">%&nbsp;CHANGE</th>'+
         changes+'</tr>';
     }).join('');
@@ -229,12 +293,14 @@
     return '<section class="mission-source-sheet" aria-label="Twenty-two traffic sources, six measures, eighteen Last Current and Percent Change data rows">'+
       '<div class="mission-sheet-heading"><div><h3>SEARCH & DISCOVERY · 22 SOURCES</h3>'+
       '<p>Six measurements with LAST, CURRENT and % CHANGE on separate rows.</p></div>'+
-      '<strong>22 COLUMNS · 18 ROWS</strong></div>'+
-      '<p class="mission-sheet-scroll-hint">SCROLL RIGHT TO SEE ALL SOURCES → The two left columns stay visible.</p>'+
+      '<strong>22 SOURCES + TOTAL · 18 ROWS</strong></div>'+
+      '<p class="mission-sheet-scroll-hint">SCROLL RIGHT FOR ALL 22 SOURCES → MEASUREMENT, TOTAL and PERIOD stay visible.</p>'+
       '<div class="mission-sheet-scroll" tabindex="0" role="region" aria-label="Horizontal source comparison spreadsheet">'+
         '<table class="mission-sheet-table">'+head+'<tbody>'+body+'</tbody></table>'+
       '</div>'+
-      '<p class="mission-sheet-note">Google Search Console supplies search appearances, clicks, CTR and average position for Google only. '+
+      '<p class="mission-sheet-note">TOTAL is immediately after MEASUREMENT. For searches, TOTAL means verified Google Search only; other search providers have N/A, not zero. '+
+        'Search CTR and position are Google-reported rates/averages, never added across sources. '+
+        'Website visit and stay totals come from the overall '+esc(provider)+' report, not from adding incomplete source rows. '+
         'Website visits are attributed sessions from '+esc(provider)+
         ' and are not unique visitors. Previous source sessions use the preceding equal-length Wix report when available. '+
         'Wix and GA4 are never combined. Relative percent changes compare matching periods; lower average search position is better. '+
