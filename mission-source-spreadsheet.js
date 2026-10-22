@@ -246,8 +246,16 @@
     // instead of comparing a partial past against a wider current total.
     const searchProviders=[...(google?['google']:[]),
       ...(bing?.status==='connected'?['bing']:[])];
+    // Do not add provider totals with different observed date ranges.
+    const sameSearchWindow=searchProviders.length<2||(
+      bing?.currentRange?.start===seo?.comparison?.currentRange?.start&&
+      bing?.currentRange?.end===seo?.comparison?.currentRange?.end);
+    const sameSearchPrevious=searchProviders.length<2||(
+      bing?.previousRange?.start===seo?.comparison?.previousRange?.start&&
+      bing?.previousRange?.end===seo?.comparison?.previousRange?.end);
     function measuredSearchTotal(measure,which){
-      if(!searchProviders.length)return null;
+      if(!searchProviders.length||!sameSearchWindow||
+        (which==='last'&&!sameSearchPrevious))return null;
       if(measure==='position')return searchProviders.length===1&&
         searchProviders[0]==='google'?raw('position','google',which):null;
       if(measure==='ctr'){
@@ -387,7 +395,7 @@
       '<div class="mission-sheet-scroll" tabindex="0" role="region" aria-label="Horizontal source comparison spreadsheet">'+
         '<table class="mission-sheet-table">'+head+'<tbody>'+body+'</tbody></table>'+
       '</div>'+
-      '<p class="mission-sheet-note">TOTAL is immediately after MEASUREMENT. Search counts cover connected Google Search and Bing reporting only, never every possible search engine. Google Maps profile impressions are excluded. '+
+      '<p class="mission-sheet-note">TOTAL is immediately after MEASUREMENT. Search counts cover connected Google Search and Bing reporting only, never every possible search engine. Google Maps profile impressions are excluded. Search totals remain N/A when provider reporting dates differ. '+
         'Search CTR is calculated from same-period clicks and appearances, while search rankings cannot be combined across engines. '+
         'Website visit and stay totals come from the overall '+esc(provider)+' report, not from adding incomplete source rows. '+
         'Website visits are attributed sessions from '+esc(provider)+
