@@ -9491,7 +9491,8 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   white-space:normal;overflow-wrap:break-word;
 }
 #connectionStrip .mission-direction-panel .mission-sheet-table thead th.mission-sheet-source {
-  width:154px;min-width:154px;max-width:154px;
+  width:124px;min-width:124px;max-width:124px;
+  padding:9px 5px;font-size:13px;line-height:1.17;
 }
 #connectionStrip .mission-direction-panel .mission-sheet-table thead .mission-sheet-google {
   background:#cadbbf;border-bottom-color:#a2b492;
@@ -9540,8 +9541,8 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   border-bottom:0;
 }
 #connectionStrip .mission-direction-panel .mission-sheet-table td.mission-sheet-number {
-  width:154px;min-width:154px;max-width:154px;
-  height:50px;padding:8px 10px;text-align:center;
+  width:124px;min-width:124px;max-width:124px;
+  height:50px;padding:8px 5px;text-align:center;
   white-space:nowrap;
   font:900 clamp(15px,1vw,18px)/1.24 Arial,sans-serif;
   color:#101010;
@@ -9612,7 +9613,7 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   }
   #connectionStrip .mission-direction-panel .mission-sheet-table td.mission-sheet-number,
   #connectionStrip .mission-direction-panel .mission-sheet-table thead th.mission-sheet-source {
-    width:135px;min-width:135px;max-width:135px;
+    width:116px;min-width:116px;max-width:116px;
   }
   #connectionStrip .mission-direction-panel .mission-story-grid-supporting,
   #connectionStrip .mission-direction-panel .mission-sheet-query-rows {
@@ -9631,8 +9632,8 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   }
   #connectionStrip .mission-direction-panel .mission-sheet-table td.mission-sheet-number,
   #connectionStrip .mission-direction-panel .mission-sheet-table thead th.mission-sheet-source {
-    width:123px;min-width:123px;max-width:123px;
-    padding:8px 4px;font-size:13px;
+    width:108px;min-width:108px;max-width:108px;
+    padding:8px 4px;font-size:12px;
   }
 }
 
