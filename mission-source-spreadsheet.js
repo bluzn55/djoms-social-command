@@ -370,11 +370,17 @@
     const gaOutlawNow=sourceNumber(ga,'outlaw','visits');
     const outlawViaGa4=good(gaOutlawNow)&&gaOutlawNow>0&&
       (!good(wixOutlawNow)||wixOutlawNow===0);
+    // Email UTM can be available in GA4 even when Wix calls the visit Direct.
+    // Use GA4 consistently for both email periods; do not add to Wix TOTAL.
+    const wixEmailNow=sourceNumber(current,'email','visits');
+    const gaEmailNow=sourceNumber(ga,'email','visits');
+    const emailViaGa4=good(gaEmailNow)&&gaEmailNow>0&&
+      (!good(wixEmailNow)||wixEmailNow===0);
     function raw(measure,source,which){
       if(measure==='visits'){
-        const data=source==='outlaw'&&outlawViaGa4?
-          (which==='last'?gaPrior:ga):
-          (which==='last'?last:current);
+        const data=((source==='outlaw'&&outlawViaGa4)||
+          (source==='email'&&emailViaGa4))?
+          (which==='last'?gaPrior:ga):(which==='last'?last:current);
         return source==='socialGroup'?quietSocialNumber(data,measure):
           sourceNumber(data,source,measure);
       }
@@ -593,9 +599,9 @@
     const emailCurrent=raw('visits','email','current');
     const emailLast=raw('visits','email','last');
     const mailValue=(id,measure,when)=>{
-      const data=measure==='stay'?
-        (ga?(when==='last'?gaPrior:ga):(when==='last'?last:current)):
-        (when==='last'?last:current);
+      const data=measure==='stay'
+        ?(ga?(when==='last'?gaPrior:ga):(when==='last'?last:current))
+        :emailViaGa4?(when==='last'?gaPrior:ga):(when==='last'?last:current);
       return emailSourceValue(data,id,measure);
     };
     const emailRows=emailSources.filter(([id])=>['last','current'].some(when=>{
@@ -622,11 +628,11 @@
           'No identifiable email website visits in these periods.':
           'Email visitor attribution is unavailable. N/A means unknown, not zero.')+'</p>')+
       '<p><strong>Tracked link for future Doc Jaks emails:</strong></p>'+
-      '<p class="mission-sheet-email-link"><a href="'+emailUrl+
-      '" target="_blank" rel="noopener noreferrer">'+emailUrl+'</a></p>'+
+      '<p class="mission-sheet-email-link"><code>'+emailUrl+'</code></p>'+
       '<p>Use the tagged link in an email, not in website navigation. These are website '+
       'sessions, not emails sent, opened or contacts. Some mail clients hide referral '+
-      'details; those visits may appear as Direct. LAST and CURRENT use '+esc(provider)+
+      'details; those visits may appear as Direct. LAST and CURRENT use '+
+      esc(emailViaGa4?'GA4 (verified email fallback)':provider)+
       ' attribution; average stay uses GA4 when verified.</p></details>';
     const aiNow=raw('visits','ai','current');
     const aiLast=raw('visits','ai','last');
@@ -725,7 +731,9 @@
         'NEW is used instead of a percentage when the last value was zero. N/A means not applicable or unverified. '+
         'OTHER SOCIAL combines TikTok, Pinterest, Reddit and Nextdoor without double-counting TOTAL; expand to see which platform sent visits. '+
         'TRIPADVISOR is website traffic attribution, not review counts. '+
-        'OUTLAW RADIO 5150 counts identified radio-domain or tagged external visits, not radio listeners. If Wix records zero but GA4 verifies tagged radio visits, the radio column uses GA4 for both periods; it is not added to the Wix TOTAL. An untagged domain forward may show as Direct.'+bingNote+mapNote+'</p>'+
+        'OUTLAW RADIO 5150 counts identified radio-domain or tagged external visits, not radio listeners. If Wix records zero but GA4 verifies tagged radio visits, the radio column uses GA4 for both periods; it is not added to the Wix TOTAL. An untagged domain forward may show as Direct. '+
+        'EMAIL counts website sessions with identifiable email attribution, not opens, sends or subscribers. If Wix records no email visits but GA4 verifies tagged email sessions, EMAIL uses GA4 for both periods without adding those sessions to Wix TOTAL.'+
+        bingNote+mapNote+'</p>'+
       aiDetail+emailDetail+metaStatus+queryDetails+'</section>';
   }
   window.djomsAiReferralService=aiReferralService;
