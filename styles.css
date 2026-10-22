@@ -10302,7 +10302,9 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 }
 #connectionStrip .mission-direction-panel .mission-direction-top-evidence
 .mission-pair-number {
-  min-width:0;justify-self:end;text-align:right;
+  /* Keep each L/number and C/number together. Rows still share the
+     same two 123px value columns and their salmon center divider. */
+  min-width:0;justify-self:start;text-align:left;
   color:inherit;font-size:inherit;font-weight:900;line-height:inherit;white-space:nowrap;
 }
 #connectionStrip .mission-direction-panel .mission-direction-top-evidence
