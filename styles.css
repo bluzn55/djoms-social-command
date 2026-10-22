@@ -10250,7 +10250,7 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 }
 
 
-/* OWNER L/C VALUES: LARGE, DIVIDED, VERTICALLY ALIGNED · OCT 22 2026 */
+/* OWNER L/C VALUES: FULL ROW-LABEL FONT SIZE, DIVIDED AND ALIGNED · OCT 22 2026 */
 /* LAST and CURRENT are equal-width value columns in every owner-stage box.
    They use the same readable size as the Search appearances row label. */
 #connectionStrip .mission-direction-panel .mission-pair-prefix {
@@ -10262,7 +10262,7 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 #connectionStrip .mission-direction-panel .mission-direction-top-evidence
 .mission-stage-rows .mission-story-pair {
   display:grid !important;
-  grid-template-columns:minmax(0,1fr) 246px !important;
+  grid-template-columns:minmax(0,1fr) 280px !important;
   align-items:center;column-gap:12px;
 }
 #connectionStrip .mission-direction-panel .mission-direction-top-evidence
@@ -10274,7 +10274,7 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 .mission-pair-values {
   display:grid !important;
   grid-template-columns:repeat(2,minmax(0,1fr));
-  width:246px;max-width:100%;
+  width:280px;max-width:100%;
   box-sizing:border-box;
   align-items:center;justify-content:stretch;justify-self:end;
   gap:0 !important;min-width:0;white-space:nowrap;
@@ -10298,27 +10298,31 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 #connectionStrip .mission-direction-panel .mission-direction-top-evidence
 .mission-pair-prefix {
   margin:0;color:inherit;
-  font-size:inherit;font-weight:900;line-height:inherit;
+  /* Match the font size of Search appearances, including L and C. */
+  font-size:clamp(16px,1.04vw,18px) !important;
+  font-weight:900 !important;line-height:1.3;
 }
 #connectionStrip .mission-direction-panel .mission-direction-top-evidence
 .mission-pair-number {
   /* Keep each L/number and C/number together. Rows still share the
      same two 123px value columns and their salmon center divider. */
   min-width:0;justify-self:start;text-align:left;
-  color:inherit;font-size:inherit;font-weight:900;line-height:inherit;white-space:nowrap;
+  color:inherit;
+  font-size:clamp(16px,1.04vw,18px) !important;
+  font-weight:900 !important;line-height:1.3;white-space:nowrap;
 }
 #connectionStrip .mission-direction-panel .mission-direction-top-evidence
 .mission-action-compact-row > .mission-pair-values {
-  width:246px !important;justify-self:end;
+  width:280px !important;justify-self:end;
 }
 #connectionStrip .mission-direction-panel .mission-direction-top-evidence
 .mission-action-compact-row {
-  grid-template-columns:minmax(0,1fr) 246px 10px !important;
+  grid-template-columns:minmax(0,1fr) 280px 10px !important;
   gap:8px;align-items:center;
 }
 #connectionStrip .mission-direction-panel .mission-direction-top-evidence
 .mission-action-compact-row > span:first-child {
-  font:900 clamp(16px,1.04vw,18px)/1.3 Arial,sans-serif;
+  font:900 clamp(16px,1.04vw,18px)/1.3 Arial,sans-serif !important;
 }
 @media(max-width:1000px){
   #connectionStrip .mission-direction-panel .mission-direction-top-evidence {
