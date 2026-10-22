@@ -3692,6 +3692,41 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   color:#f7d08c;
   white-space:nowrap;
 }
+/* Visited pages: clearly separate visitors, views, and Wix average page time. */
+.mission-web-visited .mission-web-page-row {
+  grid-template-columns:minmax(105px,1fr) 73px 65px 90px;
+  gap:8px;
+  font-size:16px;
+}
+.mission-web-visited .mission-web-page-row strong {
+  text-align:right;
+  font-size:18px;
+}
+.mission-web-visited .mission-web-page-head {
+  border-bottom:2px solid #ba8b4c;
+  color:#e9bc78;
+  font:900 13px/1.25 Arial,sans-serif;
+}
+.mission-web-visited .mission-web-page-head span {
+  font-weight:900;
+}
+.mission-web-visited .mission-web-page-head span:not(:first-child) {
+  text-align:right;
+}
+.mission-web-visited .mission-web-page-note {
+  margin:9px 4px 0;
+  color:#e8cda3;
+  font:700 13px/1.45 Arial,sans-serif;
+}
+@media (max-width:600px) {
+  .mission-web-visited .mission-web-page-row {
+    grid-template-columns:minmax(80px,1fr) 55px 50px 68px;
+    gap:5px;
+    font-size:13px;
+  }
+  .mission-web-visited .mission-web-page-row strong {font-size:14px}
+  .mission-web-visited .mission-web-page-head {font-size:11px}
+}
 .mission-web-empty {
   color:#f5daa9;
   font-size:14px;
