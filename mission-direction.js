@@ -190,6 +190,37 @@
     return '<div class="mission-story-row mission-story-pair"><span>'+esc(label)+
       '</span>'+inlinePair(last,current,direction)+'</div>';
   }
+  // Dedicated lower-evidence renderer. Explicit layout styles are intentional:
+  // the lower 3 evidence cards must match the top owner cards even when an
+  // older generic .mission-story-pair stylesheet rule is still in the cache.
+  // All 21 lower data rows use the same fixed L / C positions.
+  function detailPairRow(label,last,current,direction='unknown'){
+    const before=last==null?'N/A':String(last);
+    const after=current==null?'N/A':String(current);
+    const directionClass=safeMotion(direction);
+    const numberStyle='font:900 18px/1.3 Arial,sans-serif;white-space:nowrap;';
+    const partStyle='display:flex;align-items:center;justify-content:flex-start;'+
+      'gap:5px;padding:4px 7px;min-width:0;box-sizing:border-box;'+
+      'font:900 18px/1.3 Arial,sans-serif;white-space:nowrap;';
+    return '<div class="mission-story-row mission-story-pair mission-detail-pair-row" '+
+        'style="display:grid;grid-template-columns:minmax(0,1fr) 280px;'+
+        'align-items:center;column-gap:12px;padding:8px 0;min-width:0;">'+
+      '<span class="mission-detail-pair-label" '+
+        'style="font:900 18px/1.3 Arial,sans-serif;min-width:0;">'+esc(label)+'</span>'+
+      '<span class="mission-pair-values mission-detail-pair-values story-'+
+        directionClass+'" title="'+esc('Last '+before+', current '+after)+'" '+
+        'style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));'+
+        'width:280px;max-width:100%;min-width:0;justify-self:end;gap:0;'+
+        'font:900 18px/1.3 Arial,sans-serif;white-space:nowrap;">'+
+        '<span class="mission-pair-last" style="'+partStyle+'">'+
+          '<span class="mission-pair-prefix" style="'+numberStyle+'">L</span>'+
+          '<strong class="mission-pair-number" style="'+numberStyle+'">'+esc(before)+'</strong></span>'+
+        '<span class="mission-pair-current" style="'+partStyle+
+          'border-left:2px solid #c78a7b;">'+
+          '<span class="mission-pair-prefix" style="'+numberStyle+'">C</span>'+
+          '<strong class="mission-pair-number" style="'+numberStyle+'">'+esc(after)+'</strong></span>'+
+      '</span></div>';
+  }
 
   function storyCard(title,direction,body,note){
     const status={up:'UP',down:'DOWN',hold:'HOLD',mixed:'MIXED',unknown:'N/A'};
@@ -206,7 +237,7 @@
     const googleLast=key=>good(gc?.[key]?.previous)?gc[key].previous:null;
     const priorCtr=good(googleLast('impressions'))&&googleLast('impressions')>0&&good(googleLast('clicks'))
       ?googleLast('clicks')/googleLast('impressions'):null;
-    const pair=storyPairRow;
+    const pair=detailPairRow;
     const trafficRows=[
       pair('Visitors',storyNumber(cmp.visitors?.previousVisitors),storyNumber(wix?site.visitors:null),score.traffic),
       pair('Page views',storyNumber(cmp.pageViews?.previous),storyNumber(wix?site.pageViews:null),
