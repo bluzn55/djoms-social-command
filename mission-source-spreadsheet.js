@@ -213,7 +213,7 @@
         '<th scope="row" class="mission-sheet-period">CURRENT</th>'+
         cells('current')+'</tr>'+
         '<tr class="mission-sheet-data-row mission-sheet-change">'+
-        '<th scope="row" class="mission-sheet-period">% CHANGE</th>'+
+        '<th scope="row" class="mission-sheet-period">%&nbsp;CHANGE</th>'+
         changes+'</tr>';
     }).join('');
     const queries=google&&Array.isArray(seo.topQueries)?
