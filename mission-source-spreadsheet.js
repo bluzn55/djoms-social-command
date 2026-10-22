@@ -43,14 +43,25 @@
       /(?:^|[^a-z0-9])yahoo\s*\/\s*e-?mail(?:$|[^a-z0-9])/.test(name)||
       /(?:^|[^a-z0-9])duckduckgo\s*\/\s*e-?mail(?:$|[^a-z0-9])/.test(name)||
       /(?:^|[^a-z0-9])duck\.com\s*\/\s*e-?mail(?:$|[^a-z0-9])/.test(name)||
+      /(?:^|[^a-z0-9])(?:facebook|instagram|fb|ig)\s*\/\s*(?:e-?mail|newsletter)(?:$|[^a-z0-9])/.test(name)||
       /(?:^|[^a-z0-9])mail\.duck\.com(?:$|[^a-z0-9])/.test(name)||
       /email\s*protection/.test(name)||
       /@duck\.com(?:$|\W)/.test(name))
       return 'email';
     if(/outlawradio5150|outlaw\s*(?:radio\s*)?5150|51\.50/.test(s))return 'outlaw';
     if(/chatgpt|openai|perplexity|copilot|claude|gemini|deepseek|you\.com/.test(s))return 'ai';
-    if(/facebook|fb\.me|\bfb\b/.test(s))return 'facebook';
-    if(/instagram|ig\.me|\binsta\b/.test(s))return 'instagram';
+    // Account followers/Meta post impressions are not website referrals.
+    // Classify only identified Wix/GA4 sources; fbclid and igshid query
+    // parameters alone must never be treated as verified attribution.
+    const fromFacebook=/(?:^|[^a-z0-9])(?:facebook|fb)(?:$|[^a-z0-9])/.test(name)||
+      /(?:^|[^a-z0-9])fb\.(?:me|com|watch)(?:$|[^a-z0-9])/.test(name)||
+      /^(?:facebook|fb)$/.test(cat);
+    const fromInstagram=/(?:^|[^a-z0-9])(?:instagram|instagr\.am|ig\.me|insta|ig)(?:$|[^a-z0-9])/.test(name)||
+      /^(?:instagram|insta|ig)$/.test(cat);
+    // Do not arbitrarily assign a shared Facebook+Instagram referrer.
+    if(fromFacebook&&fromInstagram)return 'other';
+    if(fromFacebook)return 'facebook';
+    if(fromInstagram)return 'instagram';
     if(/youtube|youtu\.be/.test(s))return 'youtube';
     if(/twitter|t\.co|x\.com/.test(s)||name==='x'||name.startsWith('x /'))return 'x';
     if(/tiktok/.test(s))return 'tiktok';
@@ -323,6 +334,10 @@
             ?'Yahoo-attributed website sessions from Wix or GA4. Yahoo Mail goes to EMAIL. Separate Yahoo search appearances and clicks are not verified.'
             :id==='duckduckgo'
             ?'DuckDuckGo-attributed website sessions from Wix or GA4. DuckDuckGo Email Protection is counted under EMAIL; search appearances and ranks are not separately verified.'
+            :id==='facebook'
+            ?'Facebook-attributed website sessions from Wix or GA4. Paid referrals go to PAID ADS. Facebook post impressions and engagement are tracked separately in Platforms.'
+            :id==='instagram'
+            ?'Instagram-attributed website sessions from Wix or GA4. Paid referrals go to PAID ADS. Instagram account/post performance is tracked separately in Platforms.'
             :esc(label))+'">'+headerName(id,label)+'</th>').join('')+
       '</tr></thead>';
     const body=measures.map(([metric,label])=>{
@@ -408,6 +423,20 @@
         '<span role="status" aria-live="polite" data-bing-connect-feedback="1"></span>'+
       '</form>'+
     '</details>';
+    // Account connection status comes from the existing Meta status check.
+    // It does not prove referral attribution or permission to read all insights.
+    const meta=typeof connection!=='undefined'?connection:null;
+    const metaLinked=platform=>meta?.[platform]?.connected===true;
+    const metaKnown=platform=>typeof meta?.[platform]?.connected==='boolean';
+    const metaStatus=metaKnown('facebook')||metaKnown('instagram')?
+      '<p class="mission-sheet-note"><strong>META ACCOUNTS:</strong> Facebook '+
+      (metaKnown('facebook')?(metaLinked('facebook')?'linked':'not linked'):'N/A')+
+      ' · Instagram '+(metaKnown('instagram')?(metaLinked('instagram')?'linked':'not linked'):'N/A')+
+      '. Account/post analytics remain separate from the website referrals shown above.'+
+      (metaLinked('facebook')&&metaLinked('instagram')?' ':
+        ' <a href="/api/meta/connect">Connect or reconnect Meta accounts ↗</a>')+
+      '</p>':
+      '<p class="mission-sheet-note">Facebook and Instagram website referrals use verified Wix/GA4 source reports. Check the existing Platforms page for Meta account connections and post insights.</p>';
     const mapNote=maps?.status==='connected'?
       ' Google Maps appearances come from Business Profile desktop/mobile daily impressions; they are not unique people or site visits. Google does not provide a separate Maps CTR or average search position through that report.':
       maps?.status==='not-connected'?
@@ -435,7 +464,7 @@
         ' and are not unique visitors. Previous source sessions use Wix\'s matching preceding period when verified; otherwise N/A. '+
         'Wix and GA4 session counts are never added. Source-specific average stay uses GA4 session duration when verified (and may differ from the Wix overall average). Relative percent changes compare matching periods; lower average search position is better. '+
         'NEW is used instead of a percentage when the last value was zero. N/A means not applicable or unverified.'+bingNote+mapNote+'</p>'+
-      queryDetails+'</section>';
+      metaStatus+queryDetails+'</section>';
   }
   window.djomsSourceSpreadsheet=draw;
 })();
