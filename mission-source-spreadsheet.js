@@ -332,9 +332,19 @@
     const last=current===wix&&current?
       (wixPriorReport(site)||priorSourceData(period)):
       current===ga&&current?gaPrior:null;
+    // GoDaddy/domain forwards sometimes lose their referrer in Wix. If Wix
+    // identifies zero radio-origin sessions but GA4 independently verifies
+    // positive tagged radio sessions, show GA4 for BOTH comparison periods,
+    // never Wix LAST against GA4 CURRENT. These are not added to Wix TOTAL.
+    const wixOutlawNow=sourceNumber(current,'outlaw','visits');
+    const gaOutlawNow=sourceNumber(ga,'outlaw','visits');
+    const outlawViaGa4=good(gaOutlawNow)&&gaOutlawNow>0&&
+      (!good(wixOutlawNow)||wixOutlawNow===0);
     function raw(measure,source,which){
       if(measure==='visits'){
-        const data=which==='last'?last:current;
+        const data=source==='outlaw'&&outlawViaGa4?
+          (which==='last'?gaPrior:ga):
+          (which==='last'?last:current);
         return source==='socialGroup'?quietSocialNumber(data,measure):
           sourceNumber(data,source,measure);
       }
@@ -469,7 +479,7 @@
             :id==='ai'
             ?'AI-attributed website visits from Wix/GA4. Expand the AI REFERRALS breakdown below for individual services; AI mentions and recommendations cannot be verified here.'
             :id==='outlaw'
-            ?'Identified visits arriving at DOCJAKS.COM from Outlaw Radio 5150 referrals or a tagged external redirect. Not actual radio listeners; untagged forwards may appear as Direct.'
+            ?'Identified visits to DOCJAKS.COM from Outlaw Radio 5150 referrals or tagged external redirects. Uses GA4 source attribution if Wix reports no radio visits but GA4 identifies them. Not radio listeners.'
             :esc(label))+'">'+headerName(id,label)+'</th>').join('')+
       '</tr></thead>';
     const body=measures.map(([metric,label])=>{
@@ -645,7 +655,7 @@
         'NEW is used instead of a percentage when the last value was zero. N/A means not applicable or unverified. '+
         'OTHER SOCIAL combines TikTok, Pinterest, Reddit and Nextdoor without double-counting TOTAL; expand to see which platform sent visits. '+
         'TRIPADVISOR is website traffic attribution, not review counts. '+
-        'OUTLAW RADIO 5150 counts identifiable referrals from the radio domain or tagged external links, not live radio listeners. An untagged domain forward may show as Direct.'+bingNote+mapNote+'</p>'+
+        'OUTLAW RADIO 5150 counts identified radio-domain or tagged external visits, not radio listeners. If Wix records zero but GA4 verifies tagged radio visits, the radio column uses GA4 for both periods; it is not added to the Wix TOTAL. An untagged domain forward may show as Direct.'+bingNote+mapNote+'</p>'+
       aiDetail+metaStatus+queryDetails+'</section>';
   }
   window.djomsAiReferralService=aiReferralService;
