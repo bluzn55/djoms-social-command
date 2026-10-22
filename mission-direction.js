@@ -131,51 +131,42 @@
   }
 
 
-  // Four independent drivers. Never average Google, traffic, engagement
-  // and sales percentages into a fictional business-growth percentage.
+  // The 100-baseline weighted score lives in mission-owner-score.js.
+  // Keep source-specific directional diagnostics for the detailed panels.
   const changeMotion=(comparison,inverse=false)=>{
     if(!comparison||!Number.isFinite(comparison.percentChange))return 'unknown';
-    const direction=(inverse?-1:1)*comparison.percentChange;
-    return direction>0?'up':direction<0?'down':'hold';
+    const change=(inverse?-1:1)*comparison.percentChange;
+    return change>0?'up':change<0?'down':'hold';
   };
   const safeMotion=value=>['up','down','hold','mixed'].includes(value)?value:'unknown';
   const measureRatio=value=>good(value)&&value<=1?(value*100).toFixed(1)+'%':'N/A';
-  function momentumScore(site,seo,sales,period){
-    const comparisons=site?.connected===true?site.metricComparisons||{}:{};
-    const traffic=changeMotion(comparisons.visitors);
-    const stay=changeMotion(comparisons.avgTimeSeconds);
-    const bounce=changeMotion(comparisons.bounceRate,true);
-    const engagement=stay!=='unknown'&&bounce!=='unknown'&&
-      stay!==bounce&&stay!=='hold'&&bounce!=='hold'?'mixed':
-      stay!=='unknown'?stay:bounce;
-    const search=seo?.status==='connected'&&seo?.comparison?.status==='reported'?seo.comparison:null;
-    const googleClicks=changeMotion(search?.clicks);
-    const googleImpressions=changeMotion(search?.impressions);
-    const google=googleClicks==='unknown'?googleImpressions:
-      googleImpressions==='unknown'?googleClicks:
-      googleClicks===googleImpressions?googleClicks:
-      googleClicks==='hold'?googleImpressions:
-      googleImpressions==='hold'?googleClicks:'mixed';
-    const salesVerdict=assessBusiness(sales,period);
-    const business=salesVerdict.state==='green'?'up':
-      salesVerdict.state==='red'?'down':
-      ['NO PAID SALES YET','SALES HOLDING'].includes(salesVerdict.headline)?'hold':
-      salesVerdict.headline==='MIXED SALES'?'mixed':'unknown';
-    const parts=[{name:'TRAFFIC',status:traffic},{name:'GOOGLE',status:google},
-      {name:'ENGAGEMENT',status:engagement},{name:'BUSINESS',status:business}];
-    const known=parts.filter(p=>p.status!=='unknown').length;
-    const ups=parts.filter(p=>p.status==='up').length;
-    const downs=parts.filter(p=>p.status==='down').length;
-    const mixed=parts.some(p=>p.status==='mixed');
-    let verdict='UNPROVEN',kind='unknown',position=50;
-    if(mixed||(ups>0&&downs>0)){verdict='MIXED';kind='hold';}
-    else if(known>=3&&ups>=2&&!downs){verdict='FORWARD';kind='up';position=26;}
-    else if(known>=3&&downs>=2&&!ups){verdict='BACKWARD';kind='down';position=74;}
-    else if(known>=3&&!ups&&!downs){verdict='HOLDING';kind='hold';}
-    return {verdict,kind,position,parts,known,google,googleClicks,googleImpressions,
-      traffic,engagement,business,salesVerdict,
-      note:known<3?'Only '+known+' of four drivers have verified period-to-period directions.':
-        'Verified independent signals, not an average of unlike percentages.'};
+  function momentumScore(site,ga4,seo,sales,period){
+    const weighted=typeof window.djomsOwnerScore==='function'?
+      window.djomsOwnerScore(site,ga4,seo,sales,period):null;
+    const section=id=>weighted?.stages?.find(item=>item.id===id);
+    const gsc=seo?.status==='connected'&&seo?.comparison?.status==='reported'?
+      seo.comparison:null;
+    return {...(weighted||{score:null,kind:'unknown',verdict:'UNVERIFIED',
+      position:50,stages:[],covered:0,availableWeight:0,
+      parts:[],note:'The owner scoring model is unavailable.'}),
+      google:section('search')?.status||'unknown',
+      traffic:section('sources')?.status||'unknown',
+      engagement:section('engagement')?.status||'unknown',
+      business:section('sales')?.status||'unknown',
+      googleImpressions:changeMotion(gsc?.impressions),
+      googleClicks:changeMotion(gsc?.clicks),
+      salesVerdict:assessBusiness(sales,period)
+    };
+  }
+  function stageScore(meter,id){
+    const section=meter?.stages?.find(s=>s.id===id);
+    const state=section?.status||'unknown';
+    const score=Number.isInteger(section?.score)?section.score:null;
+    const tooltip=score===null?'This section lacks a verified previous/current comparison':
+      '100 is unchanged; '+section.weight+' importance points; '+
+      section.measured+' measured signals. 101+ forward, 99- backward.';
+    return '<strong class="mission-stage-score story-'+safeMotion(state)+
+      '" title="'+esc(tooltip)+'">SCORE '+(score===null?'N/A':score)+'</strong>';
   }
   const storyNumber=value=>good(value)?fmt(value):'N/A';
   function storyRow(label,value,direction='unknown'){
@@ -285,11 +276,9 @@
     const last=key=>good(comparison?.[key]?.previous)?comparison[key].previous:null;
     const priorCtr=good(last('impressions'))&&last('impressions')>0&&good(last('clicks'))
       ?last('clicks')/last('impressions'):null;
-    const status=safeMotion(score?.google);
-    const direction=status==='unknown'?'N/A':status.toUpperCase();
     return '<article class="mission-direction-signal mission-stage-card mission-stage-google">'+
-      '<div class="mission-stage-head"><small>2. GOOGLE DISCOVERY</small>'+
-      '<b class="mission-stage-tag story-'+status+'">'+direction+'</b></div>'+
+      '<div class="mission-stage-head"><small>1. SEARCH</small>'+
+      stageScore(score,'search')+'</div>'+
       '<div class="mission-stage-rows">'+
         storyPairRow('Search appearances',storyNumber(last('impressions')),storyNumber(m.impressions),
           score?.googleImpressions)+
@@ -298,51 +287,57 @@
         storyPairRow('Search CTR',measureRatio(priorCtr),measureRatio(m.ctr))+
         storyPairRow('Search position',good(last('position'))?last('position').toFixed(1):'N/A',
           good(m.position)?m.position.toFixed(1):'N/A')+
-      '</div><p class="mission-stage-foot">Google searches and clicks. Search Console data may arrive a few days late.</p></article>';
+      '</div><p class="mission-stage-foot">Google Search Console values. Bing is shown separately below; report dates may differ.</p></article>';
   }
 
+  // Only the critical channel summary goes up here. The 23-source detail
+  // spreadsheet below retains ALL traffic source metrics.
   function sourceStageCard(site,score){
-    const connected=site?.connected===true;
-    const rows=connected&&Array.isArray(site.trafficSources)?site.trafficSources:[];
-    const cmp=connected?site.metricComparisons||{}:{};
-    const totals={direct:0,google:0,facebook:0,instagram:0,x:0,youtube:0,other:0};
-    const found=new Set();
-    let summed=0;
-    for(const item of rows){
-      if(!good(item?.sessions))continue;
-      const name=(String(item.source||'')+' '+String(item.category||'')).toLowerCase();
-      let key='other';
-      if(/facebook|fb\.me|\bfb\b/.test(name))key='facebook';
-      else if(/instagram|ig\.me|\binsta\b/.test(name))key='instagram';
-      else if(/youtube|youtu\.be/.test(name))key='youtube';
-      else if(/twitter|t\.co|x\.com/.test(name))key='x';
-      else if(/google/.test(name))key='google';
-      else if(/\bdirect\b|\(direct\)/.test(name))key='direct';
-      totals[key]+=item.sessions;found.add(key);summed+=item.sessions;
-    }
-    const complete=connected&&site.trafficSourcesComplete===true&&
-      (!good(site.sessions)||summed===site.sessions);
-    const num=key=>connected&&(found.has(key)||complete)?fmt(totals[key]):'N/A';
-    const names=[['direct','Direct'],['google','Google referrals'],
-      ['facebook','Facebook'],['instagram','Instagram'],['x','X / Twitter'],
-      ['youtube','YouTube'],['other','Other sources']];
-    const status=safeMotion(score?.traffic);
-    const direction=status==='unknown'?'N/A':status.toUpperCase();
+    const linked=site?.connected===true;
+    const currentRows=linked&&Array.isArray(site.trafficSources)?site.trafficSources:[];
+    const previousRows=linked&&Array.isArray(site.trafficSourcesPrevious)?
+      site.trafficSourcesPrevious:[];
+    const c=linked?site.metricComparisons||{}:{};
+    const summarize=rows=>{
+      const buckets={direct:0,google:0,other:0},found=new Set();
+      let total=0;
+      for(const item of rows){
+        if(!good(item?.sessions))continue;
+        const name=String(item.source||'').toLowerCase();
+        const cat=String(item.category||'').toLowerCase();
+        let kind='other';
+        if(/(?:^|[^a-z0-9])direct(?:$|[^a-z0-9])|\(direct\)/.test(name)||cat==='direct')
+          kind='direct';
+        else if(/google/.test(name)&&!/maps\.google|google\s*maps|g\.page/.test(name))
+          kind='google';
+        buckets[kind]+=item.sessions;found.add(kind);total+=item.sessions;
+      }
+      return {buckets,found,total};
+    };
+    const now=summarize(currentRows),prior=summarize(previousRows);
+    const currentComplete=linked&&site.trafficSourcesComplete===true&&
+      (!good(site.sessions)||now.total===site.sessions);
+    const lastComplete=linked&&site.trafficSourcesPreviousComplete===true&&
+      (!good(c.sessions?.previous)||prior.total===c.sessions.previous);
+    const get=(snapshot,key,complete)=>snapshot.found.has(key)||complete?
+      storyNumber(snapshot.buckets[key]):'N/A';
+    const pair=(name,key)=>storyPairRow(name,linked?get(prior,key,lastComplete):'N/A',
+      linked?get(now,key,currentComplete):'N/A');
     return '<article class="mission-direction-signal mission-stage-card mission-stage-sources">'+
-      '<div class="mission-stage-head"><small>1. WEBSITE TRAFFIC & SOURCES</small>'+
-      '<b class="mission-stage-tag story-'+status+'">'+direction+'</b></div>'+
+      '<div class="mission-stage-head"><small>2. WEBSITE TRAFFIC &amp; SOURCES</small>'+
+      stageScore(score,'sources')+'</div>'+
       '<div class="mission-stage-rows">'+
-        storyPairRow('Visitors',storyNumber(cmp.visitors?.previousVisitors),
-          storyNumber(connected?site.visitors:null),status)+
-        storyPairRow('Wix sessions',storyNumber(cmp.sessions?.previous),
-          storyNumber(connected?site.sessions:null))+
-        names.map(([key,label])=>storyPairRow(label,'N/A',num(key))).join('')+
-      '</div><p class="mission-stage-foot">Visitors are people; sources count Wix sessions. '+
-      'Previous channel totals stay N/A until verified.'+
-      (complete?'':' Some source counts may be incomplete.')+'</p></article>';
+        storyPairRow('Wix sessions',storyNumber(c.sessions?.previous),
+          storyNumber(linked?site.sessions:null),score?.traffic)+
+        pair('Direct','direct')+
+        pair('Google referrals','google')+
+        pair('Other sources','other')+
+      '</div><p class="mission-stage-foot">Wix sessions, not unique people. '+
+      'Use Search &amp; Discovery below for the full source breakdown.'+
+      ((!currentComplete||!lastComplete)?' Unverified rows show N/A.':'')+
+      '</p></article>';
   }
-
-  function periodKpi(item,site){
+  function periodKpi(item,site,score){
     const visits=item?.label==='VISITORS';
     const comparison=site?.connected===true?
       site.metricComparisons?.[visits?'visitors':'avgTimeSeconds']:null;
@@ -372,7 +367,8 @@
     }
     return '<div class="mission-direction-signal trend-metric mission-stage-card '+esc(item?.state)+'">'+
       '<div class="mission-stage-head"><small>'+
-        esc(visits?'3. WEBSITE VISITORS':'4. VISITOR ENGAGEMENT')+'</small></div>'+
+        esc(visits?'3. WEBSITE VISITORS':'4. VISITOR ENGAGEMENT')+'</small>'+
+        stageScore(score,visits?'visitors':'engagement')+'</div>'+
       '<div class="mission-stage-rows">'+rows.join('')+'</div>'+
       '<p class="mission-stage-foot">Change vs last: <strong class="mission-stage-change story-'+
         safeMotion(change)+'">'+esc(Number.isFinite(comparison?.percentChange)?
@@ -390,7 +386,7 @@
     const stayTrend=trend(stay);
     const bounceTrend=trend(bounced,false);
     const returnTrend=trend(returns);
-    const momentum=momentumScore(site,seo,sales,period);
+    const momentum=momentumScore(site,ga4,seo,sales,period);
     const currentVisitors=good(site?.visitors)?site.visitors:visitors?.currentVisitors;
     const previousVisitors=good(visitors?.previousVisitors)?visitors.previousVisitors:null;
     const salesReady=sales?.connected===true&&sales?.complete===true&&Number.isSafeInteger(sales.paidOrders);
@@ -646,7 +642,7 @@
 
   // Four genuine outcomes in priority order, then separate GA4 download
   // interest. Counts are different things; never sum them into one total.
-  function meaningfulActionsCard(site,ga4,sales,period){
+  function meaningfulActionsCard(site,ga4,sales,period,score){
     const gaActions=ga4?.connected===true&&ga4?.actions?.status==='reported'?
       ga4.actions:null;
     const downloads=good(gaActions?.counts?.fileDownload)?gaActions.counts.fileDownload:null;
@@ -657,7 +653,8 @@
       {id:'downloads',label:'File Downloads',value:downloads,secondary:true}
     ];
     return '<div class="mission-direction-signal action-summary-card mission-stage-card">'+
-      '<div class="mission-stage-head"><small>5. MEANINGFUL ACTIONS</small></div>'+
+      '<div class="mission-stage-head"><small>5. MEANINGFUL ACTIONS</small>'+
+        stageScore(score,'actions')+'</div>'+
       '<div class="mission-action-compact-rows">'+rows.map(item=>{
         const expanded=actionDetailsOpen&&selectedAction===item.id;
         return '<button type="button" class="mission-action-compact-row'+
@@ -870,7 +867,7 @@
   // The Online Sales total comes from approved, fully PAID WEB orders,
   // excluding refunds and in-person orders. Categories come from the
   // optional verified Wix V3 catalog lookup, never product-name guesses.
-  function onlineSalesCard(sales,period){
+  function onlineSalesCard(sales,period,score){
     const ready=sales?.connected===true&&sales?.complete===true&&
       sales?.range?.start===period?.start&&sales?.range?.end===period?.end&&
       Number.isSafeInteger(sales.paidOrders)&&sales.paidOrders>=0&&
@@ -919,7 +916,8 @@
       '</p>';
     return '<section class="mission-direction-signal mission-online-summary mission-stage-card">'+
       '<div class="mission-stage-head"><small>6. PAID WEB SALES</small>'+
-        '<span class="mission-online-source">Wix online only</span></div>'+
+        stageScore(score,'sales')+'</div>'+
+        '<span class="mission-online-source">Wix online only</span>'+
       '<div class="mission-stage-rows">'+
         storyPairRow('Paid orders',storyNumber(salesPrior?.paidOrders),orders)+
         storyPairRow('Gross item sales',money(salesPrior?.itemSalesCents),amount)+
