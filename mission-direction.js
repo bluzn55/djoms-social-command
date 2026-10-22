@@ -321,7 +321,9 @@
       '<div class="mission-story-grid mission-story-grid-supporting">'+
         storyCard('VISITOR ENGAGEMENT',score.engagement,engagementRows.join(''),engagementNote)+
         storyCard('ACTIONS & ONLINE SALES',score.business,businessRows.join(''),businessNote)+
-      '</div><p class="mission-story-coverage">'+esc(score.note)+'</p></section>';
+      '</div>'+
+      (typeof renderVisitorEvidence==='function'?renderVisitorEvidence(site):'')+
+      '<p class="mission-story-coverage">'+esc(score.note)+'</p></section>';
   }
 
   // Owner customer journey. Google Search exposure and Wix-attributed
