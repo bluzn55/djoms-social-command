@@ -58,5 +58,39 @@
       return result;
     };
   }
+  // Save credentials only on the owner's direct form submission.
+  // The page never persists or displays the key after the request.
+  document.addEventListener('submit',async event=>{
+    const form=event.target?.closest?.('form[data-bing-connect-form]');
+    if(!form)return;
+    event.preventDefault();
+    const field=form.querySelector('[name="bingApiKey"]');
+    const status=form.querySelector('[data-bing-connect-feedback]');
+    const button=form.querySelector('button[type="submit"]');
+    const token=typeof csrf==='string'?csrf:'';
+    if(!field||!status||!button)return;
+    if(!token){status.textContent='Sign in to the Command Center again to save Bing.';return;}
+    const apiKey=String(field.value||'').trim();
+    if(!apiKey){status.textContent='Enter the Bing Webmaster API key.';return;}
+    button.disabled=true;
+    status.textContent='Checking the Bing API key…';
+    try{
+      const response=await fetch('/api/meta/bing-key',{
+        method:'POST',credentials:'same-origin',cache:'no-store',
+        headers:{'Content-Type':'application/json','X-DJOMS-CSRF':token},
+        body:JSON.stringify({apiKey}),signal:AbortSignal.timeout(34000)
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw Error(data.error||'Bing connection was not saved.');
+      field.value='';
+      status.textContent=data.message||'Bing connection saved.';
+      cache.clear();
+      refresh(true);
+    }catch(error){
+      status.textContent=error?.name==='TimeoutError'?
+        'Bing connection verification took too long. Check before retrying.':
+        String(error?.message||'Could not connect Bing.');
+    }finally{button.disabled=false;}
+  });
   window.djomsRefreshBingReport=()=>refresh(true);
 })();
