@@ -36,7 +36,7 @@
   // N/A = not verified; zero only follows a complete source report.
   const originOrder=[
     ['direct','Direct'],['facebook','Facebook'],['instagram','Instagram'],
-    ['x','X / Twitter'],['youtube','YouTube'],['google','Google Search'],
+    ['x','X / Twitter'],['youtube','YouTube'],['ai','AI referral sites'],['google','Google Search'],
     ['other-search','Other search engines'],['other-social','Other social platforms'],
     ['email','Email'],['ads','Paid advertising'],
     ['referral','Other websites / referrals'],['other','Other / unassigned']
@@ -54,6 +54,10 @@
     if(/twitter|t\.co(?:\s|$)|x\.com/.test(text)||base==='x')return 'x';
     if(/youtube|youtu\.be/.test(text))return 'youtube';
     if(/newsletter|email|e-mail/.test(text))return 'email';
+    // Use the exact same detector as the 23-source Search & Discovery grid.
+    // A named AI referrer is not an ordinary search-engine impression.
+    if(typeof window.djomsAiReferralService==='function'&&
+      window.djomsAiReferralService({source:raw,category:cat}))return 'ai';
     if((base==='google'||base==='google.com'||base==='www.google.com')&&
        (cat.includes('organic_search')||cat.includes('organic search')||
         medium==='organic'||medium==='organic_search'))return 'google';
