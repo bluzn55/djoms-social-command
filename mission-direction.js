@@ -478,7 +478,20 @@
             :'We still need measured listening, membership actions and costs to tell whether attention creates business value.';
     let next='Measure actual radio listening and meaningful actions before grading customer growth.';
     let nextHref='';
-    if(visitorsTrend==='down'&&isTrend(visitors)&&available){
+    // If search appearances increased but clicks declined, improve relevance
+    // and the search result invitation before broad traffic advice.
+    const googleComparison=seo?.status==='connected'&&
+      seo.comparison?.status==='reported'?seo.comparison:null;
+    const appearancesRose=good(googleComparison?.impressions?.previous)&&
+      good(seo.metrics?.impressions)&&
+      seo.metrics.impressions>googleComparison.impressions.previous;
+    const clicksFell=good(googleComparison?.clicks?.previous)&&
+      good(seo.metrics?.clicks)&&
+      seo.metrics.clicks<googleComparison.clicks.previous;
+    if(appearancesRose&&clicksFell){
+      next='SEARCH: Appearances increased but clicks fell. Open TOP GOOGLE SEARCHES below; check the high-impression queries, improve the relevant page titles/descriptions and next-step invitations, then compare clicks next period.';
+      nextHref='https://search.google.com/search-console';
+    }else if(visitorsTrend==='down'&&isTrend(visitors)&&available){
       next='Improve traffic: compare Direct, Google, Facebook and Instagram to see what declined. Keep what holds attention.';
       if(ga4Gap(site,ga4)){
         next+=' Also check the Wix-versus-GA4 session gap before relying on source totals.';
@@ -534,10 +547,11 @@
       stayDelta:isTrend(stay)?stay.percentChange:null,
       coverage,actionEvidence,warnings,
       notes:[
-        'The overall verdict checks four distinct drivers: website traffic, Google discovery, engagement and verified paid web sales.',
-        'A FORWARD or BACKWARD verdict needs at least three verified drivers and two signals in the same direction with no opposite signal; mixed signals remain MIXED.',
-        'Visitor counts, site time, Google search impressions, GA4 sessions and business sales are different measurements. No percentages are averaged into a business growth rate.',
-        'Site bounces and outgoing clicks do not prove radio listening. Verified web-sales growth does not prove profit or overall business health.',
+        'Each stage starts at 100 with importance weights: Search 15 points, Traffic 20, Visitors 25, Engagement 15, Actions 10 and Paid Web Sales 15.',
+        'Scores above 100 are green (forward), exactly 100 is yellow (unchanged), and 99 or below is red (backward). Missing comparisons remain N/A.',
+        'Within each stage, verified metric changes are capped at plus or minus 40 points, so a dramatic percentage from a tiny base cannot erase large traffic losses.',
+        'The overall index reweights available section scores and requires at least 50 out of 100 importance points in verified comparisons.',
+        'The index is not measured revenue, profit, actual radio listening or confirmed Pit Krewe membership.',
         'Comparisons are against the preceding equal-length reporting period, not a different week or year.',
         smallSample?'Small comparison base: a few visitors may swing these percentages.':null,
         periodCaution
@@ -1001,12 +1015,12 @@
     const visitors=summary.coverage.find(item=>item.label==='VISITORS');
     const engagement=summary.coverage.find(item=>item.label==='ENGAGEMENT');
     const leadingCards=[
-      sourceStageCard(site,summary.momentum),
       searchStageCard(seo,summary.momentum),
-      periodKpi(visitors,site),
-      periodKpi(engagement,site),
-      meaningfulActionsCard(site,ga4,sales,period),
-      onlineSalesCard(sales,period)
+      sourceStageCard(site,summary.momentum),
+      periodKpi(visitors,site,summary.momentum),
+      periodKpi(engagement,site,summary.momentum),
+      meaningfulActionsCard(site,ga4,sales,period,summary.momentum),
+      onlineSalesCard(sales,period,summary.momentum)
     ].join('');
     node.innerHTML=
       '<div class="mission-direction-overview">'+
@@ -1015,7 +1029,7 @@
             '<small>DOC JAKS · OWNER-FIRST BUSINESS INTELLIGENCE</small>'+
             '<h2>ARE WE MOVING FORWARD OR BACKWARD?</h2></div>'+
           '<p class="mission-stage-journey">THE OWNER VIEW: '+
-            'TRAFFIC & SOURCES → GOOGLE DISCOVERY → VISITORS → ENGAGEMENT → ACTIONS → SALES</p>'+
+            'SEARCH → TRAFFIC &amp; SOURCES → VISITORS → ENGAGEMENT → ACTIONS → SALES</p>'+
           '<div class="mission-direction-evidence mission-direction-top-evidence">'+
             leadingCards+'</div>'+
         '</div>'+
