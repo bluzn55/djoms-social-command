@@ -1,4 +1,4 @@
-/* DJOMS · Owner discovery spreadsheet · 22 sources plus totals, six measurements, 18 rows.
+/* DJOMS · Owner discovery spreadsheet · 23 tracked sources (4 grouped), six measurements, 18 rows.
    Read-only; never treat unrelated providers' numbers as additive. */
 (function discoveryWorkbook(){
   'use strict';
@@ -13,12 +13,12 @@
     ['direct','DIRECT'],['google','GOOGLE SEARCH'],['maps','GOOGLE MAPS'],
     ['bing','BING'],['yahoo','YAHOO'],['duckduckgo','DUCKDUCKGO'],
     ['facebook','FACEBOOK'],['instagram','INSTAGRAM'],['x','X / TWITTER'],
-    ['youtube','YOUTUBE'],['socialGroup','OTHER SOCIAL'],
-    ['tiktok','TIKTOK'],['pinterest','PINTEREST'],['reddit','REDDIT'],['nextdoor','NEXTDOOR'],
-    ['yelp','YELP'],['tripadvisor','TRIPADVISOR'],
+    ['youtube','YOUTUBE'],['yelp','YELP'],['tripadvisor','TRIPADVISOR'],
     ['ai','AI REFERRALS'],['outlaw','OUTLAW RADIO 5150'],
     ['websites','OTHER WEBSITES / BLOGS'],['email','EMAIL'],
-    ['qr','QR CODES'],['ads','PAID ADS'],['other','OTHER REFERRALS']
+    ['qr','QR CODES'],['ads','PAID ADS'],['other','OTHER REFERRALS'],
+    ['socialGroup','OTHER SOCIAL'],
+    ['tiktok','TIKTOK'],['pinterest','PINTEREST'],['reddit','REDDIT'],['nextdoor','NEXTDOOR']
   ];
   // Four source buckets remain separate; the display-only aggregate must
   // never be added to Wix or GA4's actual website session total.
@@ -515,7 +515,7 @@
       '<p>Six measurements with LAST, CURRENT and % CHANGE on separate rows.</p></div>'+
       '<strong>23 SOURCES · 4 GROUPED · 18 ROWS</strong></div>'+
       bingForm+
-      '<p class="mission-sheet-scroll-hint">SCROLL RIGHT FOR SOURCES → Tap OTHER SOCIAL ▾ to show TikTok, Pinterest, Reddit and Nextdoor. MEASUREMENT, TOTAL and PERIOD stay visible.</p>'+
+      '<p class="mission-sheet-scroll-hint">SCROLL ALL THE WAY RIGHT FOR OTHER SOCIAL ▾ → Tap to show TikTok, Pinterest, Reddit and Nextdoor. MEASUREMENT, TOTAL and PERIOD stay visible.</p>'+
       '<div class="mission-sheet-scroll" tabindex="0" role="region" aria-label="Horizontal source comparison spreadsheet">'+
         '<table class="mission-sheet-table'+(socialExpanded?' mission-sheet-social-expanded':'')+'">'+head+'<tbody>'+body+'</tbody></table>'+
       '</div>'+
