@@ -7554,6 +7554,21 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   border-top:2px solid #b48b4c;
   color:#ffe2a0;
 }
+/* Highlight GA4 report reconciliation without altering the actual counts. */
+#connectionStrip .mission-google-performance .mission-ga4-origin-discrepancy {
+  margin:12px 0 5px;
+  padding:12px 15px;
+  border:2px solid #c79b4d;
+  border-left-width:6px;
+  border-radius:5px;
+  background:#49341d;
+  color:#ffeac2;
+  font:800 17px/1.45 Arial,sans-serif;
+}
+#connectionStrip .mission-google-performance .mission-ga4-origin-discrepancy strong {
+  font:900 20px/1.2 Arial,sans-serif;
+  color:#ffd98f;
+}
 #connectionStrip .mission-google-performance .mission-ga4-origin-coverage,
 #connectionStrip .mission-google-performance .mission-ga4-origin-note {
   margin:9px 0 0;
