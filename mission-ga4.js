@@ -49,12 +49,18 @@
     const parts=raw.split(/\s+\/\s+/),base=parts[0]||'',medium=(parts[1]||'').trim();
     const text=raw+' '+cat;
     if(/(?:^|[^a-z])(?:cpc|ppc|paid|cpm|display|advertising|ads)(?:$|[^a-z])/.test(medium+' '+cat))return 'ads';
+    // Share the same verified Email referrer detector as Search & Discovery.
+    // Only tracked campaigns and known mail clients count, not generic
+    // website articles with "email" in their URL.
+    if((typeof window.djomsEmailReferralSource==='function'&&
+      window.djomsEmailReferralSource({source:raw,category:cat}))||
+      /(?:^|[^a-z0-9])(?:mail\.duck\.com|email\s*protection|@duck\.com)(?:$|[^a-z0-9])/.test(raw))
+      return 'email';
     if(cat==='direct'||base==='(direct)'||base==='direct')return 'direct';
     if(/facebook|fb\.me|\bfb\b/.test(text))return 'facebook';
     if(/instagram|ig\.me|\binsta\b/.test(text))return 'instagram';
     if(/twitter|t\.co(?:\s|$)|x\.com/.test(text)||base==='x')return 'x';
     if(/youtube|youtu\.be/.test(text))return 'youtube';
-    if(/newsletter|email|e-mail/.test(text))return 'email';
     // A referral from the radio domain or an explicitly tagged external
     // forward is a radio-origin website session, not a streaming listener.
     if(typeof window.djomsOutlawRadioReferral==='function'&&
