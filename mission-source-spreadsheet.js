@@ -55,6 +55,26 @@
     for(const [id,,rx] of emailSources)if(rx&&rx.test(name))return id;
     return 'other';
   }
+  // QR-attributed WEBSITE sessions, not scans; exact medium/category/source.
+  // A QR generator or a blog post mentioning QR is not an actual QR source.
+  function qrReferralSource(item){
+    const name=String(item?.source||item?.sourceMedium||item?.referrer||'').trim().toLowerCase();
+    const cat=String(item?.category||'').trim().toLowerCase();
+    const pieces=name.split(/\s+\/\s+/);
+    const base=pieces[0]||'';
+    const medium=pieces.slice(1).join(' / ').trim();
+    const utm=/(?:[?&]utm_medium=)(?:qr|qr_code|qrcode)(?:$|[&#\s])/i.test(name);
+    const fromMedium=/^(?:qr|qr_code|qrcode)(?:$|[\s,;])/i.test(medium);
+    const fromCategory=/^(?:qr|qr[\s_-]*codes?|qr[\s_-]*scans?|qr[\s_-]*campaigns?)$/i.test(cat);
+    const fromSource=/^(?:qr|qr[\s_-]*codes?|qrcode|docjaks[\s_-]*qr)$/i.test(base);
+    return utm||fromMedium||fromCategory||fromSource;
+  }
+  const qrPlacements=[
+    ['market_tent','Market tent'],['boss_soss','Boss Soss bottle'],
+    ['sweet_bayou','Sweet Bayou bottle'],['wooden_token','The Wooden Token'],
+    ['pit_krewe','Pit Krewe'],['outlaw_radio_5150','Outlaw Radio 5150']
+  ];
+  const qrLink=id=>'https://docjaks.com/?utm_source=docjaks_qr&utm_medium=qr&utm_campaign='+encodeURIComponent(id);
   const quietSocial=['tiktok','pinterest','reddit','nextdoor'];
   const columns=[
     ['direct','DIRECT'],['google','GOOGLE SEARCH'],['maps','GOOGLE MAPS'],
@@ -110,12 +130,12 @@
     const cat=String(item?.category||'').toLowerCase();
     const s=name+' '+cat;
     if(/maps\.google|google\s*maps|google.*business\s*profile|google_business_profile|g\.page|(?:^|[\W_])gbp(?:[\W_]|$)/.test(s))return 'maps';
-    if(/(?:^|[\W_])qr(?:[\W_]|$)|qr.?code|scan.?code/.test(s))return 'qr';
     if(/(?:^|[\W_])(?:cpc|ppc|paid|display|advertising|ads)(?:[\W_]|$)/.test(s))return 'ads';
     // Prioritize proven email mediums before the named Google/Yahoo/Meta source.
     if(emailReferralSource(item)||
       /(?:^|[^a-z0-9])(?:mail\.duck\.com|email\s*protection|@duck\.com)(?:$|[^a-z0-9])/.test(name))
       return 'email';
+    if(qrReferralSource(item))return 'qr';
     if(outlawRadioReferral(item))return 'outlaw';
     if(aiReferralService(item))return 'ai';
     // Account followers/Meta post impressions are not website referrals.
@@ -376,10 +396,17 @@
     const gaEmailNow=sourceNumber(ga,'email','visits');
     const emailViaGa4=good(gaEmailNow)&&gaEmailNow>0&&
       (!good(wixEmailNow)||wixEmailNow===0);
+    // Consistent GA4 fallback when Wix reports zero QR sessions as Direct.
+    // Never add provider session counts.
+    const wixQrNow=sourceNumber(current,'qr','visits');
+    const gaQrNow=sourceNumber(ga,'qr','visits');
+    const qrViaGa4=good(gaQrNow)&&gaQrNow>0&&
+      (!good(wixQrNow)||wixQrNow===0);
     function raw(measure,source,which){
       if(measure==='visits'){
         const data=((source==='outlaw'&&outlawViaGa4)||
-          (source==='email'&&emailViaGa4))?
+          (source==='email'&&emailViaGa4)||
+          (source==='qr'&&qrViaGa4))?
           (which==='last'?gaPrior:ga):(which==='last'?last:current);
         return source==='socialGroup'?quietSocialNumber(data,measure):
           sourceNumber(data,source,measure);
@@ -739,5 +766,6 @@
   window.djomsAiReferralService=aiReferralService;
   window.djomsOutlawRadioReferral=outlawRadioReferral;
   window.djomsEmailReferralSource=emailReferralSource;
+  window.djomsQrReferralSource=qrReferralSource;
   window.djomsSourceSpreadsheet=draw;
 })();
