@@ -376,7 +376,7 @@
       bing?.status==='needs-attention'||bing?.status==='unavailable'?
       ' Bing Webmaster: '+esc(bing.message||'Reporting unavailable.')+'.':
       '';
-    const bingForm='<details class="mission-sheet-bing-connect">'+
+    const bingForm='<details id="bing-connection" class="mission-sheet-bing-connect"'+(bing?.status==='connected'?'':' open')+'>'+
       '<summary>BING CONNECTION · SAVE API KEY</summary>'+
       '<p>Open <a href="https://www.bing.com/webmasters/" target="_blank" rel="noopener noreferrer">Bing Webmaster Tools ↗</a>, verify or import DOCJAKS.COM, then find <b>Settings → API Access → API Key</b>. Paste the key here in your signed-in Command Center. It is encrypted on the server and never shown again.</p>'+
       '<form data-bing-connect-form="1">'+
@@ -401,6 +401,7 @@
       '<div class="mission-sheet-heading"><div><h3>SEARCH & DISCOVERY · 22 SOURCES</h3>'+
       '<p>Six measurements with LAST, CURRENT and % CHANGE on separate rows.</p></div>'+
       '<strong>22 SOURCES + TOTAL · 18 ROWS</strong></div>'+
+      bingForm+
       '<p class="mission-sheet-scroll-hint">SCROLL RIGHT FOR ALL 22 SOURCES → MEASUREMENT, TOTAL and PERIOD stay visible.</p>'+
       '<div class="mission-sheet-scroll" tabindex="0" role="region" aria-label="Horizontal source comparison spreadsheet">'+
         '<table class="mission-sheet-table">'+head+'<tbody>'+body+'</tbody></table>'+
@@ -412,7 +413,7 @@
         ' and are not unique visitors. Previous source sessions use Wix\'s matching preceding period when verified; otherwise N/A. '+
         'Wix and GA4 session counts are never added. Source-specific average stay uses GA4 session duration when verified (and may differ from the Wix overall average). Relative percent changes compare matching periods; lower average search position is better. '+
         'NEW is used instead of a percentage when the last value was zero. N/A means not applicable or unverified.'+bingNote+mapNote+'</p>'+
-      queryDetails+bingForm+'</section>';
+      queryDetails+'</section>';
   }
   window.djomsSourceSpreadsheet=draw;
 })();
