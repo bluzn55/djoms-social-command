@@ -77,6 +77,15 @@
     if(report?.connected!==true||!Array.isArray(report.trafficSources))return null;
     return summarizeSources(report.trafficSources,report.trafficSourcesComplete,report.sessions);
   }
+  // Wix already provides prior-period source rows in the same verified
+  // report, so use them immediately instead of waiting for another request.
+  function wixPriorReport(report){
+    const rows=report?.trafficSourcesPrevious;
+    if(report?.connected!==true||!Array.isArray(rows))return null;
+    if(!rows.length&&report.trafficSourcesPreviousComplete!==true)return null;
+    const previousSessions=report?.metricComparisons?.sessions?.previous;
+    return summarizeSources(rows,report.trafficSourcesPreviousComplete,previousSessions);
+  }
   function ga4Report(report){
     if(report?.status!=='connected'||report?.sourceDetails?.status!=='reported'||
         !Array.isArray(report.sourceDetails.rows))return null;
@@ -183,8 +192,10 @@
       pastSearch('clicks')/pastSearch('impressions'):null;
     const wix=wixReport(site),ga=ga4Report(ga4);
     const current=wix&&(wix.complete||Object.keys(wix.buckets).length)?wix:ga||wix;
-    // Do not compare prior Wix attribution against present GA4 attribution.
-    const last=current===wix&&current?priorSourceData(period):null;
+    // Compare Wix with Wix, never a mix of Wix and GA4. Wix already
+    // returns the matching previous source rows; old range fetch is fallback.
+    const last=current===wix&&current?
+      (wixPriorReport(site)||priorSourceData(period)):null;
     function raw(measure,source,which){
       if(measure==='visits'||measure==='stay')
         return sourceNumber(which==='last'?last:current,source,measure);
@@ -218,18 +229,19 @@
       }
       return null;
     };
-    const headerName=(id,label,i)=>
+    const headerName=(id,label)=>
       id==='maps'
-      ?'<span class="mission-sheet-maps-heading"><span class="mission-sheet-map-num">'+
-        (i+1)+'.</span><span class="mission-sheet-maps-words"><b>GOOGLE</b><b>MAPS</b></span></span>'
-      :'<span>'+(i+1)+'.</span> '+esc(label);
+        ?'<span class="mission-sheet-maps-heading"><span class="mission-sheet-maps-words"><b>GOOGLE</b><b>MAPS</b></span></span>'
+        :esc(label);
     const head='<thead><tr>'+
       '<th scope="col" class="mission-sheet-metric">MEASUREMENT</th>'+
       '<th scope="col" class="mission-sheet-total" title="Verified overall measure; Google-only for Search Console">TOTAL</th>'+
       '<th scope="col" class="mission-sheet-period">PERIOD</th>'+
-      columns.map(([id,label],i)=>
+      columns.map(([id,label])=>
         '<th scope="col" class="mission-sheet-source'+(id==='google'?' mission-sheet-google':'')+
-        '">'+headerName(id,label,i)+'</th>').join('')+
+        '" title="'+(id==='direct'
+            ?'Direct-attributed website sessions from Wix; not proof a person typed the URL'
+            :esc(label))+'">'+headerName(id,label)+'</th>').join('')+
       '</tr></thead>';
     const body=measures.map(([metric,label])=>{
       const totalPrevious=totalValue(metric,'last');
@@ -303,7 +315,7 @@
         'Search CTR and position are Google-reported rates/averages, never added across sources. '+
         'Website visit and stay totals come from the overall '+esc(provider)+' report, not from adding incomplete source rows. '+
         'Website visits are attributed sessions from '+esc(provider)+
-        ' and are not unique visitors. Previous source sessions use the preceding equal-length Wix report when available. '+
+        ' and are not unique visitors. Previous source sessions use Wix\'s matching preceding period when verified; otherwise N/A. '+
         'Wix and GA4 are never combined. Relative percent changes compare matching periods; lower average search position is better. '+
         'NEW is used instead of a percentage when the last value was zero. N/A means not applicable or unverified.</p>'+
       queryDetails+'</section>';
