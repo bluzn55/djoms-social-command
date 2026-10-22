@@ -383,6 +383,40 @@ function platformExtraMetrics(platform, metrics) {
   if (platform === 'youtube') return [['Watch time',metrics.watchTime],['Subscriber gain',metrics.subscriberGain]];
   return [];
 }
+// Wix reporting supplies the same date-scoped page and geography lists in the
+// owner summary, immediately under Visitor Engagement and Actions & Online Sales.
+function renderVisitorEvidence(site) {
+  const pageRows=Array.isArray(site?.topPages)?site.topPages
+    .filter(item=>item&&typeof item.path==='string'&&item.path.trim()&&
+      typeof item.visitors==='number'&&Number.isFinite(item.visitors)&&item.visitors>0)
+    .sort((a,b)=>b.visitors-a.visitors||(Number(b.views)||0)-(Number(a.views)||0)):[];
+  const locationRows=Array.isArray(site?.geography)?site.geography
+    .filter(item=>item&&(item.city||item.region||item.country)&&
+      typeof item.visitors==='number'&&Number.isFinite(item.visitors)&&item.visitors>0)
+    .sort((a,b)=>b.visitors-a.visitors):[];
+  const pages=pageRows;
+  const locations=locationRows;
+  const locationName=item=>[item.city,item.region].filter(Boolean).join(', ')||item.country||'Not reported';
+  return `
+            <div class="mission-web-lists mission-owner-visited-lists">
+              <section class="mission-web-mini mission-web-visited" aria-label="Pages with reported visitors and average time on each page">
+                <h3>VISITED PAGES <small>· Wix reported</small></h3>
+                <div class="mission-web-list">
+                  <div class="mission-web-listrow mission-web-page-row mission-web-page-head"><span>PAGE</span><span>VISITORS</span><span>VIEWS</span><span>AVG. TIME</span></div>
+                  ${pages.length?pages.map((item,index)=>`<div class="mission-web-listrow mission-web-page-row"><span title="${esc(item.path)}"><em>${index+1}.</em> ${esc(wName(item.path))}</span><strong>${esc(compactMetric(item.visitors))}</strong><strong>${esc(compactMetric(item.views))}</strong><strong title="Average Wix-measured time on this page">${esc(wTime(item.avgTimeSeconds))}</strong></div>`).join(''):'<p class="mission-web-empty">No pages with recorded visitors for this period.</p>'}
+                </div>
+                <p class="mission-web-page-note">Only pages with reported visitors. Time is the measured page average, not an individual visitor timeline. N/A means the time was not measured.</p>
+              </section>
+              <section class="mission-web-mini" aria-label="Top five reported visitor locations">
+                <h3>WHERE VISITORS ARE FROM <small>· Approximate</small></h3>
+                <div class="mission-web-list">
+                  ${locations.length?locations.map((item,index)=>`<div class="mission-web-listrow"><span><em>${index+1}.</em> ${esc(locationName(item))}</span><strong>${esc(compactMetric(item.visitors))}</strong></div>`).join(''):'<p class="mission-web-empty">No location details available for this period.</p>'}
+                </div>
+              </section>
+            </div>
+  `;
+}
+
 function renderConnectionStrip() {
   const strip = $('connectionStrip');
 
@@ -496,17 +530,6 @@ function renderConnectionStrip() {
             ['Contact Actions',leads,'contactActions']
           ];
           const rangeCaption=({today:'Today','7d':'Last 7 days','30d':'Last 30 days','365d':'Last 365 days',custom:'Custom dates'})[websiteRange]||'Last 7 days';
-          // Display only Wix-returned pages with at least one reported visitor.
-          // Unknown visitor counts do not qualify as confirmed visits.
-          const pages=Array.isArray(site.topPages)
-            ? site.topPages.filter(item=>item && typeof item.path==='string' &&
-                item.path.trim() && (reportNumber(item.visitors)??0)>0)
-              .sort((a,b)=>(reportNumber(b.visitors)??0)-(reportNumber(a.visitors)??0)||
-                (reportNumber(b.views)??0)-(reportNumber(a.views)??0))
-            : [];
-          const locations=Array.isArray(site.geography)
-            ? site.geography.filter(item=>item && (item.city||item.region||item.country)).slice(0,5) : [];
-          const locationName=item=>[item.city,item.region].filter(Boolean).join(', ')||item.country||'Not reported';
           return `<div class="mission-web-console">
             <div class="mission-web-brand">
               <small class="mission-web-overline">⚜ DOC JAKS · WIX</small>
@@ -548,22 +571,6 @@ function renderConnectionStrip() {
                 </div>
               </div>`;
             })()}
-            <div class="mission-web-lists">
-              <section class="mission-web-mini mission-web-visited" aria-label="Pages with reported visitors and average time on each page">
-                <h3>VISITED PAGES <small>· Wix reported</small></h3>
-                <div class="mission-web-list">
-                  <div class="mission-web-listrow mission-web-page-row mission-web-page-head"><span>PAGE</span><span>VISITORS</span><span>VIEWS</span><span>AVG. TIME</span></div>
-                  ${pages.length?pages.map((item,index)=>`<div class="mission-web-listrow mission-web-page-row"><span title="${esc(item.path)}"><em>${index+1}.</em> ${esc(wName(item.path))}</span><strong>${esc(compactMetric(item.visitors))}</strong><strong>${esc(compactMetric(item.views))}</strong><strong title="Average Wix-measured time on this page">${esc(wTime(item.avgTimeSeconds))}</strong></div>`).join(''):'<p class="mission-web-empty">No pages with recorded visitors for this period.</p>'}
-                </div>
-                <p class="mission-web-page-note">Only pages with reported visitors. Time is the measured page average, not an individual visitor timeline. N/A means the time was not measured.</p>
-              </section>
-              <section class="mission-web-mini" aria-label="Top five reported visitor locations">
-                <h3>WHERE VISITORS ARE FROM <small>· Approximate</small></h3>
-                <div class="mission-web-list">
-                  ${locations.length?locations.map((item,index)=>`<div class="mission-web-listrow"><span><em>${index+1}.</em> ${esc(locationName(item))}</span><strong>${esc(compactMetric(item.visitors))}</strong></div>`).join(''):'<p class="mission-web-empty">No location details available for this period.</p>'}
-                </div>
-              </section>
-            </div>
           </div>`;
         })()}
       </section>
