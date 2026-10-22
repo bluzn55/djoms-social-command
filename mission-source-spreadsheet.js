@@ -190,6 +190,13 @@
       good(pastSearch('impressions'))&&pastSearch('impressions')>0&&
       good(pastSearch('clicks'))?
       pastSearch('clicks')/pastSearch('impressions'):null;
+    // Same-period Maps data comes from the separately authorized GBP report.
+    // Maps impressions do not get added to the Search Console total.
+    const savedMaps=window.djomsVerifiedReports?.maps;
+    const maps=savedMaps?.query===period?.query&&
+      savedMaps?.data?.range?.start===period?.start&&
+      savedMaps?.data?.range?.end===period?.end?
+      savedMaps.data:null;
     const wix=wixReport(site),ga=ga4Report(ga4);
     const current=wix&&(wix.complete||Object.keys(wix.buckets).length)?wix:ga||wix;
     // Compare Wix with Wix, never a mix of Wix and GA4. Wix already
@@ -199,6 +206,13 @@
     function raw(measure,source,which){
       if(measure==='visits'||measure==='stay')
         return sourceNumber(which==='last'?last:current,source,measure);
+      if(source==='maps'){
+        if(measure!=='appearances'||maps?.status!=='connected')return null;
+        if(which==='current')return good(maps.metrics?.impressions)?maps.metrics.impressions:null;
+        return maps.comparison?.status==='reported'&&
+          good(maps.comparison?.appearances?.previous)?
+          maps.comparison.appearances.previous:null;
+      }
       if(source!=='google'||!google)return null;
       if(which==='last')return measure==='ctr'?ctrLast:pastSearch(
         measure==='appearances'?'impressions':measure);
@@ -303,6 +317,17 @@
       ).join('')+'</div></details>':'';
     const provider=current===wix&&current?'Wix':
       current===ga&&current?'Google Analytics':'N/A';
+    const mapNote=maps?.status==='connected'?
+      ' Google Maps appearances come from Business Profile desktop/mobile daily impressions; they are not unique people or site visits. Google does not provide a separate Maps CTR or average search position through that report.':
+      maps?.status==='not-connected'?
+      ' Google Maps appearances need Business Profile authorization. <a href="/api/meta/local-google-connect">Connect Google Business Profile ↗</a>':
+      maps?.status==='needs-location'?
+      ' Google Maps appearances need a selected location in REVIEWS & LOCAL.':
+      maps?.status==='reconnect'?
+      ' Google Business Profile needs reconnection in REVIEWS & LOCAL.':
+      maps?.status==='unavailable'?
+      ' Google Maps appearances: '+esc(maps.message||'API permission or data unavailable.')+'.':
+      '';
     return '<section class="mission-source-sheet" aria-label="Twenty-two traffic sources, six measures, eighteen Last Current and Percent Change data rows">'+
       '<div class="mission-sheet-heading"><div><h3>SEARCH & DISCOVERY · 22 SOURCES</h3>'+
       '<p>Six measurements with LAST, CURRENT and % CHANGE on separate rows.</p></div>'+
@@ -317,7 +342,7 @@
         'Website visits are attributed sessions from '+esc(provider)+
         ' and are not unique visitors. Previous source sessions use Wix\'s matching preceding period when verified; otherwise N/A. '+
         'Wix and GA4 are never combined. Relative percent changes compare matching periods; lower average search position is better. '+
-        'NEW is used instead of a percentage when the last value was zero. N/A means not applicable or unverified.</p>'+
+        'NEW is used instead of a percentage when the last value was zero. N/A means not applicable or unverified.'+mapNote+'</p>'+
       queryDetails+'</section>';
   }
   window.djomsSourceSpreadsheet=draw;
