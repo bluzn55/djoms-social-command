@@ -36,7 +36,8 @@
   // N/A = not verified; zero only follows a complete source report.
   const originOrder=[
     ['direct','Direct'],['facebook','Facebook'],['instagram','Instagram'],
-    ['x','X / Twitter'],['youtube','YouTube'],['ai','AI referral sites'],['google','Google Search'],
+    ['x','X / Twitter'],['youtube','YouTube'],['ai','AI referral sites'],
+    ['outlaw','Outlaw Radio 5150'],['google','Google Search'],
     ['other-search','Other search engines'],['other-social','Other social platforms'],
     ['email','Email'],['ads','Paid advertising'],
     ['referral','Other websites / referrals'],['other','Other / unassigned']
@@ -54,6 +55,10 @@
     if(/twitter|t\.co(?:\s|$)|x\.com/.test(text)||base==='x')return 'x';
     if(/youtube|youtu\.be/.test(text))return 'youtube';
     if(/newsletter|email|e-mail/.test(text))return 'email';
+    // A referral from the radio domain or an explicitly tagged external
+    // forward is a radio-origin website session, not a streaming listener.
+    if(typeof window.djomsOutlawRadioReferral==='function'&&
+      window.djomsOutlawRadioReferral({source:raw,category:cat}))return 'outlaw';
     // Use the exact same detector as the 23-source Search & Discovery grid.
     // A named AI referrer is not an ordinary search-engine impression.
     if(typeof window.djomsAiReferralService==='function'&&
