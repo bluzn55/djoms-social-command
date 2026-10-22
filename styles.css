@@ -9637,11 +9637,11 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
    The row-spanning frozen measurement label must have the same border
    as the CURRENT period column and all 22 source cells. */
 #connectionStrip .mission-direction-panel
-.mission-sheet-table tbody tr.mission-sheet-last:not(:nth-last-child(2)) > th.mission-sheet-metric,
+.mission-sheet-table tbody tr.mission-sheet-last:not(:nth-last-child(3)) > th.mission-sheet-metric,
 #connectionStrip .mission-direction-panel
-.mission-sheet-table tbody tr.mission-sheet-current:not(:last-child) > th.mission-sheet-period,
+.mission-sheet-table tbody tr.mission-sheet-change:not(:last-child) > th.mission-sheet-period,
 #connectionStrip .mission-direction-panel
-.mission-sheet-table tbody tr.mission-sheet-current:not(:last-child) > td.mission-sheet-number {
+.mission-sheet-table tbody tr.mission-sheet-change:not(:last-child) > td.mission-sheet-number {
   border-bottom: 3px solid #111 !important;
 }
 
@@ -9650,10 +9650,11 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 /* Preserve the original 12-row grid. Current cells get a legible second
    line for the verified change, while salmon vertical rules and black
    measure-pair dividers remain untouched. */
-#connectionStrip .mission-direction-panel .mission-sheet-table tbody tr.mission-sheet-current > td.mission-sheet-number {
-  height:57px;
-  padding-top:7px;
-  padding-bottom:7px;
+#connectionStrip .mission-direction-panel .mission-sheet-table tbody tr.mission-sheet-current > td.mission-sheet-number,
+#connectionStrip .mission-direction-panel .mission-sheet-table tbody tr.mission-sheet-change > td.mission-sheet-number {
+  height:41px;
+  padding-top:8px;
+  padding-bottom:8px;
 }
 #connectionStrip .mission-direction-panel .mission-sheet-table .mission-sheet-main {
   display:block;
@@ -9683,4 +9684,25 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 #connectionStrip .mission-direction-panel .mission-sheet-table td .mission-sheet-delta.mission-sheet-unknown {
   color:#68635c !important;
   font-size:12px;
+}
+
+
+/* THREE DISTINCT ROWS PER SEARCH METRIC: LAST / CURRENT / % CHANGE */
+#connectionStrip .mission-direction-panel .mission-sheet-table .mission-sheet-change > th.mission-sheet-period {
+  background:#f0dfcf;
+  color:#111;
+  font-weight:900;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table tbody .mission-sheet-change > td.mission-sheet-number {
+  background:#fff8f1;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table tbody .mission-sheet-change > td.mission-sheet-up {
+  background:#e9f4e9;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table tbody .mission-sheet-change > td.mission-sheet-down {
+  background:#fbe9e6;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-table tbody .mission-sheet-change .mission-sheet-delta {
+  margin:0;
+  font-size:clamp(14px,1vw,18px);
 }
