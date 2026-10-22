@@ -354,24 +354,37 @@
         measure==='appearances'?'impressions':measure);
       return measure==='appearances'?search.impressions:search[measure];
     }
-    // Search counts include only verified Google Search and Bing providers.
-    // Maps profile impressions do not belong in these website-search totals.
-    // A missing prior period for any connected source makes the past N/A
-    // instead of comparing a partial past against a wider current total.
-    const searchProviders=[...(google?['google']:[]),
-      ...(bing?.status==='connected'?['bing']:[])];
-    // Do not add provider totals with different observed date ranges.
-    const sameSearchWindow=searchProviders.length<2||(
-      bing?.currentRange?.start===seo?.comparison?.currentRange?.start&&
-      bing?.currentRange?.end===seo?.comparison?.currentRange?.end);
-    const sameSearchPrevious=searchProviders.length<2||(
-      bing?.previousRange?.start===seo?.comparison?.previousRange?.start&&
-      bing?.previousRange?.end===seo?.comparison?.previousRange?.end);
+    // Search TOTAL must compare the same provider(s) in LAST and CURRENT.
+    // Never add Google and Bing if their observed reporting windows differ.
+    // If both cannot be safely combined, show one verified provider (usually
+    // Google) with an explicit G/B marker instead of discarding useful data.
+    const bingConnected=bing?.status==='connected';
+    const pairedCounts=source=>['last','current'].every(which=>
+      good(raw('appearances',source,which))&&
+      good(raw('clicks',source,which)));
+    const currentCounts=source=>good(raw('appearances',source,'current'))&&
+      good(raw('clicks',source,'current'));
+    const sameSearchWindow=google&&bingConnected&&
+      bing.currentRange?.start===seo?.comparison?.currentRange?.start&&
+      bing.currentRange?.end===seo?.comparison?.currentRange?.end;
+    const sameSearchPrevious=google&&bingConnected&&
+      bing.previousRange?.start===seo?.comparison?.previousRange?.start&&
+      bing.previousRange?.end===seo?.comparison?.previousRange?.end;
+    const searchProviders=(sameSearchWindow&&sameSearchPrevious&&
+      pairedCounts('google')&&pairedCounts('bing'))?['google','bing']:
+      google&&pairedCounts('google')?['google']:
+      bingConnected&&pairedCounts('bing')?['bing']:
+      google&&currentCounts('google')?['google']:
+      bingConnected&&currentCounts('bing')?['bing']:[];
+    const searchScope=searchProviders.length===2?'G+B':
+      searchProviders[0]==='google'?'G':
+      searchProviders[0]==='bing'?'B':null;
+    // Bing's overall Webmaster traffic report has no average position.
+    // Always label Google position as G rather than imply cross-engine rank.
     function measuredSearchTotal(measure,which){
-      if(!searchProviders.length||!sameSearchWindow||
-        (which==='last'&&!sameSearchPrevious))return null;
-      if(measure==='position')return searchProviders.length===1&&
-        searchProviders[0]==='google'?raw('position','google',which):null;
+      if(measure==='position')return google?
+        raw('position','google',which):null;
+      if(!searchProviders.length)return null;
       if(measure==='ctr'){
         const clicks=measuredSearchTotal('clicks',which);
         const impressions=measuredSearchTotal('appearances',which);
@@ -420,7 +433,7 @@
         :esc(label);
     const head='<thead><tr>'+
       '<th scope="col" class="mission-sheet-metric">MEASUREMENT</th>'+
-      '<th scope="col" class="mission-sheet-total" title="Verified measured Google Search and Bing sources; Maps profile appearances excluded">TOTAL</th>'+
+      '<th scope="col" class="mission-sheet-total" title="Search coverage is marked G = Google, B = Bing, G+B = both with matching reporting dates. Average position is Google only. Website totals come from Wix/GA4.">TOTAL</th>'+
       '<th scope="col" class="mission-sheet-period">PERIOD</th>'+
       columns.map(([id,label])=>
         '<th scope="col" class="mission-sheet-source'+(id==='google'?' mission-sheet-google':'')+
@@ -452,14 +465,24 @@
         const value=which==='last'?totalPrevious:totalCurrent;
         const isChange=which==='change';
         const tone=which==='last'?'':signal(metric,totalPrevious,totalCurrent);
+        const isSearch=['appearances','clicks','ctr','position'].includes(metric);
+        const sourceTag=metric==='position'?'G':isSearch?searchScope:null;
+        const tag=sourceTag&&good(value)?
+          '<small class="mission-sheet-total-scope" aria-label="'+
+            esc(sourceTag==='G+B'?'Google and Bing':sourceTag==='G'?'Google only':'Bing only')+
+            '">'+esc(sourceTag)+'</small>':'';
         const mark=isChange
-          ?(good(totalCurrent)?changeBadge(metric,totalPrevious,totalCurrent):
+          ?(good(totalCurrent)?
+            changeBadge(metric,totalPrevious,totalCurrent).replace('</span>',tag+'</span>'):
             '<span class="mission-sheet-delta mission-sheet-unknown">N/A</span>')
-          :'<span class="mission-sheet-main">'+esc(nice(metric,value))+'</span>';
+          :'<span class="mission-sheet-main">'+esc(nice(metric,value))+tag+'</span>';
         const scope=metric==='position'
-          ?'Ranking cannot be combined across Google and Bing; N/A when more than one engine reports'
-          :['appearances','clicks','ctr'].includes(metric)
-          ?'Measured Google Search and Bing only, not all search engines; Maps profile impressions excluded'
+          ?'Google Search Console average position only; Bing supplies no compatible position. Not a combined engine ranking.'
+          :isSearch
+          ?'Verified search coverage: '+(searchScope==='G+B'?'Google and Bing with matching current and past reporting dates':
+            searchScope==='G'?'Google only; Bing unavailable, incomplete or reports different dates':
+            searchScope==='B'?'Bing only; Google comparison unavailable':'No verified search report')+
+            '. Maps profile impressions excluded.'
           :'Overall '+(current===wix?'Wix':current===ga?'Google Analytics':'unverified')+
             ' measure; not the sum of incomplete source categories';
         return '<td class="mission-sheet-number mission-sheet-total-cell'+tone+
@@ -599,7 +622,7 @@
       '<div class="mission-sheet-scroll" tabindex="0" role="region" aria-label="Horizontal source comparison spreadsheet">'+
         '<table class="mission-sheet-table'+(socialExpanded?' mission-sheet-social-expanded':'')+'">'+head+'<tbody>'+body+'</tbody></table>'+
       '</div>'+
-      '<p class="mission-sheet-note">TOTAL is immediately after MEASUREMENT. Search counts cover connected Google Search and Bing reporting only, never every possible search engine. Google Maps profile impressions are excluded. Search totals remain N/A when provider reporting dates differ. '+
+      '<p class="mission-sheet-note">TOTAL is immediately after MEASUREMENT. Search totals cover only verified comparable sources. G means Google only, B means Bing only, and G+B means both have matching reporting dates. When Google and Bing dates differ, show the verified Google-only search totals rather than add mismatched periods. Average search position is always Google only; Bing has no compatible rank metric. Google Maps impressions are excluded. '+
         'Search CTR is calculated from same-period clicks and appearances, while search rankings cannot be combined across engines. '+
         'Website visit and stay totals come from the overall '+esc(provider)+' report, not from adding incomplete source rows. '+
         'Website visits are attributed sessions from '+esc(provider)+
