@@ -10542,3 +10542,61 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     justify-self:start;
   }
 }
+
+/* OWNER REPORT · PER-LINE GREEN/RED AND VISITED PAGES POSITION · OCT 22 2026
+   Current values reflect the improvement of THAT measurement; Last stays black.
+   Lower bounce and lower search ranking position are better. */
+#connectionStrip .mission-direction-panel .mission-pair-values.story-up .mission-pair-current,
+#connectionStrip .mission-direction-panel .mission-pair-values.story-up .mission-pair-current .mission-pair-prefix,
+#connectionStrip .mission-direction-panel .mission-pair-values.story-up .mission-pair-current .mission-pair-number {
+  color:#11703a !important;
+}
+#connectionStrip .mission-direction-panel .mission-pair-values.story-down .mission-pair-current,
+#connectionStrip .mission-direction-panel .mission-pair-values.story-down .mission-pair-current .mission-pair-prefix,
+#connectionStrip .mission-direction-panel .mission-pair-values.story-down .mission-pair-current .mission-pair-number {
+  color:#b02a22 !important;
+}
+#connectionStrip .mission-direction-panel .mission-pair-values.story-hold .mission-pair-current,
+#connectionStrip .mission-direction-panel .mission-pair-values.story-hold .mission-pair-current .mission-pair-prefix,
+#connectionStrip .mission-direction-panel .mission-pair-values.story-hold .mission-pair-current .mission-pair-number,
+#connectionStrip .mission-direction-panel .mission-pair-values.story-unknown .mission-pair-current,
+#connectionStrip .mission-direction-panel .mission-pair-values.story-unknown .mission-pair-current .mission-pair-prefix,
+#connectionStrip .mission-direction-panel .mission-pair-values.story-unknown .mission-pair-current .mission-pair-number {
+  color:#171717 !important;
+}
+#connectionStrip .mission-direction-panel .mission-owner-visited-lists {
+  display:grid;
+  grid-template-columns:minmax(0,3fr) minmax(0,2fr);
+  grid-column:1/-1;
+  margin:19px 0 8px;
+  padding-top:16px;
+  border-top:3px solid #b28b55;
+  gap:12px;
+  align-items:start;
+}
+#connectionStrip .mission-direction-panel .mission-owner-visited-lists .mission-web-mini h3 {
+  font-size:18px;
+}
+#connectionStrip .mission-direction-panel .mission-owner-visited-lists .mission-web-listrow {
+  font-size:16px;
+}
+#connectionStrip .mission-direction-panel .mission-owner-visited-lists .mission-web-listrow strong {
+  font-size:18px;
+}
+#connectionStrip .mission-direction-panel .mission-owner-visited-lists .mission-web-page-head {
+  font-size:13px;
+}
+#connectionStrip .mission-direction-panel .mission-source-sheet .mission-sheet-google-connect {
+  margin:14px 0 4px;
+  padding:0;
+  font:900 18px/1.4 Arial,sans-serif;
+}
+#connectionStrip .mission-direction-panel .mission-source-sheet .mission-sheet-google-connect a {
+  color:#195a36;
+  text-decoration:underline;
+}
+@media(max-width:900px) {
+  #connectionStrip .mission-direction-panel .mission-owner-visited-lists {
+    grid-template-columns:minmax(0,1fr);
+  }
+}
