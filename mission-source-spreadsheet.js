@@ -368,7 +368,7 @@
     const bingNote=bing?.status==='connected'?
       ' Bing Webmaster searches include its reported search verticals. Bing average position is N/A because the overall traffic API does not report it.':
       bing?.status==='needs-setup'?
-      ' Bing search reporting needs a verified DOCJAKS.COM property and a private BING_WEBMASTER_API_KEY configured in the DJOMS backend. <a href="https://www.bing.com/webmasters/" target="_blank" rel="noopener noreferrer">Open Bing Webmaster Tools ↗</a>':
+      ' Bing search reporting needs an API key. Open the BING CONNECTION section below to save it securely after verifying DOCJAKS.COM.':
       bing?.status==='needs-site'?
       ' Bing search reporting needs verified DOCJAKS.COM. <a href="https://www.bing.com/webmasters/" target="_blank" rel="noopener noreferrer">Verify or import from Google Search Console ↗</a>':
       bing?.status==='incomplete'?
@@ -376,6 +376,16 @@
       bing?.status==='needs-attention'||bing?.status==='unavailable'?
       ' Bing Webmaster: '+esc(bing.message||'Reporting unavailable.')+'.':
       '';
+    const bingForm='<details class="mission-sheet-bing-connect">'+
+      '<summary>BING CONNECTION · SAVE API KEY</summary>'+
+      '<p>Open <a href="https://www.bing.com/webmasters/" target="_blank" rel="noopener noreferrer">Bing Webmaster Tools ↗</a>, verify or import DOCJAKS.COM, then find <b>Settings → API Access → API Key</b>. Paste the key here in your signed-in Command Center. It is encrypted on the server and never shown again.</p>'+
+      '<form data-bing-connect-form="1">'+
+        '<label for="missionBingApiKey">Bing Webmaster API key</label>'+
+        '<input id="missionBingApiKey" type="password" name="bingApiKey" autocomplete="off" spellcheck="false" minlength="12" maxlength="256" required placeholder="Enter your Bing API key">'+
+        '<button type="submit">Save &amp; verify Bing</button>'+
+        '<span role="status" aria-live="polite" data-bing-connect-feedback="1"></span>'+
+      '</form>'+
+    '</details>';
     const mapNote=maps?.status==='connected'?
       ' Google Maps appearances come from Business Profile desktop/mobile daily impressions; they are not unique people or site visits. Google does not provide a separate Maps CTR or average search position through that report.':
       maps?.status==='not-connected'?
@@ -402,7 +412,7 @@
         ' and are not unique visitors. Previous source sessions use Wix\'s matching preceding period when verified; otherwise N/A. '+
         'Wix and GA4 session counts are never added. Source-specific average stay uses GA4 session duration when verified (and may differ from the Wix overall average). Relative percent changes compare matching periods; lower average search position is better. '+
         'NEW is used instead of a percentage when the last value was zero. N/A means not applicable or unverified.'+bingNote+mapNote+'</p>'+
-      queryDetails+'</section>';
+      queryDetails+bingForm+'</section>';
   }
   window.djomsSourceSpreadsheet=draw;
 })();
