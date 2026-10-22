@@ -225,7 +225,8 @@
     // Compare Wix with Wix, never a mix of Wix and GA4. Wix already
     // returns the matching previous source rows; old range fetch is fallback.
     const last=current===wix&&current?
-      (wixPriorReport(site)||priorSourceData(period)):null;
+      (wixPriorReport(site)||priorSourceData(period)):
+      current===ga&&current?gaPrior:null;
     function raw(measure,source,which){
       if(measure==='visits')
         return sourceNumber(which==='last'?last:current,source,measure);
@@ -297,7 +298,8 @@
         }
         return completeSourceTotal(which==='last'?last:current,measure);
       }
-      if(current===ga&&current&&which==='current'){
+      if(current===ga&&current){
+        if(which==='last')return completeSourceTotal(gaPrior,measure);
         if(measure==='visits'&&good(ga4?.metrics?.sessions))return ga4.metrics.sessions;
         if(measure==='stay'&&good(ga4?.metrics?.averageSessionDuration))
           return ga4.metrics.averageSessionDuration;
