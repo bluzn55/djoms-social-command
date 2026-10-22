@@ -10358,3 +10358,84 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     grid-column:2;grid-row:1 / 3;
   }
 }
+
+
+/* LOWER OWNER EVIDENCE: MATCH TOP L/C COLUMNS · OCT 22 2026 */
+/* The three detail panels use the SAME 18px bold type, 280px split pair,
+   and salmon divider as the six score boxes above. Scope prevents any
+   change to the 23-source Search & Discovery spreadsheet itself. */
+#connectionStrip .mission-direction-panel .mission-story-spreadsheet
+.mission-story-card .mission-story-row.mission-story-pair {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 280px !important;
+  column-gap:12px;
+  align-items:center;
+  min-width:0;
+  padding:8px 0;
+}
+#connectionStrip .mission-direction-panel .mission-story-spreadsheet
+.mission-story-card .mission-story-row.mission-story-pair > span:first-child {
+  color:#15120f !important;
+  font:900 clamp(16px,1.04vw,18px)/1.3 Arial,sans-serif !important;
+  overflow-wrap:anywhere;
+}
+#connectionStrip .mission-direction-panel .mission-story-spreadsheet
+.mission-story-card .mission-story-row.mission-story-pair > .mission-pair-values {
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  width:280px;max-width:100%;min-width:0;
+  box-sizing:border-box;
+  justify-self:end;align-items:center;justify-content:stretch;
+  gap:0 !important;white-space:nowrap;letter-spacing:0;
+  font:900 clamp(16px,1.04vw,18px)/1.3 Arial,sans-serif !important;
+  font-variant-numeric:tabular-nums;
+}
+#connectionStrip .mission-direction-panel .mission-story-spreadsheet
+.mission-story-card .mission-pair-values > .mission-pair-last,
+#connectionStrip .mission-direction-panel .mission-story-spreadsheet
+.mission-story-card .mission-pair-values > .mission-pair-current {
+  display:grid !important;
+  grid-template-columns:20px minmax(0,1fr);
+  align-items:center;gap:4px;
+  min-width:0;box-sizing:border-box;
+  padding:4px 7px;
+  line-height:1.3;white-space:nowrap;
+}
+#connectionStrip .mission-direction-panel .mission-story-spreadsheet
+.mission-story-card .mission-pair-values > .mission-pair-current {
+  border-left:2px solid #c78a7b;
+}
+#connectionStrip .mission-direction-panel .mission-story-spreadsheet
+.mission-story-card .mission-pair-prefix,
+#connectionStrip .mission-direction-panel .mission-story-spreadsheet
+.mission-story-card .mission-pair-number {
+  margin:0;
+  color:inherit;
+  font-size:clamp(16px,1.04vw,18px) !important;
+  font-weight:900 !important;
+  line-height:1.3;
+  white-space:nowrap;
+}
+#connectionStrip .mission-direction-panel .mission-story-spreadsheet
+.mission-story-card .mission-pair-number {
+  min-width:0;justify-self:start;text-align:left;
+}
+/* On narrower monitors use one supporting card per row so the enlarged
+   columns never collide with long labels or notes. */
+@media(max-width:1200px) {
+  #connectionStrip .mission-direction-panel .mission-story-grid-supporting {
+    grid-template-columns:minmax(0,1fr) !important;
+  }
+}
+@media(max-width:680px) {
+  #connectionStrip .mission-direction-panel .mission-story-spreadsheet
+  .mission-story-card .mission-story-row.mission-story-pair {
+    grid-template-columns:minmax(0,1fr) !important;
+    row-gap:5px;
+  }
+  #connectionStrip .mission-direction-panel .mission-story-spreadsheet
+  .mission-story-card .mission-story-row.mission-story-pair > .mission-pair-values {
+    justify-self:stretch;
+    max-width:100%;width:280px;
+  }
+}
