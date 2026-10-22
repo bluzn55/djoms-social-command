@@ -199,6 +199,11 @@
       savedMaps.data.range?.start===period.start&&
       savedMaps.data.range?.end===period.end?
       savedMaps.data:null;
+    const savedBing=window.djomsVerifiedReports?.bing;
+    const bing=period?.query&&savedBing?.data&&savedBing.query===period.query&&
+      savedBing.data.range?.start===period.start&&
+      savedBing.data.range?.end===period.end?
+      savedBing.data:null;
     const wix=wixReport(site),ga=ga4Report(ga4),gaPrior=ga4Report(ga4,'last');
     const current=wix&&(wix.complete||Object.keys(wix.buckets).length)?wix:ga||wix;
     // Compare Wix with Wix, never a mix of Wix and GA4. Wix already
@@ -222,17 +227,41 @@
           good(maps.comparison?.appearances?.previous)?
           maps.comparison.appearances.previous:null;
       }
+      if(source==='bing'){
+        if(bing?.status!=='connected'||measure==='position')return null;
+        const field=measure==='appearances'?'impressions':measure;
+        if(which==='current')return good(bing.metrics?.[field])?bing.metrics[field]:null;
+        return bing.comparison?.status==='reported'&&
+          good(bing.comparison?.[field]?.previous)?
+          bing.comparison[field].previous:null;
+      }
       if(source!=='google'||!google)return null;
       if(which==='last')return measure==='ctr'?ctrLast:pastSearch(
         measure==='appearances'?'impressions':measure);
       return measure==='appearances'?search.impressions:search[measure];
     }
-    // Search Console currently verifies Google Search only. Calling that a
-    // worldwide all-engine total would mislead the owner, so explain scope.
-    // Wix and GA4 are never blended, including historical comparisons.
+    // Search counts include only verified Google Search and Bing providers.
+    // Maps profile impressions do not belong in these website-search totals.
+    // A missing prior period for any connected source makes the past N/A
+    // instead of comparing a partial past against a wider current total.
+    const searchProviders=[...(google?['google']:[]),
+      ...(bing?.status==='connected'?['bing']:[])];
+    function measuredSearchTotal(measure,which){
+      if(!searchProviders.length)return null;
+      if(measure==='position')return searchProviders.length===1&&
+        searchProviders[0]==='google'?raw('position','google',which):null;
+      if(measure==='ctr'){
+        const clicks=measuredSearchTotal('clicks',which);
+        const impressions=measuredSearchTotal('appearances',which);
+        return good(clicks)&&good(impressions)&&impressions>0?
+          clicks/impressions:null;
+      }
+      const values=searchProviders.map(source=>raw(measure,source,which));
+      return values.every(good)?values.reduce((sum,n)=>sum+n,0):null;
+    }
     const totalValue=(measure,which)=>{
-      if(measure==='appearances'||measure==='clicks'||measure==='ctr'||measure==='position')
-        return raw(measure,'google',which);
+      if(['appearances','clicks','ctr','position'].includes(measure))
+        return measuredSearchTotal(measure,which);
       if(current===wix&&current){
         if(which==='current'){
           if(measure==='visits'&&good(site?.sessions))return site.sessions;
@@ -258,7 +287,7 @@
         :esc(label);
     const head='<thead><tr>'+
       '<th scope="col" class="mission-sheet-metric">MEASUREMENT</th>'+
-      '<th scope="col" class="mission-sheet-total" title="Verified overall measure; Google-only for Search Console">TOTAL</th>'+
+      '<th scope="col" class="mission-sheet-total" title="Verified measured Google Search and Bing sources; Maps profile appearances excluded">TOTAL</th>'+
       '<th scope="col" class="mission-sheet-period">PERIOD</th>'+
       columns.map(([id,label])=>
         '<th scope="col" class="mission-sheet-source'+(id==='google'?' mission-sheet-google':'')+
@@ -277,8 +306,10 @@
           ?(good(totalCurrent)?changeBadge(metric,totalPrevious,totalCurrent):
             '<span class="mission-sheet-delta mission-sheet-unknown">N/A</span>')
           :'<span class="mission-sheet-main">'+esc(nice(metric,value))+'</span>';
-        const scope=metric==='appearances'||metric==='clicks'||metric==='ctr'||metric==='position'
-          ?'Google Search Console only; other search sources not measured'
+        const scope=metric==='position'
+          ?'Ranking cannot be combined across Google and Bing; N/A when more than one engine reports'
+          :['appearances','clicks','ctr'].includes(metric)
+          ?'Measured Google Search and Bing only, not all search engines; Maps profile impressions excluded'
           :'Overall '+(current===wix?'Wix':current===ga?'Google Analytics':'unverified')+
             ' measure; not the sum of incomplete source categories';
         return '<td class="mission-sheet-number mission-sheet-total-cell'+tone+
@@ -326,6 +357,17 @@
       ).join('')+'</div></details>':'';
     const provider=current===wix&&current?'Wix':
       current===ga&&current?'Google Analytics':'N/A';
+    const bingNote=bing?.status==='connected'?
+      ' Bing Webmaster searches include its reported search verticals. Bing average position is N/A because the overall traffic API does not report it.':
+      bing?.status==='needs-setup'?
+      ' Bing search reporting needs a verified DOCJAKS.COM property and a private BING_WEBMASTER_API_KEY configured in the DJOMS backend. <a href="https://www.bing.com/webmasters/" target="_blank" rel="noopener noreferrer">Open Bing Webmaster Tools ↗</a>':
+      bing?.status==='needs-site'?
+      ' Bing search reporting needs verified DOCJAKS.COM. <a href="https://www.bing.com/webmasters/" target="_blank" rel="noopener noreferrer">Verify or import from Google Search Console ↗</a>':
+      bing?.status==='incomplete'?
+      ' Bing daily reporting is incomplete for these dates, so unverified periods remain N/A.':
+      bing?.status==='needs-attention'||bing?.status==='unavailable'?
+      ' Bing Webmaster: '+esc(bing.message||'Reporting unavailable.')+'.':
+      '';
     const mapNote=maps?.status==='connected'?
       ' Google Maps appearances come from Business Profile desktop/mobile daily impressions; they are not unique people or site visits. Google does not provide a separate Maps CTR or average search position through that report.':
       maps?.status==='not-connected'?
@@ -345,13 +387,13 @@
       '<div class="mission-sheet-scroll" tabindex="0" role="region" aria-label="Horizontal source comparison spreadsheet">'+
         '<table class="mission-sheet-table">'+head+'<tbody>'+body+'</tbody></table>'+
       '</div>'+
-      '<p class="mission-sheet-note">TOTAL is immediately after MEASUREMENT. For searches, TOTAL means verified Google Search only; other search providers have N/A, not zero. '+
-        'Search CTR and position are Google-reported rates/averages, never added across sources. '+
+      '<p class="mission-sheet-note">TOTAL is immediately after MEASUREMENT. Search counts cover connected Google Search and Bing reporting only, never every possible search engine. Google Maps profile impressions are excluded. '+
+        'Search CTR is calculated from same-period clicks and appearances, while search rankings cannot be combined across engines. '+
         'Website visit and stay totals come from the overall '+esc(provider)+' report, not from adding incomplete source rows. '+
         'Website visits are attributed sessions from '+esc(provider)+
         ' and are not unique visitors. Previous source sessions use Wix\'s matching preceding period when verified; otherwise N/A. '+
         'Wix and GA4 session counts are never added. Source-specific average stay uses GA4 session duration when verified (and may differ from the Wix overall average). Relative percent changes compare matching periods; lower average search position is better. '+
-        'NEW is used instead of a percentage when the last value was zero. N/A means not applicable or unverified.'+mapNote+'</p>'+
+        'NEW is used instead of a percentage when the last value was zero. N/A means not applicable or unverified.'+bingNote+mapNote+'</p>'+
       queryDetails+'</section>';
   }
   window.djomsSourceSpreadsheet=draw;
