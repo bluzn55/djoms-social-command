@@ -10248,3 +10248,107 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     grid-template-columns:repeat(2,minmax(0,1fr));
   }
 }
+
+
+/* OWNER L/C VALUES: LARGE, DIVIDED, VERTICALLY ALIGNED · OCT 22 2026 */
+/* LAST and CURRENT are equal-width value columns in every owner-stage box.
+   They use the same readable size as the Search appearances row label. */
+#connectionStrip .mission-direction-panel .mission-pair-prefix {
+  display:inline-block;margin-right:4px;font-weight:900;font-style:normal;
+}
+#connectionStrip .mission-direction-panel .mission-pair-number {
+  font-weight:900;color:inherit;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence
+.mission-stage-rows .mission-story-pair {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 246px !important;
+  align-items:center;column-gap:12px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence
+.mission-stage-rows .mission-story-pair > span:first-child {
+  font:900 clamp(16px,1.04vw,18px)/1.3 Arial,sans-serif !important;
+  color:#15120f !important;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence
+.mission-pair-values {
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  width:246px;max-width:100%;
+  box-sizing:border-box;
+  align-items:center;justify-content:stretch;justify-self:end;
+  gap:0 !important;min-width:0;white-space:nowrap;
+  font:900 clamp(16px,1.04vw,18px)/1.3 Arial,sans-serif !important;
+  font-variant-numeric:tabular-nums;letter-spacing:0;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence
+.mission-pair-values > .mission-pair-last,
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence
+.mission-pair-values > .mission-pair-current {
+  display:grid;grid-template-columns:20px minmax(0,1fr);
+  align-items:center;gap:4px;
+  box-sizing:border-box;
+  padding:4px 7px;min-width:0;
+  line-height:1.3;white-space:nowrap;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence
+.mission-pair-values > .mission-pair-current {
+  border-left:2px solid #c78a7b;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence
+.mission-pair-prefix {
+  margin:0;color:inherit;
+  font-size:inherit;font-weight:900;line-height:inherit;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence
+.mission-pair-number {
+  min-width:0;justify-self:end;text-align:right;
+  color:inherit;font-size:inherit;font-weight:900;line-height:inherit;white-space:nowrap;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence
+.mission-action-compact-row > .mission-pair-values {
+  width:246px !important;justify-self:end;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence
+.mission-action-compact-row {
+  grid-template-columns:minmax(0,1fr) 246px 10px !important;
+  gap:8px;align-items:center;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence
+.mission-action-compact-row > span:first-child {
+  font:900 clamp(16px,1.04vw,18px)/1.3 Arial,sans-serif;
+}
+@media(max-width:1000px){
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence {
+    grid-template-columns:minmax(0,1fr) !important;
+  }
+}
+@media(max-width:600px){
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence
+  .mission-stage-rows .mission-story-pair {
+    grid-template-columns:minmax(0,1fr) !important;
+    row-gap:5px;
+  }
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence
+  .mission-stage-rows .mission-story-pair > .mission-pair-values {
+    width:100% !important;justify-self:stretch;
+  }
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence
+  .mission-action-compact-row {
+    grid-template-columns:minmax(0,1fr) 15px !important;
+    row-gap:3px;
+  }
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence
+  .mission-action-compact-row > span:first-child {
+    grid-column:1;grid-row:1;
+  }
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence
+  .mission-action-compact-row > .mission-pair-values {
+    grid-column:1;grid-row:2;
+    width:100% !important;justify-self:stretch;
+  }
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence
+  .mission-action-compact-row > i {
+    grid-column:2;grid-row:1 / 3;
+  }
+}
