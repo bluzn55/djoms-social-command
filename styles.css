@@ -9987,3 +9987,20 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 #connectionStrip .mission-direction-panel .mission-sheet-ai-scroll .mission-sheet-delta.mission-sheet-unknown {
   color:#65615b;
 }
+
+
+/* VERIFIED SEARCH TOTAL SCOPE LABELS · OCT 22 2026 */
+/* G = Google only, B = Bing only, G+B = date-aligned coverage.
+   Tucked into the upper-right so the 50px LAST/CURRENT/% rows retain
+   their existing number size and strong black section separators. */
+#connectionStrip .mission-direction-panel
+.mission-sheet-table td.mission-sheet-total-cell .mission-sheet-total-scope {
+  position:absolute;
+  top:2px;right:2px;
+  display:inline-block;
+  padding:2px 3px 1px;
+  border:1px solid #b99f70;border-radius:3px;
+  background:#f2e6ce;color:#51371a;
+  font:900 10px/1 Arial,sans-serif;
+  text-align:center;white-space:nowrap;letter-spacing:0;
+}
