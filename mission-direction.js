@@ -1037,20 +1037,12 @@
       '</div>'+
       '<p class="mission-period-context">LAST = the preceding equal-length reporting period; CURRENT = selected dates ('+
         esc(periodName(period))+'). For Week this means the previous seven days versus the current seven days.</p>'+
-      '<p class="mission-direction-webtrend">OVERALL DIRECTION: '+
-        websiteTrendMarkup(summary)+'</p>'+
+      ownerDigest(summary)+
+      ownerScoreMethod(summary)+
       momentumBreakdown(site,ga4,seo,sales,period,summary.momentum)+
       '<section id="missionActionDetails" class="mission-action-panel"'+
         (actionDetailsOpen?'':' hidden')+'>'+
         (actionDetailsOpen?actionsDetail(site,ga4,sales,period):'')+'</section>'+
-      '<div class="mission-direction-brief">'+
-        measure('WHAT IS WORKING',summary.working,'Verified data, not a guess')+
-        measure('WHAT NEEDS ATTENTION',summary.concern,'An exception to investigate')+
-        '<div class="mission-direction-measure next"><small>WHAT SHOULD WE DO NEXT?</small>'+
-          '<strong>'+esc(summary.next)+'</strong>'+
-          (summary.nextHref?'<a href="'+esc(summary.nextHref)+'" target="_blank" rel="noopener noreferrer">Open next step ↗</a>':'')+
-        '</div>'+
-      '</div>'+
       '<details class="mission-direction-details"><summary class="mission-direction-details-toggle">'+
         '<span class="mission-detail-show">Show Details</span>'+
         '<span class="mission-detail-hide">Hide Details</span></summary>'+
