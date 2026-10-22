@@ -187,7 +187,7 @@
       '<th scope="col" class="mission-sheet-period">PERIOD</th>'+
       columns.map(([id,label],i)=>
         '<th scope="col" class="mission-sheet-source'+(id==='google'?' mission-sheet-google':'')+
-        '"><span>'+(i+1)+'.</span> '+esc(label)+'</th>').join('')+
+        '"><span>'+(i+1)+'.</span> '+(id==='maps'?'GOOGLE<br>MAPS':esc(label))+'</th>').join('')+
       '</tr></thead>';
     const body=measures.map(([metric,label])=>{
       const cells=which=>columns.map(([id])=>{
