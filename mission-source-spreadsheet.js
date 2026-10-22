@@ -545,6 +545,8 @@
             ?'Identified visits to DOCJAKS.COM from Outlaw Radio 5150 referrals or tagged external redirects. Uses GA4 source attribution if Wix reports no radio visits but GA4 identifies them. Not radio listeners.'
             :id==='email'
             ?'Visits reaching DOCJAKS.COM from identifiable email links or email clients. This does not count email sends, opens, subscribers or contacts.'
+            :id==='qr'
+            ?'QR-attributed website visits from tagged destinations. These are not verified camera scans. Open the QR CODES section below to see tagged placements when Google Analytics reports them.'
             :esc(label))+'">'+headerName(id,label)+'</th>').join('')+
       '</tr></thead>';
     const body=measures.map(([metric,label])=>{
@@ -661,6 +663,89 @@
       'details; those visits may appear as Direct. LAST and CURRENT use '+
       esc(emailViaGa4?'GA4 (verified email fallback)':provider)+
       ' attribution; average stay uses GA4 when verified.</p></details>';
+    // GA4 read-only QR campaign reports are optional and date-scoped.
+    // Never manufacture QR placement counts from a source name alone.
+    const qrNow=raw('visits','qr','current'),qrLast=raw('visits','qr','last');
+    const qrCurrentReport=ga4?.status==='connected'&&ga4?.qrCampaigns?.status==='reported'?
+      ga4.qrCampaigns:null;
+    const qrPreviousReport=ga4?.status==='connected'&&ga4?.qrCampaignsPrevious?.status==='reported'?
+      ga4.qrCampaignsPrevious:null;
+    const normalizedQrCampaign=value=>{
+      const code=String(value||'').toLowerCase().trim();
+      return !code||code==='(not set)'||code==='(not provided)'?
+        '(unlabeled)':code;
+    };
+    const qrBuckets=report=>{
+      if(!report||!Array.isArray(report.rows))return null;
+      const map=new Map();
+      for(const row of report.rows){
+        if(!good(row.sessions))return null;
+        const key=normalizedQrCampaign(row.campaign);
+        const entry=map.get(key)||{sessions:0,weighted:0,stayComplete:true};
+        entry.sessions+=row.sessions;
+        if(!good(row.avgTimeSeconds))entry.stayComplete=false;
+        else entry.weighted+=row.avgTimeSeconds*row.sessions;
+        map.set(key,entry);
+      }
+      return map;
+    };
+    const qrNowBuckets=qrBuckets(qrCurrentReport);
+    const qrLastBuckets=qrBuckets(qrPreviousReport);
+    const campaignKeys=[...new Set([...(qrNowBuckets?.keys()||[]),
+      ...(qrLastBuckets?.keys()||[])])].filter(key=>
+      (qrNowBuckets?.get(key)?.sessions||0)>0||
+      (qrLastBuckets?.get(key)?.sessions||0)>0);
+    const readableCampaign=key=>{
+      const known=qrPlacements.find(([code])=>code===key);
+      return known?known[1]:key==='(unlabeled)'?'Unlabeled QR link':
+        key.replace(/_/g,' ');
+    };
+    const qrCampaignRows=campaignKeys.map(key=>{
+      const n=qrNowBuckets?.get(key),p=qrLastBuckets?.get(key);
+      const currentValue=qrNowBuckets?(n?.sessions??0):null;
+      const previousValue=qrLastBuckets?(p?.sessions??0):null;
+      const stay=n?.stayComplete&&n.sessions>0?n.weighted/n.sessions:null;
+      return '<tr><th scope="row">'+esc(readableCampaign(key))+'</th>'+
+        '<td>'+esc(whole(previousValue))+'</td>'+
+        '<td>'+esc(whole(currentValue))+'</td>'+
+        '<td>'+changeBadge('visits',previousValue,currentValue)+'</td>'+
+        '<td>'+esc(nice('stay',stay))+'</td></tr>';
+    }).join('');
+    const starterLinks=qrPlacements.map(([id,label])=>{
+      const url=qrLink(id);
+      return '<div class="mission-sheet-qr-link-row">'+
+        '<strong>'+esc(label)+'</strong>'+
+        '<code>'+esc(url)+'</code>'+
+        '<button type="button" data-discovery-qr-copy="'+esc(url)+
+        '" aria-label="Copy tracking link for '+esc(label)+'">COPY LINK</button></div>';
+    }).join('');
+    const qrGaCurrent=sourceNumber(ga,'qr','visits');
+    const qrReconcile=qrCurrentReport&&good(qrGaCurrent)&&
+      qrCurrentReport.total!==qrGaCurrent;
+    const qrDetail='<details class="mission-sheet-ai-detail mission-sheet-qr-detail">'+
+      '<summary>QR CODES ▸ TRACKED LINKS &amp; WHICH QR BROUGHT VISITS'+
+      (good(qrNow)&&qrNow>0?' · '+esc(whole(qrNow))+' CURRENT':'')+'</summary>'+
+      '<p>Each printed QR code needs its own tagged destination. '+
+      'These starter links currently open the DOCJAKS.COM homepage, not a product page. '+
+      'Keep the UTM tracking tags when changing the destination.</p>'+
+      '<div class="mission-sheet-qr-links">'+starterLinks+'</div>'+
+      '<p><strong>Individual QR campaign performance</strong></p>'+
+      (qrCampaignRows?
+        '<div class="mission-sheet-ai-scroll"><table aria-label="GA4 QR referral placements">'+
+          '<thead><tr><th>QR PLACEMENT</th><th>LAST</th><th>CURRENT</th>'+
+          '<th>% CHANGE</th><th>AVG STAY</th></tr></thead><tbody>'+
+          qrCampaignRows+'</tbody></table></div>':
+        '<p>'+(qrCurrentReport&&qrPreviousReport?
+          'No identifiable QR campaign visits in these reporting periods.':
+          'QR campaign detail is not yet verified. N/A means unknown, not zero.')+'</p>')+
+      (qrReconcile?
+        '<p>Only GA4 QR-medium campaign visits appear in this breakdown. '+
+        'The website column may contain other identifiable QR visits.</p>':'')+
+      '<p><strong>QR-attributed visits are not confirmed physical scans.</strong> '+
+      'Printed QR codes work by opening these destination links. Untagged QR visits '+
+      'may appear as Direct. Do not add campaign counts again to TOTAL. '+
+      'Search impressions and ranking are not measured for QR links.</p>'+
+      '</details>';
     const aiNow=raw('visits','ai','current');
     const aiLast=raw('visits','ai','last');
     const aiServiceValue=(id,metric,when)=>{
@@ -759,13 +844,29 @@
         'OTHER SOCIAL combines TikTok, Pinterest, Reddit and Nextdoor without double-counting TOTAL; expand to see which platform sent visits. '+
         'TRIPADVISOR is website traffic attribution, not review counts. '+
         'OUTLAW RADIO 5150 counts identified radio-domain or tagged external visits, not radio listeners. If Wix records zero but GA4 verifies tagged radio visits, the radio column uses GA4 for both periods; it is not added to the Wix TOTAL. An untagged domain forward may show as Direct. '+
-        'EMAIL counts website sessions with identifiable email attribution, not opens, sends or subscribers. If Wix records no email visits but GA4 verifies tagged email sessions, EMAIL uses GA4 for both periods without adding those sessions to Wix TOTAL.'+
+        'EMAIL counts website sessions with identifiable email attribution, not opens, sends or subscribers. If Wix records no email visits but GA4 verifies tagged email sessions, EMAIL uses GA4 for both periods without adding those sessions to Wix TOTAL. '+
+        'QR CODES counts identified QR-tagged website visits, never physical scan events. Wix QR attribution is used if reported, otherwise independently verified GA4 QR visits can supply both periods.'+
         bingNote+mapNote+'</p>'+
-      aiDetail+emailDetail+metaStatus+queryDetails+'</section>';
+        bingNote+mapNote+'</p>'+
+      aiDetail+emailDetail+qrDetail+metaStatus+queryDetails+'</section>';
   }
   window.djomsAiReferralService=aiReferralService;
   window.djomsOutlawRadioReferral=outlawRadioReferral;
   window.djomsEmailReferralSource=emailReferralSource;
   window.djomsQrReferralSource=qrReferralSource;
+  if(typeof document!=='undefined'&&document.addEventListener){
+    document.addEventListener('click',event=>{
+      const button=event.target?.closest?.('[data-discovery-qr-copy]');
+      if(!button)return;
+      const url=button.getAttribute('data-discovery-qr-copy');
+      if(!url)return;
+      if(typeof navigator==='undefined'||!navigator.clipboard?.writeText){
+        button.textContent='SELECT THE LINK TEXT';return;
+      }
+      navigator.clipboard.writeText(url).then(()=>{
+        button.textContent='COPIED';
+      }).catch(()=>{button.textContent='SELECT THE LINK TEXT';});
+    });
+  }
   window.djomsSourceSpreadsheet=draw;
 })();
