@@ -834,20 +834,8 @@
       '<div class="mission-sheet-scroll" tabindex="0" role="region" aria-label="Horizontal source comparison spreadsheet">'+
         '<table class="mission-sheet-table'+(socialExpanded?' mission-sheet-social-expanded':'')+'">'+head+'<tbody>'+body+'</tbody></table>'+
       '</div>'+
-      '<p class="mission-sheet-note">TOTAL is immediately after MEASUREMENT. Search totals cover only verified comparable sources. G means Google only, B means Bing only, and G+B means both have matching reporting dates. When Google and Bing dates differ, show the verified Google-only search totals rather than add mismatched periods. Average search position is always Google only; Bing has no compatible rank metric. Google Maps impressions are excluded. '+
-        'Search CTR is calculated from same-period clicks and appearances, while search rankings cannot be combined across engines. '+
-        'Website visit and stay totals come from the overall '+esc(provider)+' report, not from adding incomplete source rows. '+
-        'Website visits are attributed sessions from '+esc(provider)+
-        ' and are not unique visitors. Previous source sessions use Wix\'s matching preceding period when verified; otherwise N/A. '+
-        'Wix and GA4 session counts are never added. Source-specific average stay uses GA4 session duration when verified (and may differ from the Wix overall average). Relative percent changes compare matching periods; lower average search position is better. '+
-        'NEW is used instead of a percentage when the last value was zero. N/A means not applicable or unverified. '+
-        'OTHER SOCIAL combines TikTok, Pinterest, Reddit and Nextdoor without double-counting TOTAL; expand to see which platform sent visits. '+
-        'TRIPADVISOR is website traffic attribution, not review counts. '+
-        'OUTLAW RADIO 5150 counts identified radio-domain or tagged external visits, not radio listeners. If Wix records zero but GA4 verifies tagged radio visits, the radio column uses GA4 for both periods; it is not added to the Wix TOTAL. An untagged domain forward may show as Direct. '+
-        'EMAIL counts website sessions with identifiable email attribution, not opens, sends or subscribers. If Wix records no email visits but GA4 verifies tagged email sessions, EMAIL uses GA4 for both periods without adding those sessions to Wix TOTAL. '+
-        'QR CODES counts identified QR-tagged website visits, never physical scan events. Wix QR attribution is used if reported, otherwise independently verified GA4 QR visits can supply both periods.'+
-        bingNote+mapNote+'</p>'+
-        bingNote+mapNote+'</p>'+
+      '<p class="mission-sheet-google-connect">'+
+        '<a href="/api/meta/local-google-connect">Connect Google Business Profile ↗</a></p>'+
       aiDetail+emailDetail+qrDetail+metaStatus+queryDetails+'</section>';
   }
   window.djomsAiReferralService=aiReferralService;
