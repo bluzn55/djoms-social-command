@@ -10004,3 +10004,17 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   font:900 10px/1 Arial,sans-serif;
   text-align:center;white-space:nowrap;letter-spacing:0;
 }
+
+
+/* EMAIL TRACKING SOURCE DETAIL AND NON-CLICKABLE TAGGED URL · OCT 22 2026 */
+#connectionStrip .mission-direction-panel .mission-sheet-email-detail .mission-sheet-email-link {
+  padding:10px 12px;margin:8px 0 10px;
+  border:1px solid #c5ab80;border-radius:5px;
+  background:#fffef9;color:#181512;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-email-detail .mission-sheet-email-link code {
+  display:block;max-width:100%;
+  font:800 14px/1.5 ui-monospace,Consolas,monospace;
+  color:#2b3019;overflow-wrap:anywhere;word-break:break-word;
+  white-space:normal;user-select:text;
+}
