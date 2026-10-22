@@ -467,7 +467,7 @@
         const tone=which==='last'?'':signal(metric,totalPrevious,totalCurrent);
         const isSearch=['appearances','clicks','ctr','position'].includes(metric);
         const sourceTag=metric==='position'?'G':isSearch?searchScope:null;
-        const tag=sourceTag&&good(value)?
+        const tag=sourceTag&&good(value)&&(!isChange||good(totalPrevious))?
           '<small class="mission-sheet-total-scope" aria-label="'+
             esc(sourceTag==='G+B'?'Google and Bing':sourceTag==='G'?'Google only':'Bing only')+
             '">'+esc(sourceTag)+'</small>':'';
