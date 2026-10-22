@@ -179,8 +179,12 @@
     const now=current==null?'N/A':String(current);
     return '<span class="mission-pair-values story-'+safeMotion(direction)+
       '" title="'+esc('Last '+prev+', current '+now)+'">'+
-      '<span class="mission-pair-last">L'+esc(prev)+'</span>'+
-      '<span class="mission-pair-current">C'+esc(now)+'</span></span>';
+      '<span class="mission-pair-last">'+
+        '<span class="mission-pair-prefix">L</span>'+
+        '<strong class="mission-pair-number">'+esc(prev)+'</strong></span>'+
+      '<span class="mission-pair-current">'+
+        '<span class="mission-pair-prefix">C</span>'+
+        '<strong class="mission-pair-number">'+esc(now)+'</strong></span></span>';
   }
   function storyPairRow(label,last,current,direction='unknown'){
     return '<div class="mission-story-row mission-story-pair"><span>'+esc(label)+
