@@ -9934,3 +9934,56 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     letter-spacing:0;
   }
 }
+
+
+/* AI REFERRALS VERIFIED SOURCE DRILLDOWN · OCT 22 2026 */
+#connectionStrip .mission-direction-panel .mission-sheet-ai-detail {
+  margin-top:12px;padding:10px 12px 12px;
+  border:2px solid #b18d63;border-radius:6px;
+  background:#fffaf1;color:#17120e;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-ai-detail>summary {
+  cursor:pointer;list-style:disclosure-closed;
+  color:#16130f;font:900 16px/1.4 Arial,sans-serif;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-ai-detail[open]>summary {
+  list-style:disclosure-open;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-ai-detail>summary:focus-visible {
+  outline:3px solid #267546;outline-offset:3px;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-ai-detail>p {
+  margin:10px 0 0;color:#302922;font:750 14px/1.45 Arial,sans-serif;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-ai-scroll {
+  width:100%;max-width:100%;overflow-x:auto;margin-top:12px;
+  background:#fffefa;border:1px solid #d2bb95;border-radius:5px;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-ai-scroll table {
+  width:100%;min-width:560px;border-collapse:collapse;
+  font-family:Arial,sans-serif;font-variant-numeric:tabular-nums;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-ai-scroll th,
+#connectionStrip .mission-direction-panel .mission-sheet-ai-scroll td {
+  padding:9px 10px;border-bottom:1px solid #dcc7ad;
+  font:900 14px/1.3 Arial,sans-serif;color:#17120d;
+  text-align:center;white-space:nowrap;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-ai-scroll thead th {
+  background:#e7d6b8;color:#14120e;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-ai-scroll tbody th {
+  text-align:left;background:#fbf5ea;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-ai-scroll tbody tr:last-child>* {
+  border-bottom:0;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-ai-scroll .mission-sheet-delta.mission-sheet-up {
+  color:#137538;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-ai-scroll .mission-sheet-delta.mission-sheet-down {
+  color:#aa3129;
+}
+#connectionStrip .mission-direction-panel .mission-sheet-ai-scroll .mission-sheet-delta.mission-sheet-unknown {
+  color:#65615b;
+}
