@@ -93,25 +93,46 @@
     const wixComplete=wixAvailable&&wix.trafficSourcesComplete===true;
     const ga4Reported=report?.status==='connected'&&report?.sourceDetails?.status==='reported'&&
       Array.isArray(report.sourceDetails.rows);
+    const ga4RowsValid=ga4Reported&&report.sourceDetails.rows.every(item=>validCount(item?.sessions));
     const ga4Entries=ga4Reported?report.sourceDetails.rows
       .filter(item=>validCount(item?.sessions))
       .map(item=>({kind:originKind(item.sourceMedium),sessions:item.sessions})):[];
-    // Suppressed or partial source rows may not reconcile to GA4's actual
-    // session total. Never turn missing attribution into apparent zeroes.
     const ga4SourceTotal=ga4Entries.reduce((sum,item)=>sum+item.sessions,0);
-    const ga4Available=ga4Reported&&(!validCount(report?.metrics?.sessions)||
-      ga4SourceTotal===report.metrics.sessions);
-    const rows=originOrder.map(([key,label],i)=>
-      '<tr><th scope="row"><em>'+(i+1)+'.</em> '+esc(label)+'</th>'+
-      '<td>'+esc(fmt(sourceCount(key,wixEntries,wixComplete)))+'</td>'+
-      '<td>'+esc(fmt(sourceCount(key,ga4Entries,ga4Available)))+'</td></tr>'
+    const ga4Headline=validCount(report?.metrics?.sessions)?report.metrics.sessions:null;
+    // The source report and headline are separate GA4 queries. Never conceal
+    // the actual sum merely because they disagree, or silently change data.
+    // Missing individual sources remain N/A while reconciliation is uncertain.
+    const ga4Complete=ga4RowsValid&&(ga4Headline===null||ga4SourceTotal===ga4Headline);
+    const sourceRows=originOrder.map(([key,label],originalIndex)=>({
+      key,label,originalIndex,
+      wix:sourceCount(key,wixEntries,wixComplete),
+      ga4:sourceCount(key,ga4Entries,ga4Complete)
+    }));
+    const displayedVisits=row=>validCount(row.wix)?row.wix:
+      validCount(row.ga4)?row.ga4:-1;
+    // Most Wix visits first, with GA4 as a fallback when Wix has no number.
+    // Never add the two independently measured analytics platforms together.
+    sourceRows.sort((a,b)=>displayedVisits(b)-displayedVisits(a)||
+      (validCount(b.ga4)?b.ga4:-1)-(validCount(a.ga4)?a.ga4:-1)||
+      a.originalIndex-b.originalIndex);
+    const rows=sourceRows.map((row,i)=>
+      '<tr><th scope="row"><em>'+(i+1)+'.</em> '+esc(row.label)+'</th>'+
+      '<td>'+esc(fmt(row.wix))+'</td>'+
+      '<td>'+esc(fmt(row.ga4))+'</td></tr>'
     ).join('');
-    const total=entries=>entries.reduce((sum,item)=>sum+item.sessions,0);
-    const wixTotal=wixComplete?total(wixEntries):null;
-    const ga4Total=ga4Available?total(ga4Entries):null;
+    const wixTotal=wixComplete?wixEntries.reduce((sum,item)=>sum+item.sessions,0):null;
+    const ga4Total=ga4RowsValid?ga4SourceTotal:null;
+    const gap=ga4Total!==null&&ga4Headline!==null?ga4Total-ga4Headline:null;
+    const mismatch=gap!==null&&gap!==0
+      ?'<p class="mission-ga4-origin-discrepancy" role="status">'+
+        'GA4 source rows: <strong>'+esc(fmt(ga4Total))+'</strong> · '+
+        'GA4 headline: <strong>'+esc(fmt(ga4Headline))+'</strong> · '+
+        '<strong>'+esc(fmt(Math.abs(gap)))+' '+(Math.abs(gap)===1?'session':'sessions')+
+        '</strong> '+(gap>0?'above':'below')+' the headline. '+
+        'Both figures are shown as reported, without adjustment.</p>':'';
     return '<div class="mission-ga4-sources mission-ga4-sources-breakdown" aria-label="Where website traffic sessions came from">'+
       '<div class="mission-ga4-origin-heading"><strong>WHERE VISITS CAME FROM</strong>'+
-      '<small>Source attribution · selected reporting dates</small></div>'+
+      '<small>Most visits first (Wix primary, GA4 fallback) · selected reporting dates</small></div>'+
       '<div class="mission-ga4-origin-table-scroll"><table class="mission-ga4-origin-table">'+
       '<thead><tr><th scope="col">Source</th><th scope="col">Wix sessions</th>'+
       '<th scope="col">GA4 sessions</th></tr></thead>'+
@@ -119,7 +140,8 @@
       '<tfoot><tr><th scope="row">Reported source total</th>'+
       '<td>'+esc(fmt(wixTotal))+'</td><td>'+esc(fmt(ga4Total))+'</td></tr></tfoot>'+
       '</table></div>'+
-      (!wixComplete||!ga4Available?'<p class="mission-ga4-origin-coverage">N/A means the source has not been individually verified; a 0 means a complete report recorded none.</p>':'')+
+      mismatch+
+      (!wixComplete||!ga4Complete?'<p class="mission-ga4-origin-coverage">N/A means the source has not been individually verified; a 0 means a complete report recorded none.</p>':'')+
       '<p class="mission-ga4-origin-note">Sessions are visits, not unique people. Wix and GA4 use separate tracking, so their figures need not match. Do not add the two columns together.</p>'+
     '</div>';
   }
