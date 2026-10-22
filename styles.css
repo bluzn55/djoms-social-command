@@ -9767,3 +9767,22 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   margin:0;
   font-size:clamp(14px,1vw,18px);
 }
+
+/* CRITICAL: Search & Discovery's percent-change period label must be one line.
+   The inline markup in mission-source-spreadsheet.js also enforces nowrap,
+   so this remains safe against inherited th wrapping styles. */
+#connectionStrip .mission-direction-panel
+.mission-sheet-table tbody tr.mission-sheet-change > th.mission-sheet-period,
+#connectionStrip .mission-direction-panel
+.mission-sheet-table tbody tr.mission-sheet-change > th.mission-sheet-period .mission-sheet-period-label {
+  white-space:nowrap !important;
+  overflow-wrap:normal !important;
+  word-break:keep-all !important;
+  hyphens:none !important;
+}
+#connectionStrip .mission-direction-panel
+.mission-sheet-table tbody tr.mission-sheet-change > th.mission-sheet-period .mission-sheet-period-label {
+  display:inline-block !important;
+  max-width:none;
+  vertical-align:middle;
+}
