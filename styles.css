@@ -9894,3 +9894,36 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 #connectionStrip .mission-direction-panel .mission-sheet-table thead th.mission-social-detail {
   background:#e4e7d8;
 }
+
+
+/* OTHER SOCIAL CLEAN LAST/CURRENT/% ROWS + SINGLE-LINE TRIPADVISOR · OCT 22 2026 */
+/* Keep Tripadvisor within its existing 96px source slot. No wrapping. */
+#connectionStrip .mission-direction-panel .mission-sheet-table thead th.mission-sheet-tripadvisor {
+  font-size:11px !important;
+  letter-spacing:-.32px;
+  white-space:nowrap !important;
+  overflow-wrap:normal !important;
+  word-break:keep-all !important;
+  padding-left:1px;
+  padding-right:1px;
+}
+/* The 'Other Social' group is a single three-row measurement. Hide
+   internal LAST/CURRENT dividers, keep the heavy black measure boundary. */
+#connectionStrip .mission-direction-panel .mission-sheet-table tbody tr.mission-sheet-last > td.mission-social-group,
+#connectionStrip .mission-direction-panel .mission-sheet-table tbody tr.mission-sheet-current > td.mission-social-group,
+#connectionStrip .mission-direction-panel .mission-sheet-table tbody tr.mission-sheet-last > td.mission-social-detail,
+#connectionStrip .mission-direction-panel .mission-sheet-table tbody tr.mission-sheet-current > td.mission-social-detail {
+  border-bottom:0 !important;
+}
+/* Remove the inset all-around border that otherwise draws a line on
+   every row. Only the column's vertical boundaries remain colored. */
+#connectionStrip .mission-direction-panel .mission-sheet-table tbody td.mission-social-group {
+  box-shadow:inset 1px 0 0 #ba9a67,inset -1px 0 0 #ba9a67;
+}
+/* Keep mobile fonts just small enough for the complete TRIPADVISOR name. */
+@media(max-width:780px){
+  #connectionStrip .mission-direction-panel .mission-sheet-table thead th.mission-sheet-tripadvisor{
+    font-size:10px !important;
+    letter-spacing:-.45px;
+  }
+}
