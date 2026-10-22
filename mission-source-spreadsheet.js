@@ -38,8 +38,8 @@
     ['facebook','FACEBOOK'],['instagram','INSTAGRAM'],['x','X / TWITTER'],
     ['youtube','YOUTUBE'],['yelp','YELP'],['tripadvisor','TRIPADVISOR'],
     ['ai','AI REFERRALS'],['outlaw','OUTLAW RADIO 5150'],
-    ['websites','OTHER WEBSITES / BLOGS'],['email','EMAIL'],
-    ['qr','QR CODES'],['ads','PAID ADS'],['other','OTHER REFERRALS'],
+    ['email','EMAIL'],['qr','QR CODES'],['ads','PAID ADS'],
+    ['websites','OTHER WEBSITES / BLOGS'],['other','OTHER REFERRALS'],
     ['socialGroup','OTHER SOCIAL'],
     ['tiktok','TIKTOK'],['pinterest','PINTEREST'],['reddit','REDDIT'],['nextdoor','NEXTDOOR']
   ];
@@ -67,6 +67,18 @@
     ['visits','WEBSITE VISITS (SESSIONS)'],
     ['stay','AVERAGE WEBSITE STAY']
   ];
+  // A radio-source name or tagged external referral is evidence of an
+  // attributable website visit, NOT evidence of someone listening to radio.
+  // The internal DOCJAKS.COM radio page must not become a fake external source.
+  function outlawRadioReferral(item){
+    const source=String(item?.source||item?.sourceMedium||item?.referrer||'').trim().toLowerCase();
+    const category=String(item?.category||'').trim().toLowerCase();
+    const explicitCampaign=/(?:[?&]utm_source=|^utm_source[=:])outlaw(?:[._-]?radio)?[._-]?(?:5150|51[.]50)(?:$|[&#\s])/i.test(source);
+    if(/(?:www[.])?docjaks[.]com\/(?:outlaw[-_]?radio[-_]?(?:5150|51[.]50))/i.test(source)&&!explicitCampaign)
+      return false;
+    const pattern=/(?:^|[^a-z0-9])(?:outlaw[\s._-]*radio[\s._-]*(?:5150|51[.]50)|outlaw[\s._-]*5150)(?=$|[^a-z0-9])/i;
+    return pattern.test(source)||pattern.test(category);
+  }
   // "Direct" is attribution, not proof of how a visitor heard about Doc Jaks.
   // Unmarked Google Maps, email and QR visits may fall into broader sources.
   function sourceKind(item){
@@ -90,7 +102,7 @@
       /email\s*protection/.test(name)||
       /@duck\.com(?:$|\W)/.test(name))
       return 'email';
-    if(/outlawradio5150|outlaw\s*(?:radio\s*)?5150|51\.50/.test(s))return 'outlaw';
+    if(outlawRadioReferral(item))return 'outlaw';
     if(aiReferralService(item))return 'ai';
     // Account followers/Meta post impressions are not website referrals.
     // Classify only identified Wix/GA4 sources; fbclid and igshid query
@@ -456,6 +468,8 @@
             ?'Tripadvisor-attributed website sessions from Wix/GA4; reviews and listing views are separate.'
             :id==='ai'
             ?'AI-attributed website visits from Wix/GA4. Expand the AI REFERRALS breakdown below for individual services; AI mentions and recommendations cannot be verified here.'
+            :id==='outlaw'
+            ?'Identified visits arriving at DOCJAKS.COM from Outlaw Radio 5150 referrals or a tagged external redirect. Not actual radio listeners; untagged forwards may appear as Direct.'
             :esc(label))+'">'+headerName(id,label)+'</th>').join('')+
       '</tr></thead>';
     const body=measures.map(([metric,label])=>{
@@ -630,9 +644,11 @@
         'Wix and GA4 session counts are never added. Source-specific average stay uses GA4 session duration when verified (and may differ from the Wix overall average). Relative percent changes compare matching periods; lower average search position is better. '+
         'NEW is used instead of a percentage when the last value was zero. N/A means not applicable or unverified. '+
         'OTHER SOCIAL combines TikTok, Pinterest, Reddit and Nextdoor without double-counting TOTAL; expand to see which platform sent visits. '+
-        'TRIPADVISOR is website traffic attribution, not review counts.'+bingNote+mapNote+'</p>'+
+        'TRIPADVISOR is website traffic attribution, not review counts. '+
+        'OUTLAW RADIO 5150 counts identifiable referrals from the radio domain or tagged external links, not live radio listeners. An untagged domain forward may show as Direct.'+bingNote+mapNote+'</p>'+
       aiDetail+metaStatus+queryDetails+'</section>';
   }
   window.djomsAiReferralService=aiReferralService;
+  window.djomsOutlawRadioReferral=outlawRadioReferral;
   window.djomsSourceSpreadsheet=draw;
 })();
