@@ -174,10 +174,31 @@
       safeMotion(direction)+'">'+esc(value)+'</strong></div>';
   }
   // Side-by-side verified period values. Never invent a missing previous value.
-  function inlinePair(last,current,direction='unknown'){
+  // Per-metric colors use verified, comparable values, not the parent card score.
+  // Bounce rate and search position improve when they decrease.
+  function readableAmount(value){
+    if(value===null||value===undefined)return null;
+    const valueText=String(value).trim();
+    if(!valueText||valueText==='N/A'||valueText==='—')return null;
+    const durationMatch=valueText.match(/^(\d+)m\s*(\d+)s$/i);
+    if(durationMatch)return Number(durationMatch[1])*60+Number(durationMatch[2]);
+    const shortTime=valueText.match(/^(\d+)s$/i);
+    if(shortTime)return Number(shortTime[1]);
+    const number=valueText.replace(/[$,%]/g,'').replace(/,/g,'');
+    if(!/^(?:\d+)(?:\.\d+)?$/.test(number))return null;
+    return Number(number);
+  }
+  function pairDirection(label,last,current){
+    const previous=readableAmount(last),present=readableAmount(current);
+    if(!good(previous)||!good(present))return 'unknown';
+    if(previous===present)return 'hold';
+    const lowerBetter=/bounce rate|search position|avg\. position/i.test(label||'');
+    return ((present>previous)!==lowerBetter)?'up':'down';
+  }
+  function inlinePair(last,current,direction='unknown',label=''){
     const prev=last==null?'N/A':String(last);
     const now=current==null?'N/A':String(current);
-    return '<span class="mission-pair-values story-'+safeMotion(direction)+
+    return '<span class="mission-pair-values story-'+pairDirection(label,prev,now)+
       '" title="'+esc('Last '+prev+', current '+now)+'">'+
       '<span class="mission-pair-last">'+
         '<span class="mission-pair-prefix">L</span>'+
@@ -188,7 +209,7 @@
   }
   function storyPairRow(label,last,current,direction='unknown'){
     return '<div class="mission-story-row mission-story-pair"><span>'+esc(label)+
-      '</span>'+inlinePair(last,current,direction)+'</div>';
+      '</span>'+inlinePair(last,current,direction,label)+'</div>';
   }
   // Dedicated lower-evidence renderer. Explicit layout styles are intentional:
   // the lower 3 evidence cards must match the top owner cards even when an
@@ -197,7 +218,7 @@
   function detailPairRow(label,last,current,direction='unknown'){
     const before=last==null?'N/A':String(last);
     const after=current==null?'N/A':String(current);
-    const directionClass=safeMotion(direction);
+    const directionClass=pairDirection(label,before,after);
     const numberStyle='font:900 18px/1.3 Arial,sans-serif;white-space:nowrap;';
     const partStyle='display:flex;align-items:center;justify-content:flex-start;'+
       'gap:5px;padding:4px 7px;min-width:0;box-sizing:border-box;'+
