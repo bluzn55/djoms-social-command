@@ -9510,8 +9510,9 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 }
 #connectionStrip .mission-direction-panel .mission-sheet-table th.mission-sheet-period {
   position:sticky;left:234px;z-index:3;
-  width:95px;min-width:95px;max-width:95px;
+  width:110px;min-width:110px;max-width:110px;
   height:50px;padding:9px 6px;text-align:center;
+  white-space:nowrap; /* Keep % CHANGE together on one line. */
   background:#f8efdf;color:#101010;
   font:900 14px/1.3 Arial,sans-serif;
 }
@@ -9607,7 +9608,7 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     width:180px;min-width:180px;max-width:180px;font-size:13px;
   }
   #connectionStrip .mission-direction-panel .mission-sheet-table th.mission-sheet-period {
-    left:180px;width:75px;min-width:75px;max-width:75px;font-size:12px;
+    left:180px;width:96px;min-width:96px;max-width:96px;font-size:12px;
   }
   #connectionStrip .mission-direction-panel .mission-sheet-table td.mission-sheet-number,
   #connectionStrip .mission-direction-panel .mission-sheet-table thead th.mission-sheet-source {
@@ -9625,7 +9626,7 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     padding:8px 7px;font-size:12px;
   }
   #connectionStrip .mission-direction-panel .mission-sheet-table th.mission-sheet-period {
-    left:148px;width:66px;min-width:66px;max-width:66px;
+    left:148px;width:86px;min-width:86px;max-width:86px;
     padding:8px 3px;font-size:11px;
   }
   #connectionStrip .mission-direction-panel .mission-sheet-table td.mission-sheet-number,
