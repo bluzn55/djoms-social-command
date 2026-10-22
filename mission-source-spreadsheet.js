@@ -86,10 +86,12 @@
     const previousSessions=report?.metricComparisons?.sessions?.previous;
     return summarizeSources(rows,report.trafficSourcesPreviousComplete,previousSessions);
   }
-  function ga4Report(report){
-    if(report?.status!=='connected'||report?.sourceDetails?.status!=='reported'||
-        !Array.isArray(report.sourceDetails.rows))return null;
-    return summarizeSources(report.sourceDetails.rows,true,report.metrics?.sessions);
+  function ga4Report(report,which='current'){
+    const detail=which==='last'?report?.sourceDetailsPrevious:report?.sourceDetails;
+    if(report?.status!=='connected'||detail?.status!=='reported'||
+        !Array.isArray(detail.rows))return null;
+    return summarizeSources(detail.rows,true,
+      which==='current'?report.metrics?.sessions:null);
   }
   function sourceNumber(data,key,measure){
     if(!data)return null;
@@ -193,19 +195,26 @@
     // Same-period Maps data comes from the separately authorized GBP report.
     // Maps impressions do not get added to the Search Console total.
     const savedMaps=window.djomsVerifiedReports?.maps;
-    const maps=savedMaps?.query===period?.query&&
-      savedMaps?.data?.range?.start===period?.start&&
-      savedMaps?.data?.range?.end===period?.end?
+    const maps=period?.query&&savedMaps?.data&&savedMaps.query===period.query&&
+      savedMaps.data.range?.start===period.start&&
+      savedMaps.data.range?.end===period.end?
       savedMaps.data:null;
-    const wix=wixReport(site),ga=ga4Report(ga4);
+    const wix=wixReport(site),ga=ga4Report(ga4),gaPrior=ga4Report(ga4,'last');
     const current=wix&&(wix.complete||Object.keys(wix.buckets).length)?wix:ga||wix;
     // Compare Wix with Wix, never a mix of Wix and GA4. Wix already
     // returns the matching previous source rows; old range fetch is fallback.
     const last=current===wix&&current?
       (wixPriorReport(site)||priorSourceData(period)):null;
     function raw(measure,source,which){
-      if(measure==='visits'||measure==='stay')
+      if(measure==='visits')
         return sourceNumber(which==='last'?last:current,source,measure);
+      if(measure==='stay'){
+        // GA4 reports source-level average session duration in seconds;
+        // Wix attribution currently reports sessions only. Do not mix
+        // providers across the Last / Current comparison.
+        if(ga)return sourceNumber(which==='last'?gaPrior:ga,source,'stay');
+        return sourceNumber(which==='last'?last:current,source,'stay');
+      }
       if(source==='maps'){
         if(measure!=='appearances'||maps?.status!=='connected')return null;
         if(which==='current')return good(maps.metrics?.impressions)?maps.metrics.impressions:null;
@@ -341,7 +350,7 @@
         'Website visit and stay totals come from the overall '+esc(provider)+' report, not from adding incomplete source rows. '+
         'Website visits are attributed sessions from '+esc(provider)+
         ' and are not unique visitors. Previous source sessions use Wix\'s matching preceding period when verified; otherwise N/A. '+
-        'Wix and GA4 are never combined. Relative percent changes compare matching periods; lower average search position is better. '+
+        'Wix and GA4 session counts are never added. Source-specific average stay uses GA4 session duration when verified (and may differ from the Wix overall average). Relative percent changes compare matching periods; lower average search position is better. '+
         'NEW is used instead of a percentage when the last value was zero. N/A means not applicable or unverified.'+mapNote+'</p>'+
       queryDetails+'</section>';
   }
