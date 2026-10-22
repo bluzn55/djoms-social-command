@@ -277,7 +277,8 @@
         cells('current')+'</tr>'+
         '<tr class="mission-sheet-data-row mission-sheet-change">'+
         totalCell('change')+
-        '<th scope="row" class="mission-sheet-period">%&nbsp;CHANGE</th>'+
+        '<th scope="row" class="mission-sheet-period" style="white-space:nowrap!important;overflow-wrap:normal!important;word-break:keep-all!important">'+
+        '<span class="mission-sheet-period-label" style="display:inline-block!important;white-space:nowrap!important;overflow-wrap:normal!important;word-break:keep-all!important">%&nbsp;CHANGE</span></th>'+
         changes+'</tr>';
     }).join('');
     const queries=google&&Array.isArray(seo.topQueries)?
