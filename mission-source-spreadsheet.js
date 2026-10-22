@@ -8,6 +8,29 @@
   const good=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0;
   const whole=value=>good(value)?new Intl.NumberFormat('en-US').format(Math.round(value)):'N/A';
   const dateRx=/^\d{4}-\d{2}-\d{2}$/;
+
+  // Real AI referral origins, not generic search engine visits or social posts.
+  const aiServices=[
+    ['chatgpt','ChatGPT / OpenAI',/(?:^|[^a-z0-9])(?:chatgpt(?:\.com)?|chat\.openai\.com|openai(?:\.com)?)(?:$|[^a-z0-9])/],
+    ['perplexity','Perplexity',/(?:^|[^a-z0-9])(?:perplexity(?:\.ai|\.com)?|pplx\.ai)(?:$|[^a-z0-9])/],
+    ['claude','Claude',/(?:^|[^a-z0-9])claude(?:\.ai)?(?:$|[^a-z0-9])/],
+    ['copilot','Microsoft Copilot',/(?:^|[^a-z0-9])(?:copilot(?:\.microsoft\.com)?|microsoft\s+copilot)(?:$|[^a-z0-9])/],
+    ['gemini','Google Gemini',/(?:^|[^a-z0-9])(?:gemini(?:\.google\.com)?|bard\.google\.com)(?:$|[^a-z0-9])/],
+    ['grok','Grok',/(?:^|[^a-z0-9])(?:grok(?:\.com)?|grok\.x\.ai|x\.ai)(?:$|[^a-z0-9])/],
+    ['deepseek','DeepSeek',/(?:^|[^a-z0-9])deepseek(?:\.(?:com|ai))?(?:$|[^a-z0-9])/],
+    ['poe','Poe',/(?:^|[^a-z0-9])poe(?:\.com)?(?:$|[^a-z0-9])/],
+    ['you','You.com',/(?:^|[^a-z0-9])you\.com(?:$|[^a-z0-9])/],
+    ['mistral','Mistral Le Chat',/(?:^|[^a-z0-9])(?:mistral(?:\.ai)?|lechat\.mistral\.ai)(?:$|[^a-z0-9])/],
+    ['other-ai','Other AI',/(?:^|[^a-z0-9])(?:phind(?:\.com)?|qwen(?:\.ai)?|kimi(?:\.com)?|meta\.ai)(?:$|[^a-z0-9])/]
+  ];
+  function aiReferralService(item){
+    const name=String(item?.source||item?.sourceMedium||item?.referrer||'').trim().toLowerCase();
+    const category=String(item?.category||'').trim().toLowerCase();
+    for(const [id,,pattern] of aiServices)if(pattern.test(name))return id;
+    if(/(?:^|[^a-z])(?:ai[\s_-]*(?:referrals?|assistants?|chatbots?|search|tools?)|generative[\s_-]*ai|artificial intelligence)(?:$|[^a-z])/.test(category))
+      return 'other-ai';
+    return null;
+  }
   const quietSocial=['tiktok','pinterest','reddit','nextdoor'];
   const columns=[
     ['direct','DIRECT'],['google','GOOGLE SEARCH'],['maps','GOOGLE MAPS'],
@@ -56,6 +79,7 @@
     // Yahoo Mail and DuckDuckGo Email Protection count as EMAIL, not
     // as organic search. Wix and GA4 may identify these separately.
     if(/(?:^|[^a-z0-9])(?:e-?mail|newsletter)(?:$|[^a-z0-9])/.test(cat)||
+      /\/\s*(?:e-?mail|newsletter)(?:$|[^a-z0-9])/.test(name)||
       /(?:^|[^a-z0-9])mail\.yahoo\./.test(name)||
       /(?:^|[^a-z0-9])yahoo[ -]?mail(?:$|[^a-z0-9])/.test(name)||
       /(?:^|[^a-z0-9])yahoo\s*\/\s*e-?mail(?:$|[^a-z0-9])/.test(name)||
@@ -67,7 +91,7 @@
       /@duck\.com(?:$|\W)/.test(name))
       return 'email';
     if(/outlawradio5150|outlaw\s*(?:radio\s*)?5150|51\.50/.test(s))return 'outlaw';
-    if(/chatgpt|openai|perplexity|copilot|claude|gemini|deepseek|you\.com/.test(s))return 'ai';
+    if(aiReferralService(item))return 'ai';
     // Account followers/Meta post impressions are not website referrals.
     // Classify only identified Wix/GA4 sources; fbclid and igshid query
     // parameters alone must never be treated as verified attribution.
@@ -119,6 +143,16 @@
         good(item.averageSessionDuration)?item.averageSessionDuration:null;
       if(!good(avg))bucket.stayComplete=false;
       else bucket.weightedStay+=avg*n;
+      if(key==='ai'){
+        // Service breakdown is nested inside the existing AI total.
+        const id=aiReferralService(item)||'other-ai';
+        if(!bucket.services)bucket.services=Object.create(null);
+        let service=bucket.services[id];
+        if(!service)service=bucket.services[id]={sessions:0,weightedStay:0,stayComplete:true};
+        service.sessions+=n;
+        if(!good(avg))service.stayComplete=false;
+        else service.weightedStay+=avg*n;
+      }
     }
     return {buckets,complete:flag===true&&(!good(total)||total===sum)};
   }
@@ -149,6 +183,14 @@
     if(measure==='visits')return bucket.sessions;
     return bucket.sessions>0&&bucket.stayComplete?
       bucket.weightedStay/bucket.sessions:null;
+  }
+  function aiServiceNumber(data,id,measure){
+    if(!data)return null;
+    const service=data.buckets?.ai?.services?.[id];
+    if(!service)return measure==='visits'&&data.complete?0:null;
+    if(measure==='visits')return service.sessions;
+    return measure==='stay'&&service.sessions>0&&service.stayComplete?
+      service.weightedStay/service.sessions:null;
   }
   // Only show an aggregated value for a complete source report. Average
   // website stay is weighted by sessions, not the average of four averages.
@@ -399,6 +441,8 @@
             ?'Click to show TikTok, Pinterest, Reddit and Nextdoor sources. This is one combined view, not extra website visits.'
             :id==='tripadvisor'
             ?'Tripadvisor-attributed website sessions from Wix/GA4; reviews and listing views are separate.'
+            :id==='ai'
+            ?'AI-attributed website visits from Wix/GA4. Expand the AI REFERRALS breakdown below for individual services; AI mentions and recommendations cannot be verified here.'
             :esc(label))+'">'+headerName(id,label)+'</th>').join('')+
       '</tr></thead>';
     const body=measures.map(([metric,label])=>{
@@ -467,6 +511,39 @@
       ).join('')+'</div></details>':'';
     const provider=current===wix&&current?'Wix':
       current===ga&&current?'Google Analytics':'N/A';
+    const aiNow=raw('visits','ai','current');
+    const aiLast=raw('visits','ai','last');
+    const aiServiceValue=(id,metric,when)=>{
+      const data=metric==='stay'
+        ?(ga?(when==='last'?gaPrior:ga):(when==='last'?last:current))
+        :(when==='last'?last:current);
+      return aiServiceNumber(data,id,metric);
+    };
+    const activeAI=aiServices.filter(([id])=>['last','current']
+      .some(when=>{const n=aiServiceValue(id,'visits',when);return good(n)&&n>0;}));
+    const aiDetailRows=activeAI.map(([id,label])=>{
+      const before=aiServiceValue(id,'visits','last');
+      const after=aiServiceValue(id,'visits','current');
+      const stay=aiServiceValue(id,'stay','current');
+      return '<tr><th scope="row">'+esc(label)+'</th>'+
+        '<td>'+esc(whole(before))+'</td><td>'+esc(whole(after))+'</td>'+
+        '<td>'+changeBadge('visits',before,after)+'</td>'+
+        '<td>'+esc(nice('stay',stay))+'</td></tr>';
+    }).join('');
+    const aiDetail='<details class="mission-sheet-ai-detail">'+
+      '<summary>AI REFERRALS ▸ WHICH SERVICES SENT VISITORS'+
+      (good(aiNow)&&aiNow>0?' · '+esc(whole(aiNow))+' CURRENT':'')+'</summary>'+
+      (aiDetailRows
+        ?'<div class="mission-sheet-ai-scroll"><table aria-label="AI referring services comparison">'+
+          '<thead><tr><th>AI SERVICE</th><th>LAST</th><th>CURRENT</th>'+
+          '<th>% CHANGE</th><th>AVG STAY</th></tr></thead>'+
+          '<tbody>'+aiDetailRows+'</tbody></table></div>'
+        :'<p>'+(good(aiLast)&&good(aiNow)
+          ?'No identifiable AI website referrals in these periods.'
+          :'AI referral counts are not fully verified. N/A means unknown, not zero.')+'</p>')+
+      '<p>Website sessions from '+esc(provider)+'. Source-specific average stay uses GA4 when verified. '+
+      'Identifiable referrers do not prove AI recommendations; private visits can appear as Direct.</p>'+
+      '</details>';
     const bingNote=bing?.status==='connected'?
       ' Bing Webmaster searches include its reported search verticals. Bing average position is N/A because the overall traffic API does not report it.':
       bing?.status==='needs-setup'?
@@ -531,7 +608,8 @@
         'NEW is used instead of a percentage when the last value was zero. N/A means not applicable or unverified. '+
         'OTHER SOCIAL combines TikTok, Pinterest, Reddit and Nextdoor without double-counting TOTAL; expand to see which platform sent visits. '+
         'TRIPADVISOR is website traffic attribution, not review counts.'+bingNote+mapNote+'</p>'+
-      metaStatus+queryDetails+'</section>';
+      aiDetail+metaStatus+queryDetails+'</section>';
   }
+  window.djomsAiReferralService=aiReferralService;
   window.djomsSourceSpreadsheet=draw;
 })();
