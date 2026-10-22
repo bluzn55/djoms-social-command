@@ -57,11 +57,16 @@
       const change = (number(b.sessions) - number(a.sessions)) / number(a.sessions) * 100;
       out.push('Completed weeks only: ' + count(a.sessions) + ' → ' + count(b.sessions) + ' sessions (' + (change >= 0 ? '+' : '') + change.toFixed(0) + '%). Partial weeks are excluded from this comparison.');
     } else out.push('Weekly growth: waiting for two consecutive complete weeks. Partial weeks are shown, but not compared as full weeks.');
-    const top = list(site.topPages)[0];
-    if (top) out.push('Most-viewed page in the returned ranking: ' + pageName(top.path) + ', ' + count(top.views) + ' views and ' + count(top.visitors) + ' tracked visitors. Next test: make its next step easy to find.');
+    const top = list(site.topPages).filter(row => number(row?.visitors) > 0)
+      .sort((a,b) => (number(b.visitors) ?? 0)-(number(a.visitors) ?? 0) ||
+        (number(b.views) ?? 0)-(number(a.views) ?? 0))[0];
+    if (top) out.push('Most-visited reported page: ' + pageName(top.path) +
+      ', ' + count(top.visitors) + ' visitors and average page time ' +
+      duration(top.avgTimeSeconds) + '. Next test: make its next step easy to find.');
     const source = list(site.trafficSources)[0];
     if (source) out.push('Largest reported source: ' + String(source.source || source.category || 'Unknown').replace(/_/g, ' ') + ', ' + count(source.sessions) + ' sessions. This does not identify which visits were yours.');
-    if (list(site.topPages).some(row => number(row.avgTimeSeconds) === null)) out.push('Some page times were not measured. They stay marked “Not measured”, rather than being treated as zero-second visits.');
+    if (list(site.topPages).filter(row => number(row?.visitors) > 0).some(row => number(row.avgTimeSeconds) === null))
+      out.push('Some visited page times were not measured. They stay marked “Not measured”, rather than being treated as zero-second visits.');
     out.push('Next-page journeys are not connected yet. Page bounce is not being presented as the percentage who continued to another page.');
     return out;
   }
@@ -89,7 +94,7 @@
 .wda-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.wda-kpi{background:#fffaf0;border:1px solid #cbb994;border-radius:8px;padding:18px}.wda-kpi small,.wda-kpi strong{display:block}.wda-kpi strong{font-size:29px;line-height:1.2;margin-top:7px}
 .wda-nuggets{display:grid;grid-template-columns:1fr 1fr;gap:12px}.wda-nuggets p{background:#f8efdc;border-left:4px solid #a27c36;padding:15px;margin:0}.wda-charts{display:grid;grid-template-columns:1fr;gap:18px}
 .wda-chart{border:1px solid #d5c4a2;padding:16px;border-radius:8px}.wda-column-chart{display:flex;gap:15px;align-items:stretch;overflow-x:auto}.wda-column{min-width:34px}.wda-column{flex:1;min-width:0;text-align:center}.wda-column strong{display:block;font-size:20px}.wda-track{height:145px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid #8e7c5f;margin:10px 0}.wda-track i{display:block;width:65%;background:#9c742e;min-width:8px}.wda-column small{overflow-wrap:anywhere;display:block}
-.wda-ranking{display:grid;gap:15px}.wda-rank-line{display:grid;grid-template-columns:minmax(160px,1fr) 2fr auto;align-items:center;gap:14px}.wda-rank-line small{display:block}.wda-horizontal-track{height:18px;background:#eee0c7;border-radius:6px;overflow:hidden}.wda-horizontal-track i{height:100%;display:block;background:#9c742e}
+.wda-ranking{display:grid;gap:15px}.wda-rank-line{display:grid;grid-template-columns:minmax(160px,1fr) 2fr auto;align-items:center;gap:14px}.wda-rank-line small{display:block}.wda-rank-data{text-align:right;white-space:nowrap}.wda-rank-data strong{font-size:19px}.wda-horizontal-track{height:18px;background:#eee0c7;border-radius:6px;overflow:hidden}.wda-horizontal-track i{height:100%;display:block;background:#9c742e}
 .wda-table-wrap{overflow-x:auto;margin-top:20px}.wda table{border-collapse:collapse;width:100%;font-size:16px}.wda caption{text-align:left;color:#625238;padding:0 0 10px;font-size:15px}.wda th,.wda td{padding:13px 12px;text-align:left;border-bottom:1px solid #dfd0b5;vertical-align:top}.wda th{font-weight:700;background:#f1e4ca;white-space:nowrap}.wda td:first-child{min-width:165px}.wda td small{display:block;overflow-wrap:anywhere}
 .wda-two{display:grid;grid-template-columns:1fr 1fr;gap:18px;min-width:0}.wda-list>div{display:flex;justify-content:space-between;gap:15px;padding:12px 0;border-bottom:1px solid #dfd0b5}.wda-list strong{white-space:nowrap}.wda-list span{overflow-wrap:anywhere}
 .wda button{font-size:17px;padding:12px 18px;border:1px solid #80602b;border-radius:6px;background:#f4e5c7;color:#302719;cursor:pointer}.wda button:focus-visible,.wda textarea:focus-visible{outline:3px solid #4e695c;outline-offset:3px}.wda textarea{width:100%;font:17px/1.5 Arial,sans-serif;min-height:150px;padding:12px;background:white;color:#302719;border:1px solid #80602b;margin:10px 0;resize:vertical}.wda label{font-size:17px;font-weight:bold;display:block}.wda .wda-notes-status{min-height:1.5em}
@@ -99,14 +104,29 @@
     const data = typeof localData !== 'undefined' ? localData : {};
     const site = typeof websiteSnapshot === 'function' ? websiteSnapshot() : (data.website || {});
     const weeks = weekInfo(site);
-    const pages = list(site.topPages);
+    // Only use pages that Wix reports as having at least one visitor.
+    const pages = list(site.topPages).filter(p => typeof p?.path === 'string' &&
+      p.path.trim() && number(p.visitors) > 0)
+      .sort((a,b) => (number(b.visitors) ?? 0)-(number(a.visitors) ?? 0) ||
+        (number(b.views) ?? 0)-(number(a.views) ?? 0));
     const connected = !!site.connected;
     const money = number(site.sales) === null ? 'Not available' : new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(number(site.sales));
     const metrics = [['Sessions',site.sessions],['Tracked visitors',site.visitors],['Page views',site.pageViews],['Average stay',duration(site.avgTimeSeconds)],['Pages / session',site.pagesPerSession],['Site bounce rate',percent(site.bounceRate)],['Contact-click sessions',site.contactClicks],['Forms submitted',site.formsSubmitted],['Reported sales',money]];
     const kpis = '<div class="wda-kpis">' + metrics.map(([label,value]) => '<div class="wda-kpi"><small>' + html(label) + '</small><strong>' + html(typeof value === 'string' ? value : count(value)) + '</strong></div>').join('') + '</div>';
-    const max = Math.max(1,...pages.map(p => number(p.views) ?? 0));
-    const ranking = '<div class="wda-ranking">' + pages.map((p,i) => '<div class="wda-rank-line"><span><b>' + (i+1) + '. ' + html(pageName(p.path)) + '</b><small>' + html(p.path) + '</small></span><span class="wda-horizontal-track"><i style="width:' + ((number(p.views) ?? 0) / max * 100).toFixed(2) + '%"></i></span><strong>' + html(count(p.views)) + ' views</strong></div>').join('') + '</div>';
-    const pageTable = table(['Page','Views','Visitors','Sessions','Average time','Wix page bounce'],pages.map(p => ['<b>'+html(pageName(p.path))+'</b><small>'+html(p.path)+'</small>',html(count(p.views)),html(count(p.visitors)),html(count(p.sessions)),html(duration(p.avgTimeSeconds)),html(percent(p.bounceRate))]),'Current returned ranking, not a complete inventory of every site page.');
+    const max = Math.max(1,...pages.map(p => number(p.visitors) ?? 0));
+    const ranking = pages.length ? '<div class="wda-ranking">' + pages.map((p,i) =>
+      '<div class="wda-rank-line"><span><b>' + (i+1) + '. ' + html(pageName(p.path)) +
+      '</b><small>' + html(p.path) + '</small></span><span class="wda-horizontal-track"><i style="width:' +
+      ((number(p.visitors) ?? 0) / max * 100).toFixed(2) +
+      '%"></i></span><span class="wda-rank-data"><strong>' + html(count(p.visitors)) +
+      ' visitors</strong><small>Avg. time: ' + html(duration(p.avgTimeSeconds)) +
+      '</small></span></div>').join('') + '</div>' :
+      '<p>No pages with reported visitors in the selected dates.</p>';
+    const pageTable = table(['Page','Views','Visitors','Sessions','Avg. page time','Wix page bounce'],
+      pages.map(p => ['<b>'+html(pageName(p.path))+'</b><small>'+html(p.path)+'</small>',
+      html(count(p.views)),html(count(p.visitors)),html(count(p.sessions)),
+      html(duration(p.avgTimeSeconds)),html(percent(p.bounceRate))]),
+      'Only Wix-returned pages with one or more reported visitors. Not a complete inventory of every site page.');
     const weekTable = table(['Week starts','Coverage','Sessions','Visitors','Views','Average stay','Pages / session'],weeks.map(w => [html(w.weekStart || w.label),w.complete?'Complete':'Partial',html(count(w.sessions)),html(count(w.visitors)),html(count(w.views)),html(duration(w.avgTimeSeconds)),html(count(w.pagesPerSession))]),'Unique visitors are reported per week. Do not add weekly visitors to get a unique monthly total.');
     let saved = '';
     try { saved = localStorage.getItem(NOTE_KEY) || ''; } catch (_) {}
@@ -115,7 +135,7 @@
     const output = '<div class="wda" data-version="'+VERSION+'">' + periodButtons +
       '<div class="wda-head"><small>DOC JAKS · WEBSITE RESEARCH</small><h2>Website Analytics</h2><p>What people visit, how long they stay, and what we should test next.</p><p><b>'+(connected?(site.partial?'Data connection: partial':'Data connection: available'):'Data connection: needs attention')+'</b> · '+html(site.message || 'Awaiting website data')+'</p><p class="wda-note">Summary dates: '+html(site.range?.start || 'Not available')+' through '+html(shiftDay(site.range?.end,-1) || 'Not available')+'. Time zone: Central. Last checked: '+html(site.checkedAt ? new Date(site.checkedAt).toLocaleString('en-US',{timeZone:ZONE}) : 'Not checked')+'.</p><div class="wda-caution"><b>Testing traffic is included.</b> Most current activity may be your own page checks. No owner-traffic exclusion has been applied. A healthy connection does not mean marketing performance is healthy.</div></div>' + kpis +
       section('Gold nuggets: observations and next tests','<div class="wda-nuggets">'+insights(site,weeks).map(t=>'<p>'+html(t)+'</p>').join('')+'</div>','Small samples and owner testing limit conclusions. These are prompts for investigation, not proven causes.') +
-      section('Top pages, ranked by views',ranking+pageTable,rangeLabel+'. Average time can be unmeasured. Bounce does not identify a visitor’s next page.') +
+      section('Pages with visitors, ranked by visitors',ranking+pageTable,rangeLabel+'. Average page time reflects Wix reporting, not an individual visit. Unmeasured time remains “Not measured”.') +
       section('Traffic history','<div class="wda-charts">'+weeklyChart(weeks,'sessions','Sessions')+weeklyChart(weeks,'visitors','Tracked visitors')+weeklyChart(weeks,'views','Page views')+'</div>'+weekTable,'The first and current week may be partial. Growth observations compare only consecutive complete weeks.') +
       '<div class="wda-two">'+breakdown('Where visits came from',list(site.trafficSources),r=>String(r.source||r.category||'Unknown').replace(/_/g,' '),'sessions','sessions')+breakdown('Devices',list(site.devices),r=>r.device||'Unknown','sessions','sessions')+'</div>' +
       '<div class="wda-two">'+breakdown('New and returning visitors',list(site.visitorTypes),r=>r.type==='first_time_visitor'?'New':r.type==='returning_visitor'?'Returning':r.type,'visitors','visitors')+breakdown('Reported visitor locations',list(site.geography),r=>[r.city,r.region,r.country].filter(Boolean).join(', ')||'Unknown','visitors','visitors')+'</div>' +
