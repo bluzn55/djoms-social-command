@@ -373,6 +373,8 @@
           (good(quietSocialNumber(current,'visits'))&&quietSocialNumber(current,'visits')>0?
             '<span class="mission-social-active" title="Visits recorded in Other Social" aria-hidden="true">●</span>':'')+
           '</button>'
+        :id==='tripadvisor'
+        ?'<span class="mission-sheet-tripadvisor-lines"><b>TRIP</b><b>ADVISOR</b></span>'
         :esc(label);
     const head='<thead><tr>'+
       '<th scope="col" class="mission-sheet-metric">MEASUREMENT</th>'+
