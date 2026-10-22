@@ -163,7 +163,7 @@
   // average search position improves when its numeric value decreases.
   function changeBadge(measure,previous,current){
     if(!good(current))return '';
-    if(!good(previous))return '<span class="mission-sheet-delta mission-sheet-unknown" title="No verified preceding period">CHANGE N/A</span>';
+    if(!good(previous))return '<span class="mission-sheet-delta mission-sheet-unknown" title="No verified preceding period">N/A</span>';
     if(previous===current)return '<span class="mission-sheet-delta mission-sheet-flat">0.0%</span>';
     if(previous===0){
       return '<span class="mission-sheet-delta mission-sheet-up" title="Previous value is zero; relative percent is undefined">↑ NEW</span>';
