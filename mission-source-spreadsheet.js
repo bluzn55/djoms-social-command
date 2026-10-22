@@ -35,12 +35,17 @@
     if(/maps\.google|google\s*maps|google.*business\s*profile|google_business_profile|g\.page|(?:^|[\W_])gbp(?:[\W_]|$)/.test(s))return 'maps';
     if(/(?:^|[\W_])qr(?:[\W_]|$)|qr.?code|scan.?code/.test(s))return 'qr';
     if(/(?:^|[\W_])(?:cpc|ppc|paid|display|advertising|ads)(?:[\W_]|$)/.test(s))return 'ads';
-    // Yahoo Mail is EMAIL, not Yahoo Search. Wix categories and GA4
-    // source/medium can identify mail traffic independently of search.
+    // Yahoo Mail and DuckDuckGo Email Protection count as EMAIL, not
+    // as organic search. Wix and GA4 may identify these separately.
     if(/(?:^|[^a-z0-9])(?:e-?mail|newsletter)(?:$|[^a-z0-9])/.test(cat)||
       /(?:^|[^a-z0-9])mail\.yahoo\./.test(name)||
       /(?:^|[^a-z0-9])yahoo[ -]?mail(?:$|[^a-z0-9])/.test(name)||
-      /(?:^|[^a-z0-9])yahoo\s*\/\s*e-?mail(?:$|[^a-z0-9])/.test(name))
+      /(?:^|[^a-z0-9])yahoo\s*\/\s*e-?mail(?:$|[^a-z0-9])/.test(name)||
+      /(?:^|[^a-z0-9])duckduckgo\s*\/\s*e-?mail(?:$|[^a-z0-9])/.test(name)||
+      /(?:^|[^a-z0-9])duck\.com\s*\/\s*e-?mail(?:$|[^a-z0-9])/.test(name)||
+      /(?:^|[^a-z0-9])mail\.duck\.com(?:$|[^a-z0-9])/.test(name)||
+      /email\s*protection/.test(name)||
+      /@duck\.com(?:$|\W)/.test(name))
       return 'email';
     if(/outlawradio5150|outlaw\s*(?:radio\s*)?5150|51\.50/.test(s))return 'outlaw';
     if(/chatgpt|openai|perplexity|copilot|claude|gemini|deepseek|you\.com/.test(s))return 'ai';
@@ -53,7 +58,11 @@
     if(/reddit/.test(s))return 'reddit';
     if(/yelp/.test(s))return 'yelp';
     if(/nextdoor/.test(s))return 'nextdoor';
-    if(/duckduckgo|duck\.com/.test(s))return 'duckduckgo';
+    // DuckDuckGo Search and its redirect domains are referrals. duck.com
+    // alone may be an Email Protection source and is not proof of search.
+    if(/duckduckgo|ddg\.gg/.test(s))return 'duckduckgo';
+    if(/(?:^|[^a-z0-9])duck\.com(?:$|[^a-z0-9])/.test(name)&&
+      /organic|search/.test(cat+' '+name))return 'duckduckgo';
     if(/(?:^|\W)bing(?:\W|$)/.test(s))return 'bing';
     if(/yahoo/.test(s))return 'yahoo';
     if(/google/.test(s))return 'google';
@@ -310,6 +319,8 @@
             ?'Direct-attributed website sessions from Wix; not proof a person typed the URL'
             :id==='yahoo'
             ?'Yahoo-attributed website sessions from Wix or GA4. Yahoo Mail goes to EMAIL. Separate Yahoo search appearances and clicks are not verified.'
+            :id==='duckduckgo'
+            ?'DuckDuckGo-attributed website sessions from Wix or GA4. DuckDuckGo Email Protection is counted under EMAIL; search appearances and ranks are not separately verified.'
             :esc(label))+'">'+headerName(id,label)+'</th>').join('')+
       '</tr></thead>';
     const body=measures.map(([metric,label])=>{
