@@ -31,6 +31,30 @@
       return 'other-ai';
     return null;
   }
+  // A tagged/identifiable visit is an email referral; an email open is not.
+  const emailSources=[
+    ['pit','Pit Krewe email',/\bpit[\s._-]*krewe\b|\bkrewe[\s._-]*welcome\b/],
+    ['wix','Doc Jaks / Wix Email',/docjaks[\s._-]*email|wix[\s._-]*(?:email|automations?)/],
+    ['newsletter','Newsletter',/\bnewsletter\b/],
+    ['gmail','Gmail',/\bgmail(?:\.com)?\b|mail\.google\.com/],
+    ['outlook','Outlook / Hotmail',/\boutlook\b|outlook\.(?:live|office|office365)\.com|outlook\.com|\bhotmail(?:\.com)?\b|mail\.live\.com/],
+    ['yahoo','Yahoo Mail',/mail\.yahoo\.com|yahoo[\s._-]*mail|yahoo\s*\/\s*e-?mail/],
+    ['icloud','Apple Mail / iCloud',/mail\.icloud\.com|icloud[\s._-]*mail|apple[\s._-]*mail/],
+    ['other','Other email',null]
+  ];
+  const emailClient=/\b(?:mail\.google\.com|gmail\.com|mail\.yahoo\.com|outlook(?:\.(?:live|office|office365))?\.com|hotmail\.com|mail\.live\.com|mail\.icloud\.com|mail\.aol\.com|mail\.proton\.me|protonmail\.com|mail\.zoho\.com|mailchimp\.com|mailchi\.mp|mailerlite\.com|sendgrid\.net|klaviyo\.com|constantcontact\.com|r20\.rs6\.net|trk\.klclick\.com)\b/i;
+  function emailReferralSource(item){
+    const name=String(item?.source||item?.sourceMedium||item?.referrer||'').toLowerCase().trim();
+    const category=String(item?.category||'').toLowerCase().trim();
+    const medium=name.split(/\s+\/\s+/).slice(1).join(' / ').trim();
+    const tagged=/[?&]utm_medium=(?:email|e-mail|newsletter|edm)(?:$|[&#\s])/i.test(name);
+    const mediumIsEmail=/^(?:email|e-mail|newsletter|edm)(?:$|[\s,;])/i.test(medium);
+    const categoryIsEmail=/(?:^|[^a-z0-9])(?:e-?mail|newsletter)(?:$|[^a-z0-9])/i.test(category);
+    const named=/^(?:email|e-mail|newsletter|email marketing|wix email marketing|wix automations)$/i.test(name);
+    if(!(tagged||mediumIsEmail||categoryIsEmail||named||emailClient.test(name)))return null;
+    for(const [id,,rx] of emailSources)if(rx&&rx.test(name))return id;
+    return 'other';
+  }
   const quietSocial=['tiktok','pinterest','reddit','nextdoor'];
   const columns=[
     ['direct','DIRECT'],['google','GOOGLE SEARCH'],['maps','GOOGLE MAPS'],
@@ -88,19 +112,9 @@
     if(/maps\.google|google\s*maps|google.*business\s*profile|google_business_profile|g\.page|(?:^|[\W_])gbp(?:[\W_]|$)/.test(s))return 'maps';
     if(/(?:^|[\W_])qr(?:[\W_]|$)|qr.?code|scan.?code/.test(s))return 'qr';
     if(/(?:^|[\W_])(?:cpc|ppc|paid|display|advertising|ads)(?:[\W_]|$)/.test(s))return 'ads';
-    // Yahoo Mail and DuckDuckGo Email Protection count as EMAIL, not
-    // as organic search. Wix and GA4 may identify these separately.
-    if(/(?:^|[^a-z0-9])(?:e-?mail|newsletter)(?:$|[^a-z0-9])/.test(cat)||
-      /\/\s*(?:e-?mail|newsletter)(?:$|[^a-z0-9])/.test(name)||
-      /(?:^|[^a-z0-9])mail\.yahoo\./.test(name)||
-      /(?:^|[^a-z0-9])yahoo[ -]?mail(?:$|[^a-z0-9])/.test(name)||
-      /(?:^|[^a-z0-9])yahoo\s*\/\s*e-?mail(?:$|[^a-z0-9])/.test(name)||
-      /(?:^|[^a-z0-9])duckduckgo\s*\/\s*e-?mail(?:$|[^a-z0-9])/.test(name)||
-      /(?:^|[^a-z0-9])duck\.com\s*\/\s*e-?mail(?:$|[^a-z0-9])/.test(name)||
-      /(?:^|[^a-z0-9])(?:facebook|instagram|fb|ig)\s*\/\s*(?:e-?mail|newsletter)(?:$|[^a-z0-9])/.test(name)||
-      /(?:^|[^a-z0-9])mail\.duck\.com(?:$|[^a-z0-9])/.test(name)||
-      /email\s*protection/.test(name)||
-      /@duck\.com(?:$|\W)/.test(name))
+    // Prioritize proven email mediums before the named Google/Yahoo/Meta source.
+    if(emailReferralSource(item)||
+      /(?:^|[^a-z0-9])(?:mail\.duck\.com|email\s*protection|@duck\.com)(?:$|[^a-z0-9])/.test(name))
       return 'email';
     if(outlawRadioReferral(item))return 'outlaw';
     if(aiReferralService(item))return 'ai';
@@ -135,7 +149,6 @@
     if(/(?:^|\W)bing(?:\W|$)/.test(s))return 'bing';
     if(/yahoo/.test(s))return 'yahoo';
     if(/google/.test(s))return 'google';
-    if(/newsletter|email|e-mail/.test(s))return 'email';
     if(/(?:^|\W)direct(?:\W|$)|\(direct\)|\(none\)/.test(s))return 'direct';
     if(/referral|referrer|blog|websites?|\.[a-z]{2,}(?:\W|$)/.test(s))return 'websites';
     return 'other';
@@ -155,6 +168,15 @@
         good(item.averageSessionDuration)?item.averageSessionDuration:null;
       if(!good(avg))bucket.stayComplete=false;
       else bucket.weightedStay+=avg*n;
+      if(key==='email'){
+        const id=emailReferralSource(item)||'other';
+        if(!bucket.emailSources)bucket.emailSources=Object.create(null);
+        const row=bucket.emailSources[id]||{sessions:0,weightedStay:0,stayComplete:true};
+        row.sessions+=n;
+        if(good(avg))row.weightedStay+=avg*n;
+        else row.stayComplete=false;
+        bucket.emailSources[id]=row;
+      }
       if(key==='ai'){
         // Service breakdown is nested inside the existing AI total.
         const id=aiReferralService(item)||'other-ai';
@@ -194,6 +216,14 @@
     if(!bucket)return measure==='visits'&&data.complete?0:null;
     if(measure==='visits')return bucket.sessions;
     return bucket.sessions>0&&bucket.stayComplete?
+      bucket.weightedStay/bucket.sessions:null;
+  }
+  function emailSourceValue(data,id,measure){
+    if(!data)return null;
+    const bucket=data.buckets?.email?.emailSources?.[id];
+    if(!bucket)return measure==='visits'&&data.complete?0:null;
+    if(measure==='visits')return bucket.sessions;
+    return measure==='stay'&&bucket.sessions>0&&bucket.stayComplete?
       bucket.weightedStay/bucket.sessions:null;
   }
   function aiServiceNumber(data,id,measure){
@@ -480,6 +510,8 @@
             ?'AI-attributed website visits from Wix/GA4. Expand the AI REFERRALS breakdown below for individual services; AI mentions and recommendations cannot be verified here.'
             :id==='outlaw'
             ?'Identified visits to DOCJAKS.COM from Outlaw Radio 5150 referrals or tagged external redirects. Uses GA4 source attribution if Wix reports no radio visits but GA4 identifies them. Not radio listeners.'
+            :id==='email'
+            ?'Visits reaching DOCJAKS.COM from identifiable email links or email clients. This does not count email sends, opens, subscribers or contacts.'
             :esc(label))+'">'+headerName(id,label)+'</th>').join('')+
       '</tr></thead>';
     const body=measures.map(([metric,label])=>{
@@ -558,6 +590,44 @@
       ).join('')+'</div></details>':'';
     const provider=current===wix&&current?'Wix':
       current===ga&&current?'Google Analytics':'N/A';
+    const emailCurrent=raw('visits','email','current');
+    const emailLast=raw('visits','email','last');
+    const mailValue=(id,measure,when)=>{
+      const data=measure==='stay'?
+        (ga?(when==='last'?gaPrior:ga):(when==='last'?last:current)):
+        (when==='last'?last:current);
+      return emailSourceValue(data,id,measure);
+    };
+    const emailRows=emailSources.filter(([id])=>['last','current'].some(when=>{
+      const n=mailValue(id,'visits',when);return good(n)&&n>0;
+    })).map(([id,label])=>{
+      const before=mailValue(id,'visits','last');
+      const after=mailValue(id,'visits','current');
+      const stay=mailValue(id,'stay','current');
+      return '<tr><th scope="row">'+esc(label)+'</th>'+
+        '<td>'+esc(whole(before))+'</td><td>'+esc(whole(after))+'</td>'+
+        '<td>'+changeBadge('visits',before,after)+'</td>'+
+        '<td>'+esc(nice('stay',stay))+'</td></tr>';
+    }).join('');
+    const emailUrl='https://docjaks.com/?utm_source=docjaks_email&amp;utm_medium=email&amp;utm_campaign=docjaks_updates';
+    const emailDetail='<details class="mission-sheet-ai-detail mission-sheet-email-detail">'+
+      '<summary>EMAIL TRACKING ▸ WHICH EMAIL SOURCES BROUGHT VISITORS'+
+      (good(emailCurrent)&&emailCurrent>0?' · '+esc(whole(emailCurrent))+' CURRENT':'')+'</summary>'+
+      (emailRows?
+        '<div class="mission-sheet-ai-scroll"><table aria-label="Email website referral sources">'+
+        '<thead><tr><th>SOURCE</th><th>LAST</th><th>CURRENT</th>'+
+        '<th>% CHANGE</th><th>AVG STAY</th></tr></thead><tbody>'+
+        emailRows+'</tbody></table></div>':
+        '<p>'+(good(emailLast)&&good(emailCurrent)?
+          'No identifiable email website visits in these periods.':
+          'Email visitor attribution is unavailable. N/A means unknown, not zero.')+'</p>')+
+      '<p><strong>Tracked link for future Doc Jaks emails:</strong></p>'+
+      '<p class="mission-sheet-email-link"><a href="'+emailUrl+
+      '" target="_blank" rel="noopener noreferrer">'+emailUrl+'</a></p>'+
+      '<p>Use the tagged link in an email, not in website navigation. These are website '+
+      'sessions, not emails sent, opened or contacts. Some mail clients hide referral '+
+      'details; those visits may appear as Direct. LAST and CURRENT use '+esc(provider)+
+      ' attribution; average stay uses GA4 when verified.</p></details>';
     const aiNow=raw('visits','ai','current');
     const aiLast=raw('visits','ai','last');
     const aiServiceValue=(id,metric,when)=>{
@@ -656,9 +726,10 @@
         'OTHER SOCIAL combines TikTok, Pinterest, Reddit and Nextdoor without double-counting TOTAL; expand to see which platform sent visits. '+
         'TRIPADVISOR is website traffic attribution, not review counts. '+
         'OUTLAW RADIO 5150 counts identified radio-domain or tagged external visits, not radio listeners. If Wix records zero but GA4 verifies tagged radio visits, the radio column uses GA4 for both periods; it is not added to the Wix TOTAL. An untagged domain forward may show as Direct.'+bingNote+mapNote+'</p>'+
-      aiDetail+metaStatus+queryDetails+'</section>';
+      aiDetail+emailDetail+metaStatus+queryDetails+'</section>';
   }
   window.djomsAiReferralService=aiReferralService;
   window.djomsOutlawRadioReferral=outlawRadioReferral;
+  window.djomsEmailReferralSource=emailReferralSource;
   window.djomsSourceSpreadsheet=draw;
 })();
