@@ -380,6 +380,7 @@
       '<th scope="col" class="mission-sheet-period">PERIOD</th>'+
       columns.map(([id,label])=>
         '<th scope="col" class="mission-sheet-source'+(id==='google'?' mission-sheet-google':'')+
+          (id==='tripadvisor'?' mission-sheet-tripadvisor':'')+
           (quietSocial.includes(id)?' mission-social-detail':'')+
           (id==='socialGroup'?' mission-social-group':'')+
         '" title="'+(id==='direct'
