@@ -8,16 +8,34 @@
   const good=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0;
   const whole=value=>good(value)?new Intl.NumberFormat('en-US').format(Math.round(value)):'N/A';
   const dateRx=/^\d{4}-\d{2}-\d{2}$/;
+  const quietSocial=['tiktok','pinterest','reddit','nextdoor'];
   const columns=[
     ['direct','DIRECT'],['google','GOOGLE SEARCH'],['maps','GOOGLE MAPS'],
     ['bing','BING'],['yahoo','YAHOO'],['duckduckgo','DUCKDUCKGO'],
     ['facebook','FACEBOOK'],['instagram','INSTAGRAM'],['x','X / TWITTER'],
-    ['youtube','YOUTUBE'],['tiktok','TIKTOK'],['pinterest','PINTEREST'],
-    ['reddit','REDDIT'],['yelp','YELP'],['nextdoor','NEXTDOOR'],
+    ['youtube','YOUTUBE'],['socialGroup','OTHER SOCIAL'],
+    ['tiktok','TIKTOK'],['pinterest','PINTEREST'],['reddit','REDDIT'],['nextdoor','NEXTDOOR'],
+    ['yelp','YELP'],['tripadvisor','TRIPADVISOR'],
     ['ai','AI REFERRALS'],['outlaw','OUTLAW RADIO 5150'],
     ['websites','OTHER WEBSITES / BLOGS'],['email','EMAIL'],
     ['qr','QR CODES'],['ads','PAID ADS'],['other','OTHER REFERRALS']
   ];
+  // Four source buckets remain separate; the display-only aggregate must
+  // never be added to Wix or GA4's actual website session total.
+  let socialExpanded=false;
+  if(typeof document!=='undefined'&&typeof document.addEventListener==='function'){
+    document.addEventListener('click',event=>{
+      const button=event.target?.closest?.('[data-discovery-social-toggle]');
+      if(!button)return;
+      const table=button.closest('.mission-sheet-table');
+      if(!table)return;
+      socialExpanded=!socialExpanded;
+      table.classList.toggle('mission-sheet-social-expanded',socialExpanded);
+      button.setAttribute('aria-expanded',String(socialExpanded));
+      button.setAttribute('aria-label',
+        (socialExpanded?'Hide':'Show')+' TikTok, Pinterest, Reddit and Nextdoor columns');
+    });
+  }
   const measures=[
     ['appearances','SEARCH APPEARANCES'],
     ['clicks','SEARCH CLICKS'],
@@ -63,10 +81,14 @@
     if(fromFacebook)return 'facebook';
     if(fromInstagram)return 'instagram';
     if(/youtube|youtu\.be/.test(s))return 'youtube';
-    if(/twitter|t\.co|x\.com/.test(s)||name==='x'||name.startsWith('x /'))return 'x';
+    // Pinterest and Reddit domains also end in "t.com"; never attribute
+    // those site visits to X just because of a loose "t.co" substring.
+    if(/(?:^|[^a-z0-9])(?:twitter(?:\.com)?|t\.co|x\.com)(?:$|[^a-z0-9])/.test(name)||
+      name==='x'||name.startsWith('x /'))return 'x';
     if(/tiktok/.test(s))return 'tiktok';
     if(/pinterest/.test(s))return 'pinterest';
     if(/reddit/.test(s))return 'reddit';
+    if(/trip\s*advisor|tripadvisor/.test(s))return 'tripadvisor';
     if(/yelp/.test(s))return 'yelp';
     if(/nextdoor/.test(s))return 'nextdoor';
     // DuckDuckGo Search and its redirect domains are referrals. duck.com
@@ -127,6 +149,24 @@
     if(measure==='visits')return bucket.sessions;
     return bucket.sessions>0&&bucket.stayComplete?
       bucket.weightedStay/bucket.sessions:null;
+  }
+  // Only show an aggregated value for a complete source report. Average
+  // website stay is weighted by sessions, not the average of four averages.
+  function quietSocialNumber(data,measure){
+    if(!data?.complete)return null;
+    const numbers=quietSocial.map(key=>sourceNumber(data,key,'visits'));
+    if(!numbers.every(good))return null;
+    const sessions=numbers.reduce((sum,n)=>sum+n,0);
+    if(measure==='visits')return sessions;
+    if(measure!=='stay'||sessions===0)return null;
+    let weightedSeconds=0;
+    for(const key of quietSocial){
+      const bucket=data.buckets[key];
+      if(!bucket||bucket.sessions===0)continue;
+      if(!bucket.stayComplete)return null;
+      weightedSeconds+=bucket.weightedStay;
+    }
+    return weightedSeconds/sessions;
   }
   // Complete-source fallback is only used for like-for-like Wix attribution.
   // Session durations are weighted by sessions; rates/positions are not summed.
@@ -239,14 +279,18 @@
       (wixPriorReport(site)||priorSourceData(period)):
       current===ga&&current?gaPrior:null;
     function raw(measure,source,which){
-      if(measure==='visits')
-        return sourceNumber(which==='last'?last:current,source,measure);
+      if(measure==='visits'){
+        const data=which==='last'?last:current;
+        return source==='socialGroup'?quietSocialNumber(data,measure):
+          sourceNumber(data,source,measure);
+      }
       if(measure==='stay'){
         // GA4 reports source-level average session duration in seconds;
         // Wix attribution currently reports sessions only. Do not mix
         // providers across the Last / Current comparison.
-        if(ga)return sourceNumber(which==='last'?gaPrior:ga,source,'stay');
-        return sourceNumber(which==='last'?last:current,source,'stay');
+        const data=ga?(which==='last'?gaPrior:ga):(which==='last'?last:current);
+        return source==='socialGroup'?quietSocialNumber(data,measure):
+          sourceNumber(data,source,measure);
       }
       if(source==='maps'){
         if(measure!=='appearances'||maps?.status!=='connected')return null;
@@ -321,6 +365,14 @@
     const headerName=(id,label)=>
       id==='maps'
         ?'<span class="mission-sheet-maps-heading"><span class="mission-sheet-maps-words"><b>GOOGLE</b><b>MAPS</b></span></span>'
+        :id==='socialGroup'
+        ?'<button type="button" class="mission-social-toggle" data-discovery-social-toggle="1" aria-expanded="'+
+          String(socialExpanded)+'" aria-label="'+(socialExpanded?'Hide':'Show')+
+          ' TikTok, Pinterest, Reddit and Nextdoor columns">'+
+          '<span>OTHER<br>SOCIAL</span><span class="mission-social-arrow" aria-hidden="true">▾</span>'+
+          (good(quietSocialNumber(current,'visits'))&&quietSocialNumber(current,'visits')>0?
+            '<span class="mission-social-active" title="Visits recorded in Other Social" aria-hidden="true">●</span>':'')+
+          '</button>'
         :esc(label);
     const head='<thead><tr>'+
       '<th scope="col" class="mission-sheet-metric">MEASUREMENT</th>'+
@@ -328,6 +380,8 @@
       '<th scope="col" class="mission-sheet-period">PERIOD</th>'+
       columns.map(([id,label])=>
         '<th scope="col" class="mission-sheet-source'+(id==='google'?' mission-sheet-google':'')+
+          (quietSocial.includes(id)?' mission-social-detail':'')+
+          (id==='socialGroup'?' mission-social-group':'')+
         '" title="'+(id==='direct'
             ?'Direct-attributed website sessions from Wix; not proof a person typed the URL'
             :id==='yahoo'
@@ -338,6 +392,10 @@
             ?'Facebook-attributed website sessions from Wix or GA4. Paid referrals go to PAID ADS. Facebook post impressions and engagement are tracked separately in Platforms.'
             :id==='instagram'
             ?'Instagram-attributed website sessions from Wix or GA4. Paid referrals go to PAID ADS. Instagram account/post performance is tracked separately in Platforms.'
+            :id==='socialGroup'
+            ?'Click to show TikTok, Pinterest, Reddit and Nextdoor sources. This is one combined view, not extra website visits.'
+            :id==='tripadvisor'
+            ?'Tripadvisor-attributed website sessions from Wix/GA4; reviews and listing views are separate.'
             :esc(label))+'">'+headerName(id,label)+'</th>').join('')+
       '</tr></thead>';
     const body=measures.map(([metric,label])=>{
@@ -366,14 +424,18 @@
         const previous=raw(metric,id,'last'),current=raw(metric,id,'current');
         const value=which==='last'?previous:current;
         const tone=which==='current'?signal(metric,previous,current):'';
-        return '<td class="mission-sheet-number'+tone+
+        return '<td class="mission-sheet-number'+
+          (quietSocial.includes(id)?' mission-social-detail':'')+
+          (id==='socialGroup'?' mission-social-group':'')+tone+
           (!good(value)?' mission-sheet-na':'')+'">'+
           '<span class="mission-sheet-main">'+esc(nice(metric,value))+'</span></td>';
       }).join('');
       const changes=columns.map(([id])=>{
         const previous=raw(metric,id,'last'),current=raw(metric,id,'current');
         const tone=signal(metric,previous,current);
-        return '<td class="mission-sheet-number mission-sheet-change-cell'+tone+'">'+
+        return '<td class="mission-sheet-number mission-sheet-change-cell'+
+          (quietSocial.includes(id)?' mission-social-detail':'')+
+          (id==='socialGroup'?' mission-social-group':'')+tone+'">'+
           (good(current)?changeBadge(metric,previous,current):
             '<span class="mission-sheet-delta mission-sheet-unknown">N/A</span>')+
           '</td>';
@@ -448,14 +510,14 @@
       maps?.status==='unavailable'?
       ' Google Maps appearances: '+esc(maps.message||'API permission or data unavailable.')+'.':
       '';
-    return '<section class="mission-source-sheet" aria-label="Twenty-two traffic sources, six measures, eighteen Last Current and Percent Change data rows">'+
-      '<div class="mission-sheet-heading"><div><h3>SEARCH & DISCOVERY · 22 SOURCES</h3>'+
+    return '<section class="mission-source-sheet" aria-label="Twenty-three sources including four grouped social channels; six measures and eighteen Last, Current and Change rows">'+
+      '<div class="mission-sheet-heading"><div><h3>SEARCH & DISCOVERY · 23 SOURCES</h3>'+
       '<p>Six measurements with LAST, CURRENT and % CHANGE on separate rows.</p></div>'+
-      '<strong>22 SOURCES + TOTAL · 18 ROWS</strong></div>'+
+      '<strong>23 SOURCES · 4 GROUPED · 18 ROWS</strong></div>'+
       bingForm+
-      '<p class="mission-sheet-scroll-hint">SCROLL RIGHT FOR ALL 22 SOURCES → MEASUREMENT, TOTAL and PERIOD stay visible.</p>'+
+      '<p class="mission-sheet-scroll-hint">SCROLL RIGHT FOR SOURCES → Tap OTHER SOCIAL ▾ to show TikTok, Pinterest, Reddit and Nextdoor. MEASUREMENT, TOTAL and PERIOD stay visible.</p>'+
       '<div class="mission-sheet-scroll" tabindex="0" role="region" aria-label="Horizontal source comparison spreadsheet">'+
-        '<table class="mission-sheet-table">'+head+'<tbody>'+body+'</tbody></table>'+
+        '<table class="mission-sheet-table'+(socialExpanded?' mission-sheet-social-expanded':'')+'">'+head+'<tbody>'+body+'</tbody></table>'+
       '</div>'+
       '<p class="mission-sheet-note">TOTAL is immediately after MEASUREMENT. Search counts cover connected Google Search and Bing reporting only, never every possible search engine. Google Maps profile impressions are excluded. Search totals remain N/A when provider reporting dates differ. '+
         'Search CTR is calculated from same-period clicks and appearances, while search rankings cannot be combined across engines. '+
@@ -463,7 +525,9 @@
         'Website visits are attributed sessions from '+esc(provider)+
         ' and are not unique visitors. Previous source sessions use Wix\'s matching preceding period when verified; otherwise N/A. '+
         'Wix and GA4 session counts are never added. Source-specific average stay uses GA4 session duration when verified (and may differ from the Wix overall average). Relative percent changes compare matching periods; lower average search position is better. '+
-        'NEW is used instead of a percentage when the last value was zero. N/A means not applicable or unverified.'+bingNote+mapNote+'</p>'+
+        'NEW is used instead of a percentage when the last value was zero. N/A means not applicable or unverified. '+
+        'OTHER SOCIAL combines TikTok, Pinterest, Reddit and Nextdoor without double-counting TOTAL; expand to see which platform sent visits. '+
+        'TRIPADVISOR is website traffic attribution, not review counts.'+bingNote+mapNote+'</p>'+
       metaStatus+queryDetails+'</section>';
   }
   window.djomsSourceSpreadsheet=draw;
