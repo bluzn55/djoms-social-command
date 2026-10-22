@@ -39,7 +39,7 @@
     ['x','X / Twitter'],['youtube','YouTube'],['ai','AI referral sites'],
     ['outlaw','Outlaw Radio 5150'],['google','Google Search'],
     ['other-search','Other search engines'],['other-social','Other social platforms'],
-    ['email','Email'],['ads','Paid advertising'],
+    ['email','Email'],['qr','QR code links'],['ads','Paid advertising'],
     ['referral','Other websites / referrals'],['other','Other / unassigned']
   ];
   const validCount=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0;
@@ -56,6 +56,9 @@
       window.djomsEmailReferralSource({source:raw,category:cat}))||
       /(?:^|[^a-z0-9])(?:mail\.duck\.com|email\s*protection|@duck\.com)(?:$|[^a-z0-9])/.test(raw))
       return 'email';
+    // Same QR definition and priority as the main Search & Discovery table.
+    if(typeof window.djomsQrReferralSource==='function'&&
+      window.djomsQrReferralSource({source:raw,category:cat}))return 'qr';
     if(cat==='direct'||base==='(direct)'||base==='direct')return 'direct';
     if(/facebook|fb\.me|\bfb\b/.test(text))return 'facebook';
     if(/instagram|ig\.me|\binsta\b/.test(text))return 'instagram';
