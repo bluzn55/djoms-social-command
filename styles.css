@@ -11721,3 +11721,118 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     margin:11px auto 0!important;
   }
 }
+
+/* DOC JAKS · FRIENDS & SUPPORTERS · OWNER ONLY
+   Campaign-specific Wix sessions, not Facebook reach or new traffic totals. */
+#connectionStrip .mj-friend-supporters .mj-dropdown-content{padding:4px 6px}
+#connectionStrip .mj-friend-supporter-inner{
+  min-width:0;padding:8px 6px 10px;
+  background:#f9ebcf;color:#261a10;
+}
+#connectionStrip .mj-friend-intro,
+#connectionStrip .mj-friend-note{
+  font:750 12px/1.36 Arial,sans-serif!important;
+  color:#59442c!important;margin:4px 0 8px!important;
+}
+#connectionStrip .mj-friend-total{
+  display:flex;flex-direction:column;gap:3px;
+  border-bottom:2px solid #ad8b63;
+  padding:7px 0;margin-bottom:8px;
+}
+#connectionStrip .mj-friend-total strong{
+  font:900 clamp(18px,1.22vw,24px)/1.1 Arial,sans-serif!important;
+  color:#201712!important;
+}
+#connectionStrip .mj-friend-total small{
+  font:750 11px/1.2 Arial,sans-serif;color:#654a35;
+}
+#connectionStrip .mj-friend-entries{
+  display:grid;gap:9px;max-height:470px;overflow-y:auto;min-width:0;
+}
+#connectionStrip .mj-friend-entry{
+  min-width:0;padding:8px;
+  border:2px solid #99784c;border-radius:6px;
+  background:#fef5e4;color:#1e160f;
+}
+#connectionStrip .mj-friend-heading{
+  display:flex;justify-content:space-between;gap:3px;flex-wrap:wrap;
+  align-items:baseline;padding-bottom:4px;
+}
+#connectionStrip .mj-friend-heading strong{
+  font:900 17px/1.18 Georgia,serif!important;
+  color:#21160d!important;overflow-wrap:anywhere;
+}
+#connectionStrip .mj-friend-heading small{
+  font:900 11px/1.18 Arial,sans-serif;color:#74521f!important;
+}
+#connectionStrip .mj-friend-link-label,
+#connectionStrip .mj-friend-form label{
+  display:grid;gap:4px;min-width:0;
+  font:900 12px/1.15 Arial,sans-serif;color:#392a17!important;
+}
+#connectionStrip .mj-friend-link,
+#connectionStrip .mj-friend-form input{
+  display:block;width:100%;min-width:0;padding:7px 6px;
+  color:#1f170e;background:#fffdf5;border:2px solid #a1835c;
+  border-radius:4px;font:800 12px/1.1 Arial,sans-serif;
+}
+#connectionStrip .mj-friend-link:focus,
+#connectionStrip .mj-friend-form input:focus{
+  outline:3px solid #2b7455;outline-offset:1px;
+}
+#connectionStrip .mj-friend-actions{
+  display:flex;gap:6px;flex-wrap:wrap;margin:7px 0;
+}
+#connectionStrip .mj-friend-actions button,
+#connectionStrip .mj-friend-form button,
+#connectionStrip .mj-friend-refresh{
+  cursor:pointer;min-width:0;border:2px solid #3b2a17;
+  background:#3b291b;color:#fff2d8!important;
+  padding:7px 8px;border-radius:4px;
+  font:900 12px/1.18 Arial,sans-serif!important;
+}
+#connectionStrip .mj-friend-actions button:last-child{
+  background:#f4e0b8;color:#301d10!important;
+}
+#connectionStrip .mj-friend-actions button:disabled,
+#connectionStrip .mj-friend-refresh:disabled,
+#connectionStrip .mj-friend-form button:disabled{opacity:.6;cursor:default;}
+#connectionStrip .mj-friend-metrics{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:5px;min-width:0;
+}
+#connectionStrip .mj-friend-metrics>div{
+  border:1px solid #bb9667;border-radius:4px;
+  background:#f1deb9;padding:5px;
+  min-width:0;display:flex;flex-direction:column;gap:1px;
+}
+#connectionStrip .mj-friend-metrics>div:first-child{grid-column:1/-1}
+#connectionStrip .mj-friend-metrics small{
+  font:900 11px/1.12 Arial,sans-serif!important;color:#54432e!important;
+}
+#connectionStrip .mj-friend-metrics b{
+  font:900 23px/1.12 Arial,sans-serif!important;color:#1d130e!important;
+  font-variant-numeric:tabular-nums;
+}
+#connectionStrip .mj-friend-metrics span{
+  font:800 12px/1.17 Arial,sans-serif!important;color:#60452d!important;
+}
+#connectionStrip .mj-friend-trend{
+  font:900 12px/1.15 Arial,sans-serif!important;
+}
+#connectionStrip .mj-friend-trend.up{color:#116732!important}
+#connectionStrip .mj-friend-trend.down{color:#a52922!important}
+#connectionStrip .mj-friend-trend.hold{color:#8c6627!important}
+#connectionStrip .mj-friend-trend.na{color:#5e523e!important}
+#connectionStrip .mj-friend-warning,
+#connectionStrip .mj-friend-hint{
+  margin:7px 0!important;padding:6px;
+  color:#71411f!important;background:#fff1d8;border-radius:4px;
+  font:800 12px/1.28 Arial,sans-serif!important;
+}
+#connectionStrip .mj-friend-form{
+  display:grid;gap:7px;padding:9px 0 7px;
+  margin-top:8px;border-top:2px solid #b18d5f;
+}
+#connectionStrip .mj-friend-refresh{display:block;margin-top:4px;width:100%}
+#connectionStrip .mj-friend-note{border-top:1px solid #d0af7a;padding-top:7px}
