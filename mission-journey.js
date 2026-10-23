@@ -405,6 +405,37 @@
       (site?.trafficSourcesComplete===false?' Wix source coverage is partial.':''),
       'No verified Wix traffic-source breakdown for these dates.');
   }
+  function searchEnginesDropdown(search){
+    const results=Array.isArray(search?.engines)?search.engines:[];
+    const engineRows=results.slice(0,5).map((engine,i)=>{
+      const prev=engine.previous?.impressions,now=engine.current?.impressions;
+      const diff=movement(prev,now);
+      const lastClicks=engine.previous?.clicks,currClicks=engine.current?.clicks;
+      const engineCtr=valid(now)&&now>0&&valid(currClicks)?currClicks/now:null;
+      const clickChange=movement(lastClicks,currClicks);
+      return '<div class="mj-dropdown-row mj-engine-detail-row">'+
+        '<span class="mj-dropdown-rank">'+esc(i+1)+'.</span>'+
+        '<span class="mj-dropdown-desc"><strong>'+esc(engine.name)+'</strong>'+
+        '<small>LAST '+esc(number(prev))+' · CURRENT '+esc(number(now))+
+          ' · <b class="'+esc(diff.tone)+'">'+esc(diff.text)+'</b></small>'+
+        '<small>SEARCH CLICKS: L '+esc(number(lastClicks))+' / C '+esc(number(currClicks))+
+          ' · <b class="'+esc(clickChange.tone)+'">'+esc(clickChange.text)+'</b></small>'+
+        '<small>Search CTR '+esc(formatValue(engineCtr,'percentage'))+
+          ' · Average position '+esc(engine.id==='google'?
+            formatValue(engine.positionCurrent,'position'):'N/A')+'</small></span>'+
+        '<span class="mj-dropdown-stat"><b>'+esc(number(now))+'</b><small>appearances</small></span></div>';
+    });
+    const intro=search?.status==='reported'
+      ?'Top reporting engines ranked by verified search appearances. Only engines with actual positive search appearances or clicks are listed. '+
+       'The combined total uses exactly '+search.scope+
+       '. Range '+(search.currentRange?.start||'N/A')+' to '+(search.currentRange?.end||'N/A')+
+       '. Engines with incompatible reporting dates are NOT included.'
+      :'No search engine has a complete matching-date report for this selection.';
+    return mapDropdown('engines','TOP SEARCH ENGINES · VERIFIED',engineRows,intro,
+      search?.status==='reported'?
+        'No engine reported positive appearances or clicks within the verified coverage.':
+        'No compatible, verified search-engine data yet. The connected engine reports remain available below.');
+  }
   function searchClicksDropdown(seo){
     // Search Console reports page and query aggregates, not named visitors.
     // Zero clicks must not hide the actual phrases/pages that had impressions.
@@ -440,7 +471,7 @@
         'but did not provide individual phrase/page details for this period.';
     else if(connected&&clicks===0)
       empty='Google reported zero search-result clicks for these dates.';
-    return mapDropdown('google-clicks','SEARCH APPEARANCES & GOOGLE CLICKS',rows,
+    return mapDropdown('google-clicks','GOOGLE SEARCH PHRASES & RESULT PAGES',rows,
       context,empty);
   }
   function socialPanel(social){
@@ -479,9 +510,65 @@
         '<small>'+esc('15 of 100 points when FB/IG are comparable. X is manual only.')+'</small></div>',
       'Social is a second discovery current, not a continuation of Google clicks. Meta figures are current lifetime totals on posts published in each period.');
   }
+  function musicPanel(music,owner){
+    const ms=owner?.stages?.find(stage=>stage.id==='music');
+    const score=Number.isInteger(ms?.score)?ms.score:null;
+    const grade=score===null?'N/A':String(score);
+    const historic=music?.radioImport;
+    const radioDates=historic?.start&&historic?.end?
+      historic.start+' to '+historic.end+' (UTC)':'Not imported';
+    const row=(label,value,source)=>
+      '<div class="mj-music-stat"><span>'+esc(label)+'</span>'+
+        '<strong>'+esc(value)+'</strong><small>'+esc(source)+'</small></div>';
+    const importNote=historic&&valid(historic.connections)?
+      '<details class="mj-music-history"><summary>HISTORICAL RADIO.CO DATA ▾</summary>'+
+        '<p>'+esc(radioDates)+' · '+number(historic.connections)+' measured streaming connections'+
+        (valid(historic.averageDurationSeconds)?
+          ' · average duration '+duration(historic.averageDurationSeconds):'')+
+        '. Historical UTC data is NOT substituted for the selected period.</p></details>':'';
+    const current=music?.current,previous=music?.previous;
+    return '<section class="mj-music-zone" aria-label="Music listening, online purchases and streaming health">'+
+      '<div class="mj-music-head"><div><small>⚜ A SECOND CURRENT THROUGH THE SWAMP</small>'+
+        '<h3>♫ DOC JAKS MUSIC &amp; OUTLAW RADIO 5150</h3>'+
+        '<p>Listening matters. Music sales matter. Website clicks are not plays.</p></div>'+
+        '<span class="mj-music-score">MUSIC HEALTH <b>'+esc(grade)+'</b>'+
+          '<small>10 of 100 points if verified</small></span></div>'+
+      '<div class="mj-music-grid">'+
+        row('RADIO.CO STREAM CONNECTIONS',
+          formatValue(current?.connections),
+          'Current selected days · UTC · Last '+formatValue(previous?.connections))+
+        row('RADIO.CO TOTAL LISTENED',
+          valid(current?.seconds)?duration(current.seconds):'N/A',
+          'Current selected days · UTC · Last '+
+            (valid(previous?.seconds)?duration(previous.seconds):'N/A'))+
+        row('MUSIC PAGE VIEWS',
+          formatValue(music?.musicPageViews),
+          'Wix reported music pages · not listening')+
+        row('OUTLAW RADIO PAGE VIEWS',
+          formatValue(music?.radioPageViews),
+          'Wix reported radio page · not a listener')+
+        row('PAID MUSIC UNITS',
+          formatValue(music?.musicUnits),
+          'Verified Wix Music category · already part of SALES')+
+        row('PAID MUSIC SALES',
+          formatValue(music?.musicItemSalesCents,'cents'),
+          'Verified Wix Music category · already part of SALES')+
+        row('SPOTIFY STREAMS','N/A','Not connected')+
+        row('APPLE / OTHER STREAMS','N/A','Not connected')+
+      '</div>'+importNote+
+      '<p class="mj-music-caveat">'+esc(music?.note||
+        'Verified listening and streaming comparison pending.')+' '+
+        esc(music?.caveat||'Music sales are already included in total sales.')+
+      '</p></section>';
+  }
   function journey(context){
     const {site,seo,ga4,sales,period,social:providedSocial}=context||{};
     const social=providedSocial||(typeof window.djomsSocialPeriod==='function'?window.djomsSocialPeriod(period):null);
+    const music=typeof window.djomsMusicEvidence==='function'?
+      window.djomsMusicEvidence({period,sales}):null;
+    const bing=report('bing',period);
+    const search=typeof window.djomsCombinedSearch==='function'?
+      window.djomsCombinedSearch({seo,bing,period}):null;
     const wix=site?.connected===true,google=seo?.status==='connected';
     const g=google?seo.metrics||{}:{};
     const gsc=google&&seo.comparison?.status==='reported'?seo.comparison:null;
@@ -500,23 +587,26 @@
     const contactsLast=valid(wixCmp.clicksToContact?.previous)&&valid(wixCmp.formsSubmitted?.previous)?
       wixCmp.clicksToContact.previous+wixCmp.formsSubmitted.previous:null;
     const owner=typeof window.djomsOwnerScore==='function'?
-      window.djomsOwnerScore(site,ga4,seo,sales,period,social):null;
+      window.djomsOwnerScore(site,ga4,seo,sales,period,social,music):null;
     const score=Number.isInteger(owner?.score)?owner.score:null;
     const scoreName=score===null?'UNVERIFIED':score>100?'FORWARD':score<100?'BACKWARD':'HOLDING';
     const scoreStyle=score===null?'na':score>100?'up':score<100?'down':'hold';
     const sourceMini=(title,pair)=>miniMetric(title,pair.last,pair.now);
     const first=card('search','1','SEARCH APPEARANCES','⌕',
-      heroMetric('Google impressions',lastSearch('impressions'),g.impressions,'count',false,'How often Doc Jaks appeared in search results.')+
+      heroMetric('Verified engine appearances',search?.previous,
+        search?.current,'count',false,'Google and Bing combined ONLY when their reported dates match.')+
       '<div class="mj-small-splits">'+
-        miniMetric('SEARCH CTR',lastSearch('ctr'),g.ctr,'percentage')+
-        miniMetric('AVG. POSITION',lastSearch('position'),g.position,'position',true)+'</div>',
-      'A search does not have to name Doc Jaks.');
+        miniMetric('COMBINED CTR',search?.ctrPrevious,search?.ctrCurrent,'percentage')+
+        miniMetric('GOOGLE POSITION',search?.positionPrevious,search?.positionCurrent,'position',true)+'</div>'+
+      searchEnginesDropdown(search),
+      'Reporting engines: '+(search?.scope||'N/A')+
+      '. Google position is not an average across engines.');
     const second=card('clicks','2','SEARCH CLICKS','↖',
-      heroMetric('Google clicks',lastSearch('clicks'),g.clicks,'count',false,
-        'Click count from Google Search Console, not all website entries.')+
+      heroMetric('Verified engine clicks',search?.clicksPrevious,search?.clicksCurrent,'count',false,
+        'Clicks reported by the same search engines and dates as Box 1.')+
       '<div class="mj-card-branches"><span>✖ No Click</span><span>✓ Clicked Doc Jaks</span></div>'+
       searchClicksDropdown(seo),
-      'Clicks and Wix visits are tracked by different systems.');
+      'Search phrases and result-page detail currently comes from Google. Wix visits are separate.');
     const third=card('traffic','3','WHERE THEY CAME FROM','⌖',
       heroMetric('Wix sessions',traffic.sessions.last,traffic.sessions.now,'count')+
       '<div class="mj-minis">'+
@@ -583,6 +673,7 @@
         '</svg>'+
         first+second+third+socialPanel(social)+fourth+fifth+sixth+seventh+
       '</div>'+
+      musicPanel(music,owner)+
       '<div class="mj-swamp-disclaimer">⚜ Every stop is a separate reported measurement. '+
         'Social activity is a parallel source of discovery. Values are not added into a fictional individual-visitor funnel.</div>'+
       '<div class="mj-decision-heading"><span>⚜ THE FOUR QUESTIONS THAT TURN DATA INTO DECISIONS ⚜</span></div>'+
@@ -605,7 +696,10 @@
       '<p class="mj-caveat">Meta views, likes and shares are current lifetime totals for posts published in the selected and preceding periods, not interactions on those dates. '+
       'Per-post Social comparisons are provisional; older posts have had longer to gain engagement. '+
       'Facebook and Instagram contribute up to 15 of the owner index’s 100 importance points only when comparable. '+
-      'X is owner-entered and excluded from scoring. Google Search, Wix sessions, and CTA events remain separate.'+
+      'X is owner-entered and excluded from scoring. Google and Bing are combined only on matching reported dates. '+
+      'Music listening is counted only when Radio.co verifies full current and previous UTC windows. '+
+      'Music purchases already count in overall Wix paid sales and are never double-scored. '+
+      'Wix sessions and CTA events remain separate.'+
       '</p>'+
       '<div class="mj-rougarou-eyes" aria-hidden="true"><i></i><i></i></div>'+
     '</section>';
