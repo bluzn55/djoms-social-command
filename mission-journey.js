@@ -358,14 +358,15 @@
   function viewedPagesDropdown(site){
     const pages=site?.connected===true&&Array.isArray(site.topPages)?
       site.topPages.filter(p=>p&&typeof p.path==='string'&&p.path.trim()&&
-        valid(p.visitors)&&p.visitors>0)
-        .sort((a,b)=>b.visitors-a.visitors||(valid(b.views)?b.views:0)-(valid(a.views)?a.views:0)):[];
+        ((valid(p.views)&&p.views>0)||(valid(p.visitors)&&p.visitors>0)))
+        .sort((a,b)=>(valid(b.views)?b.views:0)-(valid(a.views)?a.views:0)||
+          (valid(b.visitors)?b.visitors:0)-(valid(a.visitors)?a.visitors:0)):[];
     const rows=pages.map((p,i)=>mapDetailRow(named(p.path),
-      'Views '+number(p.views)+' · Avg. time '+compactTime(p.avgTimeSeconds),
-      number(p.visitors),'visitors',i));
+      'Page visitors '+number(p.visitors)+' · Avg. time '+compactTime(p.avgTimeSeconds),
+      number(p.views),'page views',i));
     return mapDropdown('pages','PAGES VIEWED',rows,
-      'Wix-reported pages: visitors, views and average time on that page. Average time is not a complete visitor timeline.',
-      'No Wix pages with recorded visitors for these dates.');
+      'Wix-reported page views, visitors and average time per page. Page-level visitors may overlap, so do not add these to find unique site visitors.',
+      'No Wix page-view details were returned for these dates.');
   }
   function locationsDropdown(site){
     const places=site?.connected===true&&Array.isArray(site.geography)?
@@ -396,12 +397,13 @@
         const last=knownLast?(oldBySource.get(normalized(p))??0):null;
         const source=String(p.source||p.category||'Unassigned');
         const category=p.category&&String(p.category)!==source?String(p.category):'Wix traffic source';
+        const change=movement(last,p.sessions);
         return mapDetailRow(source,
-          category+' · Last '+(valid(last)?number(last):'N/A'),
-          number(p.sessions),'sessions',i);
+          category+' · LAST '+number(last)+' · '+change.text,
+          number(p.sessions),'website visits',i);
       });
     return mapDropdown('traffic-sources','WHERE WEBSITE VISITS CAME FROM',rows,
-      'These are Wix-attributed website sessions, including direct visits and referrals. They do NOT represent a breakdown of Google Search Console clicks.'+
+      'Wix calls these sessions; the map calls them Website Visits. These include direct entries, search referrals, and social or other links when Wix identifies them. A visit is not necessarily a click. Google Search Console clicks use a separate measurement.'+
       (site?.trafficSourcesComplete===false?' Wix source coverage is partial.':''),
       'No verified Wix traffic-source breakdown for these dates.');
   }
