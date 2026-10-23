@@ -11657,3 +11657,67 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   }
   #connectionStrip .mj-card-music .mj-music-stat>strong{font-size:23px!important}
 }
+
+/* OCT 23 · SINGLE OWNER HEALTH DISPLAY
+   The old "Are We Moving Forward/Backward" scorecards and meter have been
+   removed. Keep the detailed source tables below the swamp journey. */
+#connectionStrip > .mission-source-detail-panel{
+  padding:9px 11px 13px!important;
+  border:1px solid #bfa782!important;
+  background:#fdf8ec!important;
+  box-shadow:none!important;
+}
+#connectionStrip .mission-source-report-header{
+  display:flex;align-items:baseline;justify-content:space-between;
+  gap:7px 16px;flex-wrap:wrap;
+  padding:2px 0 9px;margin:0 0 7px;
+  border-bottom:2px solid #b98a7a;
+  color:#1d1710;
+}
+#connectionStrip .mission-source-report-header strong{
+  font:900 19px/1.16 Arial,sans-serif!important;
+  color:#1d1611!important;
+}
+#connectionStrip .mission-source-report-header small{
+  font:800 13px/1.2 Arial,sans-serif!important;
+  color:#66513a!important;
+}
+#connectionStrip .mission-source-loading{
+  font:850 15px/1.25 Arial,sans-serif;color:#463627;
+  margin:0;padding:6px;
+}
+/* This arrow is tied to the ACTUAL owner score on the 100-point scale.
+   Green UP: >100; yellow level: 100; red DOWN: <100; gray ?: N/A. */
+#connectionStrip .mj-wood-score{
+  position:relative!important;
+  min-width:170px!important;
+  padding-right:40px!important;
+  min-height:103px!important;
+}
+#connectionStrip .mj-wood-score .mj-direction-arrow{
+  position:absolute;right:7px;top:23px;
+  display:block;min-width:32px;
+  color:#72644b!important;
+  font:900 clamp(40px,2.8vw,53px)/1 Georgia,serif!important;
+  text-shadow:0 1px rgba(255,255,255,.4);
+  pointer-events:none;text-align:center;
+}
+#connectionStrip .mj-wood-score .mj-direction-arrow.up{
+  color:#087339!important;
+}
+#connectionStrip .mj-wood-score .mj-direction-arrow.down{
+  color:#b22c21!important;
+}
+#connectionStrip .mj-wood-score .mj-direction-arrow.hold{
+  color:#957319!important;
+}
+#connectionStrip .mj-wood-score .mj-direction-arrow.na{
+  color:#786c5a!important;
+  font-size:31px!important;top:30px;
+}
+@media(max-width:690px){
+  #connectionStrip .mj-wood-score{
+    min-width:170px!important;
+    margin:11px auto 0!important;
+  }
+}
