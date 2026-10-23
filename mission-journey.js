@@ -436,43 +436,78 @@
         'No engine reported positive appearances or clicks within the verified coverage.':
         'No compatible, verified search-engine data yet. The connected engine reports remain available below.');
   }
-  function searchClicksDropdown(seo){
-    // Search Console reports page and query aggregates, not named visitors.
-    // Zero clicks must not hide the actual phrases/pages that had impressions.
+  function searchAppearancesDetails(seo){
+    // Search phrases describe why Doc Jaks APPEARED, even when nobody clicked.
+    // GSC may omit/suppress queries, so shown rows never equal all impressions.
     const connected=seo?.status==='connected';
     const metrics=connected?seo.metrics||{}:{};
     const impressions=valid(metrics.impressions)?metrics.impressions:null;
     const clicks=valid(metrics.clicks)?metrics.clicks:null;
     const pairs=connected&&seo.queryPages?.status==='reported'&&Array.isArray(seo.queryPages.rows)?
       seo.queryPages.rows.filter(p=>p?.query&&p?.page&&(valid(p.impressions)||valid(p.clicks)))
-        .sort((a,b)=>(b.impressions??0)-(a.impressions??0)).slice(0,5):[];
+        .sort((a,b)=>(b.impressions??0)-(a.impressions??0)).slice(0,60):[];
     const terms=connected&&Array.isArray(seo.topQueries)?
       seo.topQueries.filter(p=>p?.query&&(valid(p.impressions)||valid(p.clicks)))
         .sort((a,b)=>(b.impressions??0)-(a.impressions??0)).slice(0,5):[];
     const pages=connected&&Array.isArray(seo.topPages)?
       seo.topPages.filter(p=>p?.page&&(valid(p.impressions)||valid(p.clicks)))
         .sort((a,b)=>(b.impressions??0)-(a.impressions??0)).slice(0,5):[];
-    // A phrase may occur on multiple pages. Do not add totals across
-    // different query, page or query+page breakdowns.
-    const primary=terms.length?terms:pairs;
-    const termRows=primary.map((p,i)=>mapDetailRow('SEARCH: '+p.query,
-      'Clicks '+number(p.clicks)+(p.page?' · Google result '+named(p.page):' · Exact result page N/A'),
-      number(p.impressions),'appearances',i));
-    const pageRows=pages.map((p,i)=>mapDetailRow('PAGE: '+named(p.page),
-      'Clicks '+number(p.clicks)+' · Appeared in Google results',
-      number(p.impressions),'appearances',i));
+    const matched=phrase=>pairs.filter(p=>p.query===phrase).slice(0,3)
+      .map(p=>named(p.page)).filter(Boolean);
+    const primary=terms.length?terms:pairs.slice(0,5);
+    const termRows=primary.map((p,i)=>{
+      const found=p.page?[named(p.page)]:matched(p.query);
+      const pagesText=found.length?
+        ' · Result'+(found.length>1?'s':'')+': '+[...new Set(found)].join(', '):
+        ' · Result page not disclosed';
+      return mapDetailRow('SEARCH PHRASE: '+p.query,
+        'Google result clicks '+number(p.clicks)+pagesText,
+        number(p.impressions),'appearances',i);
+    });
+    const pageRows=pages.map((p,i)=>mapDetailRow('RESULT PAGE: '+named(p.page),
+      'Google clicks '+number(p.clicks)+' · Page shown in search results',
+      number(p.impressions),'appearances',i+termRows.length));
     const rows=[...termRows,...pageRows];
-    const context='Google Search Console: '+number(impressions)+' total appearances · '+
-      number(clicks)+' total search-result clicks. Search phrases and result pages below are separate '+
-      'aggregate breakdowns and must not be added together.';
-    let empty='Google did not return individual search phrases or result pages for these dates.';
+    const context='Google Search Console: '+number(impressions)+' reported Google appearances, '+
+      number(clicks)+' clicks. Phrases show what people typed when Google discloses it; '+
+      'result pages show which Doc Jaks pages appeared. Google hides some searches. '+
+      'Phrase and page counts overlap and must not be added together or to the engine totals.';
+    let empty='Google has not reported individual search phrases or result pages for the selected dates.';
     if(connected&&valid(impressions)&&impressions>0&&clicks===0)
       empty='Google reported '+number(impressions)+' search appearances and zero clicks, '+
-        'but did not provide individual phrase/page details for this period.';
-    else if(connected&&clicks===0)
-      empty='Google reported zero search-result clicks for these dates.';
-    return mapDropdown('google-clicks','GOOGLE SEARCH PHRASES & RESULT PAGES',rows,
-      context,empty);
+        'but did not disclose individual phrase or page details for this period.';
+    return mapDropdown('google-phrases','GOOGLE SEARCH PHRASES & RESULT PAGES',
+      rows,context,empty);
+  }
+  function clicksByEngineDropdown(search){
+    // Each engine in the source breakdown is genuinely included in the
+    // matching-date Search totals; 0 clicks is a verified 0, not a missing row.
+    const results=search?.status==='reported'&&Array.isArray(search.engines)?
+      search.engines:[];
+    const rows=results.slice(0,5).map((engine,i)=>{
+      const last=engine.previous?.clicks,now=engine.current?.clicks;
+      const change=movement(last,now);
+      return '<div class="mj-dropdown-row mj-engine-clicks">'+
+        '<span class="mj-dropdown-rank">'+esc(i+1)+'.</span>'+
+        '<span class="mj-dropdown-desc"><strong>'+esc(engine.name)+'</strong>'+
+          '<small>LAST '+esc(number(last))+' · CURRENT '+esc(number(now))+
+          ' · <b class="'+esc(change.tone)+'">'+esc(change.text)+'</b></small>'+
+          '<small>Verified search appearances '+esc(number(engine.current?.impressions))+
+          ' · CTR '+esc(valid(engine.current?.impressions)&&engine.current.impressions>0&&
+            valid(now)?formatValue(now/engine.current.impressions,'percentage'):'N/A')+
+          '</small></span>'+
+        '<span class="mj-dropdown-stat"><b>'+esc(number(now))+
+          '</b><small>search clicks</small></span></div>';
+    });
+    return mapDropdown('search-click-engines','CLICKS BY SEARCH ENGINE',rows,
+      search?.status==='reported'?
+        'Verified search-result clicks only. Same engine/date coverage as #1: '+
+          search.scope+' ('+(search.currentRange?.start||'N/A')+
+          ' through '+(search.currentRange?.end||'N/A')+
+          '). An engine with appearances but zero clicks is correctly shown as 0. '+
+          'Search phrases and result pages are under #1.':
+        'Waiting for verified engine-level search-result click totals.',
+      'No search engine returned compatible search-click data.');
   }
   function socialPanel(social){
     const icons={facebook:'f',instagram:'◎',x:'𝕏'};
@@ -598,15 +633,15 @@
       '<div class="mj-small-splits">'+
         miniMetric('COMBINED CTR',search?.ctrPrevious,search?.ctrCurrent,'percentage')+
         miniMetric('GOOGLE POSITION',search?.positionPrevious,search?.positionCurrent,'position',true)+'</div>'+
-      searchEnginesDropdown(search),
+      searchEnginesDropdown(search)+searchAppearancesDetails(seo),
       'Reporting engines: '+(search?.scope||'N/A')+
       '. Google position is not an average across engines.');
     const second=card('clicks','2','SEARCH CLICKS','↖',
       heroMetric('Verified engine clicks',search?.clicksPrevious,search?.clicksCurrent,'count',false,
         'Clicks reported by the same search engines and dates as Box 1.')+
       '<div class="mj-card-branches"><span>✖ No Click</span><span>✓ Clicked Doc Jaks</span></div>'+
-      searchClicksDropdown(seo),
-      'Search phrases and result-page detail currently comes from Google. Wix visits are separate.');
+      clicksByEngineDropdown(search),
+      'Click totals are from the engines included in #1. Search phrases and result pages appear under #1. Wix visits are separate.');
     const third=card('traffic','3','WHERE THEY CAME FROM','⌖',
       heroMetric('Wix sessions',traffic.sessions.last,traffic.sessions.now,'count')+
       '<div class="mj-minis">'+
