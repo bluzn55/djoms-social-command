@@ -338,13 +338,15 @@
       const label={facebook:'FACEBOOK',instagram:'INSTAGRAM',x:'X'}[platform];
       const each=(key,title)=>{
         const now=d?.now?.[key],last=d?.last?.[key];
-        const pct=d?.movements?.[key];
-        const hue=isX?'na':typeof pct==='number'&&Number.isFinite(pct)?
+        const pct=d?.displayPct?.[key];
+        const hue=isX?'na':pct==='NEW'?'up':
+          typeof pct==='number'&&Number.isFinite(pct)?
           pct>0?'up':pct<0?'down':'hold':'na';
         return '<div class="mj-social-stat"><small>'+esc(title)+'</small>'+
           '<b>'+esc(formatValue(now))+'</b>'+
           '<span>L '+esc(formatValue(last))+'</span>'+
-          (!isX&&typeof pct==='number'&&Number.isFinite(pct)?
+          (!isX&&pct==='NEW'?'<em class="up">↑ NEW</em>':
+           !isX&&typeof pct==='number'&&Number.isFinite(pct)?
             '<em class="'+hue+'">'+(pct>0?'↑ +':pct<0?'↓ ':'→ ')+
               esc(pct.toFixed(1))+'%</em>':'')+'</div>';
       };
