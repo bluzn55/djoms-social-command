@@ -643,7 +643,7 @@
       clicksByEngineDropdown(search),
       'Click totals are from the engines included in #1. Search phrases and result pages appear under #1. Wix visits are separate.');
     const third=card('traffic','3','WHERE THEY CAME FROM','⌖',
-      heroMetric('Wix sessions',traffic.sessions.last,traffic.sessions.now,'count')+
+      heroMetric('Website Visits',traffic.sessions.last,traffic.sessions.now,'count')+
       '<div class="mj-minis">'+
         sourceMini('DIRECT',traffic.direct)+
         sourceMini('GOOGLE REFERRALS',traffic.google)+
