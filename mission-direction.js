@@ -1093,6 +1093,8 @@
         '</div>'+
         '<div class="mission-direction-gauge-aside">'+directionMeter(summary)+'</div>'+
       '</div>'+
+      (typeof window.djomsVisitorJourney==='function'
+        ?window.djomsVisitorJourney({site,ga4,seo,sales,period}):'')+
       '<p class="mission-period-context">LAST = the preceding equal-length reporting period; CURRENT = selected dates ('+
         esc(periodName(period))+'). For Week this means the previous seven days versus the current seven days.</p>'+
       ownerDigest(summary)+
