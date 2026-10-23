@@ -541,7 +541,7 @@
           each('shares','SHARES')+each('comments','COMMENTS')+'</div></section>';
     }).join('');
     const socialEvidence=social?.availableWeight>0;
-    return card('social','8','SOCIAL MEDIA','♟',
+    return card('social','7','SOCIAL MEDIA','♟',
       '<div class="mj-social-inner">'+rows+'</div>'+
       '<div class="mj-social-impact"><strong>SOCIAL HEALTH · '+(socialEvidence?'COUNTS':'N/A')+'</strong>'+
         '<small>'+esc('15 of 100 points when FB/IG are comparable. X is manual only.')+'</small></div>',
@@ -657,22 +657,21 @@
       wixSourcesDropdown(site)+locationsDropdown(site),
       'Visits count sessions; Visitors estimate distinct browsers/devices. '+
       'Not every visit came from a link click, and one visitor can make several visits.');
-    // #4 now shows the page-view stage rather than repeating Visitors from #3.
-    const fourth=card('visitors','4','PAGES VISITED','♟',
+    // #4 unifies where people went and how they engaged. Metrics remain
+    // distinct Wix measures; they are never summed into a fabricated total.
+    const fourth=card('visitors','4','PAGES & ENGAGEMENT','◷',
       heroMetric('PAGE VIEWS',wixCmp.pageViews?.previous,wix?site.pageViews:null,'count',
-        false,'Total Wix page views in the selected dates, including repeat views.')+
-      viewedPagesDropdown(site),
-      'Which Doc Jaks pages people opened, how many views were recorded, and available time on each page.');
-    const fifth=card('engagement','5','VISITOR ENGAGEMENT','◷',
-      heroMetric('Average stay',wixCmp.avgTimeSeconds?.previous,
-        wix?site.avgTimeSeconds:null,'time')+
+        false,'Total Wix page views, including repeat views by the same visitor.')+
       '<div class="mj-minis">'+
+        miniMetric('AVERAGE STAY',wixCmp.avgTimeSeconds?.previous,
+          wix?site.avgTimeSeconds:null,'time')+
         miniMetric('BOUNCE RATE',wixCmp.bounceRate?.previous,
           wix?site.bounceRate:null,'percentage',true)+
-        miniMetric('PAGES / SESSION',wixCmp.pagesPerSession?.previous,
-          wix?site.pagesPerSession:null,'decimal')+'</div>',
-      'More stay and page depth is encouraging; lower bounce is better.');
-    const sixth=card('actions','6','MEANINGFUL ACTIONS','✦',
+        miniMetric('PAGES / VISIT',wixCmp.pagesPerSession?.previous,
+          wix?site.pagesPerSession:null,'decimal')+'</div>'+
+      viewedPagesDropdown(site),
+      'Explore the pages visited and engagement. Lower bounce is favorable.');
+    const fifth=card('actions','5','MEANINGFUL ACTIONS','✦',
       '<div class="mj-minis">'+
         miniMetric('INQUIRIES',contactsLast,contactsNow)+
         miniMetric('PIT KREWE',null,null)+
@@ -680,7 +679,7 @@
         miniMetric('FILE DOWNLOAD EVENTS',
           previousEvents.fileDownload?.previous,gaEvent.fileDownload)+'</div>',
       'Actual listeners and confirmed Pit Krewe members remain N/A until their own proof is connected.');
-    const seventh=card('sales','7','PAID WEB SALES','▣',
+    const sixth=card('sales','6','PAID WEB SALES','▣',
       heroMetric('Gross item sales',comparison?.itemSalesCents,
         paid?sales.itemSalesCents:null,'cents')+
       '<div class="mj-minis">'+
@@ -711,7 +710,7 @@
           '<path class="mj-path-shadow" d="M 75 160 C 285 70, 460 230, 610 130 S 1040 45, 1135 175 C 1180 290, 1170 390, 1080 490 S 750 590, 575 485 S 245 390, 90 530"/>'+
           '<path class="mj-path-planks" d="M 75 160 C 285 70, 460 230, 610 130 S 1040 45, 1135 175 C 1180 290, 1170 390, 1080 490 S 750 590, 575 485 S 245 390, 90 530"/>'+
         '</svg>'+
-        first+second+third+fourth+fifth+sixth+seventh+socialPanel(social)+
+        first+second+third+fourth+fifth+sixth+socialPanel(social)+
       '</div>'+
       musicPanel(music,owner)+
       '<div class="mj-swamp-disclaimer">⚜ Every stop is a separate reported measurement. '+
