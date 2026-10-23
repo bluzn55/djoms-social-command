@@ -10850,3 +10850,226 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     grid-row:1 / 3 !important;
   }
 }
+
+/* DOC JAKS · VISITOR JOURNEY INTELLIGENCE · OCT 23 2026
+   Full-width journey below the six existing scorecards, owner-friendly type. */
+#missionDirectionPanel .mission-journey-panel {
+  width:100%;box-sizing:border-box;margin:12px 0 16px;padding:12px;
+  background:#fff9ed;border:3px solid #18120e;border-radius:9px;
+  color:#17130d;font:700 16px/1.28 Arial,sans-serif;
+}
+#missionDirectionPanel .mission-journey-panel *{box-sizing:border-box;}
+#missionDirectionPanel .mj-header{
+  display:flex;align-items:start;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  padding:0 0 9px;border-bottom:3px solid #c78a7b;margin-bottom:10px;
+}
+#missionDirectionPanel .mj-header small{
+  display:block;color:#5b432a;font:900 13px/1.2 Arial,sans-serif;letter-spacing:.4px;
+}
+#missionDirectionPanel .mj-header h2{
+  color:#17130f;margin:3px 0;font:900 clamp(24px,1.85vw,30px)/1.1 Arial,sans-serif;letter-spacing:.1px;
+}
+#missionDirectionPanel .mj-header p{color:#433527;font:800 16px/1.3 Arial,sans-serif;margin:4px 0 0}
+#missionDirectionPanel .mj-header > b{
+  display:inline-flex;align-items:center;padding:5px 9px;
+  background:#f3e6ce;border:2px solid #856543;border-radius:5px;
+  font:900 14px/1.2 Arial,sans-serif;white-space:nowrap;
+}
+#missionDirectionPanel .mj-flow{
+  display:grid;grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:8px;margin:6px 0 9px;align-items:stretch;
+}
+#missionDirectionPanel .mj-step{
+  min-width:0;position:relative;display:flex;flex-direction:column;
+  justify-content:center;align-items:center;text-align:center;gap:1px;
+  padding:9px 5px;background:#fffcf6;border:2px solid #201813;border-radius:6px;
+}
+#missionDirectionPanel .mj-step > small{
+  font:900 clamp(12px,.85vw,15px)/1.18 Arial,sans-serif;color:#282019;letter-spacing:.12px;
+}
+#missionDirectionPanel .mj-step > strong{
+  font:900 clamp(24px,2vw,35px)/1.12 Arial,sans-serif;color:#19130f;
+  font-variant-numeric:tabular-nums;
+}
+#missionDirectionPanel .mj-step > span{
+  font:800 clamp(11px,.78vw,14px)/1.22 Arial,sans-serif;color:#65523d;
+}
+#missionDirectionPanel .mj-split{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 9px;
+}
+#missionDirectionPanel .mj-split > span{
+  display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;justify-content:center;
+  border:2px solid #aa8c70;border-radius:6px;padding:6px 8px;
+  text-align:center;font:900 clamp(14px,.92vw,17px)/1.2 Arial,sans-serif;
+}
+#missionDirectionPanel .mj-no-click{background:#fff0eb;color:#a52b24}
+#missionDirectionPanel .mj-yes-click{background:#ebf4ea;color:#126432}
+#missionDirectionPanel .mj-split > span > b{font:900 clamp(19px,1.3vw,24px)/1.1 Arial,sans-serif}
+#missionDirectionPanel .mj-split > span > small{
+  flex:0 0 100%;color:#504437;font:800 13px/1.2 Arial,sans-serif;
+}
+#missionDirectionPanel .mj-outcomes{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:6px;margin:0 0 9px;
+}
+#missionDirectionPanel .mj-outcomes .mj-row{
+  display:flex;justify-content:space-between;align-items:baseline;
+  flex-wrap:wrap;gap:2px 7px;min-width:0;
+  padding:7px;background:#f3ead7;border:1px solid #b8a386;border-radius:4px;
+  font:900 15px/1.2 Arial,sans-serif;
+}
+#missionDirectionPanel .mj-outcomes .mj-row > strong{
+  font:900 clamp(19px,1.2vw,24px)/1.1 Arial,sans-serif;color:#16120f;white-space:nowrap;
+}
+#missionDirectionPanel .mj-outcomes .mj-row small{
+  display:block;color:#64533c;font:700 12px/1.3 Arial,sans-serif;
+  margin-top:3px;flex-basis:100%;width:100%;
+}
+#missionDirectionPanel .mj-evidence-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:7px 0 10px;
+}
+#missionDirectionPanel .mj-evidence {
+  min-width:0;background:#fffcf6;border:2px solid #211710;border-radius:5px;
+  align-self:start;overflow:hidden;
+}
+#missionDirectionPanel .mj-evidence > summary {
+  display:flex;gap:5px;justify-content:space-between;align-items:center;
+  list-style:none;cursor:pointer;padding:7px 8px;
+  background:#f2e4ca;font:900 16px/1.2 Arial,sans-serif;color:#15110e;
+}
+#missionDirectionPanel .mj-evidence > summary::-webkit-details-marker{display:none}
+#missionDirectionPanel .mj-evidence > summary > span{
+  font-size:13px;white-space:nowrap;color:#51412c;
+}
+#missionDirectionPanel .mj-evidence > p{
+  margin:5px 8px;color:#554534;font:750 13px/1.25 Arial,sans-serif;
+}
+#missionDirectionPanel .mj-evidence-list{
+  display:grid;gap:0;margin:4px 7px 6px;max-height:270px;overflow-y:auto;
+}
+#missionDirectionPanel .mj-list-row{
+  display:flex;justify-content:space-between;align-items:baseline;gap:5px;
+  min-width:0;padding:6px 1px;border-top:1px solid #e0d5c3;
+}
+#missionDirectionPanel .mj-list-row > span{flex:1;min-width:0;overflow-wrap:anywhere}
+#missionDirectionPanel .mj-list-row > span > strong{
+  display:block;font:900 15px/1.2 Arial,sans-serif;color:#1c150e;overflow-wrap:anywhere;
+}
+#missionDirectionPanel .mj-list-row small{
+  display:block;margin-top:3px;font:700 12px/1.25 Arial,sans-serif;color:#625440;overflow-wrap:anywhere;
+}
+#missionDirectionPanel .mj-list-row > b{
+  font:900 13px/1.2 Arial,sans-serif;color:#372b1a;text-align:right;
+  flex:0 0 auto;max-width:42%;
+}
+#missionDirectionPanel .mj-list-row a{color:#154d72;text-decoration:underline;font-weight:900}
+#missionDirectionPanel .mj-intelligence{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0;
+}
+#missionDirectionPanel .mj-intelligence article{
+  min-width:0;border:2px solid #19130f;border-radius:5px;background:#fffdf8;padding:10px;
+}
+#missionDirectionPanel .mj-intelligence article:nth-child(2){
+  border-color:#ad853c;background:#fff8e8;
+}
+#missionDirectionPanel .mj-intelligence article:nth-child(3){
+  border-color:#2d7455;background:#f4faf1;
+}
+#missionDirectionPanel .mj-intelligence h3{
+  font:900 clamp(17px,1.12vw,21px)/1.2 Arial,sans-serif;
+  color:#15110e;margin:0 0 7px;
+}
+#missionDirectionPanel .mj-intelligence p{
+  font:800 16px/1.34 Arial,sans-serif;margin:0 0 7px;
+  color:#211a15;overflow-wrap:anywhere;
+}
+#missionDirectionPanel .mj-intelligence small{
+  font:750 12px/1.25 Arial,sans-serif;color:#5e4b3a;
+}
+#missionDirectionPanel .mj-trend {
+  display:block;font:900 18px/1.2 Arial,sans-serif;margin:0 0 5px;
+}
+#missionDirectionPanel .mj-trend.up,#missionDirectionPanel .mj-result.up{color:#116732}
+#missionDirectionPanel .mj-trend.down,#missionDirectionPanel .mj-result.down{color:#a52922}
+#missionDirectionPanel .mj-trend.pending,#missionDirectionPanel .mj-result.pending{color:#805814}
+#missionDirectionPanel .mj-tests{
+  border:2px solid #241c14;background:#fffaf0;border-radius:6px;margin:8px 0 0;overflow:hidden;
+}
+#missionDirectionPanel .mj-tests > summary{
+  display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;justify-content:space-between;
+  list-style:none;cursor:pointer;
+  padding:9px 10px;color:#18130e;background:#ebdbba;
+  font:900 19px/1.2 Arial,sans-serif;
+}
+#missionDirectionPanel .mj-tests > summary::-webkit-details-marker{display:none}
+#missionDirectionPanel .mj-tests > summary small{
+  color:#554331;font:800 13px/1.2 Arial,sans-serif;
+}
+#missionDirectionPanel .mj-tests > p{
+  padding:0 10px;font:750 15px/1.33 Arial,sans-serif;color:#433627;
+}
+#missionDirectionPanel .mj-test-form{
+  display:grid;grid-template-columns:1fr 1fr auto;gap:8px;
+  padding:8px 10px;align-items:end;
+}
+#missionDirectionPanel .mj-test-form > label{
+  display:grid;gap:4px;font:900 14px/1.2 Arial,sans-serif;
+}
+#missionDirectionPanel .mj-test-form input,
+#missionDirectionPanel .mj-test-form select{
+  width:100%;min-width:0;padding:9px;border:2px solid #8d7759;border-radius:4px;
+  background:#fffdf9;color:#18110e;font:750 16px Arial,sans-serif;
+}
+#missionDirectionPanel .mj-test-form > button{
+  padding:11px;background:#33251a;color:#fff7eb;border:2px solid #17110d;
+  border-radius:4px;font:900 15px Arial,sans-serif;cursor:pointer;
+}
+#missionDirectionPanel .mj-test-form > button:disabled{opacity:.5;cursor:not-allowed}
+#missionDirectionPanel .mj-test-form > small{grid-column:1/-1;font-size:13px}
+#missionDirectionPanel .mj-tests-list{padding:2px 10px 8px;}
+#missionDirectionPanel .mj-test-row{
+  display:grid;grid-template-columns:minmax(0,1fr) auto auto;
+  align-items:center;gap:5px 10px;border-top:1px solid #d6c4a4;padding:8px 0;
+}
+#missionDirectionPanel .mj-test-row > div > strong{
+  display:block;font:900 16px/1.2 Arial,sans-serif;
+}
+#missionDirectionPanel .mj-test-row > div > small{
+  display:block;color:#544534;font:700 13px/1.2 Arial,sans-serif;margin-top:3px;
+}
+#missionDirectionPanel .mj-test-row > p{
+  grid-column:1/-1;grid-row:2;margin:0;color:#463828;font:750 14px/1.3 Arial,sans-serif;
+}
+#missionDirectionPanel .mj-test-row > button{
+  border:1px solid #9d684e;background:#fff1e9;
+  padding:6px 9px;border-radius:4px;cursor:pointer;font:800 13px Arial,sans-serif;
+}
+#missionDirectionPanel .mj-empty{
+  color:#6a563e;padding:8px;font:750 14px/1.3 Arial,sans-serif;
+}
+#missionDirectionPanel .mj-caveat{
+  color:#635139;font:750 13px/1.32 Arial,sans-serif;
+  border-top:1px solid #cbb18b;padding-top:7px;margin:8px 0 0;
+}
+@media(max-width:1450px){
+  #missionDirectionPanel .mj-flow{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #missionDirectionPanel .mj-outcomes{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #missionDirectionPanel .mj-intelligence{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:950px){
+  #missionDirectionPanel .mj-evidence-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #missionDirectionPanel .mj-test-form{grid-template-columns:1fr 1fr}
+  #missionDirectionPanel .mj-test-form > button{grid-column:1/-1}
+}
+@media(max-width:620px){
+  #missionDirectionPanel .mission-journey-panel{padding:7px}
+  #missionDirectionPanel .mj-flow{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #missionDirectionPanel .mj-split,
+  #missionDirectionPanel .mj-outcomes,
+  #missionDirectionPanel .mj-intelligence,
+  #missionDirectionPanel .mj-evidence-grid,
+  #missionDirectionPanel .mj-test-form{grid-template-columns:minmax(0,1fr)}
+  #missionDirectionPanel .mj-test-row{grid-template-columns:minmax(0,1fr) auto}
+  #missionDirectionPanel .mj-test-row .mj-result{grid-column:1/-1;grid-row:2}
+  #missionDirectionPanel .mj-test-row > p{grid-row:3}
+}
