@@ -963,8 +963,9 @@
         '<article class="mission-owner-digest-item '+style+'">'+
         '<strong>'+esc(title)+'</strong><p>'+esc(value)+'</p></article>').join('')+
       '</div>'+
-      '<p class="mission-owner-digest-caution">Scores measure change in tracked online signals, '+
-      'not business profit, actual radio listening or confirmed Pit Krewe memberships.</p>'+
+      '<p class="mission-owner-digest-caution">Scores reflect verified changes in online activity, '+
+      'not business profit, unique radio listeners or confirmed Pit Krewe memberships. '+
+      'Music listening is scored only when Radio.co has comparable dated records.</p>'+
     '</section>';
   }
   function ownerScoreMethod(summary){
@@ -991,6 +992,12 @@
         'X owner-entered figures are displayed but not scored. '+
         'Meta counts are lifetime activity on posts published in selected date windows, not '+
         'interactions that happened only within those windows, so their comparison is provisional. '+
+        'Music is worth 10 of the 100 points only when Radio.co provides complete, matching '+
+        'current and previous UTC periods for stream connections and listening duration. '+
+        'Spotify and other services remain N/A until reporting connects. Music purchases '+
+        'already contribute to Sales and are not scored again under Music. '+
+        'The SEARCH component combines Google and Bing only for verified matching reporting dates. '+
+        'Google position alone is not a cross-engine ranking. '+
         'Sales use paid Wix web orders and gross item sales only. Actions are '+
         'measured GA4 events, not proven customers or Pit Krewe memberships. '+
         'The index is a diagnostic signal, not a measured financial return.</p>'+
