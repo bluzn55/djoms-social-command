@@ -7,15 +7,16 @@
 (function ownerScoreModule(){
   'use strict';
   const valid=x=>typeof x==='number'&&Number.isFinite(x)&&x>=0;
-  // Social influence is meaningful but cannot overwhelm measured store outcomes.
-  // The six existing site boxes stay as they are; SOCIAL is a seventh
-  // independently verified contributor to the owner direction index.
+  // Social engagement and VERIFIED listening matter without counting
+  // music purchases twice (they already contribute to all paid web sales).
+  // The six existing site boxes stay; social and music are health components.
   const WEIGHTS=[
     {id:'search',name:'SEARCH',weight:15},
-    {id:'sources',name:'TRAFFIC',weight:15},
-    {id:'visitors',name:'VISITORS',weight:20},
+    {id:'sources',name:'TRAFFIC',weight:10},
+    {id:'visitors',name:'VISITORS',weight:15},
     {id:'engagement',name:'ENGAGE',weight:10},
     {id:'social',name:'SOCIAL',weight:15},
+    {id:'music',name:'MUSIC',weight:10},
     {id:'actions',name:'ACTIONS',weight:10},
     {id:'sales',name:'SALES',weight:15}
   ];
@@ -42,7 +43,7 @@
     return {...meta,score,tone:tone(score),status:tone(score),
       measured:evidence.length,metricWeight:used,evidence};
   }
-  function evaluate(site,ga4,seo,sales,period,social){
+  function evaluate(site,ga4,seo,sales,period,social,music){
     const wix=site?.connected===true;
     const cmp=wix?site.metricComparisons||{}:{};
     const current=field=>wix&&valid(site?.[field])?site[field]:null;
@@ -60,17 +61,26 @@
     };
     const gc=seo?.status==='connected'&&seo.comparison?.status==='reported'?
       seo.comparison:null;
-    const gm=gc?seo.metrics||{}:{};
+    const gm=seo?.status==='connected'?seo.metrics||{}:{};
+    const combined=typeof window.djomsCombinedSearch==='function'?
+      window.djomsCombinedSearch({seo,
+        bing:window.djomsVerifiedReports?.bing?.query===period?.query?
+          window.djomsVerifiedReports.bing.data:null,period}):null;
+    const hasCombined=combined?.status==='reported';
     const searchPair=name=>({
       previous:gc?.[name]?.previous??null,current:gm[name]??null
     });
-    const impressions=searchPair('impressions'),clicks=searchPair('clicks');
-    const ctr={
-      previous:gc?.ctr?.previous??(valid(impressions.previous)&&
+    const impressions=hasCombined?
+      {previous:combined.previous,current:combined.current}:searchPair('impressions');
+    const clicks=hasCombined?
+      {previous:combined.clicksPrevious,current:combined.clicksCurrent}:searchPair('clicks');
+    const ctr=hasCombined?
+      {previous:combined.ctrPrevious,current:combined.ctrCurrent}:
+      {previous:gc?.ctr?.previous??(valid(impressions.previous)&&
         impressions.previous>0&&valid(clicks.previous)?
-        clicks.previous/impressions.previous:null),
-      current:gm.ctr??null
-    };
+        clicks.previous/impressions.previous:null),current:gm.ctr??null};
+    const trackedMusic=music||(typeof window.djomsMusicEvidence==='function'?
+      window.djomsMusicEvidence({period,sales}):null);
     const gaCmp=ga4?.status==='connected'&&ga4.actions?.status==='reported'&&
       ga4.actions.comparison?.status==='reported'?
       ga4.actions.comparison.counts||{}:{};
@@ -92,10 +102,10 @@
     });
     const stages=[
       section(WEIGHTS[0],[
-        {label:'Google search clicks',weight:50,...clicks},
-        {label:'Google search appearances',weight:25,...impressions},
-        {label:'Google click-through rate',weight:15,...ctr},
-        {label:'Google average position',weight:10,inverse:true,...searchPair('position')}
+        {label:'Verified engine search clicks',weight:50,...clicks},
+        {label:'Verified engine search appearances',weight:25,...impressions},
+        {label:'Verified search click-through rate',weight:15,...ctr},
+        {label:'Google average position (not a cross-engine rank)',weight:10,inverse:true,...searchPair('position')}
       ]),
       section(WEIGHTS[1],[
         {label:'Wix sessions',weight:100,...compare('sessions')}
@@ -113,14 +123,17 @@
       section(WEIGHTS[4],
         social?.status==='reported'&&Array.isArray(social.scoreSignals)
           ?social.scoreSignals:[]),
-      section(WEIGHTS[5],[
+      section(WEIGHTS[5],
+        trackedMusic?.status==='reported'&&Array.isArray(trackedMusic.signals)?
+          trackedMusic.signals:[]),
+      section(WEIGHTS[6],[
         {label:'Form submission events',weight:35,...eventPair('formSubmit')},
         {label:'Sign-up events (not verified Krewe members)',weight:25,...eventPair('signUp')},
         {label:'Add-to-cart events',weight:20,...eventPair('addToCart')},
         {label:'Checkout start events',weight:15,...eventPair('beginCheckout')},
         {label:'File download events',weight:5,...eventPair('fileDownload')}
       ]),
-      section(WEIGHTS[6],[
+      section(WEIGHTS[7],[
         {label:'Gross paid web item sales',weight:70,...salesPair('itemSalesCents')},
         {label:'Paid web orders',weight:30,...salesPair('paidOrders')}
       ])
@@ -140,10 +153,12 @@
     return {score,kind:status,verdict,position,stages,
       covered:found.length,availableWeight,totalWeight:100,
       incomplete:found.length<stages.length,
-      note:'Verified online-activity direction only. Social compares as-of-now per-post '+
-        'lifetime results on published-post cohorts, not social interactions by date; older posts '+
-        'have had more time to accumulate engagement. X manual numbers are not scored. '+
-        'Comparisons are normalized and capped. Not profit or company-wide growth.'};
+      note:'Verified online-activity direction only. Search totals combine only engines with matching reported dates. '+
+        'Social uses as-of-now post-cohort snapshots; older posts had more time to gain engagement. '+
+        'Music uses only independently verified Radio.co listening connections and time from exact dated UTC CSV windows. '+
+        'Paid music products already count within the Sales component; music revenue is not scored again. '+
+        'X manual metrics and unconnected Spotify/Apple streams remain unscored. '+
+        'All change signals are normalized and capped. Not profit or company-wide growth.'};
   }
   window.djomsOwnerScore=evaluate;
   window.djomsOwnerScoreWeights=WEIGHTS.map(({id,name,weight})=>({id,name,weight}));
