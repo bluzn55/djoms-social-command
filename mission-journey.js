@@ -252,83 +252,244 @@
         '<p class="mj-empty">'+(testsLoaded?'No website changes recorded yet.':'Loading saved changes…')+'</p>')+
       '</div><p class="mj-caveat">A before/after result can show improvement, but only controlled comparisons and other evidence can help establish WHY. Google search reports can be delayed.</p></details>';
   }
+  // Owner route on the bayou. No painted-in numbers, each value comes
+  // from the selected period's actual source report. Last < Current font size.
+  const duration=value=>valid(value)?Math.floor(Math.round(value)/60)+'m '+(Math.round(value)%60)+'s':'N/A';
+  const formatValue=(value,unit='count')=>{
+    if(!valid(value))return 'N/A';
+    return unit==='time'?duration(value):
+      unit==='percentage'?ratio(value):
+      unit==='decimal'?value.toFixed(2):
+      unit==='position'?value.toFixed(1):
+      unit==='cents'?cash(value):number(value);
+  };
+  function movement(previous,current,inverse=false){
+    if(!valid(previous)||!valid(current))return {tone:'na',text:'N/A'};
+    if(previous===current)return {tone:'hold',text:'→ 0%'};
+    if(previous===0)return {tone:inverse?'down':'up',text:(inverse?'↓':'↑')+' NEW'};
+    const change=(current-previous)/previous*100;
+    if(!Number.isFinite(change))return {tone:'na',text:'N/A'};
+    const good=(current<previous)===inverse;
+    return {tone:good?'up':'down',
+      text:(good?'↑':'↓')+' '+(change>0?'+':'')+change.toFixed(1)+'%'};
+  }
+  function heroMetric(label,last,current,unit='count',inverse=false,caption=''){
+    const motion=movement(last,current,inverse);
+    return '<div class="mj-primary-kpi">'+
+      '<div class="mj-primary-label">'+esc(label)+'</div>'+
+      '<div class="mj-head-numbers"><strong class="mj-current">'+esc(formatValue(current,unit))+'</strong>'+
+      '<b class="mj-change '+esc(motion.tone)+'">'+esc(motion.text)+'</b></div>'+
+      '<div class="mj-last">LAST '+esc(formatValue(last,unit))+'</div>'+
+      (caption?'<small>'+esc(caption)+'</small>':'')+'</div>';
+  }
+  function miniMetric(label,last,current,unit='count',inverse=false){
+    const motion=movement(last,current,inverse);
+    return '<div class="mj-mini-kpi">'+
+      '<span>'+esc(label)+'</span>'+
+      '<strong>'+esc(formatValue(current,unit))+'</strong>'+
+      '<small>Last '+esc(formatValue(last,unit))+'</small>'+
+      '<b class="'+esc(motion.tone)+'">'+esc(motion.text)+'</b>'+
+    '</div>';
+  }
+  const card=(id,index,title,icon,content,note='')=>
+    '<article class="mj-trail-card mj-card-'+esc(id)+'">'+
+      '<div class="mj-card-heading"><span class="mj-number-stake">'+esc(index)+'</span>'+
+        '<span class="mj-card-icon" aria-hidden="true">'+icon+'</span>'+
+        '<h3>'+esc(title)+'</h3></div>'+
+      content+(note?'<p class="mj-stage-note">'+esc(note)+'</p>':'')+
+      '</article>';
+  function sources(site){
+    const enabled=site?.connected===true;
+    const summarize=rows=>{
+      const values={direct:0,google:0,other:0},has={direct:false,google:false,other:false};
+      let sum=0;
+      for(const entry of Array.isArray(rows)?rows:[]){
+        if(!valid(entry?.sessions))continue;
+        const raw=String(entry.source||'').toLowerCase(),category=String(entry.category||'').toLowerCase();
+        const key=/(?:^|[^a-z0-9])direct(?:$|[^a-z0-9])|\(direct\)/.test(raw)||category==='direct'
+          ?'direct':/google/.test(raw)&&!/maps\.google|google\s*maps|g\.page/.test(raw)?'google':'other';
+        values[key]+=entry.sessions;has[key]=true;sum+=entry.sessions;
+      }
+      return {values,has,sum};
+    };
+    const current=summarize(enabled?site.trafficSources:[]);
+    const previous=summarize(enabled?site.trafficSourcesPrevious:[]);
+    const priorTotal=site?.metricComparisons?.sessions?.previous;
+    const currentReady=enabled&&site.trafficSourcesComplete===true&&
+      (!valid(site.sessions)||current.sum===site.sessions);
+    const priorReady=enabled&&site.trafficSourcesPreviousComplete===true&&
+      (!valid(priorTotal)||previous.sum===priorTotal);
+    const metric=(obj,key,complete)=>obj.has[key]||complete?obj.values[key]:null;
+    return {
+      sessions:{last:valid(priorTotal)?priorTotal:null,now:enabled?site.sessions:null},
+      direct:{last:priorReady?metric(previous,'direct',true):null,
+        now:currentReady?metric(current,'direct',true):null},
+      google:{last:priorReady?metric(previous,'google',true):null,
+        now:currentReady?metric(current,'google',true):null},
+      other:{last:priorReady?metric(previous,'other',true):null,
+        now:currentReady?metric(current,'other',true):null}
+    };
+  }
+  function socialPanel(social){
+    const icons={facebook:'f',instagram:'◎',x:'𝕏'};
+    const rows=['facebook','instagram','x'].map(platform=>{
+      const d=social?.platforms?.[platform];
+      const isX=platform==='x';
+      const label={facebook:'FACEBOOK',instagram:'INSTAGRAM',x:'X'}[platform];
+      const each=(key,title)=>{
+        const now=d?.now?.[key],last=d?.last?.[key];
+        const pct=d?.movements?.[key];
+        const hue=isX?'na':typeof pct==='number'&&Number.isFinite(pct)?
+          pct>0?'up':pct<0?'down':'hold':'na';
+        return '<div class="mj-social-stat"><small>'+esc(title)+'</small>'+
+          '<b>'+esc(formatValue(now))+'</b>'+
+          '<span>L '+esc(formatValue(last))+'</span>'+
+          (!isX&&typeof pct==='number'&&Number.isFinite(pct)?
+            '<em class="'+hue+'">'+(pct>0?'↑ +':pct<0?'↓ ':'→ ')+
+              esc(pct.toFixed(1))+'%</em>':'')+'</div>';
+      };
+      return '<section class="mj-social-platform"><div class="mj-social-brand">'+
+        '<b class="mj-social-symbol">'+icons[platform]+'</b>'+
+        '<strong>'+label+'</strong><small>'+
+          (isX?'Owner-entered · not scored':
+            d?.verified?'Verified Meta cohort':'Comparison N/A')+'</small></div>'+
+        '<div class="mj-social-stats">'+
+          each('views','VIEWS')+each('reactions','LIKES')+
+          each('shares','SHARES')+each('comments','COMMENTS')+'</div></section>';
+    }).join('');
+    const socialEvidence=social?.availableWeight>0;
+    return card('social','✦','SOCIAL MEDIA','♟',
+      '<div class="mj-social-inner">'+rows+'</div>'+
+      '<div class="mj-social-impact"><strong>SOCIAL HEALTH · '+(socialEvidence?'COUNTS':'N/A')+'</strong>'+
+        '<small>'+esc('15 of 100 points when FB/IG are comparable. X is manual only.')+'</small></div>',
+      'Social is a second discovery current, not a continuation of Google clicks. Meta figures are current lifetime totals on posts published in each period.');
+  }
   function journey(context){
-    const {site,seo,ga4,sales,period}=context||{};
-    const g=seo?.status==='connected'?seo.metrics||{}:{};
-    const w=site?.connected===true;
+    const {site,seo,ga4,sales,period,social:providedSocial}=context||{};
+    const social=providedSocial||(typeof window.djomsSocialPeriod==='function'?window.djomsSocialPeriod(period):null);
+    const wix=site?.connected===true,google=seo?.status==='connected';
+    const g=google?seo.metrics||{}:{};
+    const gsc=google&&seo.comparison?.status==='reported'?seo.comparison:null;
+    const lastSearch=field=>valid(gsc?.[field]?.previous)?gsc[field].previous:null;
+    const wixCmp=wix?site.metricComparisons||{}:{};
+    const priorVisitors=wixCmp.visitors?.previousVisitors;
     const paid=salesReady(sales,period);
-    const clicks=valid(g.clicks)?g.clicks:null;
-    const impressions=valid(g.impressions)?g.impressions:null;
-    const notClicked=valid(impressions)&&valid(clicks)&&impressions>=clicks?impressions-clicks:null;
-    const landing=w&&Array.isArray(site.landingPages)?
-      site.landingPages.filter(p=>valid(p.sessions)).reduce((sum,p)=>sum+p.sessions,0):null;
-    const entryCount=w&&Array.isArray(site.landingPages)&&site.landingPages.length>0?landing:null;
-    const flows=ga4?.status==='connected'&&ga4.journey?.pageTransitions?.status==='reported'?
-      ga4.journey.pageTransitions.rows||[]:null;
-    const outbound=ga4?.status==='connected'&&ga4.actions?.ctaPages?.status==='reported'?
-      ga4.actions.ctaPages.rows||[]:null;
-    const outboundEvents=Array.isArray(outbound)?
-      outbound.reduce((sum,p)=>sum+(valid(p.clicks)?p.clicks:0),0):null;
-    const gaActions=ga4?.status==='connected'&&ga4.actions?.status==='reported'?ga4.actions.counts||{}:{};
-    const suggestion=diagnostic(site,seo,ga4,sales,period);
-    const key=suggestion.metric;
-    const current=valueFor(key,site,seo,ga4,sales,period);
-    const def=metricDefs[key];
-    let previous=null;
-    if(key==='searchCtr'||key==='searchClicks'){
-      const cmp=seo?.comparison?.status==='reported'?seo.comparison:null;
-      previous=key==='searchCtr'?cmp?.ctr?.previous:cmp?.clicks?.previous;
-    }else if(key==='siteVisitors')previous=site?.metricComparisons?.visitors?.previousVisitors;
-    else if(key==='siteBounceRate')previous=site?.metricComparisons?.bounceRate?.previous;
-    else if(key==='sitePageViews')previous=site?.metricComparisons?.pageViews?.previous;
-    else if(key==='formSubmissions')previous=site?.metricComparisons?.formsSubmitted?.previous;
-    else if(key==='fileDownloads')previous=ga4?.actions?.comparison?.counts?.fileDownload?.previous;
-    const hasCompare=valid(previous)&&valid(current);
-    const arrow=hasCompare?(current===previous?'→':((current>previous)===def.higher?'↑':'↓')):'';
-    const change=hasCompare?(current===previous?'No movement':(arrow==='↑'?'Moving favorably':'Moving unfavorably')):'Comparison N/A';
-    const foot='Google search exposure, Wix entry sessions and GA4 events are different measures. They cannot be added into a single visitor funnel. A search query cannot normally be traced to a particular individual.';
-    const step=(num,title,value,caption)=>'<div class="mj-step"><small>'+esc(num+' · '+title)+'</small><strong>'+esc(value)+
-      '</strong><span>'+esc(caption)+'</span></div>';
-    return '<section id="mjVisitorJourney" class="mission-journey-panel" aria-label="Doc Jaks Visitor Journey Intelligence">'+
-      '<header class="mj-header"><div><small>DOC JAKS · SEARCH TO ACTION TO RESULTS</small>'+
-        '<h2>VISITOR JOURNEY INTELLIGENCE</h2>'+
-        '<p>WHAT happened? WHY might it have happened? WHAT should we change? DID it help?</p></div>'+
-        '<b>'+esc(periodTitle(period))+' · Actual data only</b></header>'+
-      '<div class="mj-flow" aria-label="Flow from search discovery through verified outcome">'+
-        step('1','SEARCH SHOWN',number(impressions),'Google result appearances')+
-        step('2','CLICK?',number(clicks),'Google search clicks')+
-        step('3','ARRIVED',number(entryCount),'Top reported Wix entry sessions')+
-        step('4','NEXT PAGE',Array.isArray(flows)?number(flows.reduce((sum,r)=>sum+(valid(r.views)?r.views:0),0)):'N/A',
-          'GA4 internal referrer page views')+
-        step('5','CTA CLICK',number(outboundEvents),'GA4 outbound click events')+
-        step('6','OUTCOME',paid?number(sales.paidOrders):'N/A','Verified Wix paid orders')+
+    const comparison=paid&&sales.salesComparison?.status==='reported'&&
+      sales.salesComparison.previousRange?.end===sales.range.start?
+      sales.salesComparison.previous:null;
+    const gaEvent=ga4?.status==='connected'&&ga4.actions?.status==='reported'?ga4.actions.counts||{}:{};
+    const previousEvents=ga4?.actions?.comparison?.status==='reported'?ga4.actions.comparison.counts||{}:{};
+    const traffic=sources(site);
+    const contactsNow=wix&&valid(site.contactClicks)&&valid(site.formsSubmitted)?
+      site.contactClicks+site.formsSubmitted:null;
+    const contactsLast=valid(wixCmp.clicksToContact?.previous)&&valid(wixCmp.formsSubmitted?.previous)?
+      wixCmp.clicksToContact.previous+wixCmp.formsSubmitted.previous:null;
+    const owner=typeof window.djomsOwnerScore==='function'?
+      window.djomsOwnerScore(site,ga4,seo,sales,period,social):null;
+    const score=Number.isInteger(owner?.score)?owner.score:null;
+    const scoreName=score===null?'UNVERIFIED':score>100?'FORWARD':score<100?'BACKWARD':'HOLDING';
+    const scoreStyle=score===null?'na':score>100?'up':score<100?'down':'hold';
+    const sourceMini=(title,pair)=>miniMetric(title,pair.last,pair.now);
+    const first=card('search','1','SEARCH APPEARANCES','⌕',
+      heroMetric('Google impressions',lastSearch('impressions'),g.impressions,'count',false,'How often Doc Jaks appeared in search results.')+
+      '<div class="mj-small-splits">'+
+        miniMetric('SEARCH CTR',lastSearch('ctr'),g.ctr,'percentage')+
+        miniMetric('AVG. POSITION',lastSearch('position'),g.position,'position',true)+'</div>',
+      'A search does not have to name Doc Jaks.');
+    const second=card('clicks','2','SEARCH CLICKS','↖',
+      heroMetric('Google clicks',lastSearch('clicks'),g.clicks,'count',false,
+        'Click count from Google Search Console, not all website entries.')+
+      '<div class="mj-card-branches"><span>✖ No Click</span><span>✓ Clicked Doc Jaks</span></div>',
+      'Clicks and Wix visits are tracked by different systems.');
+    const third=card('traffic','3','WHERE THEY CAME FROM','⌖',
+      heroMetric('Wix sessions',traffic.sessions.last,traffic.sessions.now,'count')+
+      '<div class="mj-minis">'+
+        sourceMini('DIRECT',traffic.direct)+
+        sourceMini('GOOGLE REFERRALS',traffic.google)+
+        sourceMini('OTHER SOURCES',traffic.other)+'</div>',
+      'These are Wix-attributed website sessions. Google referrals are not the same as Google Search Console clicks.');
+    const fourth=card('visitors','4','WEBSITE VISITORS','♟',
+      heroMetric('Visitors',priorVisitors,wix?site.visitors:null)+
+      '<div class="mj-minis">'+
+        miniMetric('RETURNING',wixCmp.returningVisitors?.previous,
+          wixCmp.returningVisitors?.current)+
+        miniMetric('PAGE VIEWS',wixCmp.pageViews?.previous,wix?site.pageViews:null)+'</div>',
+      'Unique Wix visitors in the selected dates.');
+    const fifth=card('engagement','5','VISITOR ENGAGEMENT','◷',
+      heroMetric('Average stay',wixCmp.avgTimeSeconds?.previous,
+        wix?site.avgTimeSeconds:null,'time')+
+      '<div class="mj-minis">'+
+        miniMetric('BOUNCE RATE',wixCmp.bounceRate?.previous,
+          wix?site.bounceRate:null,'percentage',true)+
+        miniMetric('PAGES / SESSION',wixCmp.pagesPerSession?.previous,
+          wix?site.pagesPerSession:null,'decimal')+'</div>',
+      'More stay and page depth is encouraging; lower bounce is better.');
+    const sixth=card('actions','6','MEANINGFUL ACTIONS','✦',
+      '<div class="mj-minis">'+
+        miniMetric('INQUIRIES',contactsLast,contactsNow)+
+        miniMetric('PIT KREWE',null,null)+
+        miniMetric('RADIO LISTENERS',null,null)+
+        miniMetric('FILE DOWNLOAD EVENTS',
+          previousEvents.fileDownload?.previous,gaEvent.fileDownload)+'</div>',
+      'Actual listeners and confirmed Pit Krewe members remain N/A until their own proof is connected.');
+    const seventh=card('sales','7','PAID WEB SALES','▣',
+      heroMetric('Gross item sales',comparison?.itemSalesCents,
+        paid?sales.itemSalesCents:null,'cents')+
+      '<div class="mj-minis">'+
+        miniMetric('PAID ORDERS',comparison?.paidOrders,paid?sales.paidOrders:null)+'</div>',
+      'Wix paid online items only, not market sales or profit.');
+    const note=diagnostic(site,seo,ga4,sales,period);
+    const key=note.metric,curr=valueFor(key,site,seo,ga4,sales,period);
+    const lastMetric=key==='searchCtr'?gsc?.ctr?.previous:
+      key==='searchClicks'?gsc?.clicks?.previous:
+      key==='siteVisitors'?priorVisitors:
+      key==='siteBounceRate'?wixCmp.bounceRate?.previous:
+      key==='sitePageViews'?wixCmp.pageViews?.previous:
+      key==='formSubmissions'?wixCmp.formsSubmitted?.previous:
+      key==='fileDownloads'?previousEvents.fileDownload?.previous:null;
+    const canCompare=valid(lastMetric)&&valid(curr);
+    const direction=canCompare?movement(lastMetric,curr,key==='siteBounceRate'):{tone:'na',text:'N/A'};
+    return '<section id="mjVisitorJourney" class="mission-journey-panel mj-swamp-map" aria-label="Swamp Visitor Journey Intelligence">'+
+      '<div class="mj-swamp-trees" aria-hidden="true"></div>'+
+      '<header class="mj-wood-header">'+
+        '<div class="mj-wood-sign"><small>⚜ DOC JAKS · FOLLOW THE CURRENT ⚜</small>'+
+          '<h2>VISITOR JOURNEY MAP</h2>'+
+          '<p>FROM SEARCH AND SOCIAL DISCOVERY TO SALES</p></div>'+
+        '<div class="mj-wood-score '+esc(scoreStyle)+'"><small>OWNER DIRECTION</small>'+
+          '<strong>'+esc(score===null?'N/A':score)+'</strong>'+
+          '<b>'+esc(scoreName)+'</b></div></header>'+
+      '<div class="mj-boardwalk">'+
+        '<svg class="mj-water-path" viewBox="0 0 1200 650" preserveAspectRatio="none" aria-hidden="true">'+
+          '<path class="mj-path-shadow" d="M 75 160 C 285 70, 460 230, 610 130 S 1040 45, 1135 175 C 1180 290, 1170 390, 1080 490 S 750 590, 575 485 S 245 390, 90 530"/>'+
+          '<path class="mj-path-planks" d="M 75 160 C 285 70, 460 230, 610 130 S 1040 45, 1135 175 C 1180 290, 1170 390, 1080 490 S 750 590, 575 485 S 245 390, 90 530"/>'+
+        '</svg>'+
+        first+second+third+socialPanel(social)+fourth+fifth+sixth+seventh+
       '</div>'+
-      '<div class="mj-split"><span class="mj-no-click">SEARCH RESULT NOT CLICKED <b>'+
-        (notClicked!==null?'≈'+number(notClicked):'N/A')+
-        '</b><small>Approximate appearances without a click, not people</small></span>'+
-        '<span class="mj-yes-click">SEARCH RESULT CLICKED <b>'+number(clicks)+
-        '</b><small>Google clicks, not matched to Wix sessions</small></span></div>'+
-      '<div class="mj-outcomes">'+
-        row('Wix form submissions',w?number(site.formsSubmitted):'N/A','Confirmed submissions, not necessarily Krewe members')+
-        row('GA4 download events',number(gaActions.fileDownload),'Events, not unique readers')+
-        row('Radio listening starts','N/A','External-link clicks are not verified listening')+
-        row('Gross paid web item sales',paid?cash(sales.itemSalesCents):'N/A','Paid Wix items before tax and shipping')+
-      '</div>'+
-      evidence(seo,site,ga4)+
+      '<div class="mj-swamp-disclaimer">⚜ Every stop is a separate reported measurement. '+
+        'Social activity is a parallel source of discovery. Values are not added into a fictional individual-visitor funnel.</div>'+
+      '<div class="mj-decision-heading"><span>⚜ THE FOUR QUESTIONS THAT TURN DATA INTO DECISIONS ⚜</span></div>'+
       '<div class="mj-intelligence">'+
-        '<article><h3>1. WHAT HAPPENED?</h3><p>'+esc(suggestion.evidence)+
-          '</p><small>Verified measurements from the selected dates.</small></article>'+
-        '<article><h3>2. WHY MIGHT THAT BE?</h3><p>'+esc(suggestion.why)+
-          '</p><small>HYPOTHESIS · '+esc(suggestion.confidence)+'</small></article>'+
-        '<article><h3>3. WHAT SHOULD WE CHANGE?</h3><p>'+esc(suggestion.next)+
-          '</p><small>Recommended next test, not an automatic site edit.</small></article>'+
-        '<article><h3>4. DID IT HELP?</h3>'+
-          '<strong class="mj-trend '+(arrow==='↑'?'up':arrow==='↓'?'down':'pending')+'">'+esc(change)+
-          '</strong><p>'+esc(def.label)+': Last '+esc(showMetric(key,previous))+
-            ' · Current '+esc(showMetric(key,current))+'</p>'+
-          '<small>This is period movement, not proof of cause. Record the change below to compare a full post-change window.</small></article>'+
-      '</div>'+testsPanel(site,seo,ga4,sales,period)+
-      '<p class="mj-caveat">'+esc(foot)+' Internal CTA clicks and confirmed listener starts need separate instrumentation; they remain N/A until verified.</p>'+
+        '<article><h3>1. WHAT HAPPENED?</h3><p>'+esc(note.evidence)+
+          '</p><small>Recorded evidence</small></article>'+
+        '<article><h3>2. WHY?</h3><p>'+esc(note.why)+
+          '</p><small>HYPOTHESIS · '+esc(note.confidence)+'</small></article>'+
+        '<article><h3>3. WHAT DO WE CHANGE?</h3><p>'+esc(note.next)+
+          '</p><small>Suggested improvement to test</small></article>'+
+        '<article><h3>4. DID IT WORK?</h3><strong class="mj-trend '+esc(direction.tone)+'">'+
+          esc(canCompare?direction.text:'NOT YET PROVEN')+'</strong>'+
+          '<p>'+esc(metricDefs[key]?.label||'Tracked metric')+': Last '+esc(showMetric(key,lastMetric))+
+          ' · Current '+esc(showMetric(key,curr))+'</p>'+
+          '<small>Observed change is not proof that a specific page edit caused it.</small></article>'+
+      '</div>'+
+      '<details class="mj-map-evidence"><summary>OPEN SEARCH PHRASES, VISITED PAGES, CTAs &amp; OTHER EVIDENCE ▾</summary>'+
+        evidence(seo,site,ga4)+'</details>'+
+      testsPanel(site,seo,ga4,sales,period)+
+      '<p class="mj-caveat">Meta views, likes and shares are current lifetime totals for posts published in the selected and preceding periods, not interactions on those dates. '+
+      'Per-post Social comparisons are provisional; older posts have had longer to gain engagement. '+
+      'Facebook and Instagram contribute up to 15 of the owner index’s 100 importance points only when comparable. '+
+      'X is owner-entered and excluded from scoring. Google Search, Wix sessions, and CTA events remain separate.'+
+      '</p>'+
+      '<div class="mj-rougarou-eyes" aria-hidden="true"><i></i><i></i></div>'+
     '</section>';
   }
   window.djomsVisitorJourney=journey;
