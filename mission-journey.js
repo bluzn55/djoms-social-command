@@ -539,7 +539,7 @@
           each('shares','SHARES')+each('comments','COMMENTS')+'</div></section>';
     }).join('');
     const socialEvidence=social?.availableWeight>0;
-    return card('social','✦','SOCIAL MEDIA','♟',
+    return card('social','8','SOCIAL MEDIA','♟',
       '<div class="mj-social-inner">'+rows+'</div>'+
       '<div class="mj-social-impact"><strong>SOCIAL HEALTH · '+(socialEvidence?'COUNTS':'N/A')+'</strong>'+
         '<small>'+esc('15 of 100 points when FB/IG are comparable. X is manual only.')+'</small></div>',
@@ -626,7 +626,6 @@
     const score=Number.isInteger(owner?.score)?owner.score:null;
     const scoreName=score===null?'UNVERIFIED':score>100?'FORWARD':score<100?'BACKWARD':'HOLDING';
     const scoreStyle=score===null?'na':score>100?'up':score<100?'down':'hold';
-    const sourceMini=(title,pair)=>miniMetric(title,pair.last,pair.now);
     const first=card('search','1','SEARCH APPEARANCES','⌕',
       heroMetric('Verified engine appearances',search?.previous,
         search?.current,'count',false,'Google and Bing combined ONLY when their reported dates match.')+
@@ -642,22 +641,26 @@
       '<div class="mj-card-branches"><span>✖ No Click</span><span>✓ Clicked Doc Jaks</span></div>'+
       clicksByEngineDropdown(search),
       'Click totals are from the engines included in #1. Search phrases and result pages appear under #1. Wix visits are separate.');
-    const third=card('traffic','3','WHERE THEY CAME FROM','⌖',
-      heroMetric('Website Visits',traffic.sessions.last,traffic.sessions.now,'count')+
+    // #3 is the actual WEBSITE ARRIVAL stage, regardless of whether the
+    // visitor came from search, social, referral, or a direct connection.
+    // Visitors are Wix estimates of distinct browsers, NOT identified people
+    // nor a verified match to a specific search click.
+    const third=card('traffic','3','WEBSITE VISITS','⌖',
+      heroMetric('TOTAL WEBSITE VISITS',traffic.sessions.last,traffic.sessions.now,'count',
+        false,'All Wix-reported sessions, including direct and identifiable referral visits.')+
       '<div class="mj-minis">'+
-        sourceMini('DIRECT',traffic.direct)+
-        sourceMini('GOOGLE REFERRALS',traffic.google)+
-        sourceMini('OTHER SOURCES',traffic.other)+'</div>'+
-      wixSourcesDropdown(site),
-      'These are Wix-attributed website sessions. Google referrals are not the same as Google Search Console clicks.');
-    const fourth=card('visitors','4','WEBSITE VISITORS','♟',
-      heroMetric('Visitors',priorVisitors,wix?site.visitors:null)+
-      '<div class="mj-minis">'+
-        miniMetric('RETURNING',wixCmp.returningVisitors?.previous,
-          wixCmp.returningVisitors?.current)+
-        miniMetric('PAGE VIEWS',wixCmp.pageViews?.previous,wix?site.pageViews:null)+'</div>'+
-      viewedPagesDropdown(site)+locationsDropdown(site),
-      'Unique Wix visitors in the selected dates.');
+        miniMetric('WEBSITE VISITORS',priorVisitors,wix?site.visitors:null)+
+        miniMetric('RETURNING VISITORS',wixCmp.returningVisitors?.previous,
+          wixCmp.returningVisitors?.current)+'</div>'+
+      wixSourcesDropdown(site)+locationsDropdown(site),
+      'Visits count sessions; Visitors estimate distinct browsers/devices. '+
+      'Not every visit came from a link click, and one visitor can make several visits.');
+    // #4 now shows the page-view stage rather than repeating Visitors from #3.
+    const fourth=card('visitors','4','PAGES VISITED','♟',
+      heroMetric('PAGE VIEWS',wixCmp.pageViews?.previous,wix?site.pageViews:null,'count',
+        false,'Total Wix page views in the selected dates, including repeat views.')+
+      viewedPagesDropdown(site),
+      'Which Doc Jaks pages people opened, how many views were recorded, and available time on each page.');
     const fifth=card('engagement','5','VISITOR ENGAGEMENT','◷',
       heroMetric('Average stay',wixCmp.avgTimeSeconds?.previous,
         wix?site.avgTimeSeconds:null,'time')+
@@ -706,11 +709,12 @@
           '<path class="mj-path-shadow" d="M 75 160 C 285 70, 460 230, 610 130 S 1040 45, 1135 175 C 1180 290, 1170 390, 1080 490 S 750 590, 575 485 S 245 390, 90 530"/>'+
           '<path class="mj-path-planks" d="M 75 160 C 285 70, 460 230, 610 130 S 1040 45, 1135 175 C 1180 290, 1170 390, 1080 490 S 750 590, 575 485 S 245 390, 90 530"/>'+
         '</svg>'+
-        first+second+third+socialPanel(social)+fourth+fifth+sixth+seventh+
+        first+second+third+fourth+fifth+sixth+seventh+socialPanel(social)+
       '</div>'+
       musicPanel(music,owner)+
       '<div class="mj-swamp-disclaimer">⚜ Every stop is a separate reported measurement. '+
-        'Social activity is a parallel source of discovery. Values are not added into a fictional individual-visitor funnel.</div>'+
+        'Social Media is shown last as a separate discovery and engagement channel, not a step everyone takes. '+
+        'Website Visits, Visitors, and Page Views count different things and are not added into a fictional individual-visitor funnel.</div>'+
       '<div class="mj-decision-heading"><span>⚜ THE FOUR QUESTIONS THAT TURN DATA INTO DECISIONS ⚜</span></div>'+
       '<div class="mj-intelligence">'+
         '<article><h3>1. WHAT HAPPENED?</h3><p>'+esc(note.evidence)+
@@ -734,7 +738,7 @@
       'X is owner-entered and excluded from scoring. Google and Bing are combined only on matching reported dates. '+
       'Music listening is counted only when Radio.co verifies full current and previous UTC windows. '+
       'Music purchases already count in overall Wix paid sales and are never double-scored. '+
-      'Wix sessions and CTA events remain separate.'+
+      'Wix website visits (sessions), estimated visitors, and CTA events remain separate.'+
       '</p>'+
       '<div class="mj-rougarou-eyes" aria-hidden="true"><i></i><i></i></div>'+
     '</section>';
