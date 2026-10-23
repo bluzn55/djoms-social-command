@@ -40,6 +40,7 @@
     sitePageViews:{label:'Wix page views',unit:'count',higher:true,source:'Wix'},
     formSubmissions:{label:'Wix form submissions',unit:'count',higher:true,source:'Wix'},
     fileDownloads:{label:'GA4 download events',unit:'count',higher:true,source:'GA4'},
+    radioLinkClicks:{label:'GA4 radio link clicks',unit:'count',higher:true,source:'GA4'},
     paidOrders:{label:'Wix paid web orders',unit:'count',higher:true,source:'Wix paid store'},
     grossSalesCents:{label:'Gross web item sales',unit:'cents',higher:true,source:'Wix paid store'}
   };
@@ -52,7 +53,9 @@
       searchCtr:google?g.ctr:null,searchClicks:google?g.clicks:null,
       siteVisitors:wix?site.visitors:null,siteBounceRate:wix?site.bounceRate:null,
       sitePageViews:wix?site.pageViews:null,formSubmissions:wix?site.formsSubmitted:null,
-      fileDownloads:event.fileDownload??null,paidOrders:paid?sales.paidOrders:null,
+      fileDownloads:event.fileDownload??null,
+      radioLinkClicks:ga4?.status==='connected'&&ga4.actions?.radioLinkStatus==='reported'?ga4.actions.radioLinkClicks:null,
+      paidOrders:paid?sales.paidOrders:null,
       grossSalesCents:paid?sales.itemSalesCents:null
     };
     return valid(values[key])?values[key]:null;
@@ -161,7 +164,7 @@
       return {evidence:number(radio)+' GA4 radio-related external-link click events; listening starts are not confirmed.',
         why:'An interested visitor may click Listen Live without audio actually starting. The number of real listeners remains unknown.',
         next:'Verify a Radio.co listening-start measure separately from link clicks, then compare click-to-listen completion.',
-        metric:'fileDownloads',confidence:'Radio click events measured; actual listening remains unverified.'};
+        metric:'radioLinkClicks',confidence:'Radio click events measured; actual listening remains unverified.'};
     }
     if(landing&&page){
       return {evidence:number(landing.sessions)+' Wix entry sessions on '+named(landing.path)+
