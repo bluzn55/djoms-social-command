@@ -662,7 +662,10 @@
         miniMetric('WEBSITE VISITORS',priorVisitors,wix?site.visitors:null)+
         miniMetric('RETURNING VISITORS',wixCmp.returningVisitors?.previous,
           wixCmp.returningVisitors?.current)+'</div>'+
-      wixSourcesDropdown(site)+locationsDropdown(site),
+      wixSourcesDropdown(site)+
+      (typeof window.djomsSupporterPanel==='function'?
+        window.djomsSupporterPanel(period):'')+
+      locationsDropdown(site),
       'Visits count sessions; Visitors estimate distinct browsers/devices. '+
       'Not every visit came from a link click, and one visitor can make several visits.');
     // #4 unifies where people went and how they engaged. Metrics remain
