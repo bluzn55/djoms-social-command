@@ -11170,16 +11170,16 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   box-shadow:0 0 0 2px #ac773b,0 6px 4px rgba(5,10,6,.7);
   align-self:start;
 }
-/* SWAMP TRAIL: follow all eight verified story stops, left to right on
-   the top row and right to left on the bottom row. Music follows Social. */
+/* SWAMP TRAIL: ordered #1–#4 left-to-right, then #5–#8
+   right-to-left. Music is fifth, Meaningful Actions ends the trail. */
 #connectionStrip .mj-card-search{grid-column:1;grid-row:1;margin-top:2px}
 #connectionStrip .mj-card-clicks{grid-column:2;grid-row:1;margin-top:33px}
 #connectionStrip .mj-card-traffic{grid-column:3;grid-row:1;margin-top:7px}
 #connectionStrip .mj-card-visitors{grid-column:4;grid-row:1;margin-top:36px}
-#connectionStrip .mj-card-actions{grid-column:4;grid-row:2;margin-top:7px}
+#connectionStrip .mj-card-music{grid-column:4;grid-row:2;margin-top:7px}
 #connectionStrip .mj-card-sales{grid-column:3;grid-row:2;margin-top:32px}
 #connectionStrip .mj-card-social{grid-column:2;grid-row:2;margin-top:10px}
-#connectionStrip .mj-card-music{grid-column:1;grid-row:2;margin-top:32px}
+#connectionStrip .mj-card-actions{grid-column:1;grid-row:2;margin-top:32px}
 #connectionStrip .mj-card-heading{
   display:flex;align-items:center;gap:6px;
   padding-bottom:6px;margin-bottom:4px;
