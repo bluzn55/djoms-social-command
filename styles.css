@@ -11505,3 +11505,83 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   #connectionStrip .mj-dropdown-desc>strong{font-size:15px!important}
   #connectionStrip .mj-dropdown-stat>b{font-size:19px!important}
 }
+
+/* MUSIC · DISTINCT VERIFIED HEALTH CHANNEL. Purchased music is already
+   counted within SALES; music-health weighting uses only confirmed streams. */
+#connectionStrip .mj-music-zone {
+  position:relative;z-index:1;margin:10px 0 14px;padding:11px;
+  background:linear-gradient(115deg,rgba(31,26,18,.98),rgba(63,45,28,.96));
+  border:3px solid #d5ae6e;border-radius:9px;
+  box-shadow:inset 0 0 0 2px #120e08;
+  color:#f8eac6;font:800 15px/1.25 Arial,sans-serif;
+}
+#connectionStrip .mj-music-head{
+  display:flex;align-items:start;justify-content:space-between;
+  gap:12px;flex-wrap:wrap;padding:0 0 8px;border-bottom:2px solid #9a7543;
+}
+#connectionStrip .mj-music-head small{
+  display:block;color:#d9b576!important;
+  font:900 13px/1.14 Georgia,serif!important;letter-spacing:.5px;
+}
+#connectionStrip .mj-music-head h3{
+  margin:3px 0;color:#f4dfa8!important;
+  font:900 clamp(22px,1.6vw,31px)/1.12 Georgia,serif!important;
+}
+#connectionStrip .mj-music-head p{
+  margin:4px 0 0;color:#f0e1ba!important;font:800 14px/1.3 Arial,sans-serif!important;
+}
+#connectionStrip .mj-music-score{
+  display:flex;align-items:center;gap:9px;
+  color:#f4d89f;font:900 14px/1.2 Arial,sans-serif;
+  padding:7px;border:2px solid #b89460;border-radius:6px;
+}
+#connectionStrip .mj-music-score>b{
+  font:900 33px/1 Arial,sans-serif!important;color:#f2da9f;
+}
+#connectionStrip .mj-music-score>small{
+  max-width:115px;color:#e6d3ac!important;font:700 12px/1.15 Arial,sans-serif!important;
+}
+#connectionStrip .mj-music-grid{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:7px;margin:10px 0 7px;
+}
+#connectionStrip .mj-music-stat{
+  display:flex;flex-direction:column;align-items:start;gap:3px;
+  background:linear-gradient(160deg,#f9edd0,#e4c79c);
+  border:2px solid #100d08;border-radius:5px;
+  padding:8px;min-width:0;
+}
+#connectionStrip .mj-music-stat>span{
+  font:900 clamp(13px,.91vw,16px)/1.14 Arial,sans-serif;color:#2a1a10;
+}
+#connectionStrip .mj-music-stat>strong{
+  font:900 clamp(22px,1.75vw,33px)/1.1 Arial,sans-serif!important;
+  color:#16110c!important;font-variant-numeric:tabular-nums;
+}
+#connectionStrip .mj-music-stat>small{
+  color:#5b4228!important;font:800 12px/1.23 Arial,sans-serif!important;
+}
+#connectionStrip .mj-music-history{
+  margin:10px 0 0;color:#f2ddaf;border:1px solid #bb965e;border-radius:5px;
+}
+#connectionStrip .mj-music-history>summary{
+  list-style:none;cursor:pointer;
+  padding:8px;color:#f5dfb8;font:900 15px/1.2 Arial,sans-serif;
+}
+#connectionStrip .mj-music-history>summary::-webkit-details-marker{display:none}
+#connectionStrip .mj-music-history>p{
+  margin:0!important;padding:7px 8px;color:#efdfbc!important;
+  font:750 14px/1.3 Arial,sans-serif!important;
+}
+#connectionStrip .mj-music-caveat{
+  margin:8px 0 0!important;color:#e3cca3!important;
+  font:750 13px/1.32 Arial,sans-serif!important;
+}
+@media(max-width:1350px){
+  #connectionStrip .mj-music-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:690px){
+  #connectionStrip .mj-music-grid{grid-template-columns:minmax(0,1fr)}
+  #connectionStrip .mj-music-head{display:block}
+  #connectionStrip .mj-music-score{margin:10px 0 0;width:max-content}
+}
