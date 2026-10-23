@@ -482,8 +482,8 @@ function renderConnectionStrip() {
         <div class="mj-loading">⚜ DOC JAKS · FOLLOW THE CURRENT · Loading the verified visitor journey…</div>
       </section>
 
-      <section id="missionDirectionPanel" class="mission-direction-panel" aria-label="Business direction and next action">
-        <h3>BUSINESS DIRECTION</h3><p>Checking actual performance and reporting coverage…</p>
+      <section id="missionDirectionPanel" class="mission-direction-panel mission-source-detail-panel" aria-label="Detailed source reports and underlying evidence">
+        <p class="mission-source-loading">Checking detailed source reports…</p>
       </section>
 
       <section class="mission-google-performance" aria-label="Google Performance: Google Search and Google Analytics combined">
