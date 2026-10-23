@@ -330,6 +330,101 @@
         now:currentReady?metric(current,'other',true):null}
     };
   }
+
+  /* Compact, native expandable drilldowns. All content is selected-period
+     evidence; no visitor identity, search-to-session joins or made-up totals. */
+  function mapDropdown(id,title,rows,context,empty){
+    return '<details class="mj-stage-dropdown" data-mj-dropdown="'+esc(id)+'">'+
+      '<summary><span>'+esc(title)+'</span><b>'+esc(rows.length?number(rows.length)+' shown':'N/A')+
+      '<i aria-hidden="true">▾</i></b></summary>'+
+      '<div class="mj-dropdown-content"><p class="mj-dropdown-explainer">'+esc(context)+'</p>'+
+      (rows.length?'<div class="mj-dropdown-rows">'+rows.join('')+'</div>':
+        '<p class="mj-dropdown-empty">'+esc(empty)+'</p>')+
+      '</div></details>';
+  }
+  const mapDetailRow=(heading,subtext,numberText,numberLabel,index)=>{
+    return '<div class="mj-dropdown-row">'+
+      '<span class="mj-dropdown-rank">'+esc(index+1)+'.</span>'+
+      '<span class="mj-dropdown-desc"><strong>'+esc(heading)+'</strong>'+
+        (subtext?'<small>'+esc(subtext)+'</small>':'')+'</span>'+
+      '<span class="mj-dropdown-stat"><b>'+esc(numberText)+'</b>'+
+        '<small>'+esc(numberLabel)+'</small></span></div>';
+  };
+  const compactTime=value=>{
+    if(!valid(value))return 'N/A';
+    const s=Math.round(value);
+    return s<60?s+'s':Math.floor(s/60)+'m '+(s%60)+'s';
+  };
+  function viewedPagesDropdown(site){
+    const pages=site?.connected===true&&Array.isArray(site.topPages)?
+      site.topPages.filter(p=>p&&typeof p.path==='string'&&p.path.trim()&&
+        valid(p.visitors)&&p.visitors>0)
+        .sort((a,b)=>b.visitors-a.visitors||(valid(b.views)?b.views:0)-(valid(a.views)?a.views:0)):[];
+    const rows=pages.map((p,i)=>mapDetailRow(named(p.path),
+      'Views '+number(p.views)+' · Avg. time '+compactTime(p.avgTimeSeconds),
+      number(p.visitors),'visitors',i));
+    return mapDropdown('pages','PAGES VIEWED',rows,
+      'Wix-reported pages: visitors, views and average time on that page. Average time is not a complete visitor timeline.',
+      'No Wix pages with recorded visitors for these dates.');
+  }
+  function locationsDropdown(site){
+    const places=site?.connected===true&&Array.isArray(site.geography)?
+      site.geography.filter(p=>p&&(p.city||p.region||p.country)&&valid(p.visitors)&&p.visitors>0)
+        .sort((a,b)=>b.visitors-a.visitors):[];
+    const placeName=p=>[p.city,p.region].filter(Boolean).join(', ')||p.country||'Location not supplied';
+    const rows=places.map((p,i)=>mapDetailRow(placeName(p),'Approximate Wix geography',
+      number(p.visitors),'visitors',i));
+    return mapDropdown('locations','WHERE VISITORS ARE FROM',rows,
+      'Approximate geographic categories from Wix. Some entries cover whole countries, so these rows should not be added together as unique people.',
+      'Wix has not returned visitor locations for these dates.');
+  }
+  function wixSourcesDropdown(site){
+    const current=site?.connected===true&&Array.isArray(site.trafficSources)?
+      site.trafficSources.filter(p=>p&&valid(p.sessions)):[];
+    const previous=site?.connected===true&&Array.isArray(site.trafficSourcesPrevious)?
+      site.trafficSourcesPrevious.filter(p=>p&&valid(p.sessions)):[];
+    const normalized=item=>(String(item.category||'').trim().toLowerCase()+'|'+
+      String(item.source||'').trim().toLowerCase());
+    const oldBySource=new Map();
+    for(const p of previous){
+      const key=normalized(p);
+      oldBySource.set(key,(oldBySource.get(key)||0)+p.sessions);
+    }
+    const knownLast=site?.trafficSourcesPreviousComplete===true;
+    const rows=current
+      .sort((a,b)=>b.sessions-a.sessions).map((p,i)=>{
+        const last=knownLast?(oldBySource.get(normalized(p))??0):null;
+        const source=String(p.source||p.category||'Unassigned');
+        const category=p.category&&String(p.category)!==source?String(p.category):'Wix traffic source';
+        return mapDetailRow(source,
+          category+' · Last '+(valid(last)?number(last):'N/A'),
+          number(p.sessions),'sessions',i);
+      });
+    return mapDropdown('traffic-sources','WHERE WEBSITE VISITS CAME FROM',rows,
+      'These are Wix-attributed website sessions, including direct visits and referrals. They do NOT represent a breakdown of Google Search Console clicks.'+
+      (site?.trafficSourcesComplete===false?' Wix source coverage is partial.':''),
+      'No verified Wix traffic-source breakdown for these dates.');
+  }
+  function searchClicksDropdown(seo){
+    const paired=seo?.status==='connected'&&seo.queryPages?.status==='reported'&&
+      Array.isArray(seo.queryPages.rows)?seo.queryPages.rows.filter(p=>p?.query&&p?.page&&valid(p.clicks)&&p.clicks>0):[];
+    const generic=seo?.status==='connected'&&Array.isArray(seo.topQueries)?
+      seo.topQueries.filter(p=>p?.query&&valid(p.clicks)&&p.clicks>0):[];
+    const rows=paired.length?
+      paired.sort((a,b)=>b.clicks-a.clicks)
+        .map((p,i)=>mapDetailRow(p.query,
+          'Result: '+named(p.page)+' · '+number(p.impressions)+' appearances',
+          number(p.clicks),'Google clicks',i)):
+      generic.sort((a,b)=>b.clicks-a.clicks)
+        .map((p,i)=>mapDetailRow(p.query,
+          number(p.impressions)+' appearances · Exact result page N/A',
+          number(p.clicks),'Google clicks',i));
+    const zero=seo?.status==='connected'&&seo.metrics?.clicks===0;
+    return mapDropdown('google-clicks','WHERE GOOGLE CLICKS CAME FROM',rows,
+      'Search phrases that received Google clicks, when Google reports them. These are aggregate search results, not identified visitors.',
+      zero?'No Google search clicks recorded for these dates. Searches may still have caused appearances.':
+        'Google has not identified individual search phrases with reported clicks for this period.');
+  }
   function socialPanel(social){
     const icons={facebook:'f',instagram:'◎',x:'𝕏'};
     const rows=['facebook','instagram','x'].map(platform=>{
@@ -401,21 +496,24 @@
     const second=card('clicks','2','SEARCH CLICKS','↖',
       heroMetric('Google clicks',lastSearch('clicks'),g.clicks,'count',false,
         'Click count from Google Search Console, not all website entries.')+
-      '<div class="mj-card-branches"><span>✖ No Click</span><span>✓ Clicked Doc Jaks</span></div>',
+      '<div class="mj-card-branches"><span>✖ No Click</span><span>✓ Clicked Doc Jaks</span></div>'+
+      searchClicksDropdown(seo),
       'Clicks and Wix visits are tracked by different systems.');
     const third=card('traffic','3','WHERE THEY CAME FROM','⌖',
       heroMetric('Wix sessions',traffic.sessions.last,traffic.sessions.now,'count')+
       '<div class="mj-minis">'+
         sourceMini('DIRECT',traffic.direct)+
         sourceMini('GOOGLE REFERRALS',traffic.google)+
-        sourceMini('OTHER SOURCES',traffic.other)+'</div>',
+        sourceMini('OTHER SOURCES',traffic.other)+'</div>'+
+      wixSourcesDropdown(site),
       'These are Wix-attributed website sessions. Google referrals are not the same as Google Search Console clicks.');
     const fourth=card('visitors','4','WEBSITE VISITORS','♟',
       heroMetric('Visitors',priorVisitors,wix?site.visitors:null)+
       '<div class="mj-minis">'+
         miniMetric('RETURNING',wixCmp.returningVisitors?.previous,
           wixCmp.returningVisitors?.current)+
-        miniMetric('PAGE VIEWS',wixCmp.pageViews?.previous,wix?site.pageViews:null)+'</div>',
+        miniMetric('PAGE VIEWS',wixCmp.pageViews?.previous,wix?site.pageViews:null)+'</div>'+
+      viewedPagesDropdown(site)+locationsDropdown(site),
       'Unique Wix visitors in the selected dates.');
     const fifth=card('engagement','5','VISITOR ENGAGEMENT','◷',
       heroMetric('Average stay',wixCmp.avgTimeSeconds?.previous,
@@ -506,7 +604,13 @@
       const seo=report('seo',period),ga4=report('ga4',period),sales=report('sales',period);
       const social=typeof window.djomsSocialPeriod==='function'?
         window.djomsSocialPeriod(period):null;
+      // Keep visitor drilldowns open when a verified source refreshes.
+      const openDropdowns=new Set([...slot.querySelectorAll('details.mj-stage-dropdown[open]')]
+        .map(item=>item.dataset.mjDropdown).filter(Boolean));
       slot.innerHTML=journey({site:correctSite,seo,ga4,sales,period,social});
+      for(const detail of slot.querySelectorAll('details.mj-stage-dropdown')){
+        if(openDropdowns.has(detail.dataset.mjDropdown))detail.open=true;
+      }
     }catch(error){
       slot.innerHTML='<p class="mj-loading">Visitor Journey could not be verified for these dates. '+
         'The original six performance boxes remain available below.</p>';
