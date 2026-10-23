@@ -10600,3 +10600,114 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     grid-template-columns:minmax(0,1fr);
   }
 }
+
+/* SIX EXISTING OWNER CARDS · OCT 23 2026
+   Larger headlines than descriptions; large readable figures with Current
+   emphasized. Keep the SAME six measured cards, date controls, and data.
+   Stack labels over two compact L/C columns to prevent cramped text. */
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence > .mission-stage-card,
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence > .mission-online-summary,
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence > .trend-metric {
+  min-height:0 !important;
+  padding:11px 13px !important;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-stage-head {
+  align-items:center;
+  gap:5px 8px;
+  margin-bottom:6px !important;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-stage-head > small,
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence > .mission-stage-card > small {
+  font:900 clamp(21px,1.4vw,25px)/1.17 Arial,sans-serif !important;
+  letter-spacing:.15px;
+  color:#17130f !important;
+  overflow-wrap:anywhere;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-stage-head .mission-stage-score {
+  font:900 17px/1.16 Arial,sans-serif !important;
+  padding:4px 6px;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-stage-rows .mission-story-pair {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) !important;
+  row-gap:2px;
+  padding:7px 0 !important;
+  align-items:start;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-stage-rows .mission-story-pair > span:first-child {
+  font:900 clamp(18px,1.05vw,20px)/1.2 Arial,sans-serif !important;
+  color:#17130f !important;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-stage-rows .mission-story-pair > .mission-pair-values,
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-action-compact-row > .mission-pair-values {
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  width:100% !important;
+  max-width:375px !important;
+  justify-self:start !important;
+  align-items:center;
+  gap:0 !important;
+  font-variant-numeric:tabular-nums;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-pair-values > .mission-pair-last,
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-pair-values > .mission-pair-current {
+  display:flex !important;
+  justify-content:flex-start !important;
+  align-items:baseline !important;
+  padding:3px 6px !important;
+  gap:5px !important;
+  min-width:0;
+  white-space:nowrap;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-pair-values > .mission-pair-current {
+  border-left:3px solid #c78a7b !important;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-pair-values .mission-pair-prefix {
+  display:inline !important;
+  font:900 clamp(18px,1.1vw,21px)/1.15 Arial,sans-serif !important;
+  color:inherit;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-pair-values .mission-pair-number {
+  display:inline !important;
+  font:900 clamp(21px,1.45vw,28px)/1.18 Arial,sans-serif !important;
+  letter-spacing:-.35px;
+  color:inherit;
+  white-space:nowrap;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-stage-foot,
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-online-source {
+  font:700 15px/1.34 Arial,sans-serif !important;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-action-compact-row {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 15px !important;
+  row-gap:1px !important;
+  align-items:center;
+  min-height:0;
+  padding:5px 0 !important;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-action-compact-row > span:first-child {
+  grid-column:1;
+  grid-row:1;
+  font:900 clamp(18px,1.05vw,20px)/1.2 Arial,sans-serif !important;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-action-compact-row > .mission-pair-values {
+  grid-column:1;
+  grid-row:2;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-action-compact-row > i {
+  grid-column:2;
+  grid-row:1 / 3;
+}
+#connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-online-breakdown > summary {
+  font-size:18px !important;
+  font-weight:900 !important;
+}
+@media(max-width:450px) {
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-pair-values .mission-pair-number {
+    font-size:clamp(19px,5.2vw,24px) !important;
+  }
+  #connectionStrip .mission-direction-panel .mission-direction-top-evidence .mission-pair-values .mission-pair-prefix {
+    font-size:18px !important;
+  }
+}
