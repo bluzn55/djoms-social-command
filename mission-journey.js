@@ -632,6 +632,10 @@
     const score=Number.isInteger(owner?.score)?owner.score:null;
     const scoreName=score===null?'UNVERIFIED':score>100?'FORWARD':score<100?'BACKWARD':'HOLDING';
     const scoreStyle=score===null?'na':score>100?'up':score<100?'down':'hold';
+    const scoreArrow=score===null?'?':score>100?'↑':score<100?'↓':'→';
+    const scoreArrowLabel=score===null?'Insufficient verified data for direction':
+      score>100?'Moving forward above 100':score<100?'Moving backward below 100':
+      'Holding at exactly 100';
     const first=card('search','1','SEARCH APPEARANCES','⌕',
       heroMetric('Verified engine appearances',search?.previous,
         search?.current,'count',false,'Google and Bing combined ONLY when their reported dates match.')+
@@ -706,7 +710,10 @@
         '<div class="mj-wood-sign"><small>⚜ DOC JAKS · FOLLOW THE CURRENT ⚜</small>'+
           '<h2>VISITOR JOURNEY MAP</h2>'+
           '<p>FROM SEARCH AND SOCIAL DISCOVERY TO SALES</p></div>'+
-        '<div class="mj-wood-score '+esc(scoreStyle)+'"><small>OWNER DIRECTION</small>'+
+        '<div class="mj-wood-score '+esc(scoreStyle)+'" role="group" aria-label="Owner direction: '+esc(scoreName)+'">'+
+          '<span class="mj-direction-arrow '+esc(scoreStyle)+'" role="img" aria-label="'+esc(scoreArrowLabel)+
+          '" title="'+esc(scoreArrowLabel)+'">'+esc(scoreArrow)+'</span>'+
+          '<small>OWNER DIRECTION</small>'+
           '<strong>'+esc(score===null?'N/A':score)+'</strong>'+
           '<b>'+esc(scoreName)+'</b></div></header>'+
       '<div class="mj-boardwalk">'+
