@@ -11406,3 +11406,14 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   #connectionStrip .mj-social-stat > b{font-size:18px}
   #connectionStrip .mj-current{font-size:36px!important}
 }
+
+/* Decorative cypress swamp illustration, locally hosted and text-free.
+   No static numbers may sit beneath the verified owner metrics. */
+#connectionStrip .mj-swamp-map > .mj-swamp-trees{
+  background-image:url('/mj-swamp-scene.svg')!important;
+  background-position:center center!important;
+  background-size:cover!important;
+  background-repeat:no-repeat!important;
+  opacity:.48;
+  filter:saturate(.95);
+}
