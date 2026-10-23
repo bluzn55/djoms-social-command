@@ -11170,14 +11170,16 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   box-shadow:0 0 0 2px #ac773b,0 6px 4px rgba(5,10,6,.7);
   align-self:start;
 }
+/* SWAMP TRAIL: follow the numbered visitor path left-to-right, then
+   right-to-left, ending at #8 Social Media AFTER paid web sales. */
 #connectionStrip .mj-card-search{grid-column:1;grid-row:1;margin-top:2px}
 #connectionStrip .mj-card-clicks{grid-column:2;grid-row:1;margin-top:33px}
 #connectionStrip .mj-card-traffic{grid-column:3;grid-row:1;margin-top:7px}
-#connectionStrip .mj-card-social{grid-column:4;grid-row:1;margin-top:36px}
-#connectionStrip .mj-card-visitors{grid-column:4;grid-row:2;margin-top:7px}
-#connectionStrip .mj-card-engagement{grid-column:3;grid-row:2;margin-top:32px}
-#connectionStrip .mj-card-actions{grid-column:2;grid-row:2;margin-top:10px}
-#connectionStrip .mj-card-sales{grid-column:1;grid-row:2;margin-top:32px}
+#connectionStrip .mj-card-visitors{grid-column:4;grid-row:1;margin-top:36px}
+#connectionStrip .mj-card-engagement{grid-column:4;grid-row:2;margin-top:7px}
+#connectionStrip .mj-card-actions{grid-column:3;grid-row:2;margin-top:32px}
+#connectionStrip .mj-card-sales{grid-column:2;grid-row:2;margin-top:10px}
+#connectionStrip .mj-card-social{grid-column:1;grid-row:2;margin-top:32px}
 #connectionStrip .mj-card-heading{
   display:flex;align-items:center;gap:6px;
   padding-bottom:6px;margin-bottom:4px;
