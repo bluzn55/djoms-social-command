@@ -547,6 +547,9 @@
         '<small>'+esc('15 of 100 points when FB/IG are comparable. X is manual only.')+'</small></div>',
       'Social is a second discovery current, not a continuation of Google clicks. Meta figures are current lifetime totals on posts published in each period.');
   }
+  // #8 MUSIC is the existing verified music reporting, brought INTO the
+  // numbered boardwalk. This function never infers plays from Wix page visits
+  // or link clicks, and music sales remain scored in SALES only.
   function musicPanel(music,owner){
     const ms=owner?.stages?.find(stage=>stage.id==='music');
     const score=Number.isInteger(ms?.score)?ms.score:null;
@@ -554,49 +557,50 @@
     const historic=music?.radioImport;
     const radioDates=historic?.start&&historic?.end?
       historic.start+' to '+historic.end+' (UTC)':'Not imported';
+    const current=music?.current,previous=music?.previous;
     const row=(label,value,source)=>
       '<div class="mj-music-stat"><span>'+esc(label)+'</span>'+
         '<strong>'+esc(value)+'</strong><small>'+esc(source)+'</small></div>';
     const importNote=historic&&valid(historic.connections)?
-      '<details class="mj-music-history"><summary>HISTORICAL RADIO.CO DATA ▾</summary>'+
-        '<p>'+esc(radioDates)+' · '+number(historic.connections)+' measured streaming connections'+
+      '<details class="mj-stage-dropdown mj-music-history" data-mj-dropdown="radio-history">'+
+        '<summary><span>HISTORICAL RADIO.CO EXPORT</span><b>DETAILS <i aria-hidden="true">▾</i></b></summary>'+
+        '<p>'+esc(radioDates)+' · '+number(historic.connections)+' streaming connections'+
         (valid(historic.averageDurationSeconds)?
-          ' · average duration '+duration(historic.averageDurationSeconds):'')+
-        '. Historical UTC data is NOT substituted for the selected period.</p></details>':'';
-    const current=music?.current,previous=music?.previous;
-    return '<section class="mj-music-zone" aria-label="Music listening, online purchases and streaming health">'+
-      '<div class="mj-music-head"><div><small>⚜ A SECOND CURRENT THROUGH THE SWAMP</small>'+
-        '<h3>♫ DOC JAKS MUSIC &amp; OUTLAW RADIO 5150</h3>'+
-        '<p>Listening matters. Music sales matter. Website clicks are not plays.</p></div>'+
-        '<span class="mj-music-score">MUSIC HEALTH <b>'+esc(grade)+'</b>'+
-          '<small>10 of 100 points if verified</small></span></div>'+
+          ' · average listening duration '+duration(historic.averageDurationSeconds):'')+
+        '. This CSV is historical. It is not a current/live listener count and is not automatically used for other dates.</p></details>':'';
+    return card('music','8','MUSIC / RADIO / STREAMING','♫',
+      '<div class="mj-music-score-line">'+
+        '<span class="mj-music-score">MUSIC HEALTH <b>'+esc(grade)+
+          '</b><small>10 of 100 points, when listening is verified</small></span>'+
+        '<small>Independent listening activity, not radio-site clicks</small></div>'+
+      heroMetric('RADIO.CO STREAM CONNECTIONS',previous?.connections,current?.connections,
+        'count',false,'Imported Radio.co CSV for the selected UTC dates; connections are not unique listeners.')+
+      '<div class="mj-minis">'+
+        miniMetric('TOTAL LISTENING TIME',previous?.seconds,current?.seconds,'time')+
+      '</div>'+
       '<div class="mj-music-grid">'+
-        row('RADIO.CO STREAM CONNECTIONS',
-          formatValue(current?.connections),
-          'Current selected days · UTC · Last '+formatValue(previous?.connections))+
-        row('RADIO.CO TOTAL LISTENED',
-          valid(current?.seconds)?duration(current.seconds):'N/A',
-          'Current selected days · UTC · Last '+
-            (valid(previous?.seconds)?duration(previous.seconds):'N/A'))+
-        row('MUSIC PAGE VIEWS',
-          formatValue(music?.musicPageViews),
-          'Wix reported music pages · not listening')+
-        row('OUTLAW RADIO PAGE VIEWS',
-          formatValue(music?.radioPageViews),
-          'Wix reported radio page · not a listener')+
-        row('PAID MUSIC UNITS',
-          formatValue(music?.musicUnits),
-          'Verified Wix Music category · already part of SALES')+
-        row('PAID MUSIC SALES',
-          formatValue(music?.musicItemSalesCents,'cents'),
-          'Verified Wix Music category · already part of SALES')+
-        row('SPOTIFY STREAMS','N/A','Not connected')+
-        row('APPLE / OTHER STREAMS','N/A','Not connected')+
+        row('PAID MUSIC UNITS',formatValue(music?.musicUnits),
+          'Wix Music category · counted in #6 Sales')+
+        row('PAID MUSIC SALES',formatValue(music?.musicItemSalesCents,'cents'),
+          'Wix Music category · counted in #6 Sales')+
+        row('MUSIC PAGE VIEWS',formatValue(music?.musicPageViews),
+          'Wix pages · not music plays')+
+        row('OUTLAW RADIO PAGE VIEWS',formatValue(music?.radioPageViews),
+          'Wix page · not radio listeners')+
+        row('SPOTIFY STREAMS',formatValue(music?.spotifyStreams),
+          'N/A until verified streaming data is connected')+
+        row('APPLE MUSIC STREAMS',formatValue(music?.appleMusicStreams),
+          'N/A until verified streaming data is connected')+
+        row('YOUTUBE MUSIC STREAMS',formatValue(music?.youtubeMusicStreams),
+          'N/A until verified streaming data is connected')+
+        row('UNIQUE RADIO LISTENERS',formatValue(music?.uniqueRadioListeners),
+          'N/A until Radio.co listener reporting is connected')+
       '</div>'+importNote+
       '<p class="mj-music-caveat">'+esc(music?.note||
         'Verified listening and streaming comparison pending.')+' '+
-        esc(music?.caveat||'Music sales are already included in total sales.')+
-      '</p></section>';
+        esc(music?.caveat||'Music sales are already included in total paid web sales.')+
+      '</p>',
+      'This is a separate music-performance channel. Paid music is already included in total web sales and is not counted twice.');
   }
   function journey(context){
     const {site,seo,ga4,sales,period,social:providedSocial}=context||{};
@@ -710,12 +714,11 @@
           '<path class="mj-path-shadow" d="M 75 160 C 285 70, 460 230, 610 130 S 1040 45, 1135 175 C 1180 290, 1170 390, 1080 490 S 750 590, 575 485 S 245 390, 90 530"/>'+
           '<path class="mj-path-planks" d="M 75 160 C 285 70, 460 230, 610 130 S 1040 45, 1135 175 C 1180 290, 1170 390, 1080 490 S 750 590, 575 485 S 245 390, 90 530"/>'+
         '</svg>'+
-        first+second+third+fourth+fifth+sixth+socialPanel(social)+
+        first+second+third+fourth+fifth+sixth+socialPanel(social)+musicPanel(music,owner)+
       '</div>'+
-      musicPanel(music,owner)+
       '<div class="mj-swamp-disclaimer">⚜ Every stop is a separate reported measurement. '+
-        'Social Media is shown last as a separate discovery and engagement channel, not a step everyone takes. '+
-        'Website Visits, Visitors, and Page Views count different things and are not added into a fictional individual-visitor funnel.</div>'+
+        'Social Media and Music/Radio are independent discovery and entertainment channels, not steps every visitor takes. '+
+        'Website Visits, Visitors, Page Views and listening connections count different things; no fabricated conversion funnel is implied.</div>'+
       '<div class="mj-decision-heading"><span>⚜ THE FOUR QUESTIONS THAT TURN DATA INTO DECISIONS ⚜</span></div>'+
       '<div class="mj-intelligence">'+
         '<article><h3>1. WHAT HAPPENED?</h3><p>'+esc(note.evidence)+
