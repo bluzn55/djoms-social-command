@@ -547,7 +547,7 @@
         '<small>'+esc('15 of 100 points when FB/IG are comparable. X is manual only.')+'</small></div>',
       'Social is a second discovery current, not a continuation of Google clicks. Meta figures are current lifetime totals on posts published in each period.');
   }
-  // #8 MUSIC is the existing verified music reporting, brought INTO the
+  // #5 MUSIC is the existing verified music reporting, brought INTO the
   // numbered boardwalk. This function never infers plays from Wix page visits
   // or link clicks, and music sales remain scored in SALES only.
   function musicPanel(music,owner){
@@ -568,7 +568,7 @@
         (valid(historic.averageDurationSeconds)?
           ' · average listening duration '+duration(historic.averageDurationSeconds):'')+
         '. This CSV is historical. It is not a current/live listener count and is not automatically used for other dates.</p></details>':'';
-    return card('music','8','MUSIC / RADIO / STREAMING','♫',
+    return card('music','5','MUSIC / RADIO / STREAMING','♫',
       '<div class="mj-music-score-line">'+
         '<span class="mj-music-score">MUSIC HEALTH <b>'+esc(grade)+
           '</b><small>10 of 100 points, when listening is verified</small></span>'+
@@ -682,7 +682,7 @@
           wix?site.pagesPerSession:null,'decimal')+'</div>'+
       viewedPagesDropdown(site),
       'Explore the pages visited and engagement. Lower bounce is favorable.');
-    const fifth=card('actions','5','MEANINGFUL ACTIONS','✦',
+    const eighth=card('actions','8','MEANINGFUL ACTIONS','✦',
       '<div class="mj-minis">'+
         miniMetric('INQUIRIES',contactsLast,contactsNow)+
         miniMetric('PIT KREWE',null,null)+
@@ -724,7 +724,7 @@
           '<path class="mj-path-shadow" d="M 75 160 C 285 70, 460 230, 610 130 S 1040 45, 1135 175 C 1180 290, 1170 390, 1080 490 S 750 590, 575 485 S 245 390, 90 530"/>'+
           '<path class="mj-path-planks" d="M 75 160 C 285 70, 460 230, 610 130 S 1040 45, 1135 175 C 1180 290, 1170 390, 1080 490 S 750 590, 575 485 S 245 390, 90 530"/>'+
         '</svg>'+
-        first+second+third+fourth+fifth+sixth+socialPanel(social)+musicPanel(music,owner)+
+        first+second+third+fourth+musicPanel(music,owner)+sixth+socialPanel(social)+eighth+
       '</div>'+
       '<div class="mj-swamp-disclaimer">⚜ Every stop is a separate reported measurement. '+
         'Social Media and Music/Radio are independent discovery and entertainment channels, not steps every visitor takes. '+
