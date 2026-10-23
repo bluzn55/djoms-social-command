@@ -581,6 +581,9 @@
     getRadioImport().then(data=>{
       if(ticket!==sequence)return;
       snapshot.radio={status:'ok',data,error:null};
+      window.djomsVerifiedReports ||= {};
+      window.djomsVerifiedReports.radioImport={status:'imported',data,checkedAt:new Date().toISOString()};
+      document.dispatchEvent(new CustomEvent('djoms:verified-report',{detail:{source:'radioImport'}}));
       paint();
     }).catch(error=>{
       if(ticket!==sequence)return;
@@ -591,20 +594,20 @@
       getReport(path,selected).then(data=>{
         if(ticket!==sequence) return;
         snapshot[key]={status:'ok',data,error:null};
-        if(key==='sales') {
+        if(key==='sales'||key==='interests') {
           window.djomsVerifiedReports ||= {};
-          window.djomsVerifiedReports.sales={query:selected.query,data};
-          document.dispatchEvent(new CustomEvent('djoms:verified-report',{detail:{source:'sales'}}));
+          window.djomsVerifiedReports[key]={query:selected.query,data};
+          document.dispatchEvent(new CustomEvent('djoms:verified-report',{detail:{source:key}}));
         }
         paint();
       }).catch(error=>{
         if(ticket!==sequence) return;
         snapshot[key]={status:'error',data:null,error:error.name==='TimeoutError'
           ? 'Wix timed out. Try Check activity again.' : String(error.message||'Report unavailable.')};
-        if(key==='sales') {
+        if(key==='sales'||key==='interests') {
           window.djomsVerifiedReports ||= {};
-          window.djomsVerifiedReports.sales={query:selected.query,data:null,error:snapshot[key].error};
-          document.dispatchEvent(new CustomEvent('djoms:verified-report',{detail:{source:'sales'}}));
+          window.djomsVerifiedReports[key]={query:selected.query,data:null,error:snapshot[key].error};
+          document.dispatchEvent(new CustomEvent('djoms:verified-report',{detail:{source:key}}));
         }
         paint();
       });
