@@ -188,6 +188,8 @@
     const samePeriod=test.range===period?.range;
     const startedAfter=samePeriod&&period?.start&&period.start>ymd;
     const eligible=startedAfter&&raw!==null&&test.days===period?.days;
+    const googleMetric=test.metric==='searchCtr'||test.metric==='searchClicks';
+    const googleFinal=seo?.status==='connected'&&seo.reportedThrough>=period?.endInclusive;
     let verdict='PENDING FULL POST-CHANGE WINDOW',tone='pending';
     let detail='Choose '+({today:'Day','7d':'Week','30d':'Month'})[test.range]+
       ' and wait until the entire reporting window begins after the change.';
@@ -198,6 +200,10 @@
       verdict=good===null?'NO MEASURED CHANGE':good?'METRIC IMPROVED':'METRIC DECLINED';
       detail='Current '+showMetric(test.metric,raw)+' vs recorded baseline '+
         showMetric(test.metric,test.baseline)+'. Comparison is observational, not proof this change caused it.';
+      if(googleMetric&&!googleFinal){
+        verdict='EARLY TREND · GOOGLE REPORT DELAYED';tone='pending';
+        detail+=' Google has not finalized the full selected reporting window.';
+      }
     }
     return '<div class="mj-test-row"><div><strong>'+esc(test.note)+
       '</strong><small>'+esc(test.createdAt.slice(0,10))+' · '+esc(def.label)+
