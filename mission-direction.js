@@ -1073,6 +1073,10 @@
     '</section>';
   }
 
+  // The swamp journey already presents the owner score, eight live data
+  // stages, and the four decision panels. Keep this module's alert syncing
+  // and source spreadsheet, but NOT the duplicate direction meter, top six
+  // performance cards, owner digest, or explanation of 100-point scoring.
   function paint(){
     const node=document.getElementById('missionDirectionPanel');
     if(!node)return;
@@ -1082,58 +1086,40 @@
     const summary=evaluate(site,ga4,seo,sales,period);
     syncAttention(issueList(site,ga4,seo));
     const proof=summary.actionEvidence;
-    // Six stages in the order a person reaches and interacts with Doc Jaks.
-    const visitors=summary.coverage.find(item=>item.label==='VISITORS');
-    const engagement=summary.coverage.find(item=>item.label==='ENGAGEMENT');
-    const leadingCards=[
-      searchStageCard(seo,summary.momentum),
-      sourceStageCard(site,summary.momentum),
-      periodKpi(visitors,site,summary.momentum),
-      periodKpi(engagement,site,summary.momentum),
-      meaningfulActionsCard(site,ga4,sales,period,summary.momentum),
-      onlineSalesCard(sales,period,summary.momentum)
-    ].join('');
     node.innerHTML=
-      '<div class="mission-direction-overview">'+
-        '<div class="mission-direction-overview-main">'+
-          '<div class="mission-direction-title-block">'+
-            '<small>DOC JAKS · OWNER-FIRST BUSINESS INTELLIGENCE</small>'+
-            '<h2>ARE WE MOVING FORWARD OR BACKWARD?</h2></div>'+
-          '<p class="mission-stage-journey">THE OWNER VIEW: '+
-            'SEARCH → TRAFFIC &amp; SOURCES → VISITORS → ENGAGEMENT → ACTIONS → SALES</p>'+
-          '<div class="mission-direction-evidence mission-direction-top-evidence">'+
-            leadingCards+'</div>'+
-        '</div>'+
-        '<div class="mission-direction-gauge-aside">'+directionMeter(summary)+'</div>'+
-      '</div>'+
-      '<p class="mission-period-context">LAST = the preceding equal-length reporting period; CURRENT = selected dates ('+
-        esc(periodName(period))+'). For Week this means the previous seven days versus the current seven days.</p>'+
-      ownerDigest(summary)+
-      ownerScoreMethod(summary)+
+      '<header class="mission-source-report-header">'+
+        '<strong>DETAILED SOURCE REPORTS</strong>'+
+        '<small>Verified measurements and supporting breakdowns · Same reporting period as the swamp map</small>'+
+      '</header>'+
       momentumBreakdown(site,ga4,seo,sales,period,summary.momentum)+
       '<section id="missionActionDetails" class="mission-action-panel"'+
         (actionDetailsOpen?'':' hidden')+'>'+
         (actionDetailsOpen?actionsDetail(site,ga4,sales,period):'')+'</section>'+
-      '<details class="mission-direction-details"><summary class="mission-direction-details-toggle">'+
-        '<span class="mission-detail-show">Show Details</span>'+
-        '<span class="mission-detail-hide">Hide Details</span></summary>'+
-        '<p>Business direction evaluates multiple independent sources. Website direction is only one part; no website percentage implies business profit.</p>'+
+      '<details class="mission-direction-details mission-source-extras">'+
+        '<summary class="mission-direction-details-toggle">'+
+          'ADDITIONAL SOURCE VERIFICATION &amp; 90-DAY TREND ▾</summary>'+
+        '<p>These are independently measured sources, not a duplicate direction score.</p>'+
+        '<button type="button" class="mission-action-open" data-direction-actions-toggle="1">'+
+          (actionDetailsOpen?'Hide':'Open')+' verified action details</button>'+
         '<div class="mission-direction-action-evidence">'+
-          measure('Wix contact actions',fmt(proof.contacts),'Measured contact clicks plus forms, where available')+
+          measure('Wix contact actions',fmt(proof.contacts),'Measured clicks and forms where available')+
           measure('Paid Wix orders',fmt(proof.purchases),'Refunded and unpaid orders excluded')+
           measure('GA4 sign-up events',fmt(proof.ga4Signups),'Not verified Pit Krewe memberships')+
           measure('Radio-related link clicks',fmt(proof.ga4RadioLinkClicks),'Not confirmed audio listeners')+
         '</div>'+
-        '<p><b>What we still need:</b> actual Radio.co audience data, confirmed Pit Krewe signups, and variable costs before contribution margin can be assessed.</p>'+
+        '<p>Actual listener counts and confirmed Pit Krewe registrations remain N/A without evidence.</p>'+
         '<ul>'+summary.notes.map(note=>'<li>'+esc(note)+'</li>').join('')+'</ul>'+
-        '<p>The selected period is '+esc(summary.period)+'. The same date selection is used throughout the dashboard.</p>'+
+        '<p>The selected period is '+esc(summary.period)+'.</p>'+
         '<section class="mission-direction-ninety"><h4>Longer-term trend</h4>'+ninetyView()+'</section>'+
       '</details>';
   }
-  function repaint(){try{paint();}catch(error){
-    const box=document.getElementById('missionDirectionPanel');
-    if(box)box.innerHTML='<h3>BUSINESS DIRECTION</h3><p>Could not verify the direction summary. Source reports remain available below.</p>';
-  }}
+  function repaint(){
+    try{paint();}
+    catch(error){
+      const box=document.getElementById('missionDirectionPanel');
+      if(box)box.innerHTML='<p class="mission-source-loading">Detailed source reports are temporarily unavailable. The live journey above is unchanged.</p>';
+    }
+  }
   // The bridge script, SEO and Wix use the same owner-selected dates.
   const previous=window.renderConnectionStrip;
   if(typeof previous==='function'){
