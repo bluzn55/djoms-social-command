@@ -375,6 +375,10 @@
       savedBing.data.range?.start===period.start&&
       savedBing.data.range?.end===period.end?
       savedBing.data:null;
+    // One authoritative cross-engine calculation feeds BOTH the swamp map
+    // and this detailed source workbook. Do not display contradictory totals.
+    const combinedSearch=typeof window.djomsCombinedSearch==='function'?
+      window.djomsCombinedSearch({seo,bing,period}):null;
     const wix=wixReport(site),ga=ga4Report(ga4),gaPrior=ga4Report(ga4,'last');
     const current=wix&&(wix.complete||Object.keys(wix.buckets).length)?wix:ga||wix;
     // Compare Wix with Wix, never a mix of Wix and GA4. Wix already
@@ -428,7 +432,20 @@
       }
       if(source==='bing'){
         if(bing?.status!=='connected'||measure==='position')return null;
+        const aligned=combinedSearch?.status==='reported'?
+          combinedSearch.engines.find(item=>item.id==='bing'):null;
         const field=measure==='appearances'?'impressions':measure;
+        if(aligned){
+          if(measure==='ctr'){
+            const part=which==='current'?aligned.current:aligned.previous;
+            return part&&good(part.impressions)&&part.impressions>0&&good(part.clicks)?
+              part.clicks/part.impressions:null;
+          }
+          const part=which==='current'?aligned.current:aligned.previous;
+          return part&&good(part[field])?part[field]:null;
+        }
+        // Report the provider's own verified window when it cannot join the
+        // common current period; exclude it from the TOTAL above.
         if(which==='current')return good(bing.metrics?.[field])?bing.metrics[field]:null;
         return bing.comparison?.status==='reported'&&
           good(bing.comparison?.[field]?.previous)?
@@ -439,45 +456,24 @@
         measure==='appearances'?'impressions':measure);
       return measure==='appearances'?search.impressions:search[measure];
     }
-    // Search TOTAL must compare the same provider(s) in LAST and CURRENT.
-    // Never add Google and Bing if their observed reporting windows differ.
-    // If both cannot be safely combined, show one verified provider (usually
-    // Google) with an explicit G/B marker instead of discarding useful data.
-    const bingConnected=bing?.status==='connected';
-    const pairedCounts=source=>['last','current'].every(which=>
-      good(raw('appearances',source,which))&&
-      good(raw('clicks',source,which)));
-    const currentCounts=source=>good(raw('appearances',source,'current'))&&
-      good(raw('clicks',source,'current'));
-    const sameSearchWindow=google&&bingConnected&&
-      bing.currentRange?.start===seo?.comparison?.currentRange?.start&&
-      bing.currentRange?.end===seo?.comparison?.currentRange?.end;
-    const sameSearchPrevious=google&&bingConnected&&
-      bing.previousRange?.start===seo?.comparison?.previousRange?.start&&
-      bing.previousRange?.end===seo?.comparison?.previousRange?.end;
-    const searchProviders=(sameSearchWindow&&sameSearchPrevious&&
-      pairedCounts('google')&&pairedCounts('bing'))?['google','bing']:
-      google&&pairedCounts('google')?['google']:
-      bingConnected&&pairedCounts('bing')?['bing']:
-      google&&currentCounts('google')?['google']:
-      bingConnected&&currentCounts('bing')?['bing']:[];
-    const searchScope=searchProviders.length===2?'G+B':
-      searchProviders[0]==='google'?'G':
-      searchProviders[0]==='bing'?'B':null;
-    // Bing's overall Webmaster traffic report has no average position.
-    // Always label Google position as G rather than imply cross-engine rank.
+    // Use the SAME reported cross-engine scope as Swamp Map #1.
+    // Bing's daily data is aligned to Google's finalized days, if available.
+    const searchScope=combinedSearch?.status==='reported'?
+      (combinedSearch.scope==='Google + Bing'?'G+B':
+       combinedSearch.scope==='Google'?'G':
+       combinedSearch.scope==='Bing'?'B':null):null;
     function measuredSearchTotal(measure,which){
       if(measure==='position')return google?
         raw('position','google',which):null;
-      if(!searchProviders.length)return null;
-      if(measure==='ctr'){
-        const clicks=measuredSearchTotal('clicks',which);
-        const impressions=measuredSearchTotal('appearances',which);
-        return good(clicks)&&good(impressions)&&impressions>0?
-          clicks/impressions:null;
-      }
-      const values=searchProviders.map(source=>raw(measure,source,which));
-      return values.every(good)?values.reduce((sum,n)=>sum+n,0):null;
+      if(combinedSearch?.status!=='reported')return null;
+      const last=which==='last';
+      if(measure==='appearances')
+        return last?combinedSearch.previous:combinedSearch.current;
+      if(measure==='clicks')
+        return last?combinedSearch.clicksPrevious:combinedSearch.clicksCurrent;
+      if(measure==='ctr')
+        return last?combinedSearch.ctrPrevious:combinedSearch.ctrCurrent;
+      return null;
     }
     const totalValue=(measure,which)=>{
       if(['appearances','clicks','ctr','position'].includes(measure))
