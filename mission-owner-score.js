@@ -7,11 +7,15 @@
 (function ownerScoreModule(){
   'use strict';
   const valid=x=>typeof x==='number'&&Number.isFinite(x)&&x>=0;
+  // Social influence is meaningful but cannot overwhelm measured store outcomes.
+  // The six existing site boxes stay as they are; SOCIAL is a seventh
+  // independently verified contributor to the owner direction index.
   const WEIGHTS=[
     {id:'search',name:'SEARCH',weight:15},
-    {id:'sources',name:'TRAFFIC',weight:20},
-    {id:'visitors',name:'VISITORS',weight:25},
-    {id:'engagement',name:'ENGAGE',weight:15},
+    {id:'sources',name:'TRAFFIC',weight:15},
+    {id:'visitors',name:'VISITORS',weight:20},
+    {id:'engagement',name:'ENGAGE',weight:10},
+    {id:'social',name:'SOCIAL',weight:15},
     {id:'actions',name:'ACTIONS',weight:10},
     {id:'sales',name:'SALES',weight:15}
   ];
@@ -28,7 +32,9 @@
   function section(meta,signals){
     const evidence=signals.map(row=>({
       label:row.label,weight:row.weight,
-      movement:movement(row.previous,row.current,row.inverse===true)
+      movement:typeof row.movement==='number'&&Number.isFinite(row.movement)
+        ?Math.max(-40,Math.min(40,row.movement))
+        :movement(row.previous,row.current,row.inverse===true)
     })).filter(v=>v.movement!==null&&v.weight>0);
     const used=evidence.reduce((sum,m)=>sum+m.weight,0);
     const score=used>0?Math.round(100+
@@ -36,7 +42,7 @@
     return {...meta,score,tone:tone(score),status:tone(score),
       measured:evidence.length,metricWeight:used,evidence};
   }
-  function evaluate(site,ga4,seo,sales,period){
+  function evaluate(site,ga4,seo,sales,period,social){
     const wix=site?.connected===true;
     const cmp=wix?site.metricComparisons||{}:{};
     const current=field=>wix&&valid(site?.[field])?site[field]:null;
@@ -104,14 +110,17 @@
         {label:'Bounce rate',weight:25,inverse:true,...compare('bounceRate')},
         {label:'Pages per session',weight:10,...compare('pagesPerSession')}
       ]),
-      section(WEIGHTS[4],[
+      section(WEIGHTS[4],
+        social?.status==='reported'&&Array.isArray(social.scoreSignals)
+          ?social.scoreSignals:[]),
+      section(WEIGHTS[5],[
         {label:'Form submission events',weight:35,...eventPair('formSubmit')},
         {label:'Sign-up events (not verified Krewe members)',weight:25,...eventPair('signUp')},
         {label:'Add-to-cart events',weight:20,...eventPair('addToCart')},
         {label:'Checkout start events',weight:15,...eventPair('beginCheckout')},
         {label:'File download events',weight:5,...eventPair('fileDownload')}
       ]),
-      section(WEIGHTS[5],[
+      section(WEIGHTS[6],[
         {label:'Gross paid web item sales',weight:70,...salesPair('itemSalesCents')},
         {label:'Paid web orders',weight:30,...salesPair('paidOrders')}
       ])
@@ -131,8 +140,10 @@
     return {score,kind:status,verdict,position,stages,
       covered:found.length,availableWeight,totalWeight:100,
       incomplete:found.length<stages.length,
-      note:'Verified online-activity direction only. Comparisons of unlike units '+
-        'are normalized and capped. Not profit or company-wide growth.'};
+      note:'Verified online-activity direction only. Social compares as-of-now per-post '+
+        'lifetime results on published-post cohorts, not social interactions by date; older posts '+
+        'have had more time to accumulate engagement. X manual numbers are not scored. '+
+        'Comparisons are normalized and capped. Not profit or company-wide growth.'};
   }
   window.djomsOwnerScore=evaluate;
   window.djomsOwnerScoreWeights=WEIGHTS.map(({id,name,weight})=>({id,name,weight}));
