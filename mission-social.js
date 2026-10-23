@@ -17,7 +17,7 @@
   };
   const emptyRow=(platform)=>({
     platform,kind:platform==='x'?'owner-entered':'Meta',
-    currentPosts:null,previousPosts:null,now:{},last:{},movements:{},
+    currentPosts:null,previousPosts:null,now:{},last:{},movements:{},displayPct:{},
     verified:false,sourceNote:'No matched reporting periods received.'
   });
   const cache=new Map();
@@ -91,7 +91,7 @@
       const row=emptyRow(name);
       row.currentPosts=Number.isInteger(first?.posts)?first.posts:null;
       row.previousPosts=Number.isInteger(second?.posts)?second.posts:null;
-      row.now={};row.last={};row.movements={};
+      row.now={};row.last={};row.movements={};row.displayPct={};
       row.verified=name!=='x'&&result.status==='reported'&&
         first?.inventory?.complete===true&&second?.inventory?.complete===true&&
         entry.current?.coverage?.recordInventoryComplete===true&&
@@ -109,6 +109,7 @@
         const nowPer=now/Math.max(1,row.currentPosts);
         const pct=oldPer===0?(nowPer===0?0:40):(nowPer-oldPer)/oldPer*100;
         if(!Number.isFinite(pct))continue;
+        row.displayPct[metric]=oldPer===0&&nowPer>0?'NEW':pct;
         row.movements[metric]=Math.min(40,Math.max(-40,pct));
       }
       result.platforms[name]=row;
