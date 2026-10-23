@@ -478,6 +478,10 @@ function renderConnectionStrip() {
         ${websiteCustomControls()}
       </section>
 
+      <section id="missionJourneyTop" aria-label="Visitor journey map between reporting period and business direction">
+        <div class="mj-loading">⚜ DOC JAKS · FOLLOW THE CURRENT · Loading the verified visitor journey…</div>
+      </section>
+
       <section id="missionDirectionPanel" class="mission-direction-panel" aria-label="Business direction and next action">
         <h3>BUSINESS DIRECTION</h3><p>Checking actual performance and reporting coverage…</p>
       </section>
