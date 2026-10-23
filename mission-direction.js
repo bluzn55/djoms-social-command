@@ -142,7 +142,8 @@
   const measureRatio=value=>good(value)&&value<=1?(value*100).toFixed(1)+'%':'N/A';
   function momentumScore(site,ga4,seo,sales,period){
     const weighted=typeof window.djomsOwnerScore==='function'?
-      window.djomsOwnerScore(site,ga4,seo,sales,period):null;
+      window.djomsOwnerScore(site,ga4,seo,sales,period,
+        typeof window.djomsSocialPeriod==='function'?window.djomsSocialPeriod(period):null):null;
     const section=id=>weighted?.stages?.find(item=>item.id===id);
     const gsc=seo?.status==='connected'&&seo?.comparison?.status==='reported'?
       seo.comparison:null;
@@ -942,7 +943,7 @@
         '</span>').join('')+
       '</div>'+
       '<p class="mission-score-coverage">'+esc((model?.covered??0)+
-      '/6 verified sections · '+(model?.availableWeight??0)+
+      '/'+stages.length+' verified sections · '+(model?.availableWeight??0)+
       '/100 weight. N/A excluded.')+'</p>'+
     '</div>';
   }
@@ -971,7 +972,7 @@
     const stages=score?.stages||[];
     return '<details class="mission-owner-method">'+
       '<summary>HOW THE 100-POINT SCORES ARE CALCULATED ▸</summary>'+
-      '<p>Each of six stages starts at 100. Scores 101 and above are green (forward); '+
+      '<p>Each measured direction stage starts at 100. Scores 101 and above are green (forward); '+
         '100 is yellow (holding); 99 and below are red (backward). '+
         'The stages have different importance weights, totaling 100 points.</p>'+
       '<div class="mission-owner-weight-grid">'+stages.map(stage=>
@@ -985,7 +986,12 @@
         'Unverified sections are excluded and the remaining section weights are '+
         'rebalanced; the owner meter needs at least 50 of the 100 importance points '+
         'measured before making a direction call.</p>'+
-      '<p>Sales use paid Wix web orders and gross item sales only. Actions are '+
+      '<p>Social is worth 15 of the 100 points when matched Facebook and Instagram '+
+        'post-cohort metrics are verified. Social shares have the strongest influence; '+
+        'X owner-entered figures are displayed but not scored. '+
+        'Meta counts are lifetime activity on posts published in selected date windows, not '+
+        'interactions that happened only within those windows, so their comparison is provisional. '+
+        'Sales use paid Wix web orders and gross item sales only. Actions are '+
         'measured GA4 events, not proven customers or Pit Krewe memberships. '+
         'The index is a diagnostic signal, not a measured financial return.</p>'+
       '</details>';
@@ -1093,8 +1099,6 @@
         '</div>'+
         '<div class="mission-direction-gauge-aside">'+directionMeter(summary)+'</div>'+
       '</div>'+
-      (typeof window.djomsVisitorJourney==='function'
-        ?window.djomsVisitorJourney({site,ga4,seo,sales,period}):'')+
       '<p class="mission-period-context">LAST = the preceding equal-length reporting period; CURRENT = selected dates ('+
         esc(periodName(period))+'). For Week this means the previous seven days versus the current seven days.</p>'+
       ownerDigest(summary)+
