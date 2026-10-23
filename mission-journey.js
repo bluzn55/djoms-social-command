@@ -493,14 +493,37 @@
     '</section>';
   }
   window.djomsVisitorJourney=journey;
+  function paintTop(){
+    const slot=document.getElementById('missionJourneyTop');
+    if(!slot||typeof websiteReportPeriod!=='function')return;
+    try{
+      const period=websiteReportPeriod();
+      const site=typeof websiteSnapshot==='function'?websiteSnapshot():null;
+      const correctSite=site?.range?.start===period?.start&&site?.range?.end===period?.end?
+        site:null;
+      const seo=report('seo',period),ga4=report('ga4',period),sales=report('sales',period);
+      const social=typeof window.djomsSocialPeriod==='function'?
+        window.djomsSocialPeriod(period):null;
+      slot.innerHTML=journey({site:correctSite,seo,ga4,sales,period,social});
+    }catch(error){
+      slot.innerHTML='<p class="mj-loading">Visitor Journey could not be verified for these dates. '+
+        'The original six performance boxes remain available below.</p>';
+    }
+  }
   const original=window.renderConnectionStrip;
   if(typeof original==='function'){
     window.renderConnectionStrip=function(...args){
       const result=original.apply(this,args);
-      if(typeof activeView!=='undefined'&&activeView==='Mission Control')void loadTests();
+      if(typeof activeView!=='undefined'&&activeView==='Mission Control'){
+        paintTop();
+        void loadTests();
+      }
       return result;
     };
   }
+  document.addEventListener('djoms:verified-report',()=>{
+    if(typeof activeView!=='undefined'&&activeView==='Mission Control')paintTop();
+  });
   document.addEventListener('submit',async e=>{
     const form=e.target.closest?.('#mjTestForm');
     if(!form)return;
