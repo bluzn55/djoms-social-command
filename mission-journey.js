@@ -406,24 +406,42 @@
       'No verified Wix traffic-source breakdown for these dates.');
   }
   function searchClicksDropdown(seo){
-    const paired=seo?.status==='connected'&&seo.queryPages?.status==='reported'&&
-      Array.isArray(seo.queryPages.rows)?seo.queryPages.rows.filter(p=>p?.query&&p?.page&&valid(p.clicks)&&p.clicks>0):[];
-    const generic=seo?.status==='connected'&&Array.isArray(seo.topQueries)?
-      seo.topQueries.filter(p=>p?.query&&valid(p.clicks)&&p.clicks>0):[];
-    const rows=paired.length?
-      paired.sort((a,b)=>b.clicks-a.clicks)
-        .map((p,i)=>mapDetailRow(p.query,
-          'Result: '+named(p.page)+' · '+number(p.impressions)+' appearances',
-          number(p.clicks),'Google clicks',i)):
-      generic.sort((a,b)=>b.clicks-a.clicks)
-        .map((p,i)=>mapDetailRow(p.query,
-          number(p.impressions)+' appearances · Exact result page N/A',
-          number(p.clicks),'Google clicks',i));
-    const zero=seo?.status==='connected'&&seo.metrics?.clicks===0;
-    return mapDropdown('google-clicks','WHERE GOOGLE CLICKS CAME FROM',rows,
-      'Search phrases that received Google clicks, when Google reports them. These are aggregate search results, not identified visitors.',
-      zero?'No Google search clicks recorded for these dates. Searches may still have caused appearances.':
-        'Google has not identified individual search phrases with reported clicks for this period.');
+    // Search Console reports page and query aggregates, not named visitors.
+    // Zero clicks must not hide the actual phrases/pages that had impressions.
+    const connected=seo?.status==='connected';
+    const metrics=connected?seo.metrics||{}:{};
+    const impressions=valid(metrics.impressions)?metrics.impressions:null;
+    const clicks=valid(metrics.clicks)?metrics.clicks:null;
+    const pairs=connected&&seo.queryPages?.status==='reported'&&Array.isArray(seo.queryPages.rows)?
+      seo.queryPages.rows.filter(p=>p?.query&&p?.page&&(valid(p.impressions)||valid(p.clicks)))
+        .sort((a,b)=>(b.impressions??0)-(a.impressions??0)).slice(0,5):[];
+    const terms=connected&&Array.isArray(seo.topQueries)?
+      seo.topQueries.filter(p=>p?.query&&(valid(p.impressions)||valid(p.clicks)))
+        .sort((a,b)=>(b.impressions??0)-(a.impressions??0)).slice(0,5):[];
+    const pages=connected&&Array.isArray(seo.topPages)?
+      seo.topPages.filter(p=>p?.page&&(valid(p.impressions)||valid(p.clicks)))
+        .sort((a,b)=>(b.impressions??0)-(a.impressions??0)).slice(0,5):[];
+    // A phrase may occur on multiple pages. Do not add totals across
+    // different query, page or query+page breakdowns.
+    const primary=terms.length?terms:pairs;
+    const termRows=primary.map((p,i)=>mapDetailRow('SEARCH: '+p.query,
+      'Clicks '+number(p.clicks)+(p.page?' · Google result '+named(p.page):' · Exact result page N/A'),
+      number(p.impressions),'appearances',i));
+    const pageRows=pages.map((p,i)=>mapDetailRow('PAGE: '+named(p.page),
+      'Clicks '+number(p.clicks)+' · Appeared in Google results',
+      number(p.impressions),'appearances',i));
+    const rows=[...termRows,...pageRows];
+    const context='Google Search Console: '+number(impressions)+' total appearances · '+
+      number(clicks)+' total search-result clicks. Search phrases and result pages below are separate '+
+      'aggregate breakdowns and must not be added together.';
+    let empty='Google did not return individual search phrases or result pages for these dates.';
+    if(connected&&valid(impressions)&&impressions>0&&clicks===0)
+      empty='Google reported '+number(impressions)+' search appearances and zero clicks, '+
+        'but did not provide individual phrase/page details for this period.';
+    else if(connected&&clicks===0)
+      empty='Google reported zero search-result clicks for these dates.';
+    return mapDropdown('google-clicks','SEARCH APPEARANCES & GOOGLE CLICKS',rows,
+      context,empty);
   }
   function socialPanel(social){
     const icons={facebook:'f',instagram:'◎',x:'𝕏'};
