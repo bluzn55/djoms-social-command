@@ -11839,3 +11839,100 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 }
 #connectionStrip .mj-friend-refresh{display:block;margin-top:4px;width:100%}
 #connectionStrip .mj-friend-note{border-top:1px solid #d0af7a;padding-top:7px}
+
+
+/* OCT 24 · OUTLAW 5150 VERIFIED SONG HEART-VOTE LEADERBOARD
+   Lifetime listener votes, kept separate from music streams and social likes. */
+#connectionStrip .mj-card-music .mj-song-likes{
+  display:block;
+  margin:10px 0 12px;
+  padding:0;
+  border:2px solid #9b6730;
+  border-radius:6px;
+  overflow:hidden;
+  background:#f7e5bd;
+}
+#connectionStrip .mj-card-music .mj-top-liked{
+  padding:11px 12px;
+  background:linear-gradient(125deg,#24160f,#3b2916);
+  border-bottom:2px solid #bd8c43;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  text-align:center;
+}
+#connectionStrip .mj-card-music .mj-top-liked>span{
+  color:#e6ae59!important;
+  font:900 14px/1.3 Arial,sans-serif!important;
+  letter-spacing:.035em;
+}
+#connectionStrip .mj-card-music .mj-top-liked>strong{
+  color:#fff0c7!important;
+  font:900 clamp(19px,1.45vw,26px)/1.18 Arial,sans-serif!important;
+  overflow-wrap:anywhere;
+}
+#connectionStrip .mj-card-music .mj-top-liked>b{
+  color:#ffad98!important;
+  font:900 17px/1.3 Arial,sans-serif!important;
+}
+#connectionStrip .mj-card-music .mj-top-liked>small{
+  color:#efd6aa!important;font:800 12px/1.3 Arial,sans-serif!important;
+}
+#connectionStrip .mj-card-music .mj-liked-details{
+  margin:0;
+  border:0;
+  background:#f5e1b9;
+}
+#connectionStrip .mj-card-music .mj-liked-details>summary{
+  cursor:pointer;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  padding:10px;
+  color:#241710!important;
+  background:#e8cd9c;
+  font:900 14px/1.3 Arial,sans-serif!important;
+}
+#connectionStrip .mj-card-music .mj-liked-details>summary>b{
+  color:#65421b!important;
+  font:900 13px/1.25 Arial,sans-serif!important;
+  white-space:nowrap;
+}
+#connectionStrip .mj-card-music .mj-liked-list{
+  max-height:280px;
+  overflow-y:auto;
+  padding:5px 8px;
+}
+#connectionStrip .mj-card-music .mj-liked-row{
+  display:grid;
+  grid-template-columns:27px minmax(0,1fr) auto;
+  gap:8px;
+  align-items:center;
+  padding:9px 2px;
+  border-bottom:1px solid #d1b88a;
+  color:#221710!important;
+}
+#connectionStrip .mj-card-music .mj-liked-rank{
+  color:#986225!important;
+  font:900 15px/1.2 Arial,sans-serif!important;
+}
+#connectionStrip .mj-card-music .mj-liked-name{
+  font:800 15px/1.2 Arial,sans-serif!important;
+  overflow-wrap:anywhere;
+}
+#connectionStrip .mj-card-music .mj-liked-row>strong{
+  color:#8e3126!important;
+  font:900 15px/1.2 Arial,sans-serif!important;
+  white-space:nowrap;
+}
+#connectionStrip .mj-card-music .mj-liked-empty,
+#connectionStrip .mj-card-music .mj-liked-source{
+  color:#5b4021!important;
+  padding:9px;
+  margin:0!important;
+  font:800 12px/1.35 Arial,sans-serif!important;
+}
+@media(max-width:700px){
+  #connectionStrip .mj-card-music .mj-top-liked>strong{font-size:23px!important}
+}
