@@ -11267,16 +11267,6 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   color:#5c452c!important;
   font:750 12px/1.24 Arial,sans-serif!important;
 }
-#connectionStrip .mj-card-branches{
-  display:flex;gap:5px;justify-content:space-between;margin:8px 0;
-}
-#connectionStrip .mj-card-branches > span{
-  flex:1;font:850 12px/1.1 Arial,sans-serif;
-  background:#f3d9bb;border:1px solid #9d7756;border-radius:4px;
-  padding:7px 3px;text-align:center;
-}
-#connectionStrip .mj-card-branches > span:first-child{color:#9c2a20}
-#connectionStrip .mj-card-branches > span:last-child{color:#166432}
 #connectionStrip .mj-social-inner{display:flex;flex-direction:column;gap:5px}
 #connectionStrip .mj-social-platform{
   padding:5px 4px;border:1px solid #b38b5d;border-radius:5px;background:#faefdb;

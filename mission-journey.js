@@ -648,7 +648,6 @@
     const second=card('clicks','2','SEARCH CLICKS','↖',
       heroMetric('Verified engine clicks',search?.clicksPrevious,search?.clicksCurrent,'count',false,
         'Clicks reported by the same search engines and dates as Box 1.')+
-      '<div class="mj-card-branches"><span>✖ No Click</span><span>✓ Clicked Doc Jaks</span></div>'+
       clicksByEngineDropdown(search),
       'Click totals are from the engines included in #1. Search phrases and result pages appear under #1. Wix visits are separate.');
     // #3 is the actual WEBSITE ARRIVAL stage, regardless of whether the
