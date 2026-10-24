@@ -27,6 +27,27 @@
     const item=window.djomsVerifiedReports?.[name];
     return item?.query===period?.query?item.data:null;
   };
+  // Listener heart votes are lifetime Wix records, not station plays or
+  // social-media reactions. Show no totals unless Wix returns verified data.
+  let songLikes={status:'loading',songs:[],top:null,leaders:[]};
+  let likesLastChecked=0,likesPending=null;
+  function loadSongLikes(){
+    if(likesPending||Date.now()-likesLastChecked<90000)return;
+    likesLastChecked=Date.now();
+    likesPending=(async()=>{
+      const response=await fetch('/api/meta/song-likes',{credentials:'same-origin',cache:'no-store'});
+      const data=await response.json().catch(()=>null);
+      if(!response.ok||data?.status!=='reported'||!Array.isArray(data.songs))
+        throw new Error('Verified song likes are unavailable.');
+      songLikes=data;
+    })().catch(()=>{
+      songLikes={status:'unavailable',songs:[],top:null,leaders:[]};
+    }).finally(()=>{
+      likesPending=null;
+      if(typeof activeView!=='undefined'&&activeView==='Mission Control')paintTop();
+    });
+  }
+
   const salesReady=(sales,period)=>sales?.connected===true&&sales?.complete===true&&
     sales?.range?.start===period?.start&&sales?.range?.end===period?.end;
   const periodTitle=period=>({today:'Day','7d':'Week','30d':'Month','365d':'Year',
@@ -558,6 +579,26 @@
     const radioDates=historic?.start&&historic?.end?
       historic.start+' to '+historic.end+' (UTC)':'Not imported';
     const current=music?.current,previous=music?.previous;
+    const best=songLikes.status==='reported'?songLikes.top:null;
+    const lifetime=songLikes.status==='reported';
+    const ranked=lifetime&&Array.isArray(songLikes.songs)?songLikes.songs:[];
+    const ties=lifetime&&Array.isArray(songLikes.leaders)?songLikes.leaders.length:0;
+    const likedRows=ranked.length?ranked.map((song,index)=>
+      '<div class="mj-liked-row"><span class="mj-liked-rank">'+(index+1)+'</span>'+
+      '<span class="mj-liked-name">'+esc(song.title)+'</span>'+
+      '<strong>♥ '+number(song.likes)+'</strong></div>').join(''):
+      '<p class="mj-liked-empty">'+(lifetime?'No songs liked yet.':'Wix listener votes are not available right now.')+'</p>';
+    const likedHTML='<section class="mj-song-likes" aria-label="Outlaw Radio 5150 song likes">'+
+      '<div class="mj-top-liked"><span>♥ #1 MOST-LIKED SONG</span>'+
+      '<strong>'+esc(best?.title??(lifetime?'No likes yet':'N/A'))+'</strong>'+
+      '<b>'+esc(best?number(best.likes)+' '+(best.likes===1?'LIKE':'LIKES'):'')+'</b>'+
+      (ties>1?'<small>'+ties+' songs tied for first</small>':'')+
+      '</div>'+
+      '<details class="mj-stage-dropdown mj-liked-details" data-mj-dropdown="song-likes">'+
+      '<summary><span>ALL SONG LIKES</span><b>'+esc(lifetime?ranked.length+' SONGS':'N/A')+' ▾</b></summary>'+
+      '<div class="mj-liked-list">'+likedRows+'</div>'+
+      '<p class="mj-liked-source">Wix radio heart-button votes · All time. Not song plays or social likes.</p>'+
+      '</details></section>';
     const row=(label,value,source)=>
       '<div class="mj-music-stat"><span>'+esc(label)+'</span>'+
         '<strong>'+esc(value)+'</strong><small>'+esc(source)+'</small></div>';
@@ -573,6 +614,7 @@
         '<span class="mj-music-score">MUSIC HEALTH <b>'+esc(grade)+
           '</b><small>10 of 100 points, when listening is verified</small></span>'+
         '<small>Independent listening activity, not radio-site clicks</small></div>'+
+      likedHTML+
       heroMetric('RADIO.CO STREAM CONNECTIONS',previous?.connections,current?.connections,
         'count',false,'Imported Radio.co CSV for the selected UTC dates; connections are not unique listeners.')+
       '<div class="mj-minis">'+
@@ -773,6 +815,7 @@
       const openDropdowns=new Set([...slot.querySelectorAll('details.mj-stage-dropdown[open]')]
         .map(item=>item.dataset.mjDropdown).filter(Boolean));
       slot.innerHTML=journey({site:correctSite,seo,ga4,sales,period,social});
+      loadSongLikes();
       for(const detail of slot.querySelectorAll('details.mj-stage-dropdown')){
         if(openDropdowns.has(detail.dataset.mjDropdown))detail.open=true;
       }
