@@ -541,13 +541,13 @@
           each('shares','SHARES')+each('comments','COMMENTS')+'</div></section>';
     }).join('');
     const socialEvidence=social?.availableWeight>0;
-    return card('social','7','SOCIAL MEDIA','♟',
+    return card('social','6','SOCIAL MEDIA','♟',
       '<div class="mj-social-inner">'+rows+'</div>'+
       '<div class="mj-social-impact"><strong>SOCIAL HEALTH · '+(socialEvidence?'COUNTS':'N/A')+'</strong>'+
         '<small>'+esc('15 of 100 points when FB/IG are comparable. X is manual only.')+'</small></div>',
       'Social is a second discovery current, not a continuation of Google clicks. Meta figures are current lifetime totals on posts published in each period.');
   }
-  // #5 MUSIC is the existing verified music reporting, brought INTO the
+  // #4 MUSIC is the existing verified music reporting, brought INTO the
   // numbered boardwalk. This function never infers plays from Wix page visits
   // or link clicks, and music sales remain scored in SALES only.
   function musicPanel(music,owner){
@@ -568,7 +568,7 @@
         (valid(historic.averageDurationSeconds)?
           ' · average listening duration '+duration(historic.averageDurationSeconds):'')+
         '. This CSV is historical. It is not a current/live listener count and is not automatically used for other dates.</p></details>':'';
-    return card('music','5','MUSIC / RADIO / STREAMING','♫',
+    return card('music','4','MUSIC / RADIO / STREAMING','♫',
       '<div class="mj-music-score-line">'+
         '<span class="mj-music-score">MUSIC HEALTH <b>'+esc(grade)+
           '</b><small>10 of 100 points, when listening is verified</small></span>'+
@@ -580,9 +580,9 @@
       '</div>'+
       '<div class="mj-music-grid">'+
         row('PAID MUSIC UNITS',formatValue(music?.musicUnits),
-          'Wix Music category · counted in #6 Sales')+
+          'Wix Music category · counted in #5 Sales')+
         row('PAID MUSIC SALES',formatValue(music?.musicItemSalesCents,'cents'),
-          'Wix Music category · counted in #6 Sales')+
+          'Wix Music category · counted in #5 Sales')+
         row('MUSIC PAGE VIEWS',formatValue(music?.musicPageViews),
           'Wix pages · not music plays')+
         row('OUTLAW RADIO PAGE VIEWS',formatValue(music?.radioPageViews),
@@ -645,31 +645,32 @@
       searchEnginesDropdown(search)+searchAppearancesDetails(seo),
       'Reporting engines: '+(search?.scope||'N/A')+
       '. Google position is not an average across engines.');
-    const second=card('clicks','2','SEARCH CLICKS','↖',
-      heroMetric('Verified engine clicks',search?.clicksPrevious,search?.clicksCurrent,'count',false,
-        'Clicks reported by the same search engines and dates as Box 1.')+
-      clicksByEngineDropdown(search),
-      'Click totals are from the engines included in #1. Search phrases and result pages appear under #1. Wix visits are separate.');
-    // #3 is the actual WEBSITE ARRIVAL stage, regardless of whether the
-    // visitor came from search, social, referral, or a direct connection.
-    // Visitors are Wix estimates of distinct browsers, NOT identified people
-    // nor a verified match to a specific search click.
-    const third=card('traffic','3','WEBSITE VISITS','⌖',
-      heroMetric('TOTAL WEBSITE VISITS',traffic.sessions.last,traffic.sessions.now,'count',
-        false,'All Wix-reported sessions, including direct and identifiable referral visits.')+
-      '<div class="mj-minis">'+
-        miniMetric('WEBSITE VISITORS',priorVisitors,wix?site.visitors:null)+
-        miniMetric('RETURNING VISITORS',wixCmp.returningVisitors?.previous,
-          wixCmp.returningVisitors?.current)+'</div>'+
-      wixSourcesDropdown(site)+
-      (typeof window.djomsSupporterPanel==='function'?
-        window.djomsSupporterPanel(period):'')+
-      locationsDropdown(site),
-      'Visits count sessions; Visitors estimate distinct browsers/devices. '+
-      'Not every visit came from a link click, and one visitor can make several visits.');
-    // #4 unifies where people went and how they engaged. Metrics remain
+    // #2 groups the journey from verified search-result clicks to ALL
+    // Wix website sessions. These are two different sources and measures.
+    // We do not infer a one-to-one conversion or add the metrics together.
+    const second=card('clicks','2','SEARCH CLICKS & WEBSITE VISITS','↖',
+      '<section class="mj-arrival-part mj-arrival-clicks" aria-label="Search clicks">'+
+        heroMetric('SEARCH CLICKS',search?.clicksPrevious,search?.clicksCurrent,'count',false,
+          'Reported by the same search engines and dates as Box 1.')+
+        clicksByEngineDropdown(search)+
+      '</section>'+
+      '<section class="mj-arrival-part mj-arrival-website" aria-label="All website visits">'+
+        '<h4 class="mj-arrival-subheading">WEBSITE VISITS · ALL SOURCES</h4>'+
+        heroMetric('TOTAL WEBSITE VISITS',traffic.sessions.last,traffic.sessions.now,'count',
+          false,'All Wix-reported sessions, including direct and identifiable referral visits.')+
+        '<div class="mj-minis">'+
+          miniMetric('WEBSITE VISITORS',priorVisitors,wix?site.visitors:null)+
+          miniMetric('RETURNING VISITORS',wixCmp.returningVisitors?.previous,
+            wixCmp.returningVisitors?.current)+'</div>'+
+        wixSourcesDropdown(site)+
+        (typeof window.djomsSupporterPanel==='function'?
+          window.djomsSupporterPanel(period):'')+
+        locationsDropdown(site)+
+      '</section>',
+      'Search clicks come from the search engines in #1; Website Visits come from Wix and include direct, social, search and referral visits. The numbers are different measurements and are not added together.');
+    // #3 shows which pages were viewed and how people engaged. Metrics remain
     // distinct Wix measures; they are never summed into a fabricated total.
-    const fourth=card('visitors','4','PAGES & ENGAGEMENT','◷',
+    const third=card('visitors','3','PAGES & ENGAGEMENT','◷',
       heroMetric('PAGE VIEWS',wixCmp.pageViews?.previous,wix?site.pageViews:null,'count',
         false,'Total Wix page views, including repeat views by the same visitor.')+
       '<div class="mj-minis">'+
@@ -681,7 +682,7 @@
           wix?site.pagesPerSession:null,'decimal')+'</div>'+
       viewedPagesDropdown(site),
       'Explore the pages visited and engagement. Lower bounce is favorable.');
-    const eighth=card('actions','8','MEANINGFUL ACTIONS','✦',
+    const seventh=card('actions','7','MEANINGFUL ACTIONS','✦',
       '<div class="mj-minis">'+
         miniMetric('INQUIRIES',contactsLast,contactsNow)+
         miniMetric('PIT KREWE',null,null)+
@@ -689,7 +690,7 @@
         miniMetric('FILE DOWNLOAD EVENTS',
           previousEvents.fileDownload?.previous,gaEvent.fileDownload)+'</div>',
       'Actual listeners and confirmed Pit Krewe members remain N/A until their own proof is connected.');
-    const sixth=card('sales','6','PAID WEB SALES','▣',
+    const fifth=card('sales','5','PAID WEB SALES','▣',
       heroMetric('Gross item sales',comparison?.itemSalesCents,
         paid?sales.itemSalesCents:null,'cents')+
       '<div class="mj-minis">'+
@@ -723,7 +724,7 @@
           '<path class="mj-path-shadow" d="M 75 160 C 285 70, 460 230, 610 130 S 1040 45, 1135 175 C 1180 290, 1170 390, 1080 490 S 750 590, 575 485 S 245 390, 90 530"/>'+
           '<path class="mj-path-planks" d="M 75 160 C 285 70, 460 230, 610 130 S 1040 45, 1135 175 C 1180 290, 1170 390, 1080 490 S 750 590, 575 485 S 245 390, 90 530"/>'+
         '</svg>'+
-        first+second+third+fourth+musicPanel(music,owner)+sixth+socialPanel(social)+eighth+
+        first+second+third+musicPanel(music,owner)+fifth+socialPanel(social)+seventh+
       '</div>'+
       '<div class="mj-swamp-disclaimer">⚜ Every stop is a separate reported measurement. '+
         'Social Media and Music/Radio are independent discovery and entertainment channels, not steps every visitor takes. '+

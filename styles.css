@@ -11170,12 +11170,24 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   box-shadow:0 0 0 2px #ac773b,0 6px 4px rgba(5,10,6,.7);
   align-self:start;
 }
-/* SWAMP TRAIL: ordered #1–#4 left-to-right, then #5–#8
-   right-to-left. Music is fifth, Meaningful Actions ends the trail. */
+/* SWAMP TRAIL: 7 steps. #1 Search, wide #2 Clicks + Website Visits,
+   #3 Engagement, then #4–#7 right-to-left across row two. */
 #connectionStrip .mj-card-search{grid-column:1;grid-row:1;margin-top:2px}
-#connectionStrip .mj-card-clicks{grid-column:2;grid-row:1;margin-top:33px}
-#connectionStrip .mj-card-traffic{grid-column:3;grid-row:1;margin-top:7px}
+#connectionStrip .mj-card-clicks{grid-column:2 / span 2;grid-row:1;margin-top:16px}
 #connectionStrip .mj-card-visitors{grid-column:4;grid-row:1;margin-top:36px}
+#connectionStrip .mj-card-clicks .mj-arrival-part{min-width:0}
+#connectionStrip .mj-card-clicks .mj-arrival-clicks{padding-bottom:13px}
+#connectionStrip .mj-card-clicks .mj-arrival-website{
+  border-top:3px solid #946334;padding-top:12px;margin-top:6px
+}
+#connectionStrip .mj-card-clicks .mj-arrival-subheading{
+  margin:0 0 7px!important;color:#24160b!important;
+  font:900 clamp(16px,1.15vw,21px)/1.2 Georgia,serif!important;
+  letter-spacing:.25px
+}
+#connectionStrip .mj-card-clicks .mj-arrival-website .mj-minis{
+  grid-template-columns:repeat(2,minmax(0,1fr));column-gap:13px
+}
 #connectionStrip .mj-card-music{grid-column:4;grid-row:2;margin-top:7px}
 #connectionStrip .mj-card-sales{grid-column:3;grid-row:2;margin-top:32px}
 #connectionStrip .mj-card-social{grid-column:2;grid-row:2;margin-top:10px}
@@ -11397,6 +11409,7 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   }
   #connectionStrip .mj-social-stat > b{font-size:18px}
   #connectionStrip .mj-current{font-size:36px!important}
+  #connectionStrip .mj-card-clicks .mj-arrival-website .mj-minis{grid-template-columns:1fr}
 }
 
 /* Decorative cypress swamp illustration, locally hosted and text-free.
