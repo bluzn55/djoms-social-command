@@ -1,9 +1,12 @@
 'use strict';
 // Preserve one consistent browser-session origin across Vercel deployments.
 // Login cookies cannot be shared between separate *.vercel.app hosts.
-const DJOMS_CANONICAL_HOST = 'djoms-social-command-jay-1595s-projects.vercel.app';
+// This exact domain is also PUBLIC_BASE_URL on DJOMS Meta Bridge.
+// The session service rejects POSTs from a different Origin.
+const DJOMS_CANONICAL_HOST = 'djoms-social-command.vercel.app';
 const DJOMS_OPENED_HOST = location.hostname.toLowerCase();
 const DJOMS_REDIRECT_TO_CANONICAL =
+  DJOMS_OPENED_HOST === 'djoms-social-command-jay-1595s-projects.vercel.app' ||
   DJOMS_OPENED_HOST === 'djoms-social-command-git-main-jay-1595s-projects.vercel.app' ||
   /^djoms-social-command-[a-z0-9]{8,16}-jay-1595s-projects\.vercel\.app$/.test(DJOMS_OPENED_HOST);
 if (DJOMS_REDIRECT_TO_CANONICAL) {
