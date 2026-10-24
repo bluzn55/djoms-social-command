@@ -1,4 +1,15 @@
 'use strict';
+// Preserve one consistent browser-session origin across Vercel deployments.
+// Login cookies cannot be shared between separate *.vercel.app hosts.
+const DJOMS_CANONICAL_HOST = 'djoms-social-command-jay-1595s-projects.vercel.app';
+const DJOMS_OPENED_HOST = location.hostname.toLowerCase();
+const DJOMS_REDIRECT_TO_CANONICAL =
+  DJOMS_OPENED_HOST === 'djoms-social-command-git-main-jay-1595s-projects.vercel.app' ||
+  /^djoms-social-command-[a-z0-9]{8,16}-jay-1595s-projects\.vercel\.app$/.test(DJOMS_OPENED_HOST);
+if (DJOMS_REDIRECT_TO_CANONICAL) {
+  location.replace('https://' + DJOMS_CANONICAL_HOST +
+    location.pathname + location.search + location.hash);
+}
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const names = { facebook: 'Facebook', instagram: 'Instagram', x: 'X', youtube: 'YouTube', website: 'Website Community', blog: "From Doc's Porch" };
@@ -2463,6 +2474,7 @@ $('resetForm').addEventListener('submit', async e => {
 });
 window.addEventListener('beforeunload',e=>{ if(dirty){e.preventDefault();e.returnValue='';} });
 (async()=>{
+  if (DJOMS_REDIRECT_TO_CANONICAL) return;
   const fragment = new URLSearchParams(location.hash.slice(1));
   if (fragment.has('reset-password')) {
     resetToken = fragment.get('reset-password') || '';
@@ -2470,5 +2482,24 @@ window.addEventListener('beforeunload',e=>{ if(dirty){e.preventDefault();e.retur
     if (/^[a-f0-9]{64}$/.test(resetToken)) { $('live').textContent = 'Password recovery'; authScreen('reset'); return; }
     resetToken = ''; $('recoveryMessage').textContent = 'This reset link is incomplete. Request a new link.'; authScreen('recovery'); return;
   }
-  try{const s=await api('session'); if(s.authenticated) await signedIn(s); else showLogin('');}catch(e){$('live').textContent='Setup needed';showLogin(e.message);}
+  // Do not mistake network/data load failures for an expired password.
+  let session;
+  try { session = await api('session'); }
+  catch (error) {
+    $('live').textContent = 'Connection interrupted';
+    notice('Could not check the saved sign-in: ' + error.message +
+      '. Refresh to retry. There is no need to reset your password.', true);
+    return;
+  }
+  if (!session.authenticated) { showLogin(''); return; }
+  try { await signedIn(session); }
+  catch (error) {
+    // An actual 401 from an authenticated follow-up request opens the
+    // login dialog in api(). Other reporting errors must not ask for a password.
+    if ($('loginDialog').open) return;
+    $('live').textContent = '● Signed in · connection issue';
+    try { render(); } catch {}
+    notice('You are signed in, but some dashboard data could not load: ' +
+      error.message + '. Use Refresh to try again.', true);
+  }
 })();
