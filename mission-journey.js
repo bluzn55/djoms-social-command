@@ -1328,7 +1328,7 @@
     const searchClickDetails='<div class="mj-daily-click-phrases">'+
       '<h5>GOOGLE SEARCH PHRASES THAT EARNED CLICKS</h5>'+
       (clickPhrases.length?'<ol>'+clickPhrases.map(row=>
-        '<li><span>'+esc(row.query)+'</span><b>'+number(row.clicks)+' clicks</b></li>').join('')+'</ol>':
+        '<li><span>'+esc(row.query)+'</span><b>'+number(row.clicks)+' '+(row.clicks===1?'click':'clicks')+'</b></li>').join('')+'</ol>':
         '<p>'+esc(google&&googleClicks===0?
         'Google reported zero clicks for this period. The click-by-engine chart shows whether Bing had clicks.':
         'No individual Google search phrases with verified clicks were disclosed.')+'</p>')+
