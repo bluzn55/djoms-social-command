@@ -657,6 +657,419 @@
       '</div>';
   }
 
+
+  // DJOMS DAILY REPORT · readable owner briefing, seven evidence sections.
+  // Every graph draws actual verified source history; missing series are N/A.
+  // All interpretations are conditional, and "why" is a hypothesis, never a proven cause.
+  function dailyMovement(last,current,inverse=false,unit='count'){
+    if(!valid(last)||!valid(current))return {tone:'na',text:'N/A · no comparable period'};
+    if(last===current)return {tone:'hold',text:'→ No change'};
+    if(last===0)return {tone:inverse?'down':'up',
+      text:(inverse?'↓':'↑')+' NEW (+'+formatValue(current,unit)+')'};
+    const pct=Math.abs((current-last)/last*100).toFixed(1);
+    const better=inverse?current<last:current>last;
+    return {tone:better?'up':'down',
+      text:inverse?(better?'↑ '+pct+'% better':'↓ '+pct+'% worse'):
+        (better?'↑ +'+pct+'%':'↓ -'+pct+'%')};
+  }
+  function dailyKpi(label,last,current,unit='count',inverse=false,note=''){
+    const trend=dailyMovement(last,current,inverse,unit);
+    return '<div class="mj-daily-kpi">'+
+      '<b>'+esc(label)+'</b>'+
+      '<strong>'+esc(formatValue(current,unit))+'</strong>'+
+      '<span class="mj-daily-change '+esc(trend.tone)+'">'+esc(trend.text)+'</span>'+
+      '<small>Last: '+esc(formatValue(last,unit))+
+        (note?' · '+esc(note):'')+'</small>'+
+      '</div>';
+  }
+  function dailyLine(title,items,unit='count',source=''){
+    const seen=new Set();
+    const rows=(Array.isArray(items)?items:[])
+      .filter(row=>row&&/^\d{4}-\d{2}-\d{2}$/.test(row.date||'')&&valid(row.value))
+      .sort((a,b)=>a.date.localeCompare(b.date))
+      .filter(row=>{if(seen.has(row.date))return false;seen.add(row.date);return true;})
+      .slice(-21);
+    const caption=source?'<p class="mj-daily-chart-note">'+esc(source)+'</p>':'';
+    if(rows.length<2)return '<div class="mj-daily-chart"><h5>'+esc(title)+'</h5>'+
+      '<p class="mj-daily-no-data">NOT ENOUGH VERIFIED DATED DATA FOR A LINE GRAPH</p>'+
+      caption+'</div>';
+    const W=760,H=230,L=54,R=18,T=18,B=40;
+    const max=Math.max(1,...rows.map(row=>row.value));
+    const time=date=>Date.parse(date+'T12:00:00Z');
+    const start=time(rows[0].date),end=time(rows[rows.length-1].date);
+    const x=date=>L+(time(date)-start)/Math.max(86400000,end-start)*(W-L-R);
+    const y=value=>T+(1-value/max)*(H-T-B);
+    const coords=rows.map(row=>[+x(row.date).toFixed(2),+y(row.value).toFixed(2)]);
+    const weekday=iso=>new Intl.DateTimeFormat('en-US',{
+      timeZone:'UTC',month:'short',day:'numeric'
+    }).format(new Date(iso+'T12:00:00Z'));
+    const grid=[0,.5,1].map(f=>{
+      const gy=y(f*max).toFixed(2);
+      return '<line class="mj-daily-grid-line" x1="'+L+'" x2="'+(W-R)+
+        '" y1="'+gy+'" y2="'+gy+'"></line>'+
+        '<text class="mj-daily-axis-label" x="'+(L-8)+'" y="'+(Number(gy)+5)+
+        '" text-anchor="end">'+esc(formatValue(f*max,unit))+'</text>';
+    }).join('');
+    const segments=[];let segment=[];
+    for(let i=0;i<rows.length;i++){
+      const gap=i?Math.round((time(rows[i].date)-time(rows[i-1].date))/86400000):1;
+      // Do not draw a continuous trend through unreported days.
+      if(gap>1&&segment.length){
+        if(segment.length>1)segments.push(segment);
+        segment=[];
+      }
+      segment.push(coords[i]);
+    }
+    if(segment.length>1)segments.push(segment);
+    const paths=segments.map(part=>'<polyline class="mj-daily-line" points="'+
+      part.map(v=>v[0]+','+v[1]).join(' ')+'"></polyline>').join('');
+    const dots=rows.map((row,i)=>'<circle class="mj-daily-dot" cx="'+coords[i][0]+
+      '" cy="'+coords[i][1]+'" r="4"><title>'+esc(weekday(row.date)+
+      ' · '+formatValue(row.value,unit))+'</title></circle>').join('');
+    return '<div class="mj-daily-chart"><h5>'+esc(title)+'</h5>'+
+      '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+
+        esc(title+'. From '+weekday(rows[0].date)+' to '+weekday(rows[rows.length-1].date)+
+        '. Hover data points for actual reported values. Missing days are not zero.')+'">'+
+      grid+paths+dots+
+      '<text class="mj-daily-x-label" x="'+L+'" y="'+(H-9)+'">'+
+        esc(weekday(rows[0].date))+'</text>'+
+      '<text class="mj-daily-x-label" x="'+(W-R)+'" y="'+(H-9)+'" text-anchor="end">'+
+        esc(weekday(rows[rows.length-1].date))+'</text></svg>'+
+      caption+'</div>';
+  }
+  function dailyBars(title,items,unit='count',source=''){
+    const rows=(Array.isArray(items)?items:[])
+      .filter(item=>item&&valid(item.value)).slice(0,7);
+    const caption=source?'<p class="mj-daily-chart-note">'+esc(source)+'</p>':'';
+    if(!rows.length)return '<div class="mj-daily-chart"><h5>'+esc(title)+'</h5>'+
+      '<p class="mj-daily-no-data">NOT ENOUGH VERIFIED DATA TO COMPARE</p>'+caption+'</div>';
+    const maximum=Math.max(1,...rows.map(row=>row.value));
+    return '<div class="mj-daily-chart"><h5>'+esc(title)+'</h5>'+
+      '<div class="mj-daily-bars">'+rows.map(row=>
+        '<div class="mj-daily-bar">'+
+          '<span>'+esc(row.label)+'</span>'+
+          '<div class="mj-daily-bar-track"><i style="width:'+
+            Math.min(100,Math.max(0,row.value/maximum*100)).toFixed(2)+'%"></i></div>'+
+          '<strong>'+esc(formatValue(row.value,unit))+'</strong>'+
+        '</div>').join('')+'</div>'+caption+'</div>';
+  }
+  const dailyCompare=(title,last,current,unit,source)=>
+    dailyBars(title,[{label:'LAST',value:last},{label:'CURRENT',value:current}],unit,source);
+  function dailyDecision(good,concern,action,watch){
+    const line=(title,value,tone)=>
+      '<div class="mj-daily-decision"><strong class="'+tone+'">'+esc(title)+'</strong>'+
+      '<p>'+esc(value)+'</p></div>';
+    return '<div class="mj-daily-decisions">'+
+      line('↑ WHAT IS GOOD',good,'up')+
+      line('↓ WHAT NEEDS ATTENTION',concern,'down')+
+      line('WHAT TO DO NEXT',action,'')+
+      line('WHAT TO WATCH',watch,'')+
+    '</div>';
+  }
+  function dailySection(index,title,metrics,charts,details,good,concern,action,watch,caveat=''){
+    return '<section class="mj-daily-section" id="mjDailySection'+index+'">'+
+      '<header><b class="mj-daily-number">'+index+'</b><h4>'+esc(title)+'</h4></header>'+
+      '<div class="mj-daily-metrics">'+metrics+'</div>'+
+      '<div class="mj-daily-visuals">'+charts+'</div>'+
+      (details?'<div class="mj-daily-details">'+details+'</div>':'')+
+      dailyDecision(good,concern,action,watch)+
+      (caveat?'<p class="mj-daily-caveat">'+esc(caveat)+'</p>':'')+
+    '</section>';
+  }
+  function dailyOwnerReport(data){
+    const {site,seo,ga4,sales,period,social,music,search,traffic,wixCmp,
+      paid,comparison,contactsNow,contactsLast,owner}=data;
+    const google=seo?.status==='connected';
+    const googleMetrics=google?seo.metrics||{}:{};
+    const googlePosition=search?.positionCurrent,priorPosition=search?.positionPrevious;
+    const googleEngine=search?.engines?.find(row=>row.id==='google');
+    const googleClicks=google?googleMetrics.clicks:null;
+    const googleViews=google?googleMetrics.impressions:null;
+    const phr=google&&Array.isArray(seo.topQueries)?seo.topQueries.filter(row=>
+      row?.query&&valid(row.impressions)).sort((a,b)=>b.impressions-a.impressions).slice(0,5):[];
+    const engineData=(search?.engines||[]).map(row=>({
+      label:row.id==='bing'?'Bing':row.name,value:row.current?.impressions
+    }));
+    const googleDaily=google&&seo.trend?.status==='reported'&&Array.isArray(seo.trend.points)?
+      seo.trend.points.filter(row=>row&&valid(row.impressions)&&
+        row.date>=search?.currentRange?.start&&row.date<=search?.currentRange?.end)
+        .map(row=>({date:row.date,value:row.impressions})):[];
+    const clicksStatus=valid(googleViews)&&googleViews>0&&googleClicks===0;
+    const rankBad=valid(googlePosition)&&valid(priorPosition)&&googlePosition>priorPosition;
+    const rankGood=valid(googlePosition)&&valid(priorPosition)&&googlePosition<priorPosition;
+    const searchGood=valid(search?.current)&&valid(search?.previous)&&
+      search.current>search.previous?
+      'Verified search appearances grew from '+number(search.previous)+' to '+
+        number(search.current)+'. More searches are displaying Doc Jaks.':
+      valid(search?.current)?
+        number(search.current)+' verified appearances were recorded. Check whether the trend continues.':
+        'Search coverage is not yet verified for these dates.';
+    const searchConcern=[
+      rankBad?'Google average position slipped from '+formatValue(priorPosition,'position')+
+        ' to '+formatValue(googlePosition,'position')+'. A higher position number is worse.':null,
+      clicksStatus?'Google reported '+number(googleViews)+' appearances but zero Google result clicks.':null
+    ].filter(Boolean).join(' ')||
+      'Watch click-through rate and ranking before drawing conclusions from appearances alone.';
+    const engineDetails=(search?.engines||[]).map(row=>{
+      const prior=row.previous?.impressions,now=row.current?.impressions;
+      const change=dailyMovement(prior,now,false,'count');
+      return '<li><span>'+esc(row.name)+'</span><b>LAST '+esc(number(prior))+
+        ' · NOW '+esc(number(now))+' · <em class="'+esc(change.tone)+'">'+
+        esc(change.text)+'</em></b></li>';
+    }).join('');
+    const searchDetails='<h5>TOP VERIFIED SEARCH ENGINES</h5>'+
+      '<ol>'+(engineDetails||'<li>No comparable engine details reported.</li>')+'</ol>'+
+      (phr.length?'<h5>MOST COMMON DISCLOSED GOOGLE SEARCH PHRASES</h5>'+
+      '<ol>'+phr.map(row=>'<li><span>'+esc(row.query)+'</span><b>'+
+        number(row.impressions)+' appearances · '+number(row.clicks)+' clicks</b></li>').join('')+'</ol>':
+      '<p>Google has not disclosed enough search phrase details for these dates.</p>');
+    const part1=dailySection(1,'SEARCH APPEARANCES',
+      dailyKpi('VERIFIED APPEARANCES',search?.previous,search?.current)+
+      dailyKpi('COMBINED CTR',search?.ctrPrevious,search?.ctrCurrent,'percentage')+
+      dailyKpi('GOOGLE POSITION',priorPosition,googlePosition,'position',true)+
+      dailyKpi('GOOGLE APPEARANCES',googleEngine?.previous?.impressions,
+        googleEngine?.current?.impressions),
+      dailyBars('APPEARANCES BY VERIFIED SEARCH ENGINE',engineData,'count',
+        'Only matching report dates are combined. Engines are not unique people.')+
+      dailyLine('GOOGLE DAILY SEARCH APPEARANCES',googleDaily,'count',
+        'Google Search Console daily values only. These are not Google + Bing combined. Google may report late.'),
+      searchDetails,searchGood,searchConcern,
+      'Review the top local BBQ search phrases, the pages shown, and their search titles/descriptions. Make clear whether a result leads to sauces, products or business information.',
+      'Google position, Google result clicks, combined CTR, and whether Bing continues to contribute verified appearances.',
+      'Google search phrases overlap result-page totals and are never added to overall appearances.');
+
+    const siteOkay=site?.connected===true;
+    const weekRows=siteOkay&&Array.isArray(site.weekly)?site.weekly:[];
+    const weekly=(field)=>weekRows.filter(row=>
+      typeof row?.start==='string'&&/^\d{4}-\d{2}-\d{2}/.test(row.start)&&valid(row[field]))
+      .map(row=>({date:row.start.slice(0,10),value:row[field]}))
+      .sort((a,b)=>a.date.localeCompare(b.date)).slice(-7);
+    // Wix weekly series uses weekly buckets, so render bars, not a false daily line.
+    const weeklyBar=(field)=>weekly(field).map(row=>({
+      label:row.date.slice(5),value:row.value
+    }));
+    const wixSources=siteOkay&&Array.isArray(site.trafficSources)?
+      site.trafficSources.filter(row=>valid(row.sessions))
+        .sort((a,b)=>b.sessions-a.sessions).slice(0,6)
+        .map(row=>({label:String(row.source||row.category||'Other'),value:row.sessions})):[];
+    const siteGood=valid(traffic.sessions.now)&&valid(traffic.sessions.last)&&
+      traffic.sessions.now>traffic.sessions.last?
+      'Website visits increased from '+number(traffic.sessions.last)+' to '+
+        number(traffic.sessions.now)+'.':
+      valid(site?.visitors)?number(site.visitors)+
+        ' website visitors were reported for the selected dates.':
+        'Verified website visitor totals are unavailable.';
+    const siteConcern=valid(traffic.sessions.now)&&valid(traffic.sessions.last)&&
+      traffic.sessions.now<traffic.sessions.last?
+      'Website visits declined from '+number(traffic.sessions.last)+' to '+
+        number(traffic.sessions.now)+'. The cause is not yet established.':
+      'Search clicks and website visits come from separate sources and cannot be added to infer a conversion rate.';
+    const part2=dailySection(2,'SEARCH CLICKS & WEBSITE VISITS',
+      dailyKpi('SEARCH RESULT CLICKS',search?.clicksPrevious,search?.clicksCurrent)+
+      dailyKpi('ALL WEBSITE VISITS',traffic.sessions.last,traffic.sessions.now)+
+      dailyKpi('WEBSITE VISITORS',wixCmp.visitors?.previousVisitors,siteOkay?site.visitors:null)+
+      dailyKpi('RETURNING VISITORS',wixCmp.returningVisitors?.previous,wixCmp.returningVisitors?.current),
+      dailyBars('WHERE WEBSITE VISITS CAME FROM',wixSources,'count',
+        'Wix sessions, not search clicks. Source coverage may be partial.')+
+      dailyBars('WIX WEEKLY VISIT HISTORY',weeklyBar('sessions'),'count',
+        'Verified Wix weekly buckets, potentially including partial weeks. Not a daily trend.'),
+      '',siteGood,siteConcern,
+      'Check the most-used entry pages and whether visitors can quickly find the next step. Use distinct tracking links for supporter posts.',
+      'Direct, Google, Facebook, Instagram and other referrals, including which posts lead to actual website visits.',
+      'A session is a visit, not a unique person. Wix sessions and search-engine click reports use different definitions.');
+
+    const currentBounce=siteOkay?site.bounceRate:null;
+    const previousBounce=wixCmp.bounceRate?.previous;
+    const currentStay=siteOkay?site.avgTimeSeconds:null;
+    const priorStay=wixCmp.avgTimeSeconds?.previous;
+    const pageGood=valid(currentStay)&&valid(priorStay)&&currentStay>priorStay?
+      'Average time on site increased from '+duration(priorStay)+' to '+duration(currentStay)+'.':
+      valid(site?.pageViews)?number(site.pageViews)+' page views were recorded.':
+      'Page engagement data are unavailable.';
+    const pageConcern=valid(currentBounce)&&currentBounce>=.70?
+      'Bounce rate is '+ratio(currentBounce)+', above the 70% warning threshold. This does not prove why visitors leave.':
+      valid(site?.pageViews)&&valid(wixCmp.pageViews?.previous)&&
+        site.pageViews<wixCmp.pageViews.previous?
+        'Page views fell from '+number(wixCmp.pageViews.previous)+' to '+number(site.pageViews)+'.':
+        'Monitor page depth and bounce rate rather than assuming time on site proves purchases.';
+    const pageRows=siteOkay&&Array.isArray(site.topPages)?
+      site.topPages.filter(row=>row?.path&&valid(row.views))
+        .sort((a,b)=>b.views-a.views).slice(0,5).map(row=>({
+          label:named(row.path),value:row.views
+        })):[];
+    const part3=dailySection(3,'PAGES & ENGAGEMENT',
+      dailyKpi('PAGE VIEWS',wixCmp.pageViews?.previous,siteOkay?site.pageViews:null)+
+      dailyKpi('AVERAGE STAY',priorStay,currentStay,'time')+
+      dailyKpi('BOUNCE RATE',previousBounce,currentBounce,'percentage',true)+
+      dailyKpi('PAGES / VISIT',wixCmp.pagesPerSession?.previous,siteOkay?site.pagesPerSession:null,'decimal'),
+      dailyBars('MOST-VIEWED WEBSITE PAGES',pageRows,'count',
+        'Wix page views include repeat views and are not unique visitors.')+
+      dailyBars('WIX WEEKLY PAGE VIEW HISTORY',weeklyBar('views'),'count',
+        'Wix weekly buckets may include partial weeks; compare like-for-like windows.'),
+      '',pageGood,pageConcern,
+      'Clarify the first-screen message and primary button on your busiest landing pages. Verify clicks and completed actions.',
+      'Bounce rate, average stay, pages per visit, and the pages with the greatest exits.',
+      'A longer average stay does not automatically establish positive engagement or an actual customer.');
+
+    const radioImport=window.djomsVerifiedReports?.radioImport?.data;
+    const radioDaily=music?.current&&Array.isArray(radioImport?.rows)?
+      radioImport.rows.filter(row=>row&&row.date>=period?.start&&
+        row.date<=period?.endInclusive&&valid(row.connections)&&
+        row.coverage==='daily-row').map(row=>({date:row.date,value:row.connections})):[];
+    const topLiked=songLikes?.status==='reported'&&Array.isArray(songLikes.songs)?
+      songLikes.songs.filter(row=>row?.title&&valid(row.likes))
+        .sort((a,b)=>b.likes-a.likes).slice(0,5):[];
+    const musicGood=valid(music?.current?.connections)&&valid(music?.previous?.connections)&&
+      music.current.connections>music.previous.connections?
+      'Verified Radio.co stream connections increased from '+
+        number(music.previous.connections)+' to '+number(music.current.connections)+'.':
+      topLiked.length&&topLiked[0].likes>0?
+        '"'+topLiked[0].title+'" leads with '+number(topLiked[0].likes)+
+        ' verified lifetime song likes. Likes are not plays.':
+        'Verified listening trends are not yet available for these reporting dates.';
+    const musicConcern=music?.status==='reported'?
+      'Connections do not identify unique people. Continue checking listening duration and repeat listening.':
+      'Current Radio.co listening data do not cover both selected reporting windows, so listener growth is N/A.';
+    const part4=dailySection(4,'MUSIC, RADIO & STREAMING',
+      dailyKpi('RADIO STREAM CONNECTIONS',music?.previous?.connections,music?.current?.connections)+
+      dailyKpi('TOTAL LISTENING TIME',music?.previous?.seconds,music?.current?.seconds,'time')+
+      dailyKpi('OUTLAW RADIO PAGE VIEWS',null,music?.radioPageViews)+
+      dailyKpi('MUSIC PAGE VIEWS',null,music?.musicPageViews),
+      dailyLine('VERIFIED RADIO.CO DAILY CONNECTIONS',radioDaily,'count',
+        'Imported Radio.co CSV, UTC dates. Historical, not live. Missing days remain N/A.')+
+      dailyBars('MOST-LIKED SONGS · ALL TIME',
+        topLiked.map(row=>({label:row.title,value:row.likes})),'count',
+        'Verified Wix heart votes, not listening starts, unique listeners or social likes.'),
+      '',musicGood,musicConcern,
+      'Keep station tags working smoothly and obtain consistent Radio.co daily connection and listening-time reports.',
+      'Verified stream connections, listening time, repeat audience indicators and which songs earn hearts.',
+      'Radio page views, heart votes, paid music units and radio listening sessions are different measurements.');
+
+    const grossNow=paid?sales.itemSalesCents:null;
+    const grossLast=comparison?.itemSalesCents;
+    const ordersNow=paid?sales.paidOrders:null;
+    const ordersLast=comparison?.paidOrders;
+    const salesGood=valid(grossNow)&&valid(grossLast)&&grossNow>grossLast?
+      'Paid web item sales increased from '+cash(grossLast)+' to '+cash(grossNow)+'.':
+      valid(grossNow)&&grossNow>0?
+        cash(grossNow)+' in verified paid web item sales was reported.':
+        'No verified sales increase is established for this period.';
+    const salesConcern=valid(grossNow)&&grossNow===0?
+      'Verified paid web item sales were $0.00 during this period. No paid online orders recorded from this channel.':
+      'Gross online sales are not profit and do not include market purchases or offline transactions.';
+    const part5=dailySection(5,'PAID WEB SALES',
+      dailyKpi('GROSS ONLINE ITEM SALES',grossLast,grossNow,'cents')+
+      dailyKpi('PAID ONLINE ORDERS',ordersLast,ordersNow),
+      dailyCompare('LAST VS CURRENT GROSS SALES',grossLast,grossNow,'cents',
+        'Only reconciled paid Wix online item sales, not margins or market sales.')+
+      dailyCompare('LAST VS CURRENT PAID ORDERS',ordersLast,ordersNow,'count',
+        'No order count inferred from page visits, likes or add-to-cart events.'),
+      '',salesGood,salesConcern,
+      'Check product availability, checkout experience and clear links from the Trading Post and sauce pages.',
+      'Paid orders, gross dollars and which tracked campaign links bring qualified visitors.',
+      'Online paid item sales are not business-wide revenue or profit; music sales are already included once.');
+
+    const fb=social?.platforms?.facebook;
+    const ig=social?.platforms?.instagram;
+    const fbViews=fb?.now?.views,igViews=ig?.now?.views;
+    const fbLikes=fb?.now?.reactions,igLikes=ig?.now?.reactions;
+    const metaBars=[{label:'FACEBOOK',value:fbViews},{label:'INSTAGRAM',value:igViews}];
+    const socialGood=valid(fbViews)||valid(igViews)?
+      'Measured post-cohort views: Facebook '+number(fbViews)+
+        ', Instagram '+number(igViews)+'. This reflects lifetime views on the posts, not only today.':
+      'Meta has not returned a complete verified social measurement for this window.';
+    const socialConcern=social?.status==='reported'?
+      'Older published posts have had longer to collect views and reactions. Raw cohort totals are not reliable daily growth measures.':
+      'Comparable Facebook/Instagram post-cohort data are still incomplete or unavailable.';
+    const part6=dailySection(6,'SOCIAL MEDIA',
+      dailyKpi('FACEBOOK POST VIEWS',null,fbViews)+
+      dailyKpi('INSTAGRAM POST VIEWS',null,igViews)+
+      dailyKpi('FACEBOOK REACTIONS',null,fbLikes)+
+      dailyKpi('INSTAGRAM LIKES',null,igLikes),
+      dailyBars('FACEBOOK VS INSTAGRAM · POST VIEWS',metaBars,'count',
+        'Verified lifetime counters on posts published in the selected period, not daily interactions.'),
+      '',socialGood,socialConcern,
+      'Continue the BBQ, Music and Book rotation. Give supporter posts tagged links and measure the website referrals they actually generate.',
+      'Shares, comments, link-driven visits and which posts attract meaningful actions.',
+      'X is manually recorded and excluded from score. Social totals cannot be equated to unique readers or attributed sales.');
+
+    const event=ga4?.status==='connected'&&ga4.actions?.status==='reported'?
+      ga4.actions.counts||{}:{};
+    const before=ga4?.actions?.comparison?.status==='reported'?
+      ga4.actions.comparison.counts||{}:{};
+    const downloaded=valid(event.fileDownload)?event.fileDownload:null;
+    const lastDownloads=valid(before.fileDownload?.previous)?before.fileDownload.previous:null;
+    const actionsGood=valid(contactsNow)&&contactsNow>0?
+      number(contactsNow)+' Wix inquiry action'+(contactsNow===1?'':'s')+
+        ' were recorded. Confirm whether each represented a genuine inquiry.':
+      valid(downloaded)&&downloaded>0?
+        number(downloaded)+' file download events were recorded. Downloads do not prove reading.':
+        'No verified increase in meaningful actions is established for these dates.';
+    const actionsConcern='Confirmed Pit Krewe signups and actual unique radio listeners are not measured end-to-end yet. Do not treat an unverified source as zero.';
+    const part7=dailySection(7,'MEANINGFUL ACTIONS',
+      dailyKpi('INQUIRIES',contactsLast,contactsNow)+
+      dailyKpi('FILE DOWNLOAD EVENTS',lastDownloads,downloaded)+
+      dailyKpi('CONFIRMED PIT KREWE SIGNUPS',null,null)+
+      dailyKpi('VERIFIED UNIQUE RADIO LISTENERS',null,null),
+      dailyCompare('INQUIRY ACTIONS · LAST VS CURRENT',contactsLast,contactsNow,'count',
+        'Contact clicks plus Wix forms. Not confirmed unique people.')+
+      dailyCompare('FILE DOWNLOAD EVENTS',lastDownloads,downloaded,'count',
+        'GA4 events if the selected dates have complete verified coverage.'),
+      '',actionsGood,actionsConcern,
+      'Verify contact and Pit Krewe completion events, chapter downloads and Radio.co listening-start reporting before scoring them.',
+      'Successful forms, new confirmed Krewe members, chapter downloads and verified listening sessions.',
+      'File downloads are events, not proof that a chapter was read or understood.');
+
+    const currentScore=Number.isInteger(owner?.score)?owner.score:null;
+    const scoreKind=currentScore===null?'na':currentScore>100?'up':
+      currentScore<100?'down':'hold';
+    const scoreText=currentScore===null?'NOT VERIFIED':currentScore>100?'MOVING FORWARD':
+      currentScore<100?'MOVING BACKWARD':'HOLDING';
+    const growingSearch=valid(search?.previous)&&valid(search?.current)&&
+      search.current>search.previous;
+    const fallingTraffic=valid(traffic.sessions.last)&&valid(traffic.sessions.now)&&
+      traffic.sessions.now<traffic.sessions.last;
+    const headline=[
+      growingSearch?'Search visibility is improving.':null,
+      fallingTraffic?'Website visits are falling.':null,
+      rankBad?'Google average position is worsening.':null,
+      rankGood?'Google average position improved.':null
+    ].filter(Boolean).join(' ')||'See the verified measurements and decisions for each stage below.';
+    const sections=[part1,part2,part3,part4,part5,part6,part7].join('');
+    const dayLabel=period?.start&&period?.endInclusive?
+      period.start+' through '+period.endInclusive:'Selected reporting period';
+    const googleRange=search?.currentRange?.start&&search?.currentRange?.end?
+      search.currentRange.start+' through '+search.currentRange.end:'N/A';
+    return '<details id="mjDailyReport" class="mj-daily-report">'+
+      '<summary><span>⚜ DOC JAKS · DAILY PERFORMANCE REPORT</span>'+
+        '<strong>7 SECTIONS · VERIFIED GRAPHS · NEXT ACTIONS <i>▾</i></strong></summary>'+
+      '<div class="mj-daily-content">'+
+        '<header class="mj-daily-header"><div><small>DOC JAKS OPERATIONS MANAGEMENT SYSTEM</small>'+
+          '<h3>THE DAILY BUSINESS REPORT</h3>'+
+          '<p>Selected period: '+esc(dayLabel)+'</p>'+
+          '<p>Search-engine verified dates: '+esc(googleRange)+
+            '. Google reporting can lag behind the current date.</p></div>'+
+          '<div class="mj-daily-overall '+esc(scoreKind)+'"><span>OWNER DIRECTION</span>'+
+            '<strong>'+esc(currentScore===null?'N/A':currentScore)+'</strong>'+
+            '<b>'+esc(scoreText)+'</b><small>100 = holding · verified online activity only</small></div>'+
+        '</header>'+
+        '<div class="mj-daily-overview"><strong>THE HEADLINE</strong><p>'+esc(headline)+
+          '</p><small>Investigations and suggested actions are hypotheses until tested. '+
+          'Data can include owner website testing and incomplete source coverage.</small></div>'+
+        '<nav class="mj-daily-toc" aria-label="Daily report sections">'+
+          [ 'Search','Visits','Pages','Music','Sales','Social','Actions' ].map(
+            (label,i)=>'<a href="#mjDailySection'+(i+1)+'">'+(i+1)+'. '+label+'</a>').join('')+
+        '</nav>'+
+        sections+
+        '<footer class="mj-daily-footer">'+
+          '<p><strong>REPORTING RULE:</strong> No fabricated numbers, no assumed conversions. '+
+          'Red/green reflects the direction of the measured KPI, and Google position and bounce rate favor lower values. '+
+          'A missing measurement stays N/A. Engine, website, social and listening counts are never added together.</p>'+
+          '<button type="button" data-mj-daily-print="1">PRINT DAILY REPORT</button>'+
+        '</footer>'+
+      '</div></details>';
+  }
+
   function journey(context){
     const {site,seo,ga4,sales,period,social:providedSocial}=context||{};
     const social=providedSocial||(typeof window.djomsSocialPeriod==='function'?window.djomsSocialPeriod(period):null);
@@ -762,6 +1175,8 @@
       key==='fileDownloads'?previousEvents.fileDownload?.previous:null;
     const canCompare=valid(lastMetric)&&valid(curr);
     const direction=canCompare?movement(lastMetric,curr,key==='siteBounceRate'):{tone:'na',text:'N/A'};
+    const dailyFullReport=dailyOwnerReport({site,seo,ga4,sales,period,social,music,
+      search,traffic,wixCmp,paid,comparison,contactsNow,contactsLast,owner});
 
     // Bottom-left of the trail, beneath Steps 6 and 7.
     // The explanations here replace the four oversized panels below the trail.
@@ -816,6 +1231,7 @@
           '<small>OWNER DIRECTION</small>'+
           '<strong>'+esc(score===null?'N/A':score)+'</strong>'+
           '<b>'+esc(scoreName)+'</b></div></header>'+
+      '<button type="button" class="mj-daily-jump" data-mj-daily-open="1">OPEN DAILY PERFORMANCE REPORT · 7 SECTIONS + GRAPHS ↓</button>'+ 
       '<div class="mj-boardwalk">'+
         '<svg class="mj-water-path" viewBox="0 0 1200 650" preserveAspectRatio="none" aria-hidden="true">'+
           '<path class="mj-path-shadow" d="M 75 160 C 285 70, 460 230, 610 130 S 1040 45, 1135 175 C 1180 290, 1170 390, 1080 490 S 750 590, 575 485 S 245 390, 90 530"/>'+
@@ -826,6 +1242,7 @@
       '<div class="mj-swamp-disclaimer">⚜ Every stop is a separate reported measurement. '+
         'Social Media and Music/Radio are independent discovery and entertainment channels, not steps every visitor takes. '+
         'Website Visits, Visitors, Page Views and listening connections count different things; no fabricated conversion funnel is implied.</div>'+
+      dailyFullReport+
       '<details class="mj-map-evidence"><summary>OPEN SEARCH PHRASES, VISITED PAGES, CTAs &amp; OTHER EVIDENCE ▾</summary>'+
         evidence(seo,site,ga4)+'</details>'+
       testsPanel(site,seo,ga4,sales,period)+
@@ -853,9 +1270,11 @@
       const social=typeof window.djomsSocialPeriod==='function'?
         window.djomsSocialPeriod(period):null;
       // Keep visitor drilldowns open when a verified source refreshes.
+      const dailyWasOpen=slot.querySelector('#mjDailyReport')?.open===true;
       const openDropdowns=new Set([...slot.querySelectorAll('details.mj-stage-dropdown[open]')]
         .map(item=>item.dataset.mjDropdown).filter(Boolean));
       slot.innerHTML=journey({site:correctSite,seo,ga4,sales,period,social});
+      if(dailyWasOpen&&slot.querySelector('#mjDailyReport'))slot.querySelector('#mjDailyReport').open=true;
       loadSongLikes();
       for(const detail of slot.querySelectorAll('details.mj-stage-dropdown')){
         if(openDropdowns.has(detail.dataset.mjDropdown))detail.open=true;
@@ -910,6 +1329,21 @@
     }catch(err){
       if(typeof notice==='function')notice(err?.message||'Could not save the change.',true);
       if(button)button.disabled=false;
+    }
+  });
+
+  document.addEventListener('click',event=>{
+    if(event.target.closest?.('[data-mj-daily-open]')){
+      const detail=document.getElementById('mjDailyReport');
+      if(detail){
+        detail.open=true;
+        detail.scrollIntoView({behavior:'smooth',block:'start'});
+      }
+    }
+    if(event.target.closest?.('[data-mj-daily-print]')){
+      const detail=document.getElementById('mjDailyReport');
+      if(detail)detail.open=true;
+      window.print();
     }
   });
   document.addEventListener('click',async e=>{
