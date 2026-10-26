@@ -1097,11 +1097,25 @@
       bars.push('<text class="mj-engine-mini-label" x="'+center+
         '" y="77" text-anchor="middle">R'+(slot+1)+'</text>');
     }
+    // Show only verified previous-window totals. An actual zero is highlighted;
+    // incomplete prior reporting is N/A, never an assumed zero.
+    const googleLast=valid(google?.previous?.impressions)?google.previous.impressions:null;
+    const bingLast=valid(bing?.previous?.impressions)?bing.previous.impressions:null;
+    const engineTotal=(name,current,previous,engine)=>{
+      const change=dailyMovement(previous,current,false,'count');
+      return '<span class="'+engine+'"><i aria-hidden="true"></i>'+
+        '<strong>'+name+'</strong>'+
+        '<em class="'+(current===0?'is-zero':'')+'">'+
+          esc(formatValue(current))+'</em>'+
+        '<small class="mj-engine-last'+(previous===0?' is-zero':!valid(previous)?' is-unavailable':'')+
+          '">LAST '+esc(formatValue(previous))+'</small>'+
+        '<b class="mj-engine-change '+esc(change.tone)+'">'+esc(change.text)+'</b>'+
+      '</span>';
+    };
     const totals='<div class="mj-engine-split-totals">'+
-      '<span class="google"><i aria-hidden="true"></i><strong>Google</strong>'+
-        '<em>'+esc(formatValue(currentGoogle))+'</em></span>'+
-      '<span class="bing"><i aria-hidden="true"></i><strong>Bing</strong>'+
-        '<em>'+esc(formatValue(currentBing))+'</em></span></div>';
+      engineTotal('Google',currentGoogle,googleLast,'google')+
+      engineTotal('Bing',currentBing,bingLast,'bing')+
+      '</div>';
     const caption=hasHistory?
       count+' OF 4 REPORTS AVAILABLE':
       'CUSTOM DATES · HISTORICAL COMPARISON UNAVAILABLE';

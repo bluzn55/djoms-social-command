@@ -13450,3 +13450,66 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     -webkit-print-color-adjust:exact;print-color-adjust:exact;
   }
 }
+
+
+/* VERIFIED ENGINE LAST ZERO VISIBILITY · OCT 26 2026
+   One compact LAST line under each Google/Bing total. A true reported 0
+   is rust-red, while N/A stays gray; only actual source values shown. */
+#connectionStrip #mjDailySection1 .mj-engine-split-totals>span{
+  gap:1px;
+  padding:4px 3px 5px;
+}
+#connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-last{
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  padding:3px 1px 0;
+  margin:2px 0 0;
+  border-top:1px solid #d9c6a7;
+  color:#453827!important;
+  font:900 clamp(12px,.9vw,15px)/1.15 Arial,sans-serif!important;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+  text-align:center;
+}
+#connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-last.is-zero,
+#connectionStrip #mjDailySection1 .mj-engine-split-totals em.is-zero{
+  color:#a12a1d!important;
+  font-weight:900!important;
+}
+#connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-last.is-unavailable{
+  color:#776d5d!important;
+}
+@media(max-width:1070px){
+  #connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-last{
+    font-size:clamp(12px,1.2vw,15px)!important;
+  }
+}
+
+
+/* ENGINE PERCENT MOVEMENT DISPLAY · OCT 26 2026
+   Percent change when LAST is nonzero; NEW when LAST=0 and NOW>0.
+   The engine's LAST=0 is distinct red. Green/red movement is separate. */
+#connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-change{
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  margin:1px 0 0;
+  text-align:center;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  font:900 clamp(13px,.98vw,17px)/1.13 Arial,sans-serif!important;
+  font-variant-numeric:tabular-nums;
+}
+#connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-change.up{
+  color:#176c3c!important;
+}
+#connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-change.down{
+  color:#b32c20!important;
+}
+#connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-change.hold{
+  color:#7c651e!important;
+}
+#connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-change.na{
+  color:#776d5d!important;
+}
