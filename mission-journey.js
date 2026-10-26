@@ -541,8 +541,7 @@
     return mapDropdown('search-click-engines','CLICKS BY SEARCH ENGINE',rows,
       search?.status==='reported'?
         'Verified search-result clicks only. Same engine/date coverage as #1: '+
-          search.scope+' ('+(search.currentRange?.start||'N/A')+
-          ' through '+(search.currentRange?.end||'N/A')+
+          search.scope+' ('+displayWindow(search.currentRange?.start,search.currentRange?.end)+
           '). An engine with appearances but zero clicks is correctly shown as 0. '+
           'Search phrases and result pages are under #1.':
         'Waiting for verified engine-level search-result click totals.',
@@ -1235,7 +1234,7 @@
       .sort((a,b)=>a.date.localeCompare(b.date)).slice(-7);
     // Wix weekly series uses weekly buckets, so render bars, not a false daily line.
     const weeklyBar=(field)=>weekly(field).map(row=>({
-      label:row.date.slice(5),value:row.value
+      label:displayDay(row.date),value:row.value
     }));
     const wixSources=siteOkay&&Array.isArray(site.trafficSources)?
       site.trafficSources.filter(row=>valid(row.sessions))
