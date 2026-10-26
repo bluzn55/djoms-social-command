@@ -681,6 +681,7 @@
     'COMBINED CTR':'combinedCtr',
     'GOOGLE POSITION':'googlePosition',
     'GOOGLE APPEARANCES':'googleAppearances',
+    'BING APPEARANCES':'bingAppearances',
     'SEARCH RESULT CLICKS':'searchClicks',
     'ALL WEBSITE VISITS':'websiteVisits',
     'WEBSITE VISITORS':'websiteVisitors',
@@ -820,6 +821,8 @@
       put('searchClicks',search.clicksCurrent);
       const google=search.engines?.find(e=>e.id==='google');
       if(google)put('googleAppearances',google.current?.impressions);
+      const bing=search.engines?.find(e=>e.id==='bing');
+      if(bing)put('bingAppearances',bing.current?.impressions);
     }
     if(site?.connected===true){
       put('websiteVisits',site.sessions);
@@ -958,6 +961,90 @@
         esc(weekday(rows[rows.length-1].date))+'</text></svg>'+
       caption+'</div>';
   }
+
+  // Four report-total snapshots by engine, in ONE grouped vertical chart.
+  // Google = gold; Bing = blue. Missing historical observations are
+  // clearly marked unknown and never interpreted as zero.
+  function engineHistoryBars(search,period){
+    const results=Array.isArray(search?.engines)?search.engines:[];
+    const google=results.find(e=>e.id==='google');
+    const bing=results.find(e=>e.id==='bing');
+    const googleNow=valid(google?.current?.impressions)?google.current.impressions:null;
+    const bingNow=valid(bing?.current?.impressions)?bing.current.impressions:null;
+    const hasCurrent=search?.status==='reported'&&(googleNow!==null||bingNow!==null);
+    const heading='<h5>APPEARANCES BY VERIFIED SEARCH ENGINE</h5>';
+    if(!hasCurrent)return '<div class="mj-daily-chart mj-engine-four-report">'+heading+
+      '<p class="mj-daily-no-data">NO COMPATIBLE VERIFIED SEARCH-ENGINE TOTALS</p>'+
+      '<p class="mj-daily-chart-note">Google and Bing appear here only for matching report dates.</p></div>';
+    const key=period?.range;
+    const allowsHistory=SPARK_RANGES.has(key);
+    const byDay=new Map();
+    if(allowsHistory)for(const row of historyCache.get(key)||[]){
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(row?.day||''))continue;
+      const g=row.values?.googleAppearances,b=row.values?.bingAppearances;
+      if(!valid(g)&&!valid(b))continue;
+      byDay.set(row.day,{day:row.day,google:valid(g)?g:null,bing:valid(b)?b:null});
+    }
+    // One visible report from today; supersedes a stale same-day snapshot.
+    byDay.set(todayCentral(),{day:todayCentral(),google:googleNow,bing:bingNow});
+    const days=[...byDay.values()].sort((a,b)=>a.day.localeCompare(b.day)).slice(-4);
+    const count=days.length;
+    const max=Math.max(1,...days.flatMap(d=>[d.google,d.bing].filter(valid)));
+    const W=660,H=176,baseline=128,peakHeight=84;
+    const centers=[84,248,412,576];
+    const first=4-count;
+    const bars=[];
+    const compact=value=>number(value);
+    for(let slot=0;slot<4;slot++){
+      const center=centers[slot];
+      const report=slot<first?null:days[slot-first];
+      for(const engine of ['google','bing']){
+        const x=center+(engine==='google'?-38:7);
+        const value=report?.[engine];
+        if(valid(value)){
+          const height=value===0?2:Math.max(5,Math.round(value/max*peakHeight));
+          const y=baseline-height;
+          bars.push('<rect class="mj-engine-report-bar '+engine+
+            (slot===3?' latest':'')+'" x="'+x+'" y="'+y+'"'+
+            ' width="31" height="'+height+'" rx="4">'+
+            '<title>'+esc(report.day+' · '+(engine==='google'?'Google':'Bing')+
+              ' '+number(value)+' verified appearances')+'</title></rect>'+
+            '<text class="mj-engine-report-value '+engine+
+            '" x="'+(x+15.5)+'" y="'+Math.max(13,y-7)+
+            '" text-anchor="middle">'+esc(compact(value))+'</text>');
+        }else{
+          bars.push('<rect class="mj-engine-report-missing" x="'+x+
+            '" y="96" width="31" height="32" rx="4"></rect>'+
+            '<text class="mj-engine-report-unknown" x="'+(x+15.5)+
+            '" y="117" text-anchor="middle">?</text>');
+        }
+      }
+      bars.push('<text class="mj-engine-report-label" x="'+center+
+        '" y="154" text-anchor="middle">R'+(slot+1)+'</text>');
+    }
+    const legend='<div class="mj-engine-legend">'+
+      '<span class="mj-engine-legend-google"><i></i>Google <b>'+
+        esc(formatValue(googleNow))+'</b></span>'+
+      '<span class="mj-engine-legend-bing"><i></i>Bing <b>'+
+        esc(formatValue(bingNow))+'</b></span>'+
+      '</div>';
+    const lines='<line class="mj-engine-report-baseline" x1="14" y1="'+baseline+
+      '" x2="646" y2="'+baseline+'"></line>';
+    const captions=allowsHistory?
+      (count+' OF 4 REPORTS AVAILABLE · EARLIEST LEFT, NEWEST RIGHT'):
+      'CUSTOM DATE RANGE · OLDER COMPARABLE REPORTS NOT SAVED';
+    return '<div class="mj-daily-chart mj-engine-four-report">'+heading+legend+
+      '<svg class="mj-engine-report-graph" viewBox="0 0 '+W+' '+H+
+      '" preserveAspectRatio="xMidYMid meet" role="img" aria-label="'+
+      esc('Last four saved report-total snapshots, oldest on the left and newest on the right. '+
+        'Gold bars are Google, blue bars are Bing. Gray question marks mean unreported totals.')+
+      '">'+lines+bars.join('')+'</svg>'+
+      '<p class="mj-engine-history-caption">'+esc(captions)+'</p>'+
+      '<p class="mj-daily-chart-note">Only matching search-engine reporting dates are combined. '+
+        'These are saved report totals, not unique people or daily search counts. '+
+        'Missing history is not zero.</p></div>';
+  }
+
   function dailyBars(title,items,unit='count',source=''){
     const rows=(Array.isArray(items)?items:[])
       .filter(item=>item&&valid(item.value)).slice(0,7);
@@ -1058,9 +1145,7 @@
     const googleViews=google?googleMetrics.impressions:null;
     const phr=google&&Array.isArray(seo.topQueries)?seo.topQueries.filter(row=>
       row?.query&&valid(row.impressions)).sort((a,b)=>b.impressions-a.impressions).slice(0,5):[];
-    const engineData=(search?.engines||[]).map(row=>({
-      label:row.id==='bing'?'Bing':row.name,value:row.current?.impressions
-    }));
+
     const googleDaily=google&&seo.trend?.status==='reported'&&Array.isArray(seo.trend.points)?
       seo.trend.points.filter(row=>row&&valid(row.impressions)&&
         row.date>=search?.currentRange?.start&&row.date<=search?.currentRange?.end)
@@ -1081,6 +1166,26 @@
       clicksStatus?'Google reported '+number(googleViews)+' appearances but zero Google result clicks.':null
     ].filter(Boolean).join(' ')||
       'Watch click-through rate and ranking before drawing conclusions from appearances alone.';
+
+    // Recommendations must respond to measured results without implying that
+    // clicks alone cause better Google rank. Search Console gives aggregate
+    // impressions/clicks; page relevance and usefulness remain hypotheses.
+    const clickOpportunity=valid(googleViews)&&googleViews>=10&&
+      valid(googleClicks)&&googleClicks===0;
+    const lowClickRate=valid(googleViews)&&googleViews>=20&&
+      valid(googleClicks)&&googleClicks>0&&
+      googleClicks/googleViews<0.02;
+    const searchAction=clickOpportunity||lowClickRate?
+      'PRIORITY: Earn more qualified Google clicks. Review the top disclosed searches (especially local BBQ phrases) and the page Google actually displays. Make the page title and search description clearly describe Doc Jaks, its sauces, and the relevant location; do not promise a dine-in restaurant if the page sells sauces. Put one obvious link or button to the matching BBQ/Trading Post page on that landing page. More clicks are desirable, but clicks alone do not automatically improve Google ranking.':
+      rankBad?
+        'Google position worsened. Inspect the queries and exact pages Google shows; improve relevant page titles, page content, and clear first-screen navigation for local BBQ searches. Verify those pages work well on mobile. More clicks are useful, but do not directly guarantee a better ranking.':
+        'Keep improving the actual pages found for local BBQ searches. Check relevant search titles and descriptions, page usefulness, and one clear next-step link for sauces or the Trading Post. Aim to attract qualified clicks, not just more impressions.';
+    const searchWatch=clickOpportunity?
+      'First watch Google result clicks (currently zero): did a verified click appear? Track Google CTR, average position, local BBQ phrases, and visits to the matched page over comparable Google reporting dates.':
+      lowClickRate?
+        'Track Google clicks and CTR alongside average search position and the top query/page combinations. Do qualified visits and meaningful actions improve?':
+        'Track Google search clicks, CTR, average position, top local BBQ queries, and continued Bing visibility. Compare matching reporting windows.';
+
     const engineDetails=(search?.engines||[]).map(row=>{
       const prior=row.previous?.impressions,now=row.current?.impressions;
       const change=dailyMovement(prior,now,false,'count');
@@ -1100,13 +1205,12 @@
       dailyKpi('GOOGLE POSITION',priorPosition,googlePosition,'position',true)+
       dailyKpi('GOOGLE APPEARANCES',googleEngine?.previous?.impressions,
         googleEngine?.current?.impressions),
-      dailyBars('APPEARANCES BY VERIFIED SEARCH ENGINE',engineData,'count',
-        'Only matching report dates are combined. Engines are not unique people.')+
+      engineHistoryBars(search,period)+
       dailyLine('GOOGLE DAILY SEARCH APPEARANCES',googleDaily,'count',
         'Google Search Console daily values only. These are not Google + Bing combined. Google may report late.'),
       searchDetails,searchGood,searchConcern,
-      'Review the top local BBQ search phrases, the pages shown, and their search titles/descriptions. Make clear whether a result leads to sauces, products or business information.',
-      'Google position, Google result clicks, combined CTR, and whether Bing continues to contribute verified appearances.',
+      searchAction,
+      searchWatch,
       'Google search phrases overlap result-page totals and are never added to overall appearances.',dailyHealthMeter(dailySectionScore(owner,['search'])));
 
     const siteOkay=site?.connected===true;
