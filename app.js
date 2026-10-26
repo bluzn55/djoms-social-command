@@ -101,6 +101,48 @@ async function api(path, body, method) {
 }
 function updateRecord(r) { const index = records.findIndex(x => x.id === r.id); if (index >= 0) records[index] = r; else records.unshift(r); selected = r; }
 async function loadRecords() { const data = await api('records'); records = data.records; campaigns = data.campaigns; if (data.limited) notice('Showing the latest 500 posts.'); }
+
+// The owner report needs actual, confirmed publishing dates and the three
+// campaign families. This read-only accessor shares existing authenticated
+// DJOMS records, not draft schedules or unverified outside-platform posts.
+// One row represents a campaign post published on a Central calendar day;
+// multiple platforms publishing it that day are grouped together.
+window.djomsPublishedCampaignPosts=function(){
+  const typeMap={BBQ:'Food',SOSS:'Food',MUSIC:'Music',BOOK:'Book'};
+  const timezone='America/Chicago';
+  const localDay=value=>{
+    const time=Date.parse(value||'');
+    if(!Number.isFinite(time))return null;
+    const fields=Object.fromEntries(new Intl.DateTimeFormat('en-US',{
+      timeZone:timezone,year:'numeric',month:'2-digit',day:'2-digit'
+    }).formatToParts(new Date(time)).map(part=>[part.type,part.value]));
+    return fields.year+'-'+fields.month+'-'+fields.day;
+  };
+  const grouped=new Map();
+  for(const record of records){
+    const category=typeMap[record?.campaign];
+    if(!category)continue;
+    for(const platform of ['facebook','instagram','x']){
+      const publication=record.results?.[platform];
+      if(publication?.status!=='published'||!publication.postId)continue;
+      const day=localDay(publication.publishedAt);
+      if(!day)continue;
+      const key=record.id+'|'+day;
+      let row=grouped.get(key);
+      if(!row){
+        row={id:String(record.id),day,category,
+          campaign:record.campaign,
+          title:String(record.title||'Untitled post').slice(0,130),
+          platforms:[]};
+        grouped.set(key,row);
+      }
+      if(!row.platforms.includes(platform))row.platforms.push(platform);
+    }
+  }
+  return [...grouped.values()].sort((a,b)=>b.day.localeCompare(a.day)||
+    a.title.localeCompare(b.title));
+};
+
 async function loadAnalytics(refresh = false) {
   try {
     analyticsData = await api('analytics?range=' + encodeURIComponent(platformMetricRange) + (refresh ? '&refresh=1' : ''));
