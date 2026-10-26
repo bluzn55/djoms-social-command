@@ -1235,10 +1235,96 @@
         tone:pct>0?'up':'down',
         change:(pct>0?'↑ +':'↓ ')+pct.toFixed(1)+'%'};
     };
+    // Keep the artwork visible so the owner can identify the actual
+    // placecard. Its master media ID is the design's stable identifier.
+    const safePicture=value=>{
+      try{
+        const url=new URL(String(value||''));
+        return url.protocol==='https:'&&url.pathname.startsWith('/api/meta/media')?
+          url.href:null;
+      }catch{return null;}
+    };
+    const artworkLabel=(category,numberValue,imageId)=>{
+      const group=({Food:'FOOD',Music:'MUSIC',Book:'BOOK'})[category]||'CARD';
+      const n=Number(numberValue);
+      return Number.isInteger(n)&&n>=1&&n<=15?
+        group+' #'+String(n).padStart(2,'0'):
+        imageId?group+' · ID '+String(imageId).slice(0,8).toUpperCase():
+        group+' · IMAGE NOT SAVED';
+    };
+    const pictureCell=(name,imageUrl,identifier,title)=>{
+      const picture=safePicture(imageUrl);
+      return '<div class="mj-post-placecard">'+
+        (picture?'<a href="'+esc(picture)+'" target="_blank" rel="noopener noreferrer"'+
+          ' title="Open saved placecard image"><img loading="lazy" decoding="async"'+
+          ' src="'+esc(picture)+'" alt="Artwork for '+esc(title)+'"></a>':
+          '<span class="mj-post-no-picture">NO IMAGE</span>')+
+        '<div><b>'+esc(identifier)+'</b>'+
+          '<small>'+esc(String(name||title||'Untitled').slice(0,100))+'</small>'+
+          '<small>'+esc(title||'')+'</small></div></div>';
+    };
+    // Rank one design once, even when the same picture was shared to both
+    // platforms or reused in more than one published post. Only real Wix
+    // tagged SESSIONS are summed. Never add unique visitor counts together.
+    const placed=new Map();
+    if(attribution?.status==='reported'&&Array.isArray(inventory)){
+      for(const row of attributable){
+        if(!row.placecardImageId||!valid(row.taggedVisits))continue;
+        const group=row.campaign==='MUSIC'?'Music':
+          row.campaign==='BOOK'?'Book':'Food';
+        const key=row.campaign+'|'+row.placecardImageId;
+        let item=placed.get(key);
+        if(!item){
+          const match=inventory.find(post=>post.id===row.recordId&&
+            post.placecardImageId===row.placecardImageId);
+          item={imageId:row.placecardImageId,category:group,
+            number:row.placecardNumber,
+            name:row.placecardName||match?.placecardName||row.postTitle,
+            title:match?.title||row.postTitle,
+            imageUrl:match?.placecardImageUrl||null,
+            visits:0,facebook:0,instagram:0,postIds:new Set()};
+          placed.set(key,item);
+        }
+        item.visits+=row.taggedVisits;
+        if(row.platform==='facebook')item.facebook+=row.taggedVisits;
+        if(row.platform==='instagram')item.instagram+=row.taggedVisits;
+        item.postIds.add(row.recordId);
+      }
+    }
+    const ranked=[...placed.values()].filter(item=>item.visits>0)
+      .sort((a,b)=>b.visits-a.visits||
+        String(a.name).localeCompare(String(b.name))).slice(0,5);
+    const winners='<section class="mj-placecard-winners"'+
+      ' aria-label="Placecards with verified link-attributed website visits">'+
+      '<h5>PLACE CARDS BRINGING TRACKED WEBSITE VISITS</h5>'+
+      (ranked.length?'<div class="mj-placecard-winners-grid">'+
+        ranked.map((item,i)=>'<article class="mj-placecard-winner">'+
+          '<span class="mj-placecard-rank">#'+(i+1)+'</span>'+
+          pictureCell(item.name,item.imageUrl,
+            artworkLabel(item.category,item.number,item.imageId),item.title)+
+          '<div class="mj-placecard-results"><strong>'+
+            esc(number(item.visits))+'</strong><small>TAGGED WEBSITE VISITS</small>'+
+            '<small>FB '+esc(number(item.facebook))+' · IG '+
+            esc(number(item.instagram))+'</small>'+
+            (item.postIds.size>1?'<small>Used in '+item.postIds.size+
+              ' saved posts</small>':'')+'</div></article>').join('')+
+        '</div>':
+        '<p class="mj-post-traffic-empty">'+
+          (attribution?.status==='unavailable'?'Wix placecard attribution is unavailable.':
+          attribution?.status==='reported'?
+            'No measured website visits from tagged placecard links in these selected dates yet.':
+            'Checking the saved post links and website visits.')+'</p>')+
+      '<p class="mj-post-traffic-method">Ranked by Wix sessions carrying unique FB/IG post links during the chosen dates. Repeated posts using the same saved image are grouped; no untagged traffic or invented conversions are included.</p>'+
+      '</section>';
     const rows=selected.map(post=>{
       const change=comparison(post);
       const platformLabels={facebook:'FB',instagram:'IG',x:'X'};
       const channels=Array.isArray(post.platforms)?post.platforms:[];
+      const placecardDetails=attributable.find(row=>row.recordId===post.id&&
+        row.placecardImageId===post.placecardImageId);
+      const placecardCell=pictureCell(post.placecardName,post.placecardImageUrl,
+        artworkLabel(post.category,placecardDetails?.placecardNumber,
+          post.placecardImageId),post.title);
       const sources=channels.map(platform=>{
         if(!['facebook','instagram'].includes(platform))
           return '<span class="mj-post-platform">X · website link not measured</span>';
@@ -1272,7 +1358,8 @@
         '<td>'+esc(displayDay(post.day))+'</td>'+
         '<td><span class="mj-post-type '+esc(post.category.toLowerCase())+
           '">'+esc(campaignNames[post.category])+'</span></td>'+
-        '<td><b>'+esc(post.title)+'</b><small>'+
+        '<td class="mj-post-artwork-cell">'+placecardCell+
+          '<small class="mj-post-published-to">'+
           esc(channels.map(p=>({facebook:'Facebook',instagram:'Instagram',x:'X'})[p]||p).join(' + '))+
           '</small></td>'+
         '<td class="mj-post-count">'+esc(formatValue(change.prior))+'</td>'+
@@ -1299,12 +1386,13 @@
       '<div class="mj-post-traffic-body">'+
         '<p class="mj-post-traffic-intro">Which Food, Music or Book posts went out, and what happened to website visits and page views?</p>'+
         '<p class="mj-post-traffic-method">Before = previous calendar day. Post day = all visits on that date, not only after publication. Next = following complete day. Percent change compares post day with the day before. Today is incomplete.</p>'+
+        winners+
         (posts===null?
           '<p class="mj-post-traffic-empty">Confirmed posting history is not loaded.</p>':
           !posts.length?
           '<p class="mj-post-traffic-empty">No confirmed Food, Music or Book posts for the selected dates.</p>':
           '<div class="mj-post-traffic-scroll"><table>'+
-            '<thead><tr><th>POSTED</th><th>TYPE</th><th>POST / PLATFORM</th>'+
+            '<thead><tr><th>POSTED</th><th>TYPE</th><th>PLACE CARD / POST</th>'+
             '<th>VISITS BEFORE</th><th>POST DAY</th><th>VISITS NEXT</th>'+
             '<th>PAGE VIEWS DAY</th><th>CHANGE</th><th>TRACKED LINK VISITS &amp; LINKS</th></tr></thead>'+
             '<tbody>'+rows+'</tbody></table></div>'+
