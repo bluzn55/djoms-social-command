@@ -1276,17 +1276,10 @@
         number(row.impressions)+' appearances</b></li>').join('')+'</ol>':
       '<p>Google has not disclosed enough search phrase details for these dates.</p>');
     const part1=dailySection(1,'SEARCH APPEARANCES & CTR',
-      '<div class="mj-daily-search-headlines" aria-label="The two headline search discovery measures">'+
+      '<div class="mj-daily-search-headlines" aria-label="Three equal search discovery measures">'+
         dailyKpi('VERIFIED APPEARANCES',search?.previous,search?.current)+
         dailyKpi('COMBINED CTR',search?.ctrPrevious,search?.ctrCurrent,'percentage')+
-      '</div>'+
-      '<div class="mj-daily-search-supporting">'+
-        '<div class="mj-daily-search-position">'+
-          miniMetric('GOOGLE POSITION',
-            priorPosition,googlePosition,'position',true)+
-          '<small class="mj-position-direction-hint">LOWER NUMBER = BETTER RANKING</small>'+
-        '</div>'+
-        historicalSparkline('GOOGLE POSITION',googlePosition,'position',true,priorPosition)+
+        dailyKpi('GOOGLE POSITION',priorPosition,googlePosition,'position',true)+
       '</div>',
       engineHistoryBars(search,period)+
       dailyLine('GOOGLE DAILY SEARCH APPEARANCES',googleDaily,'count',
@@ -1638,16 +1631,13 @@
       score>100?'Moving forward above 100':score<100?'Moving backward below 100':
       'Holding at exactly 100';
     const first=card('search','1','SEARCH APPEARANCES & CTR','⌕',
-      '<div class="mj-search-headline-kpis" aria-label="Two headline discovery measures">'+
+      '<div class="mj-search-headline-kpis" aria-label="Three equal search discovery measures">'+
         heroMetric('VERIFIED APPEARANCES',search?.previous,
-          search?.current,'count',false,'Google + Bing, when report dates match.')+
+          search?.current,'count')+
         heroMetric('COMBINED CTR',search?.ctrPrevious,
-          search?.ctrCurrent,'percentage',false,'Percentage of appearances that earned a search click.')+
-      '</div>'+
-      '<div class="mj-search-supporting-position">'+
-        miniMetric('GOOGLE POSITION',
+          search?.ctrCurrent,'percentage')+
+        heroMetric('GOOGLE POSITION',
           search?.positionPrevious,search?.positionCurrent,'position',true)+
-        '<small class="mj-position-direction-hint">LOWER NUMBER = BETTER RANKING</small>'+
       '</div>'+
       searchEnginesDropdown(search)+searchAppearancesDetails(seo),
       'Appearances and CTR tell us how often Doc Jaks is found and chosen. '+

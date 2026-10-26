@@ -13126,14 +13126,6 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 #connectionStrip .mj-card-search .mj-search-headline-kpis .mj-primary-kpi>small{
   color:#695037!important;font:750 12px/1.2 Arial,sans-serif!important;
 }
-#connectionStrip .mj-card-search .mj-search-supporting-position{
-  display:block;margin:0 0 7px;
-  padding:7px 4px 3px;
-  border-top:2px solid #af8959;
-}
-#connectionStrip .mj-card-search .mj-search-supporting-position .mj-mini-kpi{
-  padding:4px 2px 6px;
-}
 #connectionStrip #mjDailySection1>.mj-daily-metrics{
   display:grid;grid-template-columns:minmax(0,1fr);
   gap:10px;
@@ -13158,38 +13150,6 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 }
 #connectionStrip #mjDailySection1 .mj-daily-search-headlines .mj-daily-change{
   font:900 clamp(18px,1.27vw,23px)/1.15 Arial,sans-serif!important;
-}
-#connectionStrip #mjDailySection1 .mj-daily-search-supporting{
-  display:grid;grid-template-columns:minmax(0,1fr) minmax(130px,190px);
-  align-items:center;gap:10px;min-width:0;
-  padding:8px 12px;
-  border:1px solid #c6af87;border-radius:6px;
-  background:#f6ebd5;
-}
-#connectionStrip #mjDailySection1 .mj-daily-search-position{
-  min-width:0;
-}
-#connectionStrip #mjDailySection1 .mj-daily-search-position .mj-mini-kpi{
-  display:grid;grid-template-columns:minmax(0,1fr) auto;
-  gap:5px 10px;border:0;padding:4px 0;
-}
-#connectionStrip #mjDailySection1 .mj-daily-search-position .mj-mini-kpi>span{
-  font:900 clamp(14px,1.01vw,18px)/1.18 Arial,sans-serif!important;
-}
-#connectionStrip #mjDailySection1 .mj-daily-search-position .mj-mini-kpi>strong{
-  font:900 clamp(24px,1.7vw,31px)/1.1 Georgia,serif!important;
-}
-#connectionStrip #mjDailySection1 .mj-daily-search-supporting>.mj-kpi-spark{
-  display:flex;align-items:flex-end;flex-direction:column;
-  margin:0;padding:0;border:0;min-width:0;
-}
-#connectionStrip #mjDailySection1 .mj-daily-search-supporting .mj-kpi-vertical-bars{
-  width:min(100%,180px);max-width:180px;
-  height:63px;max-height:63px;
-}
-#connectionStrip #mjDailySection1 .mj-daily-search-supporting .mj-kpi-spark>small{
-  font:850 10px/1.1 Arial,sans-serif!important;
-  text-align:right;
 }
 #connectionStrip #mjDailySection2 .mj-daily-click-phrases{
   min-width:0;
@@ -13224,174 +13184,152 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 }
 
 
-/* GOOGLE POSITION CENTERED THIRD KPI · OCT 26 2026
-   Below the two larger Appearances/CTR hero metrics in BOTH views.
-   Lower Google average position is better; value/last/change stay linked. */
-#connectionStrip .mj-card-search .mj-search-supporting-position{
-  box-sizing:border-box;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  min-width:0;
-  width:min(100%,270px);
-  max-width:100%;
-  margin:3px auto 12px;
-  padding:11px 10px 9px;
-  border:2px solid #ba985d;
-  border-radius:8px;
-  background:linear-gradient(150deg,#fff9e9,#f2dfb8);
-  text-align:center;
-}
-#connectionStrip .mj-card-search .mj-search-supporting-position .mj-mini-kpi{
-  box-sizing:border-box;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:3px;
-  width:100%;
-  min-width:0;
-  padding:0;
-  border:0;
-  text-align:center;
-}
-#connectionStrip .mj-card-search .mj-search-supporting-position .mj-mini-kpi>span{
-  font:900 clamp(15px,1.1vw,19px)/1.17 Arial,sans-serif!important;
-  color:#2e2114!important;
-  text-align:center;
-}
-#connectionStrip .mj-card-search .mj-search-supporting-position .mj-mini-kpi>strong{
-  font:900 clamp(27px,1.8vw,37px)/1.06 Georgia,serif!important;
-  color:#1c140c!important;
-  font-variant-numeric:tabular-nums;
-  white-space:normal;
-  text-align:center;
-}
-#connectionStrip .mj-card-search .mj-search-supporting-position .mj-mini-kpi>small{
-  font:850 13px/1.2 Arial,sans-serif!important;
-  color:#66503a!important;
-  text-align:center;
-}
-#connectionStrip .mj-card-search .mj-search-supporting-position .mj-mini-kpi>b{
-  font:900 clamp(15px,.95vw,18px)/1.18 Arial,sans-serif!important;
-  text-align:center;
-}
-#connectionStrip .mj-card-search .mj-search-supporting-position .mj-position-direction-hint,
-#connectionStrip #mjDailySection1 .mj-daily-search-position .mj-position-direction-hint{
-  display:block;
-  margin:6px 0 0;
-  padding-top:5px;
-  width:100%;
-  border-top:1px solid #d6bd91;
-  color:#775a33!important;
-  font:900 clamp(11px,.85vw,14px)/1.17 Arial,sans-serif!important;
-  letter-spacing:.035em;
-  text-align:center;
-}
-#connectionStrip #mjDailySection1 .mj-daily-search-supporting{
-  box-sizing:border-box;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-self:center;
-  width:min(100%,460px);
-  max-width:100%;
-  min-width:0;
-  margin:0 auto 3px;
-  padding:13px 19px 11px;
-  gap:7px;
-  border:2px solid #b5925c;
-  border-radius:9px;
-  background:linear-gradient(160deg,#fffaf0,#f0dfbb);
-  text-align:center;
-}
-#connectionStrip #mjDailySection1 .mj-daily-search-position{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  width:100%;
-  min-width:0;
-  text-align:center;
-}
-#connectionStrip #mjDailySection1 .mj-daily-search-position .mj-mini-kpi{
-  box-sizing:border-box;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
+
+
+/* THREE SEARCH KPI BOXES · OCT 26 2026
+   Equal presentation for Appearances / CTR / Google Position, one row.
+   Position remains inverse-good (lower is better) without redundant hint.
+   No metrics or other sections are changed. */
+#connectionStrip .mj-card-search .mj-search-headline-kpis{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
   gap:5px;
-  width:100%;
-  min-width:0;
-  border:0;
-  padding:0;
-  text-align:center;
+  margin:5px 0 10px;
+  align-items:stretch;
 }
-#connectionStrip #mjDailySection1 .mj-daily-search-position .mj-mini-kpi>span{
-  font:900 clamp(16px,1.13vw,20px)/1.14 Arial,sans-serif!important;
-  color:#372616!important;
-  text-align:center;
-}
-#connectionStrip #mjDailySection1 .mj-daily-search-position .mj-mini-kpi>strong{
-  font:900 clamp(32px,2.45vw,46px)/1.05 Georgia,serif!important;
-  color:#1d150d!important;
-  font-variant-numeric:tabular-nums;
-  white-space:normal;
-  text-align:center;
-}
-#connectionStrip #mjDailySection1 .mj-daily-search-position .mj-mini-kpi>small{
-  font:850 clamp(14px,.94vw,16px)/1.15 Arial,sans-serif!important;
-  color:#604a31!important;
-  text-align:center;
-}
-#connectionStrip #mjDailySection1 .mj-daily-search-position .mj-mini-kpi>b{
-  font:900 clamp(17px,1.12vw,21px)/1.15 Arial,sans-serif!important;
-  text-align:center;
-}
-#connectionStrip #mjDailySection1 .mj-daily-search-supporting>.mj-kpi-spark{
+#connectionStrip .mj-card-search .mj-search-headline-kpis>.mj-primary-kpi{
   display:flex;
   flex-direction:column;
   align-items:center;
+  justify-content:flex-start;
   text-align:center;
+  padding:9px 5px 8px;
+  margin:0;
+  min-width:0;
+  border:2px solid #b18b5b;
+  border-radius:7px;
+  box-sizing:border-box;
+  background:linear-gradient(150deg,#fffaeb,#f2e0b7);
+}
+#connectionStrip .mj-card-search .mj-search-headline-kpis .mj-primary-label{
+  display:block;
+  min-width:0;
+  width:100%;
+  color:#2c1c0e!important;
+  font:900 clamp(12px,.88vw,16px)/1.1 Arial,sans-serif!important;
+  overflow-wrap:break-word;
+  text-align:center;
+}
+#connectionStrip .mj-card-search .mj-search-headline-kpis .mj-head-numbers{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  margin-top:5px;
   width:100%;
   min-width:0;
-  gap:1px;
-  margin:1px 0 0;
-  padding:7px 0 0;
-  border:0;
-  border-top:1px solid #dac5a2;
 }
-#connectionStrip #mjDailySection1 .mj-daily-search-supporting .mj-kpi-vertical-bars{
-  display:block;
-  width:min(100%,210px);
-  max-width:210px;
-  height:68px;
-  max-height:68px;
-  margin:0 auto;
+#connectionStrip .mj-card-search .mj-search-headline-kpis .mj-current{
+  font:900 clamp(26px,1.96vw,36px)/1.06 Georgia,serif!important;
+  color:#1e130c!important;
+  max-width:100%;
+  overflow-wrap:anywhere;
+  font-variant-numeric:tabular-nums;
 }
-#connectionStrip #mjDailySection1 .mj-daily-search-supporting .mj-kpi-spark>small{
-  width:100%;
-  font:900 11px/1.16 Arial,sans-serif!important;
-  text-align:center!important;
+#connectionStrip .mj-card-search .mj-search-headline-kpis .mj-change{
+  font:900 clamp(12px,.95vw,17px)/1.16 Arial,sans-serif!important;
+  white-space:normal;
+  overflow-wrap:anywhere;
 }
-#connectionStrip #mjDailySection1 .mj-daily-search-supporting>.mj-kpi-spark-empty{
-  box-sizing:border-box;
-  display:flex;
-  justify-content:center;
-  min-height:33px;
-  margin:5px 0 0;
-  border-top:1px solid #dac5a2;
+#connectionStrip .mj-card-search .mj-search-headline-kpis .mj-last{
+  margin-top:auto;
+  padding-top:5px;
   text-align:center;
+  color:#604930!important;
+  font:850 12px/1.17 Arial,sans-serif!important;
 }
-@media(max-width:720px){
-  #connectionStrip #mjDailySection1 .mj-daily-search-supporting{
-    width:min(100%,460px);
-    padding:12px 13px 10px;
-    margin:0 auto;
+#connectionStrip #mjDailySection1>.mj-daily-metrics{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-headlines{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  align-items:stretch;
+  gap:9px;
+  min-width:0;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-headlines>.mj-daily-kpi{
+  display:flex;
+  flex-direction:column;
+  box-sizing:border-box;
+  min-width:0;
+  min-height:185px;
+  padding:13px 12px 10px;
+  border:2px solid #a27c49;
+  border-radius:7px;
+  background:#fffdfa;
+  box-shadow:inset 0 0 0 1px #f7eacf;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-headlines>.mj-daily-kpi>b{
+  font:900 clamp(14px,1.14vw,21px)/1.17 Arial,sans-serif!important;
+  color:#322217!important;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-headlines>.mj-daily-kpi>strong{
+  font:900 clamp(34px,2.72vw,52px)/1.05 Georgia,serif!important;
+  color:#1b120b!important;
+  font-variant-numeric:tabular-nums;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-headlines .mj-daily-change{
+  font:900 clamp(15px,1.19vw,21px)/1.15 Arial,sans-serif!important;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-headlines .mj-kpi-vertical-bars{
+  width:min(100%,205px);
+  max-width:205px;
+  height:65px;
+  max-height:65px;
+}
+@media(max-width:920px){
+  #connectionStrip #mjDailySection1 .mj-daily-search-headlines{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:7px;
   }
-  #connectionStrip #mjDailySection1 .mj-daily-search-supporting>.mj-kpi-spark{
-    align-items:center;
+  #connectionStrip #mjDailySection1 .mj-daily-search-headlines>.mj-daily-kpi{
+    padding:10px 8px 8px;
   }
-  #connectionStrip #mjDailySection1 .mj-daily-search-supporting .mj-kpi-spark>small{
-    text-align:center!important;
+  #connectionStrip #mjDailySection1 .mj-daily-search-headlines>.mj-daily-kpi>strong{
+    font-size:clamp(26px,3.65vw,40px)!important;
+  }
+  #connectionStrip #mjDailySection1 .mj-daily-search-headlines>.mj-daily-kpi>b{
+    font-size:clamp(12px,1.8vw,16px)!important;
+  }
+}
+@media(max-width:620px){
+  /* On narrow phones, do not squeeze large report numbers into unreadable columns. */
+  #connectionStrip #mjDailySection1 .mj-daily-search-headlines{
+    grid-template-columns:minmax(0,1fr);
+  }
+  #connectionStrip .mj-card-search .mj-search-headline-kpis{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:4px;
+  }
+  #connectionStrip .mj-card-search .mj-search-headline-kpis>.mj-primary-kpi{
+    padding:7px 4px 6px;
+  }
+  #connectionStrip .mj-card-search .mj-search-headline-kpis .mj-current{
+    font-size:clamp(23px,5.1vw,30px)!important;
+  }
+  #connectionStrip .mj-card-search .mj-search-headline-kpis .mj-primary-label{
+    font-size:12px!important;
+  }
+}
+@media print{
+  #connectionStrip #mjDailySection1 .mj-daily-search-headlines{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  #connectionStrip #mjDailySection1 .mj-daily-search-headlines>.mj-daily-kpi{
+    background:white!important;
+    break-inside:avoid;
   }
 }
