@@ -717,7 +717,11 @@
     }).formatToParts(new Date()).map(p=>[p.type,p.value]));
     return parts.year+'-'+parts.month+'-'+parts.day;
   }
-  function historicalSparkline(label,current,unit,inverse){
+
+  // Four compact vertical report-total bars: newest on the RIGHT.
+  // Previous slots are clearly marked missing until verified history exists.
+  // Color is based on trend direction; lower positions/bounce are better.
+  function historicalSparkline(label,current,unit,inverse,previous){
     const key=SPARK_KEYS[label];
     if(!key)return '';
     if(!SPARK_RANGES.has(sparklinesRange))return '<div class="mj-kpi-spark-empty">'+
@@ -730,34 +734,73 @@
       if(!/^\d{4}-\d{2}-\d{2}$/.test(item?.day||'')||!valid(item?.values?.[key]))continue;
       byDay.set(item.day,item.values[key]);
     }
-    // The latest verified visible value wins over a previously saved same-day value.
+    // The latest visible verified number replaces any stale same-day snapshot.
     byDay.set(todayCentral(),current);
     const days=[...byDay].sort((a,b)=>a[0].localeCompare(b[0])).slice(-4);
     const count=days.length;
     if(!count)return '<div class="mj-kpi-spark-empty">4-REPORT TREND · N/A</div>';
-    const first=days[0][1],last=days[count-1][1];
-    const tone=count<2?'na':first===last?'hold':
-      ((last>first)!==inverse?'up':'down');
-    const values=days.map(row=>row[1]),low=Math.min(...values),high=Math.max(...values);
-    const W=146,H=39,P=7;
-    const x=index=>count===1?W-P:P+index*(W-2*P)/(count-1);
-    const y=value=>high===low?H/2:P+(high-value)/(high-low)*(H-2*P);
-    const positions=days.map(([day,value],index)=>({
-      day,value,x:x(index).toFixed(1),y:y(value).toFixed(1)
-    }));
-    const segment=count>1?'<polyline class="mj-kpi-spark-path" points="'+
-      positions.map(p=>p.x+','+p.y).join(' ')+'"></polyline>':'';
-    const circles=positions.map((p,i)=>
-      '<circle class="mj-kpi-spark-dot'+(i===count-1?' last':'')+
-        '" cx="'+p.x+'" cy="'+p.y+'" r="'+(i===count-1?4.5:3.1)+'">'+
-        '<title>'+esc(p.day+' · '+formatValue(p.value,unit))+'</title></circle>').join('');
-    const series=days.map(([d,v])=>d+': '+formatValue(v,unit)).join(' · ');
+
+    const first=days[0][1],latest=days[count-1][1];
+    // For the first captured report, use the verified Last/Current comparison
+    // for color, but never pretend the Last value is an older stored report.
+    const tone=count>=2?
+      (first===latest?'hold':((latest>first)!==inverse?'up':'down')):
+      dailyMovement(previous,current,inverse,unit).tone;
+    const compact=value=>{
+      if(unit==='percentage')return (value*100).toFixed(value*100<10?1:0)+'%';
+      if(unit==='position')return value.toFixed(1);
+      if(unit==='decimal')return value.toFixed(2);
+      if(unit==='time')return value>=3600?(value/3600).toFixed(1)+'h':
+        value>=60?Math.round(value/60)+'m':number(value)+'s';
+      if(unit==='cents'){
+        const d=value/100;
+        return d>=100000?'$'+(d/1000).toFixed(0)+'k':
+          d>=1000?'$'+(d/1000).toFixed(1)+'k':'$'+(d%1?d.toFixed(1):d.toFixed(0));
+      }
+      return value>=1000000?(value/1000000).toFixed(1)+'m':
+        value>=1000?(value/1000).toFixed(1)+'k':number(value);
+    };
+    // Fixed positions so a lone first report appears at R4, with
+    // R1–R3 represented as UNKNOWN rather than fabricated zeros.
+    const W=260,H=82,bottom=59,maxBar=39;
+    const centers=[34,98,162,226];
+    const highest=Math.max(1,...days.map(row=>row[1]));
+    const firstReal=4-count;
+    const parts=[];
+    for(let slot=0;slot<4;slot++){
+      const center=centers[slot];
+      const x=center-17;
+      const dataIndex=slot-firstReal;
+      if(dataIndex<0){
+        parts.push('<rect class="mj-kpi-bar-missing" x="'+x+'" y="29" width="34"'+
+          ' height="30" rx="4"></rect>'+
+          '<text class="mj-kpi-bar-unknown" x="'+center+'" y="48"'+
+          ' text-anchor="middle">?</text>');
+      }else{
+        const [day,value]=days[dataIndex];
+        const h=value===0?2:Math.max(5,Math.round(value/highest*maxBar));
+        const y=bottom-h;
+        const recent=slot===3;
+        parts.push('<rect class="mj-kpi-bar'+(recent?' newest':' previous')+
+          '" x="'+x+'" y="'+y+'" width="34" height="'+h+'" rx="4">'+
+          '<title>'+esc(day+' · '+formatValue(value,unit))+'</title></rect>'+
+          '<text class="mj-kpi-bar-value'+(recent?' newest':'')+'"'+
+          ' x="'+center+'" y="'+Math.max(12,y-5)+'" text-anchor="middle">'+
+          esc(compact(value))+'</text>');
+      }
+      parts.push('<text class="mj-kpi-bar-label" x="'+center+'" y="76"'+
+        ' text-anchor="middle">R'+(slot+1)+'</text>');
+    }
+    const values=days.map(([day,value])=>day+': '+formatValue(value,unit)).join(' · ');
     const caption=count<4?count+' OF 4 REPORTS AVAILABLE':'LAST 4 REPORT TOTALS';
     return '<div class="mj-kpi-spark mj-kpi-spark-'+tone+'">'+
-      '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet"'+
-        ' role="img" aria-label="'+esc(label+'. '+series)+
-        '. Each point is a verified report total, not an individual daily increment.">'+
-        segment+circles+'</svg>'+
+      '<svg class="mj-kpi-vertical-bars" viewBox="0 0 '+W+' '+H+'"'+
+        ' preserveAspectRatio="xMidYMid meet" role="img" aria-label="'+
+        esc(label+'. '+count+' of 4 saved report totals. '+values+
+        '. Empty slots represent unavailable reports, not zero.')+'">'+
+        '<line class="mj-kpi-bar-axis" x1="8" y1="'+bottom+
+        '" x2="252" y2="'+bottom+'"></line>'+
+        parts.join('')+'</svg>'+
       '<small>'+esc(caption)+'</small></div>';
   }
 
@@ -857,7 +900,7 @@
       '<span class="mj-daily-change '+esc(trend.tone)+'">'+esc(trend.text)+'</span>'+
       '<small>Last: '+esc(formatValue(last,unit))+
         (note?' · '+esc(note):'')+'</small>'+
-      historicalSparkline(label,current,unit,inverse)+
+      historicalSparkline(label,current,unit,inverse,last)+
       '</div>';
   }
   function dailyLine(title,items,unit='count',source=''){
