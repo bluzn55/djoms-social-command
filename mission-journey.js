@@ -1282,8 +1282,9 @@
       '</div>'+
       '<div class="mj-daily-search-supporting">'+
         '<div class="mj-daily-search-position">'+
-          miniMetric('GOOGLE POSITION · LOWER IS BETTER',
+          miniMetric('GOOGLE POSITION',
             priorPosition,googlePosition,'position',true)+
+          '<small class="mj-position-direction-hint">LOWER NUMBER = BETTER RANKING</small>'+
         '</div>'+
         historicalSparkline('GOOGLE POSITION',googlePosition,'position',true,priorPosition)+
       '</div>',
@@ -1644,8 +1645,9 @@
           search?.ctrCurrent,'percentage',false,'Percentage of appearances that earned a search click.')+
       '</div>'+
       '<div class="mj-search-supporting-position">'+
-        miniMetric('GOOGLE POSITION · LOWER IS BETTER',
+        miniMetric('GOOGLE POSITION',
           search?.positionPrevious,search?.positionCurrent,'position',true)+
+        '<small class="mj-position-direction-hint">LOWER NUMBER = BETTER RANKING</small>'+
       '</div>'+
       searchEnginesDropdown(search)+searchAppearancesDetails(seo),
       'Appearances and CTR tell us how often Doc Jaks is found and chosen. '+
