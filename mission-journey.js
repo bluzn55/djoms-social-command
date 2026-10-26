@@ -1107,10 +1107,12 @@
         '<strong>'+name+'</strong>'+
         '<em class="'+(current===0?'is-zero':'')+'">'+
           esc(formatValue(current))+'</em>'+
-        '<small class="mj-engine-last'+(previous===0?' is-zero':!valid(previous)?' is-unavailable':'')+
-          '">LAST '+esc(formatValue(previous))+'</small>'+
-        '<b class="mj-engine-change '+esc(change.tone)+'">'+esc(change.text)+'</b>'+
-      '</span>';
+        '<span class="mj-engine-compare-line" aria-label="'+
+          esc('Last '+formatValue(previous)+', '+change.text)+'">'+
+          '<small class="mj-engine-last'+(previous===0?' is-zero':!valid(previous)?' is-unavailable':'')+
+            '">LAST '+esc(formatValue(previous))+'</small>'+
+          '<b class="mj-engine-change '+esc(change.tone)+'">'+esc(change.text)+'</b>'+
+        '</span></span>';
     };
     const totals='<div class="mj-engine-split-totals">'+
       engineTotal('Google',currentGoogle,googleLast,'google')+
