@@ -13485,3 +13485,31 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     font-size:clamp(12px,1.2vw,15px)!important;
   }
 }
+
+
+/* ENGINE PERCENT MOVEMENT DISPLAY · OCT 26 2026
+   Percent change when LAST is nonzero; NEW when LAST=0 and NOW>0.
+   The engine's LAST=0 is distinct red. Green/red movement is separate. */
+#connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-change{
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  margin:1px 0 0;
+  text-align:center;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  font:900 clamp(13px,.98vw,17px)/1.13 Arial,sans-serif!important;
+  font-variant-numeric:tabular-nums;
+}
+#connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-change.up{
+  color:#176c3c!important;
+}
+#connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-change.down{
+  color:#b32c20!important;
+}
+#connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-change.hold{
+  color:#7c651e!important;
+}
+#connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-change.na{
+  color:#776d5d!important;
+}
