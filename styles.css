@@ -11175,18 +11175,31 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 #connectionStrip .mj-card-search{grid-column:1;grid-row:1;margin-top:2px}
 #connectionStrip .mj-card-clicks{grid-column:2 / span 2;grid-row:1;margin-top:16px}
 #connectionStrip .mj-card-visitors{grid-column:4;grid-row:1;margin-top:36px}
-#connectionStrip .mj-card-clicks .mj-arrival-part{min-width:0}
-#connectionStrip .mj-card-clicks .mj-arrival-clicks{padding-bottom:13px}
+/* Two separate, clearly labeled areas inside trail step #2. */
+#connectionStrip .mj-card-clicks .mj-arrival-part{
+  box-sizing:border-box;
+  min-width:0;
+  margin:10px 0 0;
+  padding:10px 12px 12px;
+  border:2px solid #a98451;
+  border-radius:8px;
+  background:#fff8e9;
+}
+#connectionStrip .mj-card-clicks .mj-arrival-clicks{
+  padding-bottom:13px;
+}
 #connectionStrip .mj-card-clicks .mj-arrival-website{
-  border-top:3px solid #946334;padding-top:12px;margin-top:6px
+  margin-top:14px;
+  border-color:#825d32;
+  background:#f7edd9;
 }
 #connectionStrip .mj-card-clicks .mj-arrival-subheading{
-  margin:0 0 7px!important;color:#24160b!important;
+  margin:0 0 10px!important;color:#24160b!important;
   font:900 clamp(16px,1.15vw,21px)/1.2 Georgia,serif!important;
-  letter-spacing:.25px
+  letter-spacing:.25px;
 }
 #connectionStrip .mj-card-clicks .mj-arrival-website .mj-minis{
-  grid-template-columns:repeat(2,minmax(0,1fr));column-gap:13px
+  grid-template-columns:repeat(2,minmax(0,1fr));column-gap:13px;
 }
 #connectionStrip .mj-card-music{grid-column:4;grid-row:2;margin-top:7px}
 #connectionStrip .mj-card-sales{grid-column:3;grid-row:2;margin-top:32px}
@@ -12963,5 +12976,68 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   #connectionStrip .mj-daily-date-focus{
     background:white!important;
     border-color:#9b8a69!important;
+  }
+}
+
+
+/* PERFORMANCE REPORT #2 · OCT 26 2026
+   Separate 2A Search Clicks and 2B Website Visits inside section #2.
+   The four verified visitor measures read left-to-right: New, Returning,
+   Unique Visitors, All Visits. Keep existing graphs and Last comparisons. */
+#connectionStrip #mjDailySection2>.mj-daily-metrics{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,4fr);
+  align-items:stretch;
+  gap:13px;
+}
+#connectionStrip #mjDailySection2 .mj-daily-subarea{
+  box-sizing:border-box;
+  min-width:0;
+  padding:10px 11px 12px;
+  border:2px solid #9b7850;
+  border-radius:9px;
+  background:#fff8e9;
+}
+#connectionStrip #mjDailySection2 .mj-daily-subarea-clicks{
+  background:#fbf3e6;
+  border-color:#ab8b63;
+}
+#connectionStrip #mjDailySection2 .mj-daily-subarea-visits{
+  background:#f6ead2;
+  border-color:#805c32;
+}
+#connectionStrip #mjDailySection2 .mj-daily-subarea>h5{
+  margin:0 0 10px!important;
+  color:#2d1c0f!important;
+  font:900 clamp(16px,1.12vw,21px)/1.2 Georgia,serif!important;
+}
+#connectionStrip #mjDailySection2 .mj-daily-subarea-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:9px;
+  align-items:stretch;
+}
+#connectionStrip #mjDailySection2 .mj-daily-subarea-clicks .mj-daily-subarea-grid{
+  grid-template-columns:minmax(0,1fr);
+}
+#connectionStrip #mjDailySection2 .mj-daily-kpi{
+  min-height:175px;
+}
+@media(max-width:1200px){
+  #connectionStrip #mjDailySection2>.mj-daily-metrics{
+    grid-template-columns:minmax(0,1fr);
+  }
+  #connectionStrip #mjDailySection2 .mj-daily-subarea-clicks .mj-daily-subarea-grid{
+    grid-template-columns:minmax(0,310px);
+  }
+}
+@media(max-width:870px){
+  #connectionStrip #mjDailySection2 .mj-daily-subarea-visits .mj-daily-subarea-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:510px){
+  #connectionStrip #mjDailySection2 .mj-daily-subarea-visits .mj-daily-subarea-grid{
+    grid-template-columns:minmax(0,1fr);
   }
 }
