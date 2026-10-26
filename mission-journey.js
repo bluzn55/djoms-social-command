@@ -1732,7 +1732,10 @@
           '<path class="mj-path-shadow" d="M 75 160 C 285 70, 460 230, 610 130 S 1040 45, 1135 175 C 1180 290, 1170 390, 1080 490 S 750 590, 575 485 S 245 390, 90 530"/>'+
           '<path class="mj-path-planks" d="M 75 160 C 285 70, 460 230, 610 130 S 1040 45, 1135 175 C 1180 290, 1170 390, 1080 490 S 750 590, 575 485 S 245 390, 90 530"/>'+
         '</svg>'+
-        first+second+third+musicPanel(music,owner)+fifth+socialPanel(social)+seventh+quickBrief+
+        first+second+third+musicPanel(music,owner)+fifth+
+        '<div class="mj-lower-left" aria-label="Actions, social and owner bottom-line summary">'+
+          seventh+socialPanel(social)+quickBrief+
+        '</div>'+
       '</div>'+
       '<div class="mj-swamp-disclaimer">⚜ Every stop is a separate reported measurement. '+
         'Social Media and Music/Radio are independent discovery and entertainment channels, not steps every visitor takes. '+

@@ -11205,6 +11205,21 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 #connectionStrip .mj-card-sales{grid-column:3;grid-row:2;margin-top:32px}
 #connectionStrip .mj-card-social{grid-column:2;grid-row:2;margin-top:10px}
 #connectionStrip .mj-card-actions{grid-column:1;grid-row:2;margin-top:32px}
+/* An independent left-hand subgrid puts the owner brief AFTER the
+   Actions and Social cards, instead of overlaying those two step cards. */
+#connectionStrip .mj-boardwalk > .mj-lower-left{
+  position:relative;z-index:1;min-width:0;max-width:100%;
+  grid-column:1 / span 2;grid-row:2;
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-template-rows:auto auto;align-items:start;
+  gap:18px 17px;
+}
+#connectionStrip .mj-lower-left > .mj-card-actions{
+  grid-column:1;grid-row:1;margin-top:32px;
+}
+#connectionStrip .mj-lower-left > .mj-card-social{
+  grid-column:2;grid-row:1;margin-top:10px;
+}
 #connectionStrip .mj-card-heading{
   display:flex;align-items:center;gap:6px;
   padding-bottom:6px;margin-bottom:4px;
@@ -11955,9 +11970,10 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
    Inside the otherwise open LOWER-LEFT half of the swamp map.
    Red/green statuses come from verified, selected-period comparisons. */
 #connectionStrip .mj-swamp-map .mj-quick-brief{
-  position:relative;z-index:3;min-width:0;
-  grid-column:1 / span 2;grid-row:2;align-self:start;
-  margin:260px 2px 2px 2px;padding:13px 15px 11px;
+  position:relative;z-index:2;min-width:0;box-sizing:border-box;
+  width:100%;max-width:100%;
+  grid-column:1 / -1;grid-row:2;align-self:start;
+  margin:0;padding:13px 15px 11px;
   border:4px double #402713;border-radius:11px;
   background:linear-gradient(155deg,#fff2d3 0%,#efdcad 64%,#e5c68c 100%);
   color:#21170e!important;
@@ -12059,12 +12075,32 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 #connectionStrip .mj-quick-legend .down{color:#a52922!important}
 #connectionStrip .mj-quick-legend .na{color:#63594c!important}
 @media(max-width:1650px){
+  #connectionStrip .mj-boardwalk > .mj-lower-left{
+    grid-column:1 / -1;grid-row:auto;
+  }
+  #connectionStrip .mj-lower-left > .mj-trail-card{
+    grid-row:1;margin-top:0!important;
+  }
   #connectionStrip .mj-swamp-map .mj-quick-brief{
-    grid-column:1 / -1;grid-row:auto;margin:0 1px;
+    grid-column:1 / -1;grid-row:2;margin:0;
   }
 }
 @media(max-width:900px){
   #connectionStrip .mj-quick-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:690px){
+  #connectionStrip .mj-boardwalk > .mj-lower-left{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:auto auto auto;
+    row-gap:15px;
+  }
+  #connectionStrip .mj-lower-left > .mj-trail-card{
+    grid-column:1!important;grid-row:auto!important;margin-top:0!important;
+  }
+  #connectionStrip .mj-swamp-map .mj-lower-left > .mj-quick-brief{
+    grid-column:1 / -1!important;grid-row:auto!important;
+    margin:0!important;
+  }
 }
 @media(max-width:610px){
   #connectionStrip .mj-quick-heading{flex-direction:column;align-items:stretch}
