@@ -1201,7 +1201,7 @@
     return '<section class="mj-daily-section" id="mjDailySection'+index+'">'+
       '<header><div class="mj-daily-title"><b class="mj-daily-number">'+index+'</b><h4>'+esc(title)+'</h4></div>'+health+'</header>'+
       '<div class="mj-daily-metrics">'+metrics+'</div>'+
-      '<div class="mj-daily-visuals">'+charts+'</div>'+
+      (charts?'<div class="mj-daily-visuals">'+charts+'</div>':'')+
       (details?'<div class="mj-daily-details">'+details+'</div>':'')+
       dailyDecision(good,concern,action,watch)+
       (caveat?'<p class="mj-daily-caveat">'+esc(caveat)+'</p>':'')+
