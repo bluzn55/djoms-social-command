@@ -58,9 +58,11 @@
   const displayDay=value=>typeof value==='string'&&
     /^\d{4}-\d{2}-\d{2}$/.test(value)?
     value.slice(5,7)+'-'+value.slice(8,10)+'-'+value.slice(0,4):'N/A';
-  const displayWindow=(from,to)=>
-    from&&to&&from===to?displayDay(from):
-      displayDay(from)+' to '+displayDay(to);
+  const displayWindow=(from,to)=>{
+    const start=displayDay(from),end=displayDay(to);
+    if(start==='N/A'||end==='N/A')return 'N/A';
+    return from===to?start:start+' to '+end;
+  };
   const reportNames={
     today:'DAILY', '7d':'WEEKLY', '30d':'MONTHLY','365d':'YEARLY',custom:'CUSTOM'
   };
