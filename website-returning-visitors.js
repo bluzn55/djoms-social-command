@@ -35,7 +35,9 @@
     const sessions = site?.connected && ok(site.sessions) ? site.sessions : null;
     return {visitors, sessions, returning, newVisitors,
       visitsPerVisitor: visitors > 0 && sessions !== null ? sessions / visitors : null,
-      returningShare: visitors > 0 && returning !== null ? returning / visitors * 100 : null};
+      returningShare: site?.visitorReconciliation?.status==='reconciled' &&
+        visitors > 0 && returning !== null ? returning / visitors * 100 : null,
+      synced:site?.visitorReconciliation?.status==='reconciled'};
   }
   const query = () => typeof websitePeriodQuery === 'function'
     ? websitePeriodQuery() : 'range=7d';
@@ -68,7 +70,8 @@
       '</div><div class="rv-stat-grid">'+
       stat('Visits per visitor',decimal(n.visitsPerVisitor),'Wix · visits ÷ visitors')+
       stat('Wix returning visitors',whole(n.returning),'Distinct visitors, where reported')+
-      stat('Wix return share',percent(n.returningShare),'Returning ÷ total visitors')+
+      stat('Wix return share',percent(n.returningShare),
+        n.synced?'Returning ÷ total visitors':'Pending: Wix reports disagree')+
       (compact?'':stat('Wix new visitors',whole(n.newVisitors),'Selected dates'))+
       '</div>';
   }

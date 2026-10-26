@@ -55,9 +55,13 @@
       previous:cmp.visitors?.previousVisitors??null,
       current:current('visitors')??cmp.visitors?.currentVisitors??null
     };
+    // Do not score an apparent return rate trend while Wix summary and
+    // visitor-type reports are processing different amounts of traffic.
+    const returningVerified=site?.visitorReconciliation?.status==='reconciled'&&
+      site.visitorReconciliation.previousReconciled===true;
     const returns={
-      previous:cmp.returningVisitors?.previous??null,
-      current:cmp.returningVisitors?.current??null
+      previous:returningVerified?(cmp.returningVisitors?.previous??null):null,
+      current:returningVerified?(cmp.returningVisitors?.current??null):null
     };
     const gc=seo?.status==='connected'&&seo.comparison?.status==='reported'?
       seo.comparison:null;

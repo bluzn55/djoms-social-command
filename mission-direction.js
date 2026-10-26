@@ -278,6 +278,8 @@
     const trafficNote=(wix&&site.trafficSourcesComplete!==true?
       'Some source rows may be incomplete. ':'')+
       'Wix visitors and sessions are different measures. GA4 sessions are independent; never add Wix and GA4 totals.';
+    const returningTrendVerified=site?.visitorReconciliation?.status==='reconciled'&&
+      site.visitorReconciliation.previousReconciled===true;
     const engagementRows=[
       pair('Average stay',time(cmp.avgTimeSeconds?.previous),time(wix?site.avgTimeSeconds:null),
         changeMotion(cmp.avgTimeSeconds)),
@@ -286,7 +288,8 @@
       pair('Pages per session',good(cmp.pagesPerSession?.previous)?cmp.pagesPerSession.previous.toFixed(2):'N/A',
         good(wix?site.pagesPerSession:null)?site.pagesPerSession.toFixed(2):'N/A'),
       pair('Returning visitors',storyNumber(cmp.returningVisitors?.previous),
-        storyNumber(cmp.returningVisitors?.current),changeMotion(cmp.returningVisitors)),
+        storyNumber(cmp.returningVisitors?.current),
+        changeMotion(returningTrendVerified?cmp.returningVisitors:null)),
       pair('GA4 engagement (separate)','N/A',measureRatio(ga?gm.engagementRate:null))
     ];
     const engagementNote='Higher average stay is encouraging, but bounce rate and repeat visits matter too. Radio listening cannot be inferred from website time.';
@@ -404,7 +407,10 @@
     const current=visits?comparison?.currentVisitors:comparison?.current;
     const format=visits?storyNumber:time;
     const change=changeMotion(comparison);
-    const returning=site?.connected===true?site.metricComparisons?.returningVisitors:null;
+    const returning=site?.connected===true&&
+      site?.visitorReconciliation?.status==='reconciled'&&
+      site.visitorReconciliation.previousReconciled===true?
+        site.metricComparisons?.returningVisitors:null;
     const pages=site?.connected===true?site.metricComparisons?.pageViews:null;
     const bounce=site?.connected===true?site.metricComparisons?.bounceRate:null;
     const depth=site?.connected===true?site.metricComparisons?.pagesPerSession:null;
@@ -440,7 +446,9 @@
     const visitors=comparisons.visitors;
     const stay=comparisons.avgTimeSeconds;
     const bounced=comparisons.bounceRate;
-    const returns=comparisons.returningVisitors;
+    const returns=site?.visitorReconciliation?.status==='reconciled'&&
+      site.visitorReconciliation.previousReconciled===true?
+        comparisons.returningVisitors:null;
     const visitorsTrend=trend(visitors);
     const stayTrend=trend(stay);
     const bounceTrend=trend(bounced,false);

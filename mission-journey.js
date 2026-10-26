@@ -321,8 +321,8 @@
       '<div class="mj-last">LAST '+esc(formatValue(last,unit))+'</div>'+
       (caption?'<small>'+esc(caption)+'</small>':'')+'</div>';
   }
-  function miniMetric(label,last,current,unit='count',inverse=false){
-    const motion=movement(last,current,inverse);
+  function miniMetric(label,last,current,unit='count',inverse=false,provisional=false){
+    const motion=provisional?{tone:'na',text:'PENDING'}:movement(last,current,inverse);
     return '<div class="mj-mini-kpi">'+
       '<span>'+esc(label)+'</span>'+
       '<strong>'+esc(formatValue(current,unit))+'</strong>'+
@@ -343,6 +343,28 @@
     if(site?.connected!==true||!Array.isArray(site.visitorTypes))return null;
     const item=site.visitorTypes.find(row=>row?.type==='first_time_visitor');
     return valid(item?.visitors)?item.visitors:null;
+  }
+  // Different Wix reports must agree before New/Returning trends are trusted.
+  function visitorTypeTrendsReady(site){
+    const r=site?.visitorReconciliation;
+    return r?.status==='reconciled'&&r.previousReconciled===true;
+  }
+  function visitorSplitNote(site){
+    const r=site?.visitorReconciliation;
+    if(!r)return '<p class="mj-visitor-sync mj-visitor-sync-warning"><strong>WIX REPORT CHECK PENDING.</strong> Visitor breakdown and total may use different Wix update cycles.</p>';
+    if(r.status==='reconciled')return '<p class="mj-visitor-sync"><strong>VISITORS RECONCILED:</strong> '+
+      esc(number(r.newVisitors))+' New + '+esc(number(r.returningVisitors))+
+      ' Returning = '+esc(number(r.summaryVisitors))+' Website Visitors. '+
+      esc(number(r.summarySessions))+' total visits include repeat sessions.'+
+      (r.previousReconciled?'':' Previous-period comparison still needs verification.')+'</p>';
+    const classified=valid(r.classifiedVisitors)?number(r.classifiedVisitors):'N/A';
+    const total=valid(r.summaryVisitors)?number(r.summaryVisitors):'N/A';
+    const gap=valid(r.difference)&&r.difference>0?
+      ' · Difference: '+number(r.difference)+' visitors not reconciled.':'';
+    return '<p class="mj-visitor-sync mj-visitor-sync-warning" role="status">'+
+      '<strong>WIX REPORTS DO NOT YET MATCH:</strong> '+total+
+      ' unique visitors in summary versus '+classified+' in the New/Returning report'+gap+
+      ' The detailed report may lag today. New and Returning comparisons are provisional.</p>';
   }
   function sources(site){
     const enabled=site?.connected===true;
@@ -852,8 +874,10 @@
     if(site?.connected===true){
       put('websiteVisits',site.sessions);
       put('websiteVisitors',site.visitors);
-      put('newVisitors',wixNewVisitors(site));
-      put('returningVisitors',site.metricComparisons?.returningVisitors?.current);
+      if(site.visitorReconciliation?.status==='reconciled'){
+        put('newVisitors',wixNewVisitors(site));
+        put('returningVisitors',site.metricComparisons?.returningVisitors?.current);
+      }
       put('pageViews',site.pageViews);
       put('averageStay',site.avgTimeSeconds);
       put('bounceRate',site.bounceRate);
@@ -921,15 +945,16 @@
     });
   }
 
-  function dailyKpi(label,last,current,unit='count',inverse=false,note=''){
-    const trend=dailyMovement(last,current,inverse,unit);
+  function dailyKpi(label,last,current,unit='count',inverse=false,note='',provisional=false){
+    const trend=provisional?{tone:'na',text:'PENDING WIX SYNC'}:dailyMovement(last,current,inverse,unit);
     return '<div class="mj-daily-kpi">'+
       '<b>'+esc(label)+'</b>'+
       '<strong>'+esc(formatValue(current,unit))+'</strong>'+
       '<span class="mj-daily-change '+esc(trend.tone)+'">'+esc(trend.text)+'</span>'+
       '<small>Last: '+esc(formatValue(last,unit))+
         (note?' · '+esc(note):'')+'</small>'+
-      historicalSparkline(label,current,unit,inverse,last)+
+      (provisional?'<div class="mj-kpi-spark-empty">WAITING FOR WIX VISITOR BREAKDOWN</div>':
+        historicalSparkline(label,current,unit,inverse,last))+
       '</div>';
   }
   function dailyLine(title,items,unit='count',source=''){
@@ -1238,6 +1263,7 @@
       'Google search phrases overlap result-page totals and are never added to overall appearances.',dailyHealthMeter(dailySectionScore(owner,['search'])));
 
     const siteOkay=site?.connected===true;
+    const visitorTypesProvisional=!visitorTypeTrendsReady(site);
     const weekRows=siteOkay&&Array.isArray(site.weekly)?site.weekly:[];
     const weekly=(field)=>weekRows.filter(row=>
       typeof row?.start==='string'&&/^\d{4}-\d{2}-\d{2}/.test(row.start)&&valid(row[field]))
@@ -1273,11 +1299,11 @@
       '<div class="mj-daily-subarea mj-daily-subarea-visits">'+
         '<h5>2B · WEBSITE VISITS · ALL SOURCES</h5>'+
         '<div class="mj-daily-subarea-grid">'+
-          dailyKpi('NEW VISITORS',wixCmp.newVisitors?.previous,siteOkay?wixNewVisitors(site):null)+
-          dailyKpi('RETURNING VISITORS',wixCmp.returningVisitors?.previous,wixCmp.returningVisitors?.current)+
+          dailyKpi('NEW VISITORS',wixCmp.newVisitors?.previous,siteOkay?wixNewVisitors(site):null,'count',false,'',visitorTypesProvisional)+
+          dailyKpi('RETURNING VISITORS',wixCmp.returningVisitors?.previous,wixCmp.returningVisitors?.current,'count',false,'',visitorTypesProvisional)+
           dailyKpi('WEBSITE VISITORS',wixCmp.visitors?.previousVisitors,siteOkay?site.visitors:null)+
           dailyKpi('ALL WEBSITE VISITS',traffic.sessions.last,traffic.sessions.now)+
-        '</div>'+
+        '</div>'+visitorSplitNote(site)+
       '</div>',
       dailyBars('WHERE WEBSITE VISITS CAME FROM',wixSources,'count',
         'Wix sessions, not search clicks. Source coverage may be partial.')+
@@ -1538,6 +1564,7 @@
     const gsc=google&&seo.comparison?.status==='reported'?seo.comparison:null;
     const lastSearch=field=>valid(gsc?.[field]?.previous)?gsc[field].previous:null;
     const wixCmp=wix?site.metricComparisons||{}:{};
+    const visitorTypesProvisional=!visitorTypeTrendsReady(site);
     const priorVisitors=wixCmp.visitors?.previousVisitors;
     const paid=salesReady(sales,period);
     const comparison=paid&&sales.salesComparison?.status==='reported'&&
@@ -1581,11 +1608,11 @@
       '<section class="mj-arrival-part mj-arrival-website" aria-label="Website visits and unique visitors">'+
         '<h4 class="mj-arrival-subheading">2B · WEBSITE VISITS · ALL SOURCES</h4>'+
         '<div class="mj-minis mj-visit-counts">'+
-          miniMetric('NEW VISITORS',wixCmp.newVisitors?.previous,wixNewVisitors(site))+
+          miniMetric('NEW VISITORS',wixCmp.newVisitors?.previous,wixNewVisitors(site),'count',false,visitorTypesProvisional)+
           miniMetric('RETURNING VISITORS',wixCmp.returningVisitors?.previous,
-            wixCmp.returningVisitors?.current)+
+            wixCmp.returningVisitors?.current,'count',false,visitorTypesProvisional)+
           miniMetric('WEBSITE VISITORS',priorVisitors,wix?site.visitors:null)+
-          miniMetric('ALL WEBSITE VISITS',traffic.sessions.last,traffic.sessions.now)+'</div>'+
+          miniMetric('ALL WEBSITE VISITS',traffic.sessions.last,traffic.sessions.now)+'</div>'+visitorSplitNote(site)+
         wixSourcesDropdown(site)+
         (typeof window.djomsSupporterPanel==='function'?
           window.djomsSupporterPanel(period):'')+

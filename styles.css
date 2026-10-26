@@ -13041,3 +13041,23 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     grid-template-columns:minmax(0,1fr);
   }
 }
+/* DOC JAKS Wix visitor classification freshness check: visible, not alarming. */
+#connectionStrip .mj-visitor-sync{
+  display:block;
+  margin:10px 0 3px!important;
+  padding:9px 0 1px;
+  border-top:2px solid #aa8b62;
+  color:#2e2317!important;
+  font:800 clamp(13px,.92vw,16px)/1.45 Arial,sans-serif!important;
+}
+#connectionStrip .mj-visitor-sync strong{
+  font-weight:900!important;
+  color:#252014!important;
+}
+#connectionStrip .mj-visitor-sync-warning{
+  color:#7a421f!important;
+}
+#connectionStrip .mj-daily-subarea .mj-visitor-sync{
+  margin:11px 0 0!important;
+  padding:11px 1px 0;
+}

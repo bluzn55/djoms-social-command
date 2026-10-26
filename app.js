@@ -538,6 +538,12 @@ function renderConnectionStrip() {
           const pagesPerVisitor=validNumber(site.visitors)&&site.visitors>0&&
             validNumber(site.pageViews)
             ?(site.pageViews/site.visitors).toFixed(2):'N/A';
+          // A colored Returning Visitors trend is not valid until Wix's
+          // detailed visitor-type report agrees with the summary total.
+          const returnTrendVerified=site?.visitorReconciliation?.status==='reconciled'&&
+            site.visitorReconciliation.previousReconciled===true;
+          const trendFor=key=>key==='returningVisitors'&&!returnTrendVerified?null:
+            site.metricComparisons?.[key]||(key==='visitors'?site.visitorComparison:null);
           const counters=[
             ['Visitors',site.visitors,'visitors'],
             ['Returning visitors',returningVisitors,'returningVisitors'],
@@ -563,9 +569,9 @@ function renderConnectionStrip() {
               <span>Wix tracks visitors and activity from Google, social media, direct links, and other sources.</span>
             </div>
             <div class="mission-web-gauges" aria-label="Website figures for ${esc(rangeCaption)}">
-              ${counters.map(([title,value,key])=>`<div class="mission-web-gauge mission-web-trend-${missionMetricTrendColor(site.metricComparisons?.[key]||(key==='visitors'?site.visitorComparison:null),title)}${title==='Bounce rate'?' mission-web-bounce':''}${title==='Visitors'?' mission-web-visitors':''}${title==='Pages / visitor'?' mission-web-depth':''}"${title==='Pages / visitor'?' title="Page views divided by unique visitors in the selected period"':''}>
+              ${counters.map(([title,value,key])=>`<div class="mission-web-gauge mission-web-trend-${missionMetricTrendColor(trendFor(key),title)}${title==='Bounce rate'?' mission-web-bounce':''}${title==='Visitors'?' mission-web-visitors':''}${title==='Pages / visitor'?' mission-web-depth':''}"${title==='Pages / visitor'?' title="Page views divided by unique visitors in the selected period"':''}>
                 <small>${esc(title)}</small>
-                <div class="mission-web-value-line"><strong>${esc(compactMetric(value))}</strong>${title==='Pages / visitor'?'':renderVisitorChangeGauge(site.metricComparisons?.[key]||(key==='visitors'?site.visitorComparison:null),title)}</div>
+                <div class="mission-web-value-line"><strong>${esc(compactMetric(value))}</strong>${title==='Pages / visitor'?'':renderVisitorChangeGauge(trendFor(key),title)}</div>
                 ${title==='Bounce rate'?renderBounceMeter(site.bounceRate):''}
               </div>`).join('')}
             </div>
@@ -1428,7 +1434,9 @@ function calculateWebsiteHealth(site) {
   const priorReturning=metric.returningVisitors?.previous;
   // Compare repeat-visitor SHARE, not raw repeat counts. Rising overall traffic
   // must not automatically make repeat engagement look stronger.
-  if([currentVisitors,priorVisitors,currentReturning,priorReturning].every(goodNumber)
+  if(site?.visitorReconciliation?.status==='reconciled'&&
+     site.visitorReconciliation.previousReconciled===true&&
+     [currentVisitors,priorVisitors,currentReturning,priorReturning].every(goodNumber)
      &&currentVisitors>0&&priorVisitors>0) {
     const currentShare=currentReturning/currentVisitors;
     const priorShare=priorReturning/priorVisitors;
