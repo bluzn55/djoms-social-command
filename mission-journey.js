@@ -756,7 +756,7 @@
     return '<div class="mj-kpi-spark mj-kpi-spark-'+tone+'">'+
       '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet"'+
         ' role="img" aria-label="'+esc(label+'. '+series)+
-        '. Each point is a saved report total, not an individual day increment.">'+
+        '. Each point is a verified report total, not an individual daily increment.">'+
         segment+circles+'</svg>'+
       '<small>'+esc(caption)+'</small></div>';
   }
