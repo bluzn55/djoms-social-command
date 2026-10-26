@@ -12613,3 +12613,70 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     grid-column:1;grid-row:4;
   }
 }
+
+
+/* FOUR-REPORT STAT-BOX SPARKLINES · OCT 26 2026
+   Small line graphs INSIDE each existing KPI card, directly below Last.
+   Values are preserved historical report snapshots, never invented. */
+#connectionStrip .mj-daily-kpi{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  min-height:176px;
+}
+#connectionStrip .mj-kpi-spark{
+  display:flex;flex-direction:column;align-items:flex-start;
+  gap:1px;width:100%;margin:8px 0 0;
+  padding:7px 0 0;border-top:1px solid #e2d4ba;
+  margin-top:auto;min-width:0;
+}
+#connectionStrip .mj-kpi-spark svg{
+  width:min(100%,140px);
+  max-width:140px;
+  height:38px;
+  display:block;
+  overflow:visible;
+  flex:none;
+}
+#connectionStrip .mj-kpi-spark-path{
+  stroke:#80745b;stroke-width:2.65;
+  fill:none;stroke-linecap:round;stroke-linejoin:round;
+}
+#connectionStrip .mj-kpi-spark-dot{
+  stroke:#fffaf0;stroke-width:1.2;fill:#80745b;
+}
+#connectionStrip .mj-kpi-spark-dot.last{stroke-width:1.8}
+#connectionStrip .mj-kpi-spark-up .mj-kpi-spark-path{stroke:#166d42}
+#connectionStrip .mj-kpi-spark-up .mj-kpi-spark-dot{fill:#166d42}
+#connectionStrip .mj-kpi-spark-down .mj-kpi-spark-path{stroke:#b22b21}
+#connectionStrip .mj-kpi-spark-down .mj-kpi-spark-dot{fill:#b22b21}
+#connectionStrip .mj-kpi-spark-hold .mj-kpi-spark-path{stroke:#a68130}
+#connectionStrip .mj-kpi-spark-hold .mj-kpi-spark-dot{fill:#a68130}
+#connectionStrip .mj-kpi-spark-na .mj-kpi-spark-dot{fill:#756d62}
+#connectionStrip .mj-kpi-spark small{
+  display:block;color:#60513d!important;
+  font:900 10px/1.15 Arial,sans-serif!important;
+  letter-spacing:.035em;
+}
+#connectionStrip .mj-kpi-spark-empty{
+  display:flex;align-items:flex-end;
+  min-height:57px;
+  box-sizing:border-box;margin:8px 0 0;
+  padding:8px 0 2px;width:100%;min-width:0;
+  border-top:1px solid #e2d4ba;
+  color:#7a6c57!important;
+  font:850 10px/1.2 Arial,sans-serif!important;
+  letter-spacing:.025em;
+}
+@media(max-width:1250px){
+  #connectionStrip .mj-daily-kpi{min-height:172px}
+}
+@media(max-width:540px){
+  #connectionStrip .mj-daily-kpi{min-height:162px}
+  #connectionStrip .mj-kpi-spark svg{width:130px;height:36px}
+}
+@media print{
+  #connectionStrip .mj-kpi-spark svg{
+    print-color-adjust:exact;-webkit-print-color-adjust:exact;
+  }
+}
