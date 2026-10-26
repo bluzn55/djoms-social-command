@@ -13591,3 +13591,60 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     font-size:clamp(14px,3.6vw,19px)!important;
   }
 }
+
+
+/* SECTION 2 · THREE SIDE-BY-SIDE TRAFFIC CHARTS · OCT 26 2026 */
+/* Search clicks | Website visit sources | Wix weekly visit history
+   All three on one row on desktop, without stretching the shorter cards
+   into tall empty boxes. Other report sections retain their own layouts. */
+#connectionStrip #mjDailySection2>.mj-daily-visuals{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  align-items:start;
+  gap:11px;
+  min-width:0;
+}
+#connectionStrip #mjDailySection2>.mj-daily-visuals>.mj-daily-chart{
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  margin:0;
+  padding:11px 10px;
+}
+#connectionStrip #mjDailySection2 .mj-daily-chart h5{
+  font:900 clamp(14px,.96vw,17px)/1.23 Arial,sans-serif!important;
+  margin:0 0 12px!important;
+  overflow-wrap:anywhere;
+}
+#connectionStrip #mjDailySection2 .mj-daily-bar{
+  grid-template-columns:minmax(105px,1.05fr) minmax(50px,1.48fr) auto;
+  gap:7px;
+  min-width:0;
+}
+#connectionStrip #mjDailySection2 .mj-daily-bar>span{
+  font:850 clamp(12px,.83vw,14px)/1.23 Arial,sans-serif!important;
+}
+#connectionStrip #mjDailySection2 .mj-daily-bar>strong{
+  font:900 clamp(14px,.94vw,17px)/1.15 Arial,sans-serif!important;
+}
+#connectionStrip #mjDailySection2 .mj-daily-chart-note{
+  font:750 13px/1.34 Arial,sans-serif!important;
+}
+@media(max-width:1150px){
+  #connectionStrip #mjDailySection2>.mj-daily-visuals{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:700px){
+  #connectionStrip #mjDailySection2>.mj-daily-visuals{
+    grid-template-columns:minmax(0,1fr);
+  }
+  #connectionStrip #mjDailySection2 .mj-daily-bar{
+    grid-template-columns:minmax(90px,1fr) minmax(50px,1.6fr) auto;
+  }
+}
+@media print{
+  #connectionStrip #mjDailySection2>.mj-daily-visuals{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
