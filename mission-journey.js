@@ -644,6 +644,19 @@
       '</p>',
       'This is a separate music-performance channel. Paid music is already included in total web sales and is not counted twice.');
   }
+
+  // One concise owner summary: reporting-period evidence, never placeholder totals.
+  // Direction colors are based on real last/current comparisons only.
+  function quickMetric(label,last,current,unit,explanation){
+    const change=movement(last,current);
+    return '<div class="mj-quick-metric">'+
+      '<b class="mj-quick-label">'+esc(label)+'</b>'+
+      '<div class="mj-quick-values"><strong>'+esc(formatValue(current,unit))+'</strong>'+
+        '<span class="mj-quick-change '+esc(change.tone)+'">'+esc(change.text)+'</span></div>'+
+      '<small>'+esc(explanation)+(valid(last)?' · Last '+esc(formatValue(last,unit)):' · Prior N/A')+'</small>'+
+      '</div>';
+  }
+
   function journey(context){
     const {site,seo,ga4,sales,period,social:providedSocial}=context||{};
     const social=providedSocial||(typeof window.djomsSocialPeriod==='function'?window.djomsSocialPeriod(period):null);
@@ -749,6 +762,48 @@
       key==='fileDownloads'?previousEvents.fileDownload?.previous:null;
     const canCompare=valid(lastMetric)&&valid(curr);
     const direction=canCompare?movement(lastMetric,curr,key==='siteBounceRate'):{tone:'na',text:'N/A'};
+
+    // Bottom-left of the trail, beneath Steps 6 and 7.
+    // The explanations here replace the four oversized panels below the trail.
+    const quickBrief='<article class="mj-quick-brief" aria-label="The Bottom Line: quick owner results">'+
+      '<header class="mj-quick-heading">'+
+        '<div class="mj-quick-title"><small>⚜ DOC JAKS · OWNER QUICK READ</small>'+
+          '<h3>THE BOTTOM LINE</h3>'+
+          '<p>'+esc(periodTitle(period))+' · Verified figures only</p></div>'+
+        '<div class="mj-quick-score '+esc(scoreStyle)+'">'+
+          '<strong>'+esc(scoreArrow)+' '+esc(score===null?'N/A':score)+' '+esc(scoreName)+'</strong>'+
+          '<small>100 = Holding · Above 100 = Forward</small></div>'+
+      '</header>'+
+      '<div class="mj-quick-metrics" aria-label="Six key results and their changes">'+
+        quickMetric('SEARCH APPEARANCES',search?.previous,search?.current,'count',
+          'Shown in search results')+
+        quickMetric('SEARCH CLICKS',search?.clicksPrevious,search?.clicksCurrent,'count',
+          'Clicks from search results')+
+        quickMetric('WEBSITE VISITS',traffic.sessions.last,traffic.sessions.now,'count',
+          'All sources, Wix sessions')+
+        quickMetric('PAGE VIEWS',wixCmp.pageViews?.previous,wix?site.pageViews:null,'count',
+          'Pages opened, including repeats')+
+        quickMetric('INQUIRIES',contactsLast,contactsNow,'count',
+          'Contact clicks + forms')+
+        quickMetric('GROSS WEB SALES',comparison?.itemSalesCents,
+          paid?sales.itemSalesCents:null,'cents','Online item sales, not profit')+
+      '</div>'+
+      '<div class="mj-quick-answers" aria-label="What happened, why, next action and proof">'+
+        '<div class="mj-quick-answer"><b>WHAT HAPPENED?</b><p>'+esc(note.evidence)+'</p></div>'+
+        '<div class="mj-quick-answer"><b>WHY? · POSSIBLE CAUSE</b><p>'+esc(note.why)+'</p></div>'+
+        '<div class="mj-quick-answer"><b>WHAT SHOULD WE CHANGE?</b><p>'+esc(note.next)+'</p></div>'+
+        '<div class="mj-quick-answer"><b>DID IT WORK?</b>'+
+          '<strong class="mj-quick-verdict '+esc(direction.tone)+'">'+
+            esc(canCompare?direction.text:'NOT YET PROVEN')+'</strong>'+
+          '<p>'+esc(metricDefs[key]?.label||'Tracked metric')+': Last '+
+            esc(showMetric(key,lastMetric))+' · Now '+esc(showMetric(key,curr))+'</p>'+
+          '<small>Trend only. A page edit has not been proven to cause this.</small></div>'+
+      '</div>'+
+      '<p class="mj-quick-legend"><span class="up">↑ GREEN · Improving</span>'+
+        '<span class="down">↓ RED · Losing ground</span>'+
+        '<span class="na">→ N/A · Not verified yet</span></p>'+
+    '</article>';
+
     return '<section id="mjVisitorJourney" class="mission-journey-panel mj-swamp-map" aria-label="Swamp Visitor Journey Intelligence">'+
       '<div class="mj-swamp-trees" aria-hidden="true"></div>'+
       '<header class="mj-wood-header">'+
@@ -766,25 +821,11 @@
           '<path class="mj-path-shadow" d="M 75 160 C 285 70, 460 230, 610 130 S 1040 45, 1135 175 C 1180 290, 1170 390, 1080 490 S 750 590, 575 485 S 245 390, 90 530"/>'+
           '<path class="mj-path-planks" d="M 75 160 C 285 70, 460 230, 610 130 S 1040 45, 1135 175 C 1180 290, 1170 390, 1080 490 S 750 590, 575 485 S 245 390, 90 530"/>'+
         '</svg>'+
-        first+second+third+musicPanel(music,owner)+fifth+socialPanel(social)+seventh+
+        first+second+third+musicPanel(music,owner)+fifth+socialPanel(social)+seventh+quickBrief+
       '</div>'+
       '<div class="mj-swamp-disclaimer">⚜ Every stop is a separate reported measurement. '+
         'Social Media and Music/Radio are independent discovery and entertainment channels, not steps every visitor takes. '+
         'Website Visits, Visitors, Page Views and listening connections count different things; no fabricated conversion funnel is implied.</div>'+
-      '<div class="mj-decision-heading"><span>⚜ THE FOUR QUESTIONS THAT TURN DATA INTO DECISIONS ⚜</span></div>'+
-      '<div class="mj-intelligence">'+
-        '<article><h3>1. WHAT HAPPENED?</h3><p>'+esc(note.evidence)+
-          '</p><small>Recorded evidence</small></article>'+
-        '<article><h3>2. WHY?</h3><p>'+esc(note.why)+
-          '</p><small>HYPOTHESIS · '+esc(note.confidence)+'</small></article>'+
-        '<article><h3>3. WHAT DO WE CHANGE?</h3><p>'+esc(note.next)+
-          '</p><small>Suggested improvement to test</small></article>'+
-        '<article><h3>4. DID IT WORK?</h3><strong class="mj-trend '+esc(direction.tone)+'">'+
-          esc(canCompare?direction.text:'NOT YET PROVEN')+'</strong>'+
-          '<p>'+esc(metricDefs[key]?.label||'Tracked metric')+': Last '+esc(showMetric(key,lastMetric))+
-          ' · Current '+esc(showMetric(key,curr))+'</p>'+
-          '<small>Observed change is not proof that a specific page edit caused it.</small></article>'+
-      '</div>'+
       '<details class="mj-map-evidence"><summary>OPEN SEARCH PHRASES, VISITED PAGES, CTAs &amp; OTHER EVIDENCE ▾</summary>'+
         evidence(seo,site,ga4)+'</details>'+
       testsPanel(site,seo,ga4,sales,period)+
