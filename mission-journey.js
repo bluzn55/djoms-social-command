@@ -752,7 +752,7 @@
         '" cx="'+p.x+'" cy="'+p.y+'" r="'+(i===count-1?4.5:3.1)+'">'+
         '<title>'+esc(p.day+' · '+formatValue(p.value,unit))+'</title></circle>').join('');
     const series=days.map(([d,v])=>d+': '+formatValue(v,unit)).join(' · ');
-    const caption=count<4?count+' OF 4 REPORTS SAVED':'LAST 4 REPORT TOTALS';
+    const caption=count<4?count+' OF 4 REPORTS AVAILABLE':'LAST 4 REPORT TOTALS';
     return '<div class="mj-kpi-spark mj-kpi-spark-'+tone+'">'+
       '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet"'+
         ' role="img" aria-label="'+esc(label+'. '+series)+
