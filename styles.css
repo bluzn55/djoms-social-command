@@ -13450,3 +13450,38 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     -webkit-print-color-adjust:exact;print-color-adjust:exact;
   }
 }
+
+
+/* VERIFIED ENGINE LAST ZERO VISIBILITY · OCT 26 2026
+   One compact LAST line under each Google/Bing total. A true reported 0
+   is rust-red, while N/A stays gray; only actual source values shown. */
+#connectionStrip #mjDailySection1 .mj-engine-split-totals>span{
+  gap:1px;
+  padding:4px 3px 5px;
+}
+#connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-last{
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  padding:3px 1px 0;
+  margin:2px 0 0;
+  border-top:1px solid #d9c6a7;
+  color:#453827!important;
+  font:900 clamp(12px,.9vw,15px)/1.15 Arial,sans-serif!important;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+  text-align:center;
+}
+#connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-last.is-zero,
+#connectionStrip #mjDailySection1 .mj-engine-split-totals em.is-zero{
+  color:#a12a1d!important;
+  font-weight:900!important;
+}
+#connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-last.is-unavailable{
+  color:#776d5d!important;
+}
+@media(max-width:1070px){
+  #connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-last{
+    font-size:clamp(12px,1.2vw,15px)!important;
+  }
+}
