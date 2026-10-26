@@ -13222,3 +13222,176 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     background:white!important;break-inside:avoid;
   }
 }
+
+
+/* GOOGLE POSITION CENTERED THIRD KPI · OCT 26 2026
+   Below the two larger Appearances/CTR hero metrics in BOTH views.
+   Lower Google average position is better; value/last/change stay linked. */
+#connectionStrip .mj-card-search .mj-search-supporting-position{
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  min-width:0;
+  width:min(100%,270px);
+  max-width:100%;
+  margin:3px auto 12px;
+  padding:11px 10px 9px;
+  border:2px solid #ba985d;
+  border-radius:8px;
+  background:linear-gradient(150deg,#fff9e9,#f2dfb8);
+  text-align:center;
+}
+#connectionStrip .mj-card-search .mj-search-supporting-position .mj-mini-kpi{
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  width:100%;
+  min-width:0;
+  padding:0;
+  border:0;
+  text-align:center;
+}
+#connectionStrip .mj-card-search .mj-search-supporting-position .mj-mini-kpi>span{
+  font:900 clamp(15px,1.1vw,19px)/1.17 Arial,sans-serif!important;
+  color:#2e2114!important;
+  text-align:center;
+}
+#connectionStrip .mj-card-search .mj-search-supporting-position .mj-mini-kpi>strong{
+  font:900 clamp(27px,1.8vw,37px)/1.06 Georgia,serif!important;
+  color:#1c140c!important;
+  font-variant-numeric:tabular-nums;
+  white-space:normal;
+  text-align:center;
+}
+#connectionStrip .mj-card-search .mj-search-supporting-position .mj-mini-kpi>small{
+  font:850 13px/1.2 Arial,sans-serif!important;
+  color:#66503a!important;
+  text-align:center;
+}
+#connectionStrip .mj-card-search .mj-search-supporting-position .mj-mini-kpi>b{
+  font:900 clamp(15px,.95vw,18px)/1.18 Arial,sans-serif!important;
+  text-align:center;
+}
+#connectionStrip .mj-card-search .mj-search-supporting-position .mj-position-direction-hint,
+#connectionStrip #mjDailySection1 .mj-daily-search-position .mj-position-direction-hint{
+  display:block;
+  margin:6px 0 0;
+  padding-top:5px;
+  width:100%;
+  border-top:1px solid #d6bd91;
+  color:#775a33!important;
+  font:900 clamp(11px,.85vw,14px)/1.17 Arial,sans-serif!important;
+  letter-spacing:.035em;
+  text-align:center;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-supporting{
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-self:center;
+  width:min(100%,460px);
+  max-width:100%;
+  min-width:0;
+  margin:0 auto 3px;
+  padding:13px 19px 11px;
+  gap:7px;
+  border:2px solid #b5925c;
+  border-radius:9px;
+  background:linear-gradient(160deg,#fffaf0,#f0dfbb);
+  text-align:center;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-position{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  min-width:0;
+  text-align:center;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-position .mj-mini-kpi{
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:5px;
+  width:100%;
+  min-width:0;
+  border:0;
+  padding:0;
+  text-align:center;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-position .mj-mini-kpi>span{
+  font:900 clamp(16px,1.13vw,20px)/1.14 Arial,sans-serif!important;
+  color:#372616!important;
+  text-align:center;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-position .mj-mini-kpi>strong{
+  font:900 clamp(32px,2.45vw,46px)/1.05 Georgia,serif!important;
+  color:#1d150d!important;
+  font-variant-numeric:tabular-nums;
+  white-space:normal;
+  text-align:center;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-position .mj-mini-kpi>small{
+  font:850 clamp(14px,.94vw,16px)/1.15 Arial,sans-serif!important;
+  color:#604a31!important;
+  text-align:center;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-position .mj-mini-kpi>b{
+  font:900 clamp(17px,1.12vw,21px)/1.15 Arial,sans-serif!important;
+  text-align:center;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-supporting>.mj-kpi-spark{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  width:100%;
+  min-width:0;
+  gap:1px;
+  margin:1px 0 0;
+  padding:7px 0 0;
+  border:0;
+  border-top:1px solid #dac5a2;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-supporting .mj-kpi-vertical-bars{
+  display:block;
+  width:min(100%,210px);
+  max-width:210px;
+  height:68px;
+  max-height:68px;
+  margin:0 auto;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-supporting .mj-kpi-spark>small{
+  width:100%;
+  font:900 11px/1.16 Arial,sans-serif!important;
+  text-align:center!important;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-supporting>.mj-kpi-spark-empty{
+  box-sizing:border-box;
+  display:flex;
+  justify-content:center;
+  min-height:33px;
+  margin:5px 0 0;
+  border-top:1px solid #dac5a2;
+  text-align:center;
+}
+@media(max-width:720px){
+  #connectionStrip #mjDailySection1 .mj-daily-search-supporting{
+    width:min(100%,460px);
+    padding:12px 13px 10px;
+    margin:0 auto;
+  }
+  #connectionStrip #mjDailySection1 .mj-daily-search-supporting>.mj-kpi-spark{
+    align-items:center;
+  }
+  #connectionStrip #mjDailySection1 .mj-daily-search-supporting .mj-kpi-spark>small{
+    text-align:center!important;
+  }
+}
