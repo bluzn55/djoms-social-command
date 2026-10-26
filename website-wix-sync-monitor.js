@@ -18,7 +18,11 @@
     if(typeof busy==='boolean'&&busy)return null;
     const snapshot=websiteSnapshot();
     if(snapshot?.connected!==true)return null;
-    if(!['pending','unverified'].includes(snapshot.visitorReconciliation?.status))return null;
+    const reconciliation=snapshot.visitorReconciliation;
+    // Current counts may be aligned while yesterday's comparison still lags.
+    if(!reconciliation||reconciliation.status==='reconciled'&&
+       reconciliation.previousReconciled===true)return null;
+    if(!['pending','unverified','reconciled'].includes(reconciliation.status))return null;
     const range=websiteRange;
     const query=websitePeriodQuery();
     return {snapshot,range,query};
@@ -42,8 +46,11 @@
       // A transient Wix outage must not wipe verified visitors/visits.
       const next=await api('website-range?'+selection.query);
       if(!next?.connected||next?.range?.selection!==selection.range)return;
-      if(next?.range?.start!==selection.snapshot?.range?.start||
-         next?.range?.end!==selection.snapshot?.range?.end)return;
+      // A custom range never changes without user action; rolling Day/Week/
+      // Month/Year dates may advance at midnight while the page stays open.
+      if(selection.range==='custom'&&
+         (next?.range?.start!==selection.snapshot?.range?.start||
+          next?.range?.end!==selection.snapshot?.range?.end))return;
       if(websiteRange!==selection.range||websitePeriodQuery()!==selection.query)return;
 
       const wasMatched=selection.snapshot.visitorReconciliation?.status==='reconciled';
