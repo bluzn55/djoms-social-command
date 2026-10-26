@@ -1241,8 +1241,12 @@
         '<td class="mj-post-change '+esc(delta.tone)+'">'+esc(delta.trend)+'</td>'+
       '</tr>';
     }).join('');
+    const comparable=selected.map(visitComparison).filter(row=>row.tone!=='na');
+    const improved=comparable.filter(row=>row.tone==='up').length;
+    const declined=comparable.filter(row=>row.tone==='down').length;
     const summary=posts===null?'POSTING RECORDS UNAVAILABLE':
-      posts.length+' VERIFIED POST'+(posts.length===1?'':'S');
+      posts.length+' CONFIRMED POST'+(posts.length===1?'':'S')+
+      (comparable.length?' · '+improved+' ↑ / '+declined+' ↓ · TIMING ONLY':' · VISIT TREND N/A');
     const source=mode==='day'?
       'Before = calendar day before the post. After = full calendar day following it; the posting day itself is excluded.':
       mode==='week'?
@@ -1269,7 +1273,7 @@
         '<p class="mj-post-traffic-caveat"><strong>IMPORTANT:</strong> This is a timing comparison, NOT proof a post generated those visits. '+
           'Wix includes direct, search, and other sources; owner testing and multiple posts can affect totals. '+
           'Tagged per-post referral links are needed for attribution. Only saved DJOMS posts with confirmed '+
-          'publication dates are classified; externally published posts may not appear.</p>'+
+          'publication dates are classified; manually confirmed X timestamps and externally published posts may not appear.</p>'+
       '</div></details>';
   }
 
