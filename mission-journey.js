@@ -359,13 +359,16 @@
       }).format(checkedDate).split('/').join('-')+' Central':'N/A';
     if(!r)return '<p class="mj-visitor-sync mj-visitor-sync-warning">'+
       '<strong>WIX BREAKDOWN UPDATING.</strong> Waiting for both visitor reports. '+
-      'DJOMS rechecks every 30 minutes while open and visible.</p>';
+      'DJOMS checks every 10 minutes while open and visible. '+
+      '<button type="button" class="mj-wix-sync-refresh" data-wix-split-refresh="1">REFRESH WIX NOW</button></p>';
     if(r.status==='reconciled')return '<p class="mj-visitor-sync"><strong>VISITORS RECONCILED:</strong> '+
       esc(number(r.newVisitors))+' New + '+esc(number(r.returningVisitors))+
       ' Returning = '+esc(number(r.summaryVisitors))+' Website Visitors. '+
       esc(number(r.summarySessions))+' total visits include repeat sessions.'+
       (r.previousReconciled?'':' Prior-period comparison is still updating.')+
-      '<span class="mj-sync-timestamp"> Checked '+esc(checked)+'.</span></p>';
+      '<span class="mj-sync-timestamp"> Checked '+esc(checked)+'.</span>'+
+      (r.previousReconciled?'':' <button type="button" class="mj-wix-sync-refresh"'+
+        ' data-wix-split-refresh="1">REFRESH WIX NOW</button>')+'</p>';
     const classified=valid(r.classifiedVisitors)?number(r.classifiedVisitors):'N/A';
     const total=valid(r.summaryVisitors)?number(r.summaryVisitors):'N/A';
     const gap=valid(r.difference)&&r.difference>0?
@@ -375,8 +378,10 @@
       ' unique visitors in the summary; '+classified+
       ' currently assigned New or Returning in the detailed report'+gap+
       ' No missing visitors have been assumed New or Returning. '+
-      '<strong>Auto-check: every 30 minutes</strong> while DJOMS is open and visible. '+
-      '<span class="mj-sync-timestamp">Last checked '+esc(checked)+'.</span></p>';
+      '<strong>Auto-check: every 10 minutes</strong> while DJOMS is open and visible. '+
+      '<span class="mj-sync-timestamp">Last checked '+esc(checked)+'.</span>'+
+      ' <button type="button" class="mj-wix-sync-refresh"'+
+      ' data-wix-split-refresh="1">REFRESH WIX NOW</button></p>';
   }
   function sources(site){
     const enabled=site?.connected===true;
