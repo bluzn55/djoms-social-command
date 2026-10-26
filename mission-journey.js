@@ -672,6 +672,183 @@
       text:inverse?(better?'↑ '+pct+'% better':'↓ '+pct+'% worse'):
         (better?'↑ +'+pct+'%':'↓ -'+pct+'%')};
   }
+
+  // Four *saved report totals*, not daily values pulled from unrelated source
+  // chart series. The owner-only API retains report snapshots across devices.
+  const SPARK_RANGES=new Set(['today','7d','30d','365d']);
+  const SPARK_KEYS=Object.freeze({
+    'VERIFIED APPEARANCES':'searchAppearances',
+    'COMBINED CTR':'combinedCtr',
+    'GOOGLE POSITION':'googlePosition',
+    'GOOGLE APPEARANCES':'googleAppearances',
+    'SEARCH RESULT CLICKS':'searchClicks',
+    'ALL WEBSITE VISITS':'websiteVisits',
+    'WEBSITE VISITORS':'websiteVisitors',
+    'RETURNING VISITORS':'returningVisitors',
+    'PAGE VIEWS':'pageViews',
+    'AVERAGE STAY':'averageStay',
+    'BOUNCE RATE':'bounceRate',
+    'PAGES / VISIT':'pagesPerVisit',
+    'RADIO STREAM CONNECTIONS':'radioConnections',
+    'TOTAL LISTENING TIME':'radioListeningSeconds',
+    'OUTLAW RADIO PAGE VIEWS':'radioPageViews',
+    'MUSIC PAGE VIEWS':'musicPageViews',
+    'GROSS ONLINE ITEM SALES':'webSalesCents',
+    'PAID ONLINE ORDERS':'paidOrders',
+    'FACEBOOK POST VIEWS':'facebookViews',
+    'INSTAGRAM POST VIEWS':'instagramViews',
+    'FACEBOOK REACTIONS':'facebookLikes',
+    'INSTAGRAM LIKES':'instagramLikes',
+    'INQUIRIES':'inquiries',
+    'FILE DOWNLOAD EVENTS':'fileDownloads',
+    'CONFIRMED PIT KREWE SIGNUPS':'pitKreweSignups',
+    'VERIFIED UNIQUE RADIO LISTENERS':'uniqueRadioListeners'
+  });
+  const historyCache=new Map();
+  const historyLoaded=new Set();
+  const historyPending=new Set();
+  const historyAttempted=new Map();
+  const historySavedFingerprints=new Map();
+  let sparklinesRange=null;
+
+  function todayCentral(){
+    const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{
+      timeZone:'America/Chicago',year:'numeric',month:'2-digit',day:'2-digit'
+    }).formatToParts(new Date()).map(p=>[p.type,p.value]));
+    return parts.year+'-'+parts.month+'-'+parts.day;
+  }
+  function historicalSparkline(label,current,unit,inverse){
+    const key=SPARK_KEYS[label];
+    if(!key)return '';
+    if(!SPARK_RANGES.has(sparklinesRange))return '<div class="mj-kpi-spark-empty">'+
+      'CUSTOM WINDOW · NO COMPARABLE REPORT HISTORY</div>';
+    if(!valid(current))return '<div class="mj-kpi-spark-empty">'+
+      '4-REPORT TREND · N/A</div>';
+    const snapshots=historyCache.get(sparklinesRange)||[];
+    const byDay=new Map();
+    for(const item of snapshots){
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(item?.day||'')||!valid(item?.values?.[key]))continue;
+      byDay.set(item.day,item.values[key]);
+    }
+    // The latest verified visible value wins over a previously saved same-day value.
+    byDay.set(todayCentral(),current);
+    const days=[...byDay].sort((a,b)=>a[0].localeCompare(b[0])).slice(-4);
+    const count=days.length;
+    if(!count)return '<div class="mj-kpi-spark-empty">4-REPORT TREND · N/A</div>';
+    const first=days[0][1],last=days[count-1][1];
+    const tone=count<2?'na':first===last?'hold':
+      ((last>first)!==inverse?'up':'down');
+    const values=days.map(row=>row[1]),low=Math.min(...values),high=Math.max(...values);
+    const W=146,H=39,P=7;
+    const x=index=>count===1?W-P:P+index*(W-2*P)/(count-1);
+    const y=value=>high===low?H/2:P+(high-value)/(high-low)*(H-2*P);
+    const positions=days.map(([day,value],index)=>({
+      day,value,x:x(index).toFixed(1),y:y(value).toFixed(1)
+    }));
+    const segment=count>1?'<polyline class="mj-kpi-spark-path" points="'+
+      positions.map(p=>p.x+','+p.y).join(' ')+'"></polyline>':'';
+    const circles=positions.map((p,i)=>
+      '<circle class="mj-kpi-spark-dot'+(i===count-1?' last':'')+
+        '" cx="'+p.x+'" cy="'+p.y+'" r="'+(i===count-1?4.5:3.1)+'">'+
+        '<title>'+esc(p.day+' · '+formatValue(p.value,unit))+'</title></circle>').join('');
+    const series=days.map(([d,v])=>d+': '+formatValue(v,unit)).join(' · ');
+    const caption=count<4?count+' OF 4 REPORTS SAVED':'LAST 4 REPORT TOTALS';
+    return '<div class="mj-kpi-spark mj-kpi-spark-'+tone+'">'+
+      '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet"'+
+        ' role="img" aria-label="'+esc(label+'. '+series)+
+        '. Each point is a saved report total, not an individual day increment.">'+
+        segment+circles+'</svg>'+
+      '<small>'+esc(caption)+'</small></div>';
+  }
+
+  // Only collect numbers that their source has actually verified for the
+  // currently selected window. Missing platforms stay missing, never zero.
+  function verifiedSnapshotMetrics({site,seo,ga4,sales,period,social}){
+    const values={};
+    const put=(key,value)=>{if(valid(value))values[key]=value;};
+    if(!period?.start||!period?.end)return values;
+    const savedBing=report('bing',period);
+    const search=typeof window.djomsCombinedSearch==='function'?
+      window.djomsCombinedSearch({seo,bing:savedBing,period}):null;
+    if(search?.status==='reported'){
+      put('searchAppearances',search.current);
+      put('combinedCtr',search.ctrCurrent);
+      put('googlePosition',search.positionCurrent);
+      put('searchClicks',search.clicksCurrent);
+      const google=search.engines?.find(e=>e.id==='google');
+      if(google)put('googleAppearances',google.current?.impressions);
+    }
+    if(site?.connected===true){
+      put('websiteVisits',site.sessions);
+      put('websiteVisitors',site.visitors);
+      put('returningVisitors',site.metricComparisons?.returningVisitors?.current);
+      put('pageViews',site.pageViews);
+      put('averageStay',site.avgTimeSeconds);
+      put('bounceRate',site.bounceRate);
+      put('pagesPerVisit',site.pagesPerSession);
+      if(valid(site.contactClicks)&&valid(site.formsSubmitted))
+        put('inquiries',site.contactClicks+site.formsSubmitted);
+    }
+    const paid=salesReady(sales,period);
+    if(paid){
+      put('webSalesCents',sales.itemSalesCents);
+      put('paidOrders',sales.paidOrders);
+    }
+    const music=typeof window.djomsMusicEvidence==='function'?
+      window.djomsMusicEvidence({period,sales}):null;
+    if(music?.status==='reported'){
+      put('radioConnections',music.current?.connections);
+      put('radioListeningSeconds',music.current?.seconds);
+    }
+    put('radioPageViews',music?.radioPageViews);
+    put('musicPageViews',music?.musicPageViews);
+    if(ga4?.status==='connected'&&ga4.actions?.status==='reported')
+      put('fileDownloads',ga4.actions.counts?.fileDownload);
+    const meta=social?.status==='reported'?social:null;
+    for(const [platform,views,likes] of [
+      ['facebook','facebookViews','facebookLikes'],
+      ['instagram','instagramViews','instagramLikes']]){
+      const row=meta?.platforms?.[platform];
+      if(!row?.verified)continue;
+      put(views,row.now?.views);
+      put(likes,row.now?.reactions);
+    }
+    return values;
+  }
+
+  function fetchReportHistory(ctx){
+    const range=ctx?.period?.range;
+    if(!SPARK_RANGES.has(range)||typeof api!=='function')return;
+    if(historyPending.has(range))return;
+    const values=verifiedSnapshotMetrics(ctx);
+    const hasValues=Object.keys(values).length>0;
+    const fingerprint=JSON.stringify([ctx.period.start,ctx.period.end,values]);
+    const attempted=historyAttempted.get(range);
+    if(hasValues&&historySavedFingerprints.get(range)===fingerprint)return;
+    if(hasValues&&attempted?.fingerprint===fingerprint&&
+      Date.now()-attempted.at<180000)return;
+    if(!hasValues&&historyLoaded.has(range))return;
+    historyPending.add(range);
+    if(hasValues)historyAttempted.set(range,{fingerprint,at:Date.now()});
+    const call=hasValues?
+      api('report-snapshots',{range,start:ctx.period.start,end:ctx.period.end,values}):
+      api('report-snapshots?range='+encodeURIComponent(range));
+    Promise.resolve(call).then(response=>{
+      if(!Array.isArray(response?.rows))throw new Error('Report history unavailable.');
+      historyCache.set(range,response.rows);
+      historyLoaded.add(range);
+      if(hasValues)historySavedFingerprints.set(range,fingerprint);
+    }).catch(()=>{
+      // Unavailable history must never be represented as a fabricated trend.
+      historyLoaded.add(range);
+    }).finally(()=>{
+      historyPending.delete(range);
+      if(typeof activeView!=='undefined'&&activeView==='Mission Control'&&
+        typeof websiteReportPeriod==='function'&&websiteReportPeriod()?.range===range)
+        paintTop();
+    });
+  }
+
   function dailyKpi(label,last,current,unit='count',inverse=false,note=''){
     const trend=dailyMovement(last,current,inverse,unit);
     return '<div class="mj-daily-kpi">'+
@@ -680,6 +857,7 @@
       '<span class="mj-daily-change '+esc(trend.tone)+'">'+esc(trend.text)+'</span>'+
       '<small>Last: '+esc(formatValue(last,unit))+
         (note?' · '+esc(note):'')+'</small>'+
+      historicalSparkline(label,current,unit,inverse)+
       '</div>';
   }
   function dailyLine(title,items,unit='count',source=''){
@@ -826,6 +1004,7 @@
     '</section>';
   }
   function dailyOwnerReport(data){
+    sparklinesRange=data?.period?.range||null;
     const {site,seo,ga4,sales,period,social,music,search,traffic,wixCmp,
       paid,comparison,contactsNow,contactsLast,owner}=data;
     const google=seo?.status==='connected';
@@ -1354,6 +1533,7 @@
       const openDropdowns=new Set([...slot.querySelectorAll('details.mj-stage-dropdown[open]')]
         .map(item=>item.dataset.mjDropdown).filter(Boolean));
       slot.innerHTML=journey({site:correctSite,seo,ga4,sales,period,social});
+      fetchReportHistory({site:correctSite,seo,ga4,sales,period,social});
       if(dailyWasOpen&&slot.querySelector('#mjDailyReport'))slot.querySelector('#mjDailyReport').open=true;
       loadSongLikes();
       for(const detail of slot.querySelectorAll('details.mj-stage-dropdown')){
