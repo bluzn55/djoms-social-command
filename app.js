@@ -136,6 +136,11 @@ window.djomsPublishedCampaignPosts=function(){
         row={id:String(record.id),day,category,
           campaign:record.campaign,
           title:String(record.title||'Untitled post').slice(0,130),
+          // The master image ID identifies the PLACE CARD design; the
+          // separate published post ID identifies when/where it was shared.
+          placecardImageId:typeof record.imageId==='string'?record.imageId:null,
+          placecardName:String(record.placecardName||record.title||'Untitled placecard').slice(0,180),
+          placecardImageUrl:typeof record.imageUrl==='string'?record.imageUrl:null,
           platforms:[]};
         grouped.set(key,row);
       }
@@ -1368,6 +1373,7 @@ async function buildInboxDraft(itemId) {
   const saved=await api('records',{
     action:'save',id:created.record.id,revision:created.record.revision,title,campaign,caption,link,
     imageId:item.imageId,
+    placecardName:item.filename,
     imageVariants:Object.fromEntries(Object.entries(formats).map(([k,v])=>[k,v.imageId])),
     targets
   });
