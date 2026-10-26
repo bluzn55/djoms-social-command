@@ -1039,7 +1039,7 @@
           '<h3>THE DAILY BUSINESS REPORT</h3>'+
           '<p>Selected period: '+esc(dayLabel)+'</p>'+
           '<p>Search-engine verified dates: '+esc(googleRange)+
-            '. Google reporting can lag behind today's date.</p></div>'+
+            '. Google reporting can lag behind the current date.</p></div>'+
           '<div class="mj-daily-overall '+esc(scoreKind)+'"><span>OWNER DIRECTION</span>'+
             '<strong>'+esc(currentScore===null?'N/A':currentScore)+'</strong>'+
             '<b>'+esc(scoreText)+'</b><small>100 = holding · verified online activity only</small></div>'+
