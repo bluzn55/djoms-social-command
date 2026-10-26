@@ -13459,15 +13459,30 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   gap:1px;
   padding:4px 3px 5px;
 }
-#connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-last{
-  display:block;
+#connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-compare-line{
   box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:nowrap;
+  gap:3px;
   width:100%;
-  padding:3px 1px 0;
+  min-width:0;
   margin:2px 0 0;
+  padding:4px 0 1px;
   border-top:1px solid #d9c6a7;
+  text-align:center;
+}
+#connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-last{
+  display:inline-block;
+  flex:0 0 auto;
+  box-sizing:border-box;
+  width:auto;
+  padding:0;
+  margin:0;
+  border:0;
   color:#453827!important;
-  font:900 clamp(12px,.9vw,15px)/1.15 Arial,sans-serif!important;
+  font:900 clamp(10px,.77vw,13px)/1.14 Arial,sans-serif!important;
   font-variant-numeric:tabular-nums;
   white-space:nowrap;
   text-align:center;
@@ -13481,8 +13496,9 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   color:#776d5d!important;
 }
 @media(max-width:1070px){
-  #connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-last{
-    font-size:clamp(12px,1.2vw,15px)!important;
+  #connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-last,
+  #connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-change{
+    font-size:clamp(11px,1.2vw,14px)!important;
   }
 }
 
@@ -13491,14 +13507,14 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
    Percent change when LAST is nonzero; NEW when LAST=0 and NOW>0.
    The engine's LAST=0 is distinct red. Green/red movement is separate. */
 #connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-change{
-  display:block;
+  display:inline-block;
   box-sizing:border-box;
-  width:100%;
-  margin:1px 0 0;
+  flex:0 0 auto;
+  width:auto;
+  margin:0;
   text-align:center;
-  white-space:normal;
-  overflow-wrap:anywhere;
-  font:900 clamp(13px,.98vw,17px)/1.13 Arial,sans-serif!important;
+  white-space:nowrap;
+  font:900 clamp(10px,.77vw,13px)/1.14 Arial,sans-serif!important;
   font-variant-numeric:tabular-nums;
 }
 #connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-change.up{
@@ -13512,4 +13528,66 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 }
 #connectionStrip #mjDailySection1 .mj-engine-split-totals .mj-engine-change.na{
   color:#776d5d!important;
+}
+
+
+/* CENTER SECTION 1 VERIFIED HEADINGS, METRICS AND TRENDS · OCT 26 2026
+   Keep Verified search headings on one desktop line and all values
+   horizontally centered within their four compact boxes. */
+#connectionStrip #mjDailySection1 .mj-daily-search-headlines>.mj-daily-kpi{
+  align-items:center;
+  text-align:center;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-headlines>.mj-daily-kpi>b{
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  text-align:center;
+  white-space:nowrap;
+  font:900 clamp(11px,.9vw,17px)/1.14 Arial,sans-serif!important;
+  letter-spacing:-.015em;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-headlines>.mj-daily-kpi>strong,
+#connectionStrip #mjDailySection1 .mj-daily-search-headlines>.mj-daily-kpi>.mj-daily-change,
+#connectionStrip #mjDailySection1 .mj-daily-search-headlines>.mj-daily-kpi>small{
+  display:block;
+  width:100%;
+  text-align:center;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-headlines>.mj-daily-kpi>.mj-kpi-spark{
+  align-items:center;
+  text-align:center;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-headlines .mj-kpi-vertical-bars{
+  margin-left:auto;
+  margin-right:auto;
+}
+#connectionStrip #mjDailySection1 .mj-daily-search-headlines .mj-kpi-spark>small{
+  width:100%;
+  text-align:center;
+}
+#connectionStrip #mjDailySection1 .mj-engine-split-totals{
+  justify-content:center;
+}
+#connectionStrip #mjDailySection1 .mj-engine-mini-chart{
+  justify-content:center;
+}
+#connectionStrip #mjDailySection1 .mj-engine-mini-chart svg{
+  margin-left:auto;
+  margin-right:auto;
+}
+#connectionStrip #mjDailySection1 .mj-engine-mini-caption{
+  display:block;
+  width:100%;
+  text-align:center;
+}
+@media(max-width:1070px){
+  #connectionStrip #mjDailySection1 .mj-daily-search-headlines>.mj-daily-kpi>b{
+    font-size:clamp(12px,1.55vw,17px)!important;
+  }
+}
+@media(max-width:590px){
+  #connectionStrip #mjDailySection1 .mj-daily-search-headlines>.mj-daily-kpi>b{
+    font-size:clamp(14px,3.6vw,19px)!important;
+  }
 }
