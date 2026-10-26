@@ -125,6 +125,9 @@ window.djomsPublishedCampaignPosts=function(){
     for(const platform of ['facebook','instagram','x']){
       const publication=record.results?.[platform];
       if(publication?.status!=='published'||!publication.postId)continue;
+      // Manually linked X posts carry the time the owner confirmed the
+      // link, not necessarily the actual X publication date.
+      if(platform==='x'&&publication.source==='manual')continue;
       const day=localDay(publication.publishedAt);
       if(!day)continue;
       const key=record.id+'|'+day;
