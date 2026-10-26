@@ -13591,3 +13591,206 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     font-size:clamp(14px,3.6vw,19px)!important;
   }
 }
+
+
+/* SECTION 2 · THREE SIDE-BY-SIDE TRAFFIC CHARTS · OCT 26 2026 */
+/* Search clicks | Website visit sources | Wix weekly visit history
+   All three on one row on desktop, without stretching the shorter cards
+   into tall empty boxes. Other report sections retain their own layouts. */
+#connectionStrip #mjDailySection2>.mj-daily-visuals{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  align-items:start;
+  gap:11px;
+  min-width:0;
+}
+#connectionStrip #mjDailySection2>.mj-daily-visuals>.mj-daily-chart{
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  margin:0;
+  padding:11px 10px;
+}
+#connectionStrip #mjDailySection2 .mj-daily-chart h5{
+  font:900 clamp(14px,.96vw,17px)/1.23 Arial,sans-serif!important;
+  margin:0 0 12px!important;
+  overflow-wrap:anywhere;
+}
+#connectionStrip #mjDailySection2 .mj-daily-bar{
+  grid-template-columns:minmax(105px,1.05fr) minmax(50px,1.48fr) auto;
+  gap:7px;
+  min-width:0;
+}
+#connectionStrip #mjDailySection2 .mj-daily-bar>span{
+  font:850 clamp(12px,.83vw,14px)/1.23 Arial,sans-serif!important;
+}
+#connectionStrip #mjDailySection2 .mj-daily-bar>strong{
+  font:900 clamp(14px,.94vw,17px)/1.15 Arial,sans-serif!important;
+}
+#connectionStrip #mjDailySection2 .mj-daily-chart-note{
+  font:750 13px/1.34 Arial,sans-serif!important;
+}
+@media(max-width:1150px){
+  #connectionStrip #mjDailySection2>.mj-daily-visuals{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:700px){
+  #connectionStrip #mjDailySection2>.mj-daily-visuals{
+    grid-template-columns:minmax(0,1fr);
+  }
+  #connectionStrip #mjDailySection2 .mj-daily-bar{
+    grid-template-columns:minmax(90px,1fr) minmax(50px,1.6fr) auto;
+  }
+}
+@media print{
+  #connectionStrip #mjDailySection2>.mj-daily-visuals{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+
+
+/* SOCIAL POST DATE VS WIX VISITS · OCT 26 2026
+   Read-only, date-scoped evidence below all three Section 2 charts.
+   Scrollable on narrow screens; never implies post-caused visits. */
+#connectionStrip #mjDailySection2 .mj-post-traffic{
+  box-sizing:border-box;
+  width:100%;
+  margin:9px 0 3px;
+  min-width:0;
+  border:2px solid #a98850;
+  border-radius:8px;
+  background:#fff5df;
+  overflow:hidden;
+}
+#connectionStrip #mjDailySection2 .mj-post-traffic>summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:6px 14px;
+  padding:12px 15px;
+  cursor:pointer;
+  list-style:none;
+  background:#e2c28c;
+  color:#271d11!important;
+}
+#connectionStrip #mjDailySection2 .mj-post-traffic>summary::-webkit-details-marker{
+  display:none;
+}
+#connectionStrip #mjDailySection2 .mj-post-traffic>summary>span{
+  font:900 clamp(17px,1.27vw,23px)/1.2 Georgia,serif!important;
+  color:#26190d!important;
+}
+#connectionStrip #mjDailySection2 .mj-post-traffic>summary>b{
+  font:900 clamp(12px,.98vw,17px)/1.18 Arial,sans-serif!important;
+  color:#50351b!important;
+}
+#connectionStrip #mjDailySection2 .mj-post-traffic-body{
+  display:grid;
+  gap:9px;
+  padding:12px;
+}
+#connectionStrip #mjDailySection2 .mj-post-traffic-intro,
+#connectionStrip #mjDailySection2 .mj-post-traffic-method,
+#connectionStrip #mjDailySection2 .mj-post-traffic-caveat,
+#connectionStrip #mjDailySection2 .mj-post-traffic-empty{
+  margin:0!important;
+  color:#463522!important;
+  font:800 clamp(13px,.94vw,16px)/1.34 Arial,sans-serif!important;
+}
+#connectionStrip #mjDailySection2 .mj-post-traffic-method{
+  color:#604c35!important;
+  font-weight:750!important;
+}
+#connectionStrip #mjDailySection2 .mj-post-traffic-caveat{
+  padding:10px 0 0;
+  border-top:1px solid #d6bf99;
+  font-size:13px!important;
+}
+#connectionStrip #mjDailySection2 .mj-post-traffic-scroll{
+  box-sizing:border-box;
+  width:100%;
+  overflow-x:auto;
+  overflow-y:visible;
+  min-width:0;
+  border:1px solid #d7c098;
+  border-radius:6px;
+  background:#fffaf0;
+}
+#connectionStrip #mjDailySection2 .mj-post-traffic table{
+  width:100%;
+  min-width:760px;
+  border-collapse:collapse;
+  border-spacing:0;
+  color:#302317!important;
+}
+#connectionStrip #mjDailySection2 .mj-post-traffic th{
+  padding:9px 8px;
+  text-align:left;
+  white-space:nowrap;
+  background:#ead4aa;
+  color:#36210c!important;
+  font:900 12px/1.17 Arial,sans-serif!important;
+  border-bottom:2px solid #a98b5e;
+}
+#connectionStrip #mjDailySection2 .mj-post-traffic td{
+  padding:9px 8px;
+  color:#372719!important;
+  font:800 clamp(12px,.88vw,15px)/1.24 Arial,sans-serif!important;
+  border-bottom:1px solid #e5d4b7;
+  vertical-align:middle;
+}
+#connectionStrip #mjDailySection2 .mj-post-traffic tr:nth-child(even) td{
+  background:#faf0df;
+}
+#connectionStrip #mjDailySection2 .mj-post-traffic td:first-child{
+  font-weight:900!important;
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+#connectionStrip #mjDailySection2 .mj-post-traffic td b{
+  display:block;
+  color:#261b12!important;
+  font-weight:900!important;
+}
+#connectionStrip #mjDailySection2 .mj-post-traffic td small{
+  display:block;
+  margin:3px 0 0;
+  color:#654b30!important;
+  font:750 12px/1.25 Arial,sans-serif!important;
+}
+#connectionStrip #mjDailySection2 .mj-post-type{
+  display:inline-block;
+  padding:5px 8px;
+  min-width:52px;
+  border-radius:5px;
+  font:900 12px/1 Arial,sans-serif!important;
+  text-align:center;
+}
+#connectionStrip #mjDailySection2 .mj-post-type.food{
+  background:#f0d5b0;color:#643b1b!important;
+}
+#connectionStrip #mjDailySection2 .mj-post-type.music{
+  background:#dce8f2;color:#1c5373!important;
+}
+#connectionStrip #mjDailySection2 .mj-post-type.book{
+  background:#e8e0f0;color:#51396a!important;
+}
+#connectionStrip #mjDailySection2 .mj-post-count{
+  font-variant-numeric:tabular-nums;
+  text-align:center!important;
+  font-weight:900!important;
+}
+#connectionStrip #mjDailySection2 .mj-post-change{
+  font:900 clamp(12px,.91vw,16px)/1.2 Arial,sans-serif!important;
+  white-space:nowrap;
+}
+#connectionStrip #mjDailySection2 td.mj-post-change.up{color:#126439!important}
+#connectionStrip #mjDailySection2 td.mj-post-change.down{color:#ac2b1c!important}
+#connectionStrip #mjDailySection2 td.mj-post-change.hold{color:#856528!important}
+#connectionStrip #mjDailySection2 td.mj-post-change.na{color:#716a5e!important}
+@media(max-width:720px){
+  #connectionStrip #mjDailySection2 .mj-post-traffic-body{padding:8px}
+  #connectionStrip #mjDailySection2 .mj-post-traffic>summary{padding:10px}
+}
