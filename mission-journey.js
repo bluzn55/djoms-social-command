@@ -1157,128 +1157,163 @@
         '</div>').join('')+'</div>'+caption+'</div>';
   }
 
-  // Confirmed DJOMS social publications against verified Wix session buckets.
-  // This is a time comparison, NEVER a claimed individual post referral.
+  // Date-specific timing evidence and platform-specific, tagged website
+  // sessions. A correlation is not attribution; keep both measurements apart.
+  const postReferralsCache=new Map();
+  const postReferralsPending=new Map();
+  let postTrafficExpanded=true;
+  function postReferrals(period){
+    const key=period?.query;
+    if(!key)return null;
+    const saved=postReferralsCache.get(key);
+    if(saved&&Date.now()-saved.checked<120000)return saved.data;
+    if(!postReferralsPending.has(key)&&typeof api==='function'){
+      const task=api('post-referrals?'+key).then(data=>{
+        if(data?.range?.start!==period.start||data?.range?.end!==period.end)
+          throw new Error('Post referral report dates did not match.');
+        postReferralsCache.set(key,{data,checked:Date.now()});
+        return data;
+      }).catch(error=>{
+        const data={status:'unavailable',rows:[],
+          error:String(error?.message||'Tracked visits unavailable.')};
+        postReferralsCache.set(key,{data,checked:Date.now()});
+        return data;
+      }).finally(()=>{
+        postReferralsPending.delete(key);
+        if(typeof activeView!=='undefined'&&activeView==='Mission Control'&&
+          typeof websiteReportPeriod==='function'&&websiteReportPeriod()?.query===key)
+          paintTop();
+      });
+      postReferralsPending.set(key,task);
+    }
+    return saved?.data||null;
+  }
   function socialPostingTraffic(site,period){
-    const hasLedger=typeof window.djomsPublishedCampaignPosts==='function';
-    const inventory=hasLedger?window.djomsPublishedCampaignPosts():null;
+    const inventory=typeof window.djomsPublishedCampaignPosts==='function'?
+      window.djomsPublishedCampaignPosts():null;
     const posts=Array.isArray(inventory)?inventory.filter(post=>
       /^\d{4}-\d{2}-\d{2}$/.test(post?.day||'')&&
       post.day>=period?.start&&post.day<=period?.endInclusive&&
       ['Food','Music','Book'].includes(post.category)):null;
+    const attribution=postReferrals(period);
+    const attributable=Array.isArray(attribution?.rows)?attribution.rows:[];
     const shiftDay=(iso,shift)=>{
       if(!/^\d{4}-\d{2}-\d{2}$/.test(iso||''))return null;
       const date=new Date(iso+'T12:00:00Z');
       date.setUTCDate(date.getUTCDate()+shift);
       return date.toISOString().slice(0,10);
     };
-    // Wix data: date-specific SESSIONS are essential. Do not substitute
-    // unique visitors, page views, or period-level website visits.
-    const dated=site?.connected===true?site.missionTrend:null;
-    const datedPoints=Array.isArray(dated?.points)?dated.points:[];
+    const current=site?.connected===true?site.missionTrend:null;
     const daily=new Map();
-    if(dated?.granularity==='day')for(const point of datedPoints){
-      if(/^\d{4}-\d{2}-\d{2}$/.test(point?.date||'')&&valid(point.sessions))
-        daily.set(point.date,point.sessions);
-    }
-    const weekly=new Map();
-    if(dated?.granularity==='week')for(const point of datedPoints){
-      if(/^\d{4}-\d{2}-\d{2}$/.test(point?.date||'')&&valid(point.sessions))
-        weekly.set(point.date,point.sessions);
-    }
-    // The independent Wix weekly series is longer for 7-day reports, so
-    // retain it as a fallback if daily session buckets are not returned.
-    if(site?.connected===true&&Array.isArray(site.weekly))for(const row of site.weekly){
-      const day=String(row?.start||'').slice(0,10);
-      if(/^\d{4}-\d{2}-\d{2}$/.test(day)&&valid(row?.sessions)&&!weekly.has(day))
-        weekly.set(day,row.sessions);
-    }
-    const mode=daily.size>=2?'day':weekly.size>=2?'week':null;
-    const lastCompleteDay=shiftDay(todayCentral(),-1);
+    if(current?.granularity==='day'&&Array.isArray(current.points))
+      for(const point of current.points){
+        if(/^\d{4}-\d{2}-\d{2}$/.test(point?.date||'')&&
+          valid(point?.sessions))
+          daily.set(point.date,{
+            sessions:point.sessions,views:valid(point.pageViews)?point.pageViews:null
+          });
+      }
+    const yesterday=shiftDay(todayCentral(),-1);
     const selected=posts?.slice(0,18)||[];
     const campaignNames={Food:'FOOD',Music:'MUSIC',Book:'BOOK'};
-    const visitComparison=post=>{
-      if(!mode)return {before:null,after:null,tone:'na',trend:'N/A'};
-      let before=null,after=null;
-      if(mode==='day'){
-        const preceding=shiftDay(post.day,-1),following=shiftDay(post.day,1);
-        // Tomorrow, today and partial future days cannot be considered
-        // complete sessions data; never treat their missing counts as zero.
-        if(following&&following<=lastCompleteDay&&
-          daily.has(preceding)&&daily.has(following)){
-          before=daily.get(preceding);after=daily.get(following);
-        }
-      }else{
-        const starts=[...weekly.keys()].sort();
-        const weekStart=starts.filter(x=>x<=post.day&&post.day<shiftDay(x,7)).at(-1);
-        const earlier=weekStart?shiftDay(weekStart,-7):null;
-        const weekEnd=weekStart?shiftDay(weekStart,7):null;
-        // Only compare COMPLETE matching whole-week buckets. A partially
-        // reported current week can look like a collapse in visits.
-        if(earlier&&weekEnd&&weekEnd<=period.end&&
-          weekly.has(earlier)&&weekly.has(weekStart)){
-          before=weekly.get(earlier);after=weekly.get(weekStart);
-        }
-      }
-      if(!valid(before)||!valid(after))
-        return {before:null,after:null,tone:'na',trend:'N/A'};
-      if(before===after)return {before,after,tone:'hold',trend:'→ 0%'};
-      if(before===0)return {before,after,tone:after>0?'up':'hold',
-        trend:after>0?'↑ NEW (+'+number(after)+')':'→ 0%'};
-      const percent=(after-before)/before*100;
-      const increased=after>before;
-      return {before,after,tone:increased?'up':'down',
-        trend:(increased?'↑ +':'↓ ')+percent.toFixed(1)+'%'};
+    const comparison=post=>{
+      const before=shiftDay(post.day,-1);
+      const after=shiftDay(post.day,1);
+      const prior=daily.get(before)?.sessions??null;
+      const on=daily.get(post.day)?.sessions??null;
+      const views=daily.get(post.day)?.views??null;
+      const afterCount=after&&after<=yesterday?
+        (daily.get(after)?.sessions??null):null;
+      if(!valid(prior)||!valid(on)||post.day>yesterday)
+        return {prior,on,after:afterCount,views,tone:'na',change:'N/A'};
+      if(on===prior)return {prior,on,after:afterCount,views,
+        tone:'hold',change:'→ 0%'};
+      if(prior===0)return {prior,on,after:afterCount,views,
+        tone:on>0?'up':'hold',change:on>0?'↑ NEW (+ '+number(on)+')':'→ 0%'};
+      const pct=(on-prior)/prior*100;
+      return {prior,on,after:afterCount,views,
+        tone:pct>0?'up':'down',
+        change:(pct>0?'↑ +':'↓ ')+pct.toFixed(1)+'%'};
     };
     const rows=selected.map(post=>{
-      const delta=visitComparison(post);
-      const platforms=Array.isArray(post.platforms)?
-        post.platforms.map(p=>({facebook:'Facebook',instagram:'Instagram',x:'X'})[p]||null)
-        .filter(Boolean).join(' + '):'N/A';
-      const label=campaignNames[post.category]||'UNCLASSIFIED';
+      const change=comparison(post);
+      const platformLabels={facebook:'FB',instagram:'IG',x:'X'};
+      const channels=Array.isArray(post.platforms)?post.platforms:[];
+      const sources=channels.map(platform=>{
+        if(!['facebook','instagram'].includes(platform))
+          return '<span class="mj-post-platform">X · website link not measured</span>';
+        const found=attributable.find(row=>row.recordId===post.id&&
+          row.platform===platform);
+        let result='N/A';
+        if(found&&valid(found.taggedVisits)){
+          result=number(found.taggedVisits)+' tagged '+(found.taggedVisits===1?'visit':'visits');
+        }else if(attribution?.status==='unavailable'){
+          result='Wix report unavailable';
+        }else if(found?.metricStatus==='other-destination'){
+          result='Other website · N/A';
+        }else if(attribution?.status==='reported'){
+          result='Ready for tracking';
+        }else{
+          result='Checking tracking';
+        }
+        const copy=found?.trackingUrl?
+          ' <button type="button" class="mj-post-copy"'+
+          ' data-mj-copy-post="'+esc(post.id)+'"'+
+          ' data-mj-copy-platform="'+esc(platform)+'">'+
+          'COPY '+platformLabels[platform]+' LINK</button>':'';
+        const postLink=found?.publishedWithTag?
+          ' · LINK IN PUBLISHED POST':' · COPY FOR NEXT SHARE';
+        return '<span class="mj-post-platform"><b>'+platformLabels[platform]+
+          '</b> · '+esc(result)+
+          (found?.trackingUrl?'<small>'+esc(postLink)+'</small>':'')+
+          copy+'</span>';
+      }).join('');
       return '<tr>'+
         '<td>'+esc(displayDay(post.day))+'</td>'+
         '<td><span class="mj-post-type '+esc(post.category.toLowerCase())+
-          '">'+esc(label)+'</span></td>'+
-        '<td><b>'+esc(post.title)+'</b><small>'+esc(platforms||'N/A')+'</small></td>'+
-        '<td class="mj-post-count">'+esc(formatValue(delta.before))+'</td>'+
-        '<td class="mj-post-count">'+esc(formatValue(delta.after))+'</td>'+
-        '<td class="mj-post-change '+esc(delta.tone)+'">'+esc(delta.trend)+'</td>'+
+          '">'+esc(campaignNames[post.category])+'</span></td>'+
+        '<td><b>'+esc(post.title)+'</b><small>'+
+          esc(channels.map(p=>({facebook:'Facebook',instagram:'Instagram',x:'X'})[p]||p).join(' + '))+
+          '</small></td>'+
+        '<td class="mj-post-count">'+esc(formatValue(change.prior))+'</td>'+
+        '<td class="mj-post-count"><b>'+esc(formatValue(change.on))+
+          '</b>'+(post.day===todayCentral()?'<small>Today · partial</small>':'')+'</td>'+
+        '<td class="mj-post-count">'+esc(formatValue(change.after))+'</td>'+
+        '<td class="mj-post-count">'+esc(formatValue(change.views))+'</td>'+
+        '<td class="mj-post-change '+esc(change.tone)+'">'+esc(change.change)+'</td>'+
+        '<td class="mj-post-links">'+(sources||'N/A')+'</td>'+
       '</tr>';
     }).join('');
-    const comparable=selected.map(visitComparison).filter(row=>row.tone!=='na');
-    const improved=comparable.filter(row=>row.tone==='up').length;
-    const declined=comparable.filter(row=>row.tone==='down').length;
+    const comparable=selected.map(comparison).filter(x=>x.tone!=='na');
+    const higher=comparable.filter(x=>x.tone==='up').length;
+    const lower=comparable.filter(x=>x.tone==='down').length;
     const summary=posts===null?'POSTING RECORDS UNAVAILABLE':
       posts.length+' CONFIRMED POST'+(posts.length===1?'':'S')+
-      (comparable.length?' · '+improved+' ↑ / '+declined+' ↓ · TIMING ONLY':' · VISIT TREND N/A');
-    const source=mode==='day'?
-      'Before = calendar day before the post. After = full calendar day following it; the posting day itself is excluded.':
-      mode==='week'?
-        'Before = prior full Wix week. After = full Wix week CONTAINING the post; that week may include visits before the posting time.':
-        'Daily or weekly Wix website session history is not verified for these dates, so traffic comparisons remain N/A.';
-    return '<details class="mj-post-traffic" aria-label="Confirmed social post dates and website visit comparisons">'+
+      (comparable.length?' · '+higher+' ↑ / '+lower+' ↓ · TIMING ONLY':
+        ' · COMPARISON PENDING');
+    return '<details class="mj-post-traffic"'+
+      (postTrafficExpanded?' open':'')+
+      ' aria-label="Facebook and Instagram posts versus Wix website traffic">'+
       '<summary><span>SOCIAL POSTS &amp; WEBSITE TRAFFIC</span>'+
         '<b>'+esc(summary)+' ▾</b></summary>'+
       '<div class="mj-post-traffic-body">'+
-        '<p class="mj-post-traffic-intro">Confirmed DJOMS posts are grouped by publication date '+
-          'and labeled Food, Music or Book. Compare the visit pattern around each post.</p>'+
-        '<p class="mj-post-traffic-method">'+esc(source)+'</p>'+
+        '<p class="mj-post-traffic-intro">Which Food, Music or Book posts went out, and what happened to website visits and page views?</p>'+
+        '<p class="mj-post-traffic-method">Before = previous calendar day. Post day = all visits on that date, not only after publication. Next = following complete day. Percent change compares post day with the day before. Today is incomplete.</p>'+
         (posts===null?
-          '<p class="mj-post-traffic-empty">The saved publication records are not loaded. Reopen or refresh Mission Control.</p>':
+          '<p class="mj-post-traffic-empty">Confirmed posting history is not loaded.</p>':
           !posts.length?
-          '<p class="mj-post-traffic-empty">No confirmed Food, Music or Book publications are recorded during these selected dates.</p>':
+          '<p class="mj-post-traffic-empty">No confirmed Food, Music or Book posts for the selected dates.</p>':
           '<div class="mj-post-traffic-scroll"><table>'+
-            '<thead><tr><th>POSTED</th><th>CAMPAIGN</th><th>POST / PLATFORM</th>'+
-            '<th>VISITS BEFORE</th><th>VISITS AFTER</th><th>CHANGE</th></tr></thead>'+
+            '<thead><tr><th>POSTED</th><th>TYPE</th><th>POST / PLATFORM</th>'+
+            '<th>VISITS BEFORE</th><th>POST DAY</th><th>VISITS NEXT</th>'+
+            '<th>PAGE VIEWS DAY</th><th>CHANGE</th><th>TRACKED LINK VISITS &amp; LINKS</th></tr></thead>'+
             '<tbody>'+rows+'</tbody></table></div>'+
           (posts.length>selected.length?
             '<p class="mj-post-traffic-method">Showing the '+selected.length+
-              ' most recent of '+posts.length+' confirmed posts for this period.</p>':''))+
-        '<p class="mj-post-traffic-caveat"><strong>IMPORTANT:</strong> This is a timing comparison, NOT proof a post generated those visits. '+
-          'Wix includes direct, search, and other sources; owner testing and multiple posts can affect totals. '+
-          'Tagged per-post referral links are needed for attribution. Only saved DJOMS posts with confirmed '+
-          'publication dates are classified; manually confirmed X timestamps and externally published posts may not appear.</p>'+
+              ' most recent of '+posts.length+' confirmed posts.</p>':''))+
+        (attribution?.status==='unavailable'?
+          '<p class="mj-post-traffic-empty">Tagged-link reporting: '+esc(attribution.error||'Unavailable')+'</p>':'')+
+        '<p class="mj-post-traffic-caveat"><strong>MEASURED VS INFERRED:</strong> All-source visits can increase or decrease independently of a post. Only a visit carrying that post’s unique Doc Jaks link is tagged to it. Existing untagged posts cannot be credited retroactively. Facebook post links can be opened directly; Instagram feed captions do not make URLs clickable, so use the copied Instagram link in a Story link sticker or profile link. Signup actions are tracked separately. Wix reporting can lag.</p>'+
       '</div></details>';
   }
 
@@ -1945,6 +1980,8 @@
       const social=typeof window.djomsSocialPeriod==='function'?
         window.djomsSocialPeriod(period):null;
       // Keep visitor drilldowns open when a verified source refreshes.
+      const existingPostDetails=slot.querySelector('details.mj-post-traffic');
+      if(existingPostDetails)postTrafficExpanded=existingPostDetails.open;
       const dailyWasOpen=slot.querySelector('#mjDailyReport')?.open===true||keepDailyReportOpen;
       const openDropdowns=new Set([...slot.querySelectorAll('details.mj-stage-dropdown[open]')]
         .map(item=>item.dataset.mjDropdown).filter(Boolean));
@@ -2039,6 +2076,27 @@
       const detail=document.getElementById('mjDailyReport');
       if(detail)detail.open=true;
       window.print();
+    }
+  });
+  document.addEventListener('click',async e=>{
+    const button=e.target.closest?.('[data-mj-copy-post]');
+    if(!button)return;
+    e.preventDefault();
+    const period=typeof websiteReportPeriod==='function'?websiteReportPeriod():null;
+    const report=period?postReferralsCache.get(period.query)?.data:null;
+    const row=report?.rows?.find(item=>
+      item.recordId===button.dataset.mjCopyPost&&
+      item.platform===button.dataset.mjCopyPlatform);
+    if(!row?.trackingUrl){
+      if(typeof notice==='function')notice('The special tracking link is not ready yet.',true);
+      return;
+    }
+    try{
+      await navigator.clipboard.writeText(row.trackingUrl);
+      if(typeof notice==='function')notice('Copied the unique '+row.platform+
+        ' link. Visits using this URL will be included in Wix website traffic.');
+    }catch{
+      if(typeof notice==='function')notice('Clipboard unavailable. Open the post record and copy its tracking link.',true);
     }
   });
   document.addEventListener('click',async e=>{
