@@ -337,6 +337,13 @@
         '<h3>'+esc(title)+'</h3></div>'+
       content+(note?'<p class="mj-stage-note">'+esc(note)+'</p>':'')+
       '</article>';
+  // Wix visitor-type data, not a guess calculated from the total.
+  // If Wix cannot verify the category, leave the display N/A.
+  function wixNewVisitors(site){
+    if(site?.connected!==true||!Array.isArray(site.visitorTypes))return null;
+    const item=site.visitorTypes.find(row=>row?.type==='first_time_visitor');
+    return valid(item?.visitors)?item.visitors:null;
+  }
   function sources(site){
     const enabled=site?.connected===true;
     const summarize=rows=>{
@@ -700,9 +707,10 @@
     'GOOGLE APPEARANCES':'googleAppearances',
     'BING APPEARANCES':'bingAppearances',
     'SEARCH RESULT CLICKS':'searchClicks',
-    'ALL WEBSITE VISITS':'websiteVisits',
-    'WEBSITE VISITORS':'websiteVisitors',
+    'NEW VISITORS':'newVisitors',
     'RETURNING VISITORS':'returningVisitors',
+    'WEBSITE VISITORS':'websiteVisitors',
+    'ALL WEBSITE VISITS':'websiteVisits',
     'PAGE VIEWS':'pageViews',
     'AVERAGE STAY':'averageStay',
     'BOUNCE RATE':'bounceRate',
@@ -844,6 +852,7 @@
     if(site?.connected===true){
       put('websiteVisits',site.sessions);
       put('websiteVisitors',site.visitors);
+      put('newVisitors',wixNewVisitors(site));
       put('returningVisitors',site.metricComparisons?.returningVisitors?.current);
       put('pageViews',site.pageViews);
       put('averageStay',site.avgTimeSeconds);
@@ -1255,10 +1264,21 @@
         number(traffic.sessions.now)+'. The cause is not yet established.':
       'Search clicks and website visits come from separate sources and cannot be added to infer a conversion rate.';
     const part2=dailySection(2,'SEARCH CLICKS & WEBSITE VISITS',
-      dailyKpi('SEARCH RESULT CLICKS',search?.clicksPrevious,search?.clicksCurrent)+
-      dailyKpi('ALL WEBSITE VISITS',traffic.sessions.last,traffic.sessions.now)+
-      dailyKpi('WEBSITE VISITORS',wixCmp.visitors?.previousVisitors,siteOkay?site.visitors:null)+
-      dailyKpi('RETURNING VISITORS',wixCmp.returningVisitors?.previous,wixCmp.returningVisitors?.current),
+      '<div class="mj-daily-subarea mj-daily-subarea-clicks">'+
+        '<h5>2A · SEARCH CLICKS</h5>'+
+        '<div class="mj-daily-subarea-grid">'+
+          dailyKpi('SEARCH RESULT CLICKS',search?.clicksPrevious,search?.clicksCurrent)+
+        '</div>'+
+      '</div>'+
+      '<div class="mj-daily-subarea mj-daily-subarea-visits">'+
+        '<h5>2B · WEBSITE VISITS · ALL SOURCES</h5>'+
+        '<div class="mj-daily-subarea-grid">'+
+          dailyKpi('NEW VISITORS',wixCmp.newVisitors?.previous,siteOkay?wixNewVisitors(site):null)+
+          dailyKpi('RETURNING VISITORS',wixCmp.returningVisitors?.previous,wixCmp.returningVisitors?.current)+
+          dailyKpi('WEBSITE VISITORS',wixCmp.visitors?.previousVisitors,siteOkay?site.visitors:null)+
+          dailyKpi('ALL WEBSITE VISITS',traffic.sessions.last,traffic.sessions.now)+
+        '</div>'+
+      '</div>',
       dailyBars('WHERE WEBSITE VISITS CAME FROM',wixSources,'count',
         'Wix sessions, not search clicks. Source coverage may be partial.')+
       dailyBars('WIX WEEKLY VISIT HISTORY',weeklyBar('sessions'),'count',
@@ -1553,18 +1573,19 @@
     // We do not infer a one-to-one conversion or add the metrics together.
     const second=card('clicks','2','SEARCH CLICKS & WEBSITE VISITS','↖',
       '<section class="mj-arrival-part mj-arrival-clicks" aria-label="Search clicks">'+
+        '<h4 class="mj-arrival-subheading">2A · SEARCH CLICKS</h4>'+
         heroMetric('SEARCH CLICKS',search?.clicksPrevious,search?.clicksCurrent,'count',false,
           'Reported by the same search engines and dates as Box 1.')+
         clicksByEngineDropdown(search)+
       '</section>'+
-      '<section class="mj-arrival-part mj-arrival-website" aria-label="All website visits">'+
-        '<h4 class="mj-arrival-subheading">WEBSITE VISITS · ALL SOURCES</h4>'+
-        heroMetric('TOTAL WEBSITE VISITS',traffic.sessions.last,traffic.sessions.now,'count',
-          false,'All Wix-reported sessions, including direct and identifiable referral visits.')+
-        '<div class="mj-minis">'+
-          miniMetric('WEBSITE VISITORS',priorVisitors,wix?site.visitors:null)+
+      '<section class="mj-arrival-part mj-arrival-website" aria-label="Website visits and unique visitors">'+
+        '<h4 class="mj-arrival-subheading">2B · WEBSITE VISITS · ALL SOURCES</h4>'+
+        '<div class="mj-minis mj-visit-counts">'+
+          miniMetric('NEW VISITORS',wixCmp.newVisitors?.previous,wixNewVisitors(site))+
           miniMetric('RETURNING VISITORS',wixCmp.returningVisitors?.previous,
-            wixCmp.returningVisitors?.current)+'</div>'+
+            wixCmp.returningVisitors?.current)+
+          miniMetric('WEBSITE VISITORS',priorVisitors,wix?site.visitors:null)+
+          miniMetric('ALL WEBSITE VISITS',traffic.sessions.last,traffic.sessions.now)+'</div>'+
         wixSourcesDropdown(site)+
         (typeof window.djomsSupporterPanel==='function'?
           window.djomsSupporterPanel(period):'')+
