@@ -356,7 +356,7 @@
       new Intl.DateTimeFormat('en-US',{
         timeZone:'America/Chicago',month:'2-digit',day:'2-digit',
         year:'numeric',hour:'numeric',minute:'2-digit'
-      }).format(checkedDate).replace(/\\//g,'-')+' Central':'N/A';
+      }).format(checkedDate).split('/').join('-')+' Central':'N/A';
     if(!r)return '<p class="mj-visitor-sync mj-visitor-sync-warning">'+
       '<strong>WIX BREAKDOWN UPDATING.</strong> Waiting for both visitor reports. '+
       'DJOMS rechecks every 30 minutes while open and visible.</p>';
