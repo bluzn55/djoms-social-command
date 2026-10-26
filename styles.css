@@ -11936,3 +11936,128 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
 @media(max-width:700px){
   #connectionStrip .mj-card-music .mj-top-liked>strong{font-size:23px!important}
 }
+
+
+/* OCT 26 · BOTTOM LINE OWNER READOUT
+   Inside the otherwise open LOWER-LEFT half of the swamp map.
+   Red/green statuses come from verified, selected-period comparisons. */
+#connectionStrip .mj-swamp-map .mj-quick-brief{
+  position:relative;z-index:3;min-width:0;
+  grid-column:1 / span 2;grid-row:2;align-self:start;
+  margin:260px 2px 2px 2px;padding:13px 15px 11px;
+  border:4px double #402713;border-radius:11px;
+  background:linear-gradient(155deg,#fff2d3 0%,#efdcad 64%,#e5c68c 100%);
+  color:#21170e!important;
+  box-shadow:0 0 0 2px #b78a49,0 9px 12px rgba(0,0,0,.55);
+  font-family:Arial,sans-serif;
+}
+#connectionStrip .mj-quick-heading{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  border-bottom:3px solid #a9773d;padding-bottom:9px;
+}
+#connectionStrip .mj-quick-title small{
+  display:block;color:#6c421a!important;
+  font:900 13px/1.2 Arial,sans-serif!important;letter-spacing:.35px;
+}
+#connectionStrip .mj-quick-title h3{
+  margin:2px 0!important;color:#21160d!important;
+  font:900 clamp(24px,1.65vw,33px)/1.05 Georgia,serif!important;
+}
+#connectionStrip .mj-quick-title p{
+  margin:2px 0 0;color:#55402a!important;font:800 13px/1.2 Arial,sans-serif!important;
+}
+#connectionStrip .mj-quick-score{
+  flex:0 0 auto;display:flex;flex-direction:column;align-items:center;
+  min-width:178px;max-width:48%;
+  gap:3px;padding:8px 11px;border:2px solid #927a55;border-radius:7px;
+  background:#fbf4e1;text-align:center;
+}
+#connectionStrip .mj-quick-score strong{
+  color:#796027!important;font:900 clamp(20px,1.35vw,28px)/1.1 Arial,sans-serif!important;
+  white-space:normal;
+}
+#connectionStrip .mj-quick-score.up strong{color:#116738!important}
+#connectionStrip .mj-quick-score.down strong{color:#a52922!important}
+#connectionStrip .mj-quick-score small{
+  color:#604d32!important;font:800 12px/1.2 Arial,sans-serif!important;
+}
+#connectionStrip .mj-quick-metrics{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;
+  margin:10px 0;
+}
+#connectionStrip .mj-quick-metric{
+  min-width:0;padding:8px 9px;
+  border:1px solid #b89c70;border-radius:6px;
+  background:rgba(255,252,242,.8);
+}
+#connectionStrip .mj-quick-label{
+  color:#332319!important;display:block;
+  font:900 clamp(13px,.91vw,17px)/1.15 Arial,sans-serif!important;
+}
+#connectionStrip .mj-quick-values{
+  display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;margin:2px 0;
+}
+#connectionStrip .mj-quick-values>strong{
+  color:#24160e!important;font:900 clamp(23px,1.55vw,33px)/1.05 Georgia,serif!important;
+  font-variant-numeric:tabular-nums;
+}
+#connectionStrip .mj-quick-change{
+  font:900 clamp(14px,1.02vw,20px)/1.1 Arial,sans-serif!important;
+}
+#connectionStrip .mj-quick-change.up{color:#116738!important}
+#connectionStrip .mj-quick-change.down{color:#a52922!important}
+#connectionStrip .mj-quick-change.hold{color:#87651f!important}
+#connectionStrip .mj-quick-change.na{color:#6c6358!important}
+#connectionStrip .mj-quick-metric small{
+  display:block;color:#604831!important;
+  font:750 clamp(12px,.78vw,14px)/1.25 Arial,sans-serif!important;
+}
+#connectionStrip .mj-quick-answers{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;
+  border-top:3px solid #b1844b;padding-top:9px;
+}
+#connectionStrip .mj-quick-answer{
+  min-width:0;background:#f6e7c4;border:1px solid #bfa06d;
+  border-radius:5px;padding:7px 9px;
+}
+#connectionStrip .mj-quick-answer>b{
+  display:block;color:#251912!important;
+  font:900 clamp(14px,.94vw,18px)/1.15 Arial,sans-serif!important;
+}
+#connectionStrip .mj-quick-answer>p{
+  margin:4px 0!important;color:#392a1e!important;
+  font:800 clamp(13px,.85vw,16px)/1.3 Arial,sans-serif!important;
+  overflow-wrap:anywhere;
+}
+#connectionStrip .mj-quick-answer>small{
+  display:block;color:#654e38!important;font:750 12px/1.3 Arial,sans-serif!important;
+}
+#connectionStrip .mj-quick-verdict{
+  display:block;margin-top:6px;font:900 21px/1.2 Arial,sans-serif!important;
+}
+#connectionStrip .mj-quick-verdict.up{color:#116738!important}
+#connectionStrip .mj-quick-verdict.down{color:#a52922!important}
+#connectionStrip .mj-quick-verdict.na,#connectionStrip .mj-quick-verdict.hold{color:#7e642e!important}
+#connectionStrip .mj-quick-legend{
+  display:flex;flex-wrap:wrap;gap:6px 18px;margin:9px 1px 0!important;
+  color:#5d492d!important;font:900 12px/1.25 Arial,sans-serif!important;
+}
+#connectionStrip .mj-quick-legend .up{color:#116738!important}
+#connectionStrip .mj-quick-legend .down{color:#a52922!important}
+#connectionStrip .mj-quick-legend .na{color:#63594c!important}
+@media(max-width:1650px){
+  #connectionStrip .mj-swamp-map .mj-quick-brief{
+    grid-column:1 / -1;grid-row:auto;margin:0 1px;
+  }
+}
+@media(max-width:900px){
+  #connectionStrip .mj-quick-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:610px){
+  #connectionStrip .mj-quick-heading{flex-direction:column;align-items:stretch}
+  #connectionStrip .mj-quick-score{max-width:100%;width:auto}
+  #connectionStrip .mj-quick-metrics,
+  #connectionStrip .mj-quick-answers{grid-template-columns:minmax(0,1fr)}
+  #connectionStrip .mj-quick-title h3{font-size:27px!important}
+  #connectionStrip .mj-quick-values>strong{font-size:30px!important}
+}
