@@ -322,7 +322,7 @@
       (caption?'<small>'+esc(caption)+'</small>':'')+'</div>';
   }
   function miniMetric(label,last,current,unit='count',inverse=false,provisional=false){
-    const motion=provisional?{tone:'na',text:'PENDING'}:movement(last,current,inverse);
+    const motion=provisional?{tone:'na',text:'UPDATING'}:movement(last,current,inverse);
     return '<div class="mj-mini-kpi">'+
       '<span>'+esc(label)+'</span>'+
       '<strong>'+esc(formatValue(current,unit))+'</strong>'+
@@ -351,20 +351,32 @@
   }
   function visitorSplitNote(site){
     const r=site?.visitorReconciliation;
-    if(!r)return '<p class="mj-visitor-sync mj-visitor-sync-warning"><strong>WIX REPORT CHECK PENDING.</strong> Visitor breakdown and total may use different Wix update cycles.</p>';
+    const checkedDate=new Date(site?.checkedAt||'');
+    const checked=Number.isFinite(checkedDate.getTime())?
+      new Intl.DateTimeFormat('en-US',{
+        timeZone:'America/Chicago',month:'2-digit',day:'2-digit',
+        year:'numeric',hour:'numeric',minute:'2-digit'
+      }).format(checkedDate).replace(/\\//g,'-')+' Central':'N/A';
+    if(!r)return '<p class="mj-visitor-sync mj-visitor-sync-warning">'+
+      '<strong>WIX BREAKDOWN UPDATING.</strong> Waiting for both visitor reports. '+
+      'DJOMS rechecks every 30 minutes while open and visible.</p>';
     if(r.status==='reconciled')return '<p class="mj-visitor-sync"><strong>VISITORS RECONCILED:</strong> '+
       esc(number(r.newVisitors))+' New + '+esc(number(r.returningVisitors))+
       ' Returning = '+esc(number(r.summaryVisitors))+' Website Visitors. '+
       esc(number(r.summarySessions))+' total visits include repeat sessions.'+
-      (r.previousReconciled?'':' Previous-period comparison still needs verification.')+'</p>';
+      (r.previousReconciled?'':' Prior-period comparison is still updating.')+
+      '<span class="mj-sync-timestamp"> Checked '+esc(checked)+'.</span></p>';
     const classified=valid(r.classifiedVisitors)?number(r.classifiedVisitors):'N/A';
     const total=valid(r.summaryVisitors)?number(r.summaryVisitors):'N/A';
     const gap=valid(r.difference)&&r.difference>0?
-      ' · Difference: '+number(r.difference)+' visitors not reconciled.':'';
+      ' · '+number(r.difference)+' visitors differ between reports.':'';
     return '<p class="mj-visitor-sync mj-visitor-sync-warning" role="status">'+
-      '<strong>WIX REPORTS DO NOT YET MATCH:</strong> '+total+
-      ' unique visitors in summary versus '+classified+' in the New/Returning report'+gap+
-      ' The detailed report may lag today. New and Returning comparisons are provisional.</p>';
+      '<strong>WIX BREAKDOWN UPDATING:</strong> '+total+
+      ' unique visitors in the summary; '+classified+
+      ' currently assigned New or Returning in the detailed report'+gap+
+      ' No missing visitors have been assumed New or Returning. '+
+      '<strong>Auto-check: every 30 minutes</strong> while DJOMS is open and visible. '+
+      '<span class="mj-sync-timestamp">Last checked '+esc(checked)+'.</span></p>';
   }
   function sources(site){
     const enabled=site?.connected===true;
@@ -946,7 +958,7 @@
   }
 
   function dailyKpi(label,last,current,unit='count',inverse=false,note='',provisional=false){
-    const trend=provisional?{tone:'na',text:'PENDING WIX SYNC'}:dailyMovement(last,current,inverse,unit);
+    const trend=provisional?{tone:'na',text:'WIX UPDATING'}:dailyMovement(last,current,inverse,unit);
     return '<div class="mj-daily-kpi">'+
       '<b>'+esc(label)+'</b>'+
       '<strong>'+esc(formatValue(current,unit))+'</strong>'+
