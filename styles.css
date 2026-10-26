@@ -12061,3 +12061,311 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   #connectionStrip .mj-quick-title h3{font-size:27px!important}
   #connectionStrip .mj-quick-values>strong{font-size:30px!important}
 }
+
+
+/* DJOMS DAILY REPORT · OCT 26 2026
+   Readable owner briefing beneath the Visitor Journey.
+   Verified history only, never painted-in sample measurements. */
+#connectionStrip .mj-daily-jump{
+  position:relative;z-index:2;display:block;
+  width:100%;margin:8px auto 10px;padding:11px 14px;
+  color:#1f160e!important;background:linear-gradient(160deg,#f7e5bc,#d7ad69)!important;
+  border:3px solid #2c1c0f;border-radius:8px;
+  font:900 clamp(15px,1.15vw,19px)/1.2 Arial,sans-serif!important;
+  cursor:pointer;letter-spacing:.03em;text-align:center;
+}
+#connectionStrip .mj-daily-jump:hover{
+  background:#fff3d7!important;text-decoration:underline;
+}
+#connectionStrip .mj-daily-jump:focus-visible,
+#connectionStrip .mj-daily-report summary:focus-visible,
+#connectionStrip .mj-daily-report a:focus-visible,
+#connectionStrip .mj-daily-report button:focus-visible{
+  outline:4px solid #79c7b5;outline-offset:3px;
+}
+#connectionStrip .mj-daily-report{
+  position:relative;z-index:2;
+  display:block;width:100%;min-width:0;
+  margin:13px 0 11px;border:3px solid #b88f52;
+  border-radius:10px;background:#f5e5c3;
+  box-shadow:0 6px 16px rgba(0,0,0,.32);
+  color:#24190f!important;overflow:hidden;
+}
+#connectionStrip .mj-daily-report>summary{
+  display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  align-items:center;list-style:none;cursor:pointer;
+  padding:15px 19px;background:linear-gradient(120deg,#2f2a20,#181d15);
+  color:#f6dfad!important;
+}
+#connectionStrip .mj-daily-report>summary::-webkit-details-marker{display:none}
+#connectionStrip .mj-daily-report>summary>span{
+  font:900 clamp(19px,1.45vw,28px)/1.15 Georgia,serif!important;
+  color:#f8e1b3!important;
+}
+#connectionStrip .mj-daily-report>summary>strong{
+  color:#f3cf88!important;
+  font:900 clamp(13px,.95vw,17px)/1.2 Arial,sans-serif!important;
+  text-align:right;
+}
+#connectionStrip .mj-daily-report>summary i{font-style:normal;margin-left:7px}
+#connectionStrip .mj-daily-report[open]>summary i{display:inline-block;transform:rotate(180deg)}
+#connectionStrip .mj-daily-content{
+  padding:16px;display:grid;gap:15px;
+  background:linear-gradient(165deg,#fff3d9,#eddbaf);
+}
+#connectionStrip .mj-daily-header{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  gap:22px;padding:8px 2px 13px;border-bottom:3px solid #9d774a;
+}
+#connectionStrip .mj-daily-header>div:first-child{min-width:0}
+#connectionStrip .mj-daily-header small{
+  color:#624b2f!important;font:850 13px/1.3 Arial,sans-serif!important;
+}
+#connectionStrip .mj-daily-header h3{
+  color:#21170e!important;margin:5px 0 9px!important;
+  font:900 clamp(26px,2vw,36px)/1.14 Georgia,serif!important;
+}
+#connectionStrip .mj-daily-header p{
+  margin:4px 0!important;color:#3d2c1c!important;
+  font:800 clamp(14px,.96vw,18px)/1.3 Arial,sans-serif!important;
+}
+#connectionStrip .mj-daily-overall{
+  flex:0 0 auto;display:grid;text-align:center;justify-items:center;
+  min-width:180px;padding:8px 12px;border:2px solid #a58251;
+  border-radius:8px;background:#fff9ed;
+}
+#connectionStrip .mj-daily-overall>span{
+  font:900 13px/1.2 Arial,sans-serif!important;color:#47311c!important;
+}
+#connectionStrip .mj-daily-overall>strong{
+  font:900 42px/1.1 Georgia,serif!important;color:#644e22!important;
+}
+#connectionStrip .mj-daily-overall.up>strong,
+#connectionStrip .mj-daily-overall.up>b{color:#116738!important}
+#connectionStrip .mj-daily-overall.down>strong,
+#connectionStrip .mj-daily-overall.down>b{color:#ad2922!important}
+#connectionStrip .mj-daily-overall>b{
+  font:900 15px/1.2 Arial,sans-serif!important;color:#644e22!important;
+}
+#connectionStrip .mj-daily-overall small{margin-top:4px;text-align:center;max-width:220px}
+#connectionStrip .mj-daily-overview{
+  border-bottom:2px solid #bba378;padding:2px 0 13px;
+}
+#connectionStrip .mj-daily-overview>strong{
+  display:block;color:#261a11!important;font:900 19px/1.2 Georgia,serif!important;
+}
+#connectionStrip .mj-daily-overview p{
+  margin:4px 0 5px!important;color:#291d14!important;
+  font:900 clamp(17px,1.16vw,22px)/1.33 Arial,sans-serif!important;
+}
+#connectionStrip .mj-daily-overview small{
+  display:block;color:#64523c!important;
+  font:750 13px/1.4 Arial,sans-serif!important;
+}
+#connectionStrip .mj-daily-toc{
+  display:flex;flex-wrap:wrap;gap:7px;margin:0 0 6px;
+}
+#connectionStrip .mj-daily-toc a{
+  padding:9px 12px;background:#f0d29f;border:1px solid #af8554;
+  border-radius:5px;color:#302112!important;
+  font:900 15px/1.2 Arial,sans-serif!important;text-decoration:none;
+}
+#connectionStrip .mj-daily-toc a:hover{
+  text-decoration:underline;background:#fff3dc;
+}
+#connectionStrip .mj-daily-section{
+  display:grid;gap:13px;min-width:0;
+  padding:17px 17px 15px;border:2px solid #9e896d;border-radius:10px;
+  background:linear-gradient(#fff9ec,#f7ebd2);
+  color:#221911!important;
+  scroll-margin-top:20px;
+}
+#connectionStrip .mj-daily-section>header{
+  display:flex;align-items:center;gap:13px;
+  padding:0 0 11px;border-bottom:2px solid #a98753;
+}
+#connectionStrip .mj-daily-number{
+  flex:0 0 auto;display:grid;place-items:center;
+  width:42px;height:42px;background:#d4a06b;
+  border:2px solid #24180c;border-radius:50%;
+  font:900 23px/1 Arial,sans-serif!important;color:#221509!important;
+}
+#connectionStrip .mj-daily-section h4{
+  color:#23160d!important;margin:0!important;
+  font:900 clamp(21px,1.48vw,28px)/1.12 Georgia,serif!important;
+}
+#connectionStrip .mj-daily-metrics{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;
+}
+#connectionStrip .mj-daily-kpi{
+  min-width:0;display:flex;flex-direction:column;
+  gap:4px;padding:10px 11px 8px;
+  border:1px solid #c5ab82;border-radius:6px;background:#fffdf7;
+}
+#connectionStrip .mj-daily-kpi>b{
+  color:#37291b!important;
+  font:900 clamp(13px,.92vw,16px)/1.18 Arial,sans-serif!important;
+}
+#connectionStrip .mj-daily-kpi>strong{
+  color:#1c140d!important;
+  font:900 clamp(26px,1.82vw,38px)/1.08 Georgia,serif!important;
+  font-variant-numeric:tabular-nums;overflow-wrap:anywhere;
+}
+#connectionStrip .mj-daily-change{
+  font:900 clamp(14px,1vw,19px)/1.18 Arial,sans-serif!important;
+  white-space:normal;overflow-wrap:anywhere;
+}
+#connectionStrip .mj-daily-change.up{color:#116738!important}
+#connectionStrip .mj-daily-change.down{color:#ad2922!important}
+#connectionStrip .mj-daily-change.hold{color:#735725!important}
+#connectionStrip .mj-daily-change.na{color:#685e4f!important}
+#connectionStrip .mj-daily-kpi>small{
+  color:#65523c!important;font:750 13px/1.27 Arial,sans-serif!important;
+}
+#connectionStrip .mj-daily-visuals{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;
+}
+#connectionStrip .mj-daily-chart{
+  min-width:0;border:1px solid #c5aa7d;border-radius:6px;
+  padding:11px 12px;background:#fbf3e3;
+}
+#connectionStrip .mj-daily-chart h5,
+#connectionStrip .mj-daily-details h5{
+  margin:0 0 11px!important;font:900 16px/1.22 Arial,sans-serif!important;
+  color:#2a1c11!important;
+}
+#connectionStrip .mj-daily-chart svg{
+  display:block;width:100%;height:auto;max-height:260px;overflow:visible;
+  border-bottom:1px solid #e0ccad;
+}
+#connectionStrip .mj-daily-grid-line{
+  stroke:#cbbba1;stroke-width:1;stroke-dasharray:3 4;
+}
+#connectionStrip .mj-daily-line{
+  fill:none;stroke:#215c42;stroke-width:4;
+  stroke-linejoin:round;stroke-linecap:round;
+}
+#connectionStrip .mj-daily-dot{
+  stroke:#fff6e5;fill:#215c42;stroke-width:2;
+}
+#connectionStrip .mj-daily-axis-label,
+#connectionStrip .mj-daily-x-label{
+  fill:#45331f;font:850 15px Arial,sans-serif;
+}
+#connectionStrip .mj-daily-chart-note{
+  color:#614d36!important;margin:8px 0 0!important;
+  font:750 13px/1.4 Arial,sans-serif!important;
+}
+#connectionStrip .mj-daily-no-data{
+  color:#6d604f!important;padding:28px 2px!important;
+  font:900 16px/1.3 Arial,sans-serif!important;
+}
+#connectionStrip .mj-daily-bars{display:grid;gap:10px;padding:2px 0}
+#connectionStrip .mj-daily-bar{
+  display:grid;grid-template-columns:minmax(120px,1.2fr) minmax(75px,2fr) auto;
+  align-items:center;gap:9px;
+}
+#connectionStrip .mj-daily-bar>span{
+  min-width:0;overflow-wrap:anywhere;color:#37291a!important;
+  font:850 14px/1.22 Arial,sans-serif!important;
+}
+#connectionStrip .mj-daily-bar>strong{
+  justify-self:end;color:#25170d!important;white-space:nowrap;
+  font:900 16px/1.12 Arial,sans-serif!important;
+}
+#connectionStrip .mj-daily-bar-track{
+  min-width:0;display:block;height:20px;border-radius:4px;
+  border:1px solid #d3bc92;overflow:hidden;background:#e7d8b9;
+}
+#connectionStrip .mj-daily-bar-track i{
+  display:block;height:100%;border-radius:3px;
+  background:#b17b3d;
+}
+#connectionStrip .mj-daily-details{
+  padding:10px 13px;border-top:2px solid #cfb992;
+}
+#connectionStrip .mj-daily-details ol{
+  display:grid;gap:5px;list-style:decimal;list-style-position:inside;
+  padding:0;margin:0;
+}
+#connectionStrip .mj-daily-details li{
+  padding:6px;border-bottom:1px solid #e0d4be;color:#3b2c1a;
+  font:850 16px/1.3 Arial,sans-serif!important;
+}
+#connectionStrip .mj-daily-details li span{margin-right:9px}
+#connectionStrip .mj-daily-details li b{float:right;font-size:14px;color:#4b3725}
+#connectionStrip .mj-daily-decisions{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:0 18px;border-top:2px solid #a98753;padding-top:12px;
+}
+#connectionStrip .mj-daily-decision{
+  min-width:0;padding:8px 2px;border-bottom:1px solid #dec9a4;
+}
+#connectionStrip .mj-daily-decision>strong{
+  display:block;color:#25190e!important;
+  font:900 clamp(15px,1.03vw,19px)/1.16 Arial,sans-serif!important;
+}
+#connectionStrip .mj-daily-decision>strong.up{color:#116738!important}
+#connectionStrip .mj-daily-decision>strong.down{color:#ad2922!important}
+#connectionStrip .mj-daily-decision>p{
+  color:#36291e!important;margin:5px 0 1px!important;
+  font:800 clamp(15px,1vw,18px)/1.36 Arial,sans-serif!important;
+  overflow-wrap:anywhere;
+}
+#connectionStrip .mj-daily-caveat{
+  border-top:1px solid #dec9a4;padding-top:7px;
+  font:750 13px/1.37 Arial,sans-serif!important;
+  color:#6e5539!important;margin:0!important;
+}
+#connectionStrip .mj-daily-footer{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+  gap:13px;border-top:3px solid #916b37;padding-top:12px;
+}
+#connectionStrip .mj-daily-footer p{
+  flex:1 1 430px;color:#45321e!important;margin:0!important;
+  font:800 14px/1.4 Arial,sans-serif!important;
+}
+#connectionStrip .mj-daily-footer button{
+  flex:0 0 auto;border:2px solid #362313;border-radius:6px;
+  padding:11px 17px;background:#3d3022;color:#fef0cc;
+  cursor:pointer;font:900 16px/1.2 Arial,sans-serif;
+}
+@media(max-width:1250px){
+  #connectionStrip .mj-daily-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:850px){
+  #connectionStrip .mj-daily-header{flex-direction:column}
+  #connectionStrip .mj-daily-overall{min-width:0;width:100%}
+  #connectionStrip .mj-daily-visuals,
+  #connectionStrip .mj-daily-decisions{grid-template-columns:minmax(0,1fr)}
+  #connectionStrip .mj-daily-content{padding:10px}
+  #connectionStrip .mj-daily-section{padding:12px}
+  #connectionStrip .mj-daily-report>summary>strong{text-align:left}
+}
+@media(max-width:540px){
+  #connectionStrip .mj-daily-metrics{grid-template-columns:minmax(0,1fr)}
+  #connectionStrip .mj-daily-bar{grid-template-columns:minmax(90px,1fr) minmax(50px,1.2fr) auto}
+  #connectionStrip .mj-daily-bar>span{font-size:12px!important}
+  #connectionStrip .mj-daily-bar>strong{font-size:13px!important}
+  #connectionStrip .mj-daily-details li b{float:none;display:block;margin-top:2px}
+}
+@media print{
+  body *{visibility:hidden!important}
+  #connectionStrip #mjDailyReport,
+  #connectionStrip #mjDailyReport *{visibility:visible!important}
+  #connectionStrip #mjDailyReport{
+    position:absolute!important;left:0;top:0;
+    width:100%!important;padding:0!important;margin:0!important;
+    border:0!important;box-shadow:none!important;
+  }
+  #connectionStrip #mjDailyReport>summary,
+  #connectionStrip .mj-daily-toc,
+  #connectionStrip .mj-daily-footer button{display:none!important}
+  #connectionStrip .mj-daily-content{display:block!important;background:#fff!important;padding:0!important}
+  #connectionStrip .mj-daily-section{
+    margin:12px 0!important;break-inside:avoid-page;
+    box-shadow:none!important;background:#fff!important;
+  }
+  #connectionStrip .mj-daily-chart{background:#fff!important}
+  @page{size:auto;margin:12mm}
+}
