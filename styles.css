@@ -13794,3 +13794,46 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   #connectionStrip #mjDailySection2 .mj-post-traffic-body{padding:8px}
   #connectionStrip #mjDailySection2 .mj-post-traffic>summary{padding:10px}
 }
+
+
+/* WIX RECONCILIATION OWNER REFRESH · OCT 26 2026
+   One immediate, safe report check while new/returning counts disagree.
+   No guessed visitor categories or interference with verified Wix totals. */
+#connectionStrip .mj-wix-sync-refresh{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  vertical-align:middle;
+  margin:5px 1px 3px 9px;
+  padding:7px 12px;
+  min-height:38px;
+  max-width:100%;
+  border:2px solid #214936;
+  border-radius:6px;
+  background:#265a40;
+  color:#fff9eb!important;
+  font:900 clamp(12px,.87vw,15px)/1.15 Arial,sans-serif!important;
+  letter-spacing:.02em;
+  white-space:normal;
+  cursor:pointer;
+  box-sizing:border-box;
+}
+#connectionStrip .mj-wix-sync-refresh:hover:not(:disabled){
+  background:#17402d;
+  border-color:#102c1e;
+}
+#connectionStrip .mj-wix-sync-refresh:focus-visible{
+  outline:3px solid #b9762d;
+  outline-offset:2px;
+}
+#connectionStrip .mj-wix-sync-refresh:disabled{
+  opacity:.66;
+  cursor:progress;
+}
+@media(max-width:650px){
+  #connectionStrip .mj-wix-sync-refresh{
+    display:flex;
+    margin:9px 0 3px;
+    width:100%;
+  }
+}
