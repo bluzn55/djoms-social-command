@@ -1038,87 +1038,85 @@
       caption+'</div>';
   }
 
-  // Four report-total snapshots by engine, in ONE grouped vertical chart.
-  // Google = gold; Bing = blue. Missing historical observations are
-  // clearly marked unknown and never interpreted as zero.
-  function engineHistoryBars(search,period){
-    const results=Array.isArray(search?.engines)?search.engines:[];
-    const google=results.find(e=>e.id==='google');
-    const bing=results.find(e=>e.id==='bing');
-    const googleNow=valid(google?.current?.impressions)?google.current.impressions:null;
-    const bingNow=valid(bing?.current?.impressions)?bing.current.impressions:null;
-    const hasCurrent=search?.status==='reported'&&(googleNow!==null||bingNow!==null);
-    const heading='<h5>APPEARANCES BY VERIFIED SEARCH ENGINE</h5>';
-    if(!hasCurrent)return '<div class="mj-daily-chart mj-engine-four-report">'+heading+
-      '<p class="mj-daily-no-data">NO COMPATIBLE VERIFIED SEARCH-ENGINE TOTALS</p>'+
-      '<p class="mj-daily-chart-note">Google and Bing appear here only for matching report dates.</p></div>';
-    const key=period?.range;
-    const allowsHistory=SPARK_RANGES.has(key);
+
+  // Compact search-engine card: Google gold, Bing blue, four saved-report
+  // groups in the same row as Appearances, CTR, and Google Position.
+  // No fabricated zero history. A verified actual zero is still shown.
+  function verifiedEngineKpi(search,period){
+    const engines=Array.isArray(search?.engines)?search.engines:[];
+    const google=engines.find(e=>e.id==='google');
+    const bing=engines.find(e=>e.id==='bing');
+    const currentGoogle=valid(google?.current?.impressions)?google.current.impressions:null;
+    const currentBing=valid(bing?.current?.impressions)?bing.current.impressions:null;
+    const verified=search?.status==='reported'&&
+      (currentGoogle!==null||currentBing!==null);
+    const start='<div class="mj-daily-kpi mj-engine-summary-kpi">'+
+      '<b>VERIFIED SEARCH ENGINES</b>';
+    if(!verified)return start+
+      '<strong>N/A</strong><small>Search-engine appearances have not been verified for these dates.</small></div>';
+
+    const hasHistory=SPARK_RANGES.has(period?.range);
     const byDay=new Map();
-    if(allowsHistory)for(const row of historyCache.get(key)||[]){
-      if(!/^\d{4}-\d{2}-\d{2}$/.test(row?.day||''))continue;
-      const g=row.values?.googleAppearances,b=row.values?.bingAppearances;
+    if(hasHistory)for(const snapshot of historyCache.get(period.range)||[]){
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(snapshot?.day||''))continue;
+      const g=snapshot.values?.googleAppearances,b=snapshot.values?.bingAppearances;
       if(!valid(g)&&!valid(b))continue;
-      byDay.set(row.day,{day:row.day,google:valid(g)?g:null,bing:valid(b)?b:null});
+      byDay.set(snapshot.day,{day:snapshot.day,google:valid(g)?g:null,
+        bing:valid(b)?b:null});
     }
-    // One visible report from today; supersedes a stale same-day snapshot.
-    byDay.set(todayCentral(),{day:todayCentral(),google:googleNow,bing:bingNow});
-    const days=[...byDay.values()].sort((a,b)=>a.day.localeCompare(b.day)).slice(-4);
-    const count=days.length;
-    const max=Math.max(1,...days.flatMap(d=>[d.google,d.bing].filter(valid)));
-    const W=660,H=176,baseline=128,peakHeight=84;
-    const centers=[84,248,412,576];
-    const first=4-count;
-    const bars=[];
-    const compact=value=>number(value);
+    // Current verified totals override older same-day snapshots.
+    byDay.set(todayCentral(),{day:todayCentral(),
+      google:currentGoogle,bing:currentBing});
+    const reports=[...byDay.values()].sort((x,y)=>x.day.localeCompare(y.day)).slice(-4);
+    const count=reports.length;
+    const highest=Math.max(1,...reports.flatMap(item=>
+      [item.google,item.bing].filter(valid)));
+    const baseline=61,peak=33,centers=[36,102,168,234],bars=[];
+    const offset=4-count;
     for(let slot=0;slot<4;slot++){
+      const report=slot>=offset?reports[slot-offset]:null;
       const center=centers[slot];
-      const report=slot<first?null:days[slot-first];
-      for(const engine of ['google','bing']){
-        const x=center+(engine==='google'?-38:7);
-        const value=report?.[engine];
+      for(const [engine,delta] of [['google',-21],['bing',3]]){
+        const x=center+delta,value=report?.[engine];
         if(valid(value)){
-          const height=value===0?2:Math.max(5,Math.round(value/max*peakHeight));
+          const height=value===0?2:Math.max(5,Math.round(value/highest*peak));
           const y=baseline-height;
-          bars.push('<rect class="mj-engine-report-bar '+engine+
-            (slot===3?' latest':'')+'" x="'+x+'" y="'+y+'"'+
-            ' width="31" height="'+height+'" rx="4">'+
+          bars.push('<rect class="mj-engine-mini-bar '+engine+'" x="'+x+
+            '" y="'+y+'" width="18" height="'+height+'" rx="3">'+
             '<title>'+esc(displayDay(report.day)+' · '+(engine==='google'?'Google':'Bing')+
               ' '+number(value)+' verified appearances')+'</title></rect>'+
-            '<text class="mj-engine-report-value '+engine+
-            '" x="'+(x+15.5)+'" y="'+Math.max(13,y-7)+
-            '" text-anchor="middle">'+esc(compact(value))+'</text>');
+            '<text class="mj-engine-mini-value '+engine+'" text-anchor="middle"'+
+            ' x="'+(x+9)+'" y="'+Math.max(13,y-4)+'">'+esc(number(value))+'</text>');
         }else{
-          bars.push('<rect class="mj-engine-report-missing" x="'+x+
-            '" y="96" width="31" height="32" rx="4"></rect>'+
-            '<text class="mj-engine-report-unknown" x="'+(x+15.5)+
-            '" y="117" text-anchor="middle">?</text>');
+          bars.push('<rect class="mj-engine-mini-missing" x="'+x+
+            '" y="41" width="18" height="20" rx="3"></rect>'+
+            '<text class="mj-engine-mini-unknown" x="'+(x+9)+
+            '" y="55" text-anchor="middle">?</text>');
         }
       }
-      bars.push('<text class="mj-engine-report-label" x="'+center+
-        '" y="154" text-anchor="middle">R'+(slot+1)+'</text>');
+      bars.push('<text class="mj-engine-mini-label" x="'+center+
+        '" y="77" text-anchor="middle">R'+(slot+1)+'</text>');
     }
-    const legend='<div class="mj-engine-legend">'+
-      '<span class="mj-engine-legend-google"><i></i>Google <b>'+
-        esc(formatValue(googleNow))+'</b></span>'+
-      '<span class="mj-engine-legend-bing"><i></i>Bing <b>'+
-        esc(formatValue(bingNow))+'</b></span>'+
+    const totals='<div class="mj-engine-split-totals">'+
+      '<span class="google"><i aria-hidden="true"></i><strong>Google</strong>'+
+        '<em>'+esc(formatValue(currentGoogle))+'</em></span>'+
+      '<span class="bing"><i aria-hidden="true"></i><strong>Bing</strong>'+
+        '<em>'+esc(formatValue(currentBing))+'</em></span></div>';
+    const caption=hasHistory?
+      count+' OF 4 REPORTS AVAILABLE':
+      'CUSTOM DATES · HISTORICAL COMPARISON UNAVAILABLE';
+    return start+totals+
+      '<div class="mj-engine-mini-chart">'+
+        '<svg viewBox="0 0 270 84" role="img"'+
+          ' aria-label="'+esc('Google in gold, Bing in blue. '+
+            'Four saved report positions, oldest on the left and latest on the right. '+
+            'Question marks are missing verified history, not zero.')+'">'+
+          '<line class="mj-engine-mini-baseline" x1="7" y1="'+baseline+
+            '" x2="263" y2="'+baseline+'"></line>'+
+          bars.join('')+'</svg>'+
+      '</div>'+
+      '<small class="mj-engine-mini-caption">'+esc(caption)+'</small>'+
       '</div>';
-    const lines='<line class="mj-engine-report-baseline" x1="14" y1="'+baseline+
-      '" x2="646" y2="'+baseline+'"></line>';
-    const captions=allowsHistory?
-      (count+' OF 4 REPORTS AVAILABLE · EARLIEST LEFT, NEWEST RIGHT'):
-      'CUSTOM DATE RANGE · OLDER COMPARABLE REPORTS NOT SAVED';
-    return '<div class="mj-daily-chart mj-engine-four-report">'+heading+legend+
-      '<svg class="mj-engine-report-graph" viewBox="0 0 '+W+' '+H+
-      '" preserveAspectRatio="xMidYMid meet" role="img" aria-label="'+
-      esc('Last four saved report-total snapshots, oldest on the left and newest on the right. '+
-        'Gold bars are Google, blue bars are Bing. Gray question marks mean unreported totals.')+
-      '">'+lines+bars.join('')+'</svg>'+
-      '<p class="mj-engine-history-caption">'+esc(captions)+'</p>'+
-      '<p class="mj-daily-chart-note">Only matching search-engine reporting dates are combined. '+
-        'These are saved report totals, not unique people or daily search counts. '+
-        'Missing history is not zero.</p></div>';
   }
 
   function dailyBars(title,items,unit='count',source=''){
@@ -1222,10 +1220,7 @@
     const phr=google&&Array.isArray(seo.topQueries)?seo.topQueries.filter(row=>
       row?.query&&valid(row.impressions)).sort((a,b)=>b.impressions-a.impressions).slice(0,5):[];
 
-    const googleDaily=google&&seo.trend?.status==='reported'&&Array.isArray(seo.trend.points)?
-      seo.trend.points.filter(row=>row&&valid(row.impressions)&&
-        row.date>=search?.currentRange?.start&&row.date<=search?.currentRange?.end)
-        .map(row=>({date:row.date,value:row.impressions})):[];
+
     const clicksStatus=valid(googleViews)&&googleViews>0&&googleClicks===0;
     const rankBad=valid(googlePosition)&&valid(priorPosition)&&googlePosition>priorPosition;
     const rankGood=valid(googlePosition)&&valid(priorPosition)&&googlePosition<priorPosition;
@@ -1276,14 +1271,13 @@
         number(row.impressions)+' appearances</b></li>').join('')+'</ol>':
       '<p>Google has not disclosed enough search phrase details for these dates.</p>');
     const part1=dailySection(1,'SEARCH APPEARANCES & CTR',
-      '<div class="mj-daily-search-headlines" aria-label="Three equal search discovery measures">'+
+      '<div class="mj-daily-search-headlines" aria-label="Four verified search discovery measures">'+
         dailyKpi('VERIFIED APPEARANCES',search?.previous,search?.current)+
+        verifiedEngineKpi(search,period)+
         dailyKpi('COMBINED CTR',search?.ctrPrevious,search?.ctrCurrent,'percentage')+
         dailyKpi('GOOGLE POSITION',priorPosition,googlePosition,'position',true)+
       '</div>',
-      engineHistoryBars(search,period)+
-      dailyLine('GOOGLE DAILY SEARCH APPEARANCES',googleDaily,'count',
-        'Google Search Console daily values only. These are not Google + Bing combined. Google may report late.'),
+      '',
       searchDetails,searchGood,searchConcern,
       searchAction,
       searchWatch,
