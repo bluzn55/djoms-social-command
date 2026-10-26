@@ -52,6 +52,24 @@
     sales?.range?.start===period?.start&&sales?.range?.end===period?.end;
   const periodTitle=period=>({today:'Day','7d':'Week','30d':'Month','365d':'Year',
     custom:'Custom'})[period?.range]||'Selected period';
+
+  // Presentation-only formatting. API dates, filtering and persisted
+  // comparison keys remain strict YYYY-MM-DD so timezone arithmetic is safe.
+  const displayDay=value=>typeof value==='string'&&
+    /^\d{4}-\d{2}-\d{2}$/.test(value)?
+    value.slice(5,7)+'-'+value.slice(8,10)+'-'+value.slice(0,4):'N/A';
+  const displayWindow=(from,to)=>{
+    const start=displayDay(from),end=displayDay(to);
+    if(start==='N/A'||end==='N/A')return 'N/A';
+    return from===to?start:start+' to '+end;
+  };
+  const reportNames={
+    today:'DAILY', '7d':'WEEKLY', '30d':'MONTHLY','365d':'YEARLY',custom:'CUSTOM'
+  };
+  // The user can change periods inside an open report. The main Mission
+  // Control date handler rebuilds the entire report, so remember that intent.
+  let keepDailyReportOpen=false;
+
   const match=(a,b)=>a===b?'hold':a>b?'up':'down';
   const metricDefs={
     searchCtr:{label:'Google search CTR',unit:'percent',higher:true,source:'Google Search Console'},
@@ -227,7 +245,7 @@
       }
     }
     return '<div class="mj-test-row"><div><strong>'+esc(test.note)+
-      '</strong><small>'+esc(test.createdAt.slice(0,10))+' · '+esc(def.label)+
+      '</strong><small>'+esc(displayDay(test.createdAt.slice(0,10)))+' · '+esc(def.label)+
       ' · baseline '+esc(showMetric(test.metric,test.baseline))+
       ' · '+esc(({today:'Day','7d':'Week','30d':'Month'})[test.range]||test.range)+
       '</small></div><strong class="mj-result '+tone+'">'+esc(verdict)+'</strong>'+
@@ -451,7 +469,7 @@
     const intro=search?.status==='reported'
       ?'Top reporting engines ranked by verified search appearances. Only engines with actual positive search appearances or clicks are listed. '+
        'The combined total uses exactly '+search.scope+
-       '. Range '+(search.currentRange?.start||'N/A')+' to '+(search.currentRange?.end||'N/A')+
+       '. Range '+displayWindow(search.currentRange?.start,search.currentRange?.end)+
        '. Engines with incompatible reporting dates are NOT included.'
       :'No search engine has a complete matching-date report for this selection.';
     return mapDropdown('engines','TOP SEARCH ENGINES · VERIFIED',engineRows,intro,
@@ -525,8 +543,7 @@
     return mapDropdown('search-click-engines','CLICKS BY SEARCH ENGINE',rows,
       search?.status==='reported'?
         'Verified search-result clicks only. Same engine/date coverage as #1: '+
-          search.scope+' ('+(search.currentRange?.start||'N/A')+
-          ' through '+(search.currentRange?.end||'N/A')+
+          search.scope+' ('+displayWindow(search.currentRange?.start,search.currentRange?.end)+
           '). An engine with appearances but zero clicks is correctly shown as 0. '+
           'Search phrases and result pages are under #1.':
         'Waiting for verified engine-level search-result click totals.',
@@ -577,7 +594,7 @@
     const grade=score===null?'N/A':String(score);
     const historic=music?.radioImport;
     const radioDates=historic?.start&&historic?.end?
-      historic.start+' to '+historic.end+' (UTC)':'Not imported';
+      displayWindow(historic.start,historic.end)+' (UTC)':'Not imported';
     const current=music?.current,previous=music?.previous;
     const best=songLikes.status==='reported'?songLikes.top:null;
     const lifetime=songLikes.status==='reported';
@@ -784,7 +801,7 @@
         const recent=slot===3;
         parts.push('<rect class="mj-kpi-bar'+(recent?' newest':' previous')+
           '" x="'+x+'" y="'+y+'" width="34" height="'+h+'" rx="4">'+
-          '<title>'+esc(day+' · '+formatValue(value,unit))+'</title></rect>'+
+          '<title>'+esc(displayDay(day)+' · '+formatValue(value,unit))+'</title></rect>'+
           '<text class="mj-kpi-bar-value'+(recent?' newest':'')+'"'+
           ' x="'+center+'" y="'+Math.max(12,y-5)+'" text-anchor="middle">'+
           esc(compact(value))+'</text>');
@@ -792,7 +809,7 @@
       parts.push('<text class="mj-kpi-bar-label" x="'+center+'" y="76"'+
         ' text-anchor="middle">R'+(slot+1)+'</text>');
     }
-    const values=days.map(([day,value])=>day+': '+formatValue(value,unit)).join(' · ');
+    const values=days.map(([day,value])=>displayDay(day)+': '+formatValue(value,unit)).join(' · ');
     const caption=count<4?count+' OF 4 REPORTS AVAILABLE':'LAST 4 REPORT TOTALS';
     return '<div class="mj-kpi-spark mj-kpi-spark-'+tone+'">'+
       '<svg class="mj-kpi-vertical-bars" viewBox="0 0 '+W+' '+H+'"'+
@@ -924,9 +941,7 @@
     const x=date=>L+(time(date)-start)/Math.max(86400000,end-start)*(W-L-R);
     const y=value=>T+(1-value/max)*(H-T-B);
     const coords=rows.map(row=>[+x(row.date).toFixed(2),+y(row.value).toFixed(2)]);
-    const weekday=iso=>new Intl.DateTimeFormat('en-US',{
-      timeZone:'UTC',month:'short',day:'numeric'
-    }).format(new Date(iso+'T12:00:00Z'));
+    const weekday=iso=>displayDay(iso);
     const grid=[0,.5,1].map(f=>{
       const gy=y(f*max).toFixed(2);
       return '<line class="mj-daily-grid-line" x1="'+L+'" x2="'+(W-R)+
@@ -1007,7 +1022,7 @@
           bars.push('<rect class="mj-engine-report-bar '+engine+
             (slot===3?' latest':'')+'" x="'+x+'" y="'+y+'"'+
             ' width="31" height="'+height+'" rx="4">'+
-            '<title>'+esc(report.day+' · '+(engine==='google'?'Google':'Bing')+
+            '<title>'+esc(displayDay(report.day)+' · '+(engine==='google'?'Google':'Bing')+
               ' '+number(value)+' verified appearances')+'</title></rect>'+
             '<text class="mj-engine-report-value '+engine+
             '" x="'+(x+15.5)+'" y="'+Math.max(13,y-7)+
@@ -1221,7 +1236,7 @@
       .sort((a,b)=>a.date.localeCompare(b.date)).slice(-7);
     // Wix weekly series uses weekly buckets, so render bars, not a false daily line.
     const weeklyBar=(field)=>weekly(field).map(row=>({
-      label:row.date.slice(5),value:row.value
+      label:displayDay(row.date),value:row.value
     }));
     const wixSources=siteOkay&&Array.isArray(site.trafficSources)?
       site.trafficSources.filter(row=>valid(row.sessions))
@@ -1444,19 +1459,33 @@
       'Unverified stages do not count as 100 or as zero.</p>'+
     '</section>';
 
-    const dayLabel=period?.start&&period?.endInclusive?
-      period.start+' through '+period.endInclusive:'Selected reporting period';
-    const googleRange=search?.currentRange?.start&&search?.currentRange?.end?
-      search.currentRange.start+' through '+search.currentRange.end:'N/A';
+    const dayLabel=displayWindow(period?.start,period?.endInclusive);
+    const googleRange=displayWindow(search?.currentRange?.start,search?.currentRange?.end);
+    const reportName=reportNames[period?.range]||'SELECTED';
+    const choices=[
+      ['today','DAY'],['7d','WEEK'],['30d','MONTH'],['365d','YEAR']
+    ];
+    const periodPicker='<div class="mj-daily-period-picker" role="group" '+
+      'aria-label="Choose reporting period for this entire report">'+
+      choices.map(([range,label])=>
+        '<button type="button" data-website-range="'+range+'"'+
+        ' aria-pressed="'+(period?.range===range?'true':'false')+'"'+
+        ' class="'+(period?.range===range?'active':'')+'">'+label+'</button>').join('')+
+      '</div>';
     return '<details id="mjDailyReport" class="mj-daily-report">'+
-      '<summary><span>⚜ DOC JAKS · DAILY PERFORMANCE REPORT</span>'+
+      '<summary><span>⚜ DOC JAKS · '+esc(reportName)+' PERFORMANCE REPORT</span>'+
         '<strong>7 SECTIONS · VERIFIED GRAPHS · NEXT ACTIONS <i>▾</i></strong></summary>'+
       '<div class="mj-daily-content">'+
         '<header class="mj-daily-header"><div><small>DOC JAKS OPERATIONS MANAGEMENT SYSTEM</small>'+
-          '<h3>THE DAILY BUSINESS REPORT</h3>'+
-          '<p>Selected period: '+esc(dayLabel)+'</p>'+
-          '<p>Search-engine verified dates: '+esc(googleRange)+
-            '. Google reporting can lag behind the current date.</p></div>'+
+          '<h3>THE '+esc(reportName)+' PERFORMANCE REPORT</h3>'+
+          periodPicker+
+          '<div class="mj-daily-date-focus" aria-label="Dates selected for the report">'+
+            '<span>SELECTED '+esc(periodTitle(period).toUpperCase())+' REPORT DATES</span>'+
+            '<strong>'+esc(dayLabel)+'</strong>'+
+            '<small>Day = today · Week = last 7 days · Month = last 30 days · Year = last 365 days</small>'+
+          '</div>'+
+          '<p class="mj-daily-search-window">Search-engine verified dates: <b>'+esc(googleRange)+
+            '</b>. Google reporting can lag behind the selected dates.</p></div>'+
         '</header>'+
         '<div class="mj-daily-overview"><strong>THE HEADLINE</strong><p>'+esc(headline)+
           '</p><small>Investigations and suggested actions are hypotheses until tested. '+
@@ -1637,7 +1666,7 @@
           '<small>OWNER DIRECTION</small>'+
           '<strong>'+esc(score===null?'N/A':score)+'</strong>'+
           '<b>'+esc(scoreName)+'</b></div></header>'+
-      '<button type="button" class="mj-daily-jump" data-mj-daily-open="1">OPEN DAILY PERFORMANCE REPORT · 7 SECTIONS + GRAPHS ↓</button>'+ 
+      '<button type="button" class="mj-daily-jump" data-mj-daily-open="1">OPEN '+esc(reportNames[period?.range]||'SELECTED')+' PERFORMANCE REPORT · 7 SECTIONS + GRAPHS ↓</button>'+ 
       '<div class="mj-boardwalk">'+
         '<svg class="mj-water-path" viewBox="0 0 1200 650" preserveAspectRatio="none" aria-hidden="true">'+
           '<path class="mj-path-shadow" d="M 75 160 C 285 70, 460 230, 610 130 S 1040 45, 1135 175 C 1180 290, 1170 390, 1080 490 S 750 590, 575 485 S 245 390, 90 530"/>'+
@@ -1676,12 +1705,15 @@
       const social=typeof window.djomsSocialPeriod==='function'?
         window.djomsSocialPeriod(period):null;
       // Keep visitor drilldowns open when a verified source refreshes.
-      const dailyWasOpen=slot.querySelector('#mjDailyReport')?.open===true;
+      const dailyWasOpen=slot.querySelector('#mjDailyReport')?.open===true||keepDailyReportOpen;
       const openDropdowns=new Set([...slot.querySelectorAll('details.mj-stage-dropdown[open]')]
         .map(item=>item.dataset.mjDropdown).filter(Boolean));
       slot.innerHTML=journey({site:correctSite,seo,ga4,sales,period,social});
       fetchReportHistory({site:correctSite,seo,ga4,sales,period,social});
-      if(dailyWasOpen&&slot.querySelector('#mjDailyReport'))slot.querySelector('#mjDailyReport').open=true;
+      if(dailyWasOpen&&slot.querySelector('#mjDailyReport')){
+        slot.querySelector('#mjDailyReport').open=true;
+        keepDailyReportOpen=true;
+      }
       loadSongLikes();
       for(const detail of slot.querySelectorAll('details.mj-stage-dropdown')){
         if(openDropdowns.has(detail.dataset.mjDropdown))detail.open=true;
@@ -1739,11 +1771,27 @@
     }
   });
 
+  // Capture before the app's existing date-selection handler rebuilds the
+  // Mission Control DOM. This preserves the report panel across periods.
+  document.addEventListener('click',event=>{
+    const old=document.getElementById('mjDailyReport');
+    if(event.target.closest?.('#mjDailyReport > summary')){
+      keepDailyReportOpen=old?.open===false;
+    }else if(event.target.closest?.('#mjDailyReport [data-website-range], #mjDailyReport [data-website-custom]')){
+      keepDailyReportOpen=true;
+    }else if(event.target.closest?.('[data-website-range], [data-website-custom]')){
+      keepDailyReportOpen=old?.open===true||keepDailyReportOpen;
+    }else if(event.target.closest?.('[data-mj-daily-open]')){
+      keepDailyReportOpen=true;
+    }
+  },true);
+
   document.addEventListener('click',event=>{
     if(event.target.closest?.('[data-mj-daily-open]')){
       const detail=document.getElementById('mjDailyReport');
       if(detail){
         detail.open=true;
+        keepDailyReportOpen=true;
         detail.scrollIntoView({behavior:'smooth',block:'start'});
       }
     }

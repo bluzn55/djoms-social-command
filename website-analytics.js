@@ -17,6 +17,19 @@
     return seconds < 60 ? seconds + ' sec' : Math.floor(seconds / 60) + 'm ' + seconds % 60 + 's';
   }
   const list = value => Array.isArray(value) ? value : [];
+
+  // Date-only UI labels use MM-DD-YYYY. Wix / API range keys remain ISO.
+  const usDay = value => typeof value==='string'&&
+    /^\d{4}-\d{2}-\d{2}$/.test(value)?
+    value.slice(5,7)+'-'+value.slice(8,10)+'-'+value.slice(0,4):'Not available';
+  const checkedUS = value => {
+    const d=new Date(value||'');
+    return Number.isFinite(d.getTime())?
+      new Intl.DateTimeFormat('en-US',{timeZone:ZONE,year:'numeric',
+        month:'2-digit',day:'2-digit',hour:'numeric',minute:'2-digit'})
+        .format(d).replace(/\//g,'-'):'Not checked';
+  };
+
   function ymd(value) {
     const d = new Date(value);
     if (!Number.isFinite(d.getTime())) return null;
@@ -46,7 +59,7 @@
       const start = ymd(row.start);
       const end = shiftDay(start, 7);
       const complete = !!(start && end && today && windowStart && windowEnd && start >= windowStart && end <= today && end <= windowEnd);
-      return { ...row, weekStart: start, weekEnd: end, complete, weekLabel: (start || row.label || 'Unknown week') + (complete ? '' : ' · partial') };
+      return { ...row, weekStart: start, weekEnd: end, complete, weekLabel: (start ? usDay(start) : row.label || 'Unknown week') + (complete ? '' : ' · partial') };
     });
   }
   function insights(site, weeks) {
@@ -74,7 +87,7 @@
     const max = Math.max(1, ...rows.map(r => number(r[key]) ?? 0));
     return '<article class="wda-chart"><h4>' + html(title) + '</h4><div class="wda-column-chart">' + rows.map(r => {
       const n = number(r[key]);
-      return '<div class="wda-column"><strong>' + html(count(n)) + '</strong><div class="wda-track"><i style="height:' + (n === null ? 0 : Math.max(0, n) / max * 100).toFixed(2) + '%"></i></div><small>' + html(r.weekStart || r.label || '') + (r.complete ? '' : '<br><b>Partial week</b>') + '</small></div>';
+      return '<div class="wda-column"><strong>' + html(count(n)) + '</strong><div class="wda-track"><i style="height:' + (n === null ? 0 : Math.max(0, n) / max * 100).toFixed(2) + '%"></i></div><small>' + html(r.weekStart ? usDay(r.weekStart) : r.label || '') + (r.complete ? '' : '<br><b>Partial week</b>') + '</small></div>';
     }).join('') + '</div></article>';
   }
   function table(headers, rows, caption) {
@@ -127,13 +140,13 @@
       html(count(p.views)),html(count(p.visitors)),html(count(p.sessions)),
       html(duration(p.avgTimeSeconds)),html(percent(p.bounceRate))]),
       'Only Wix-returned pages with one or more reported visitors. Not a complete inventory of every site page.');
-    const weekTable = table(['Week starts','Coverage','Sessions','Visitors','Views','Average stay','Pages / session'],weeks.map(w => [html(w.weekStart || w.label),w.complete?'Complete':'Partial',html(count(w.sessions)),html(count(w.visitors)),html(count(w.views)),html(duration(w.avgTimeSeconds)),html(count(w.pagesPerSession))]),'Unique visitors are reported per week. Do not add weekly visitors to get a unique monthly total.');
+    const weekTable = table(['Week starts','Coverage','Sessions','Visitors','Views','Average stay','Pages / session'],weeks.map(w => [html(w.weekStart ? usDay(w.weekStart) : w.label),w.complete?'Complete':'Partial',html(count(w.sessions)),html(count(w.visitors)),html(count(w.views)),html(duration(w.avgTimeSeconds)),html(count(w.pagesPerSession))]),'Unique visitors are reported per week. Do not add weekly visitors to get a unique monthly total.');
     let saved = '';
     try { saved = localStorage.getItem(NOTE_KEY) || ''; } catch (_) {}
     const periodButtons = typeof websiteRangeButtons === 'function' ? websiteRangeButtons() : '';
-    const rangeLabel = site.range?.selection==='custom' ? ('Custom '+site.range.start+' to '+shiftDay(site.range.end,-1)) : ({today:'Today','7d':'Last 7 days','30d':'Last 30 days','365d':'Last 365 days'}[site.range?.selection] || 'Selected dates');
+    const rangeLabel = site.range?.selection==='custom' ? ('Custom '+usDay(site.range.start)+' to '+usDay(shiftDay(site.range.end,-1))) : ({today:'Today','7d':'Last 7 days','30d':'Last 30 days','365d':'Last 365 days'}[site.range?.selection] || 'Selected dates');
     const output = '<div class="wda" data-version="'+VERSION+'">' + periodButtons +
-      '<div class="wda-head"><small>DOC JAKS · WEBSITE RESEARCH</small><h2>Website Analytics</h2><p>What people visit, how long they stay, and what we should test next.</p><p><b>'+(connected?(site.partial?'Data connection: partial':'Data connection: available'):'Data connection: needs attention')+'</b> · '+html(site.message || 'Awaiting website data')+'</p><p class="wda-note">Summary dates: '+html(site.range?.start || 'Not available')+' through '+html(shiftDay(site.range?.end,-1) || 'Not available')+'. Time zone: Central. Last checked: '+html(site.checkedAt ? new Date(site.checkedAt).toLocaleString('en-US',{timeZone:ZONE}) : 'Not checked')+'.</p><div class="wda-caution"><b>Testing traffic is included.</b> Most current activity may be your own page checks. No owner-traffic exclusion has been applied. A healthy connection does not mean marketing performance is healthy.</div></div>' + kpis +
+      '<div class="wda-head"><small>DOC JAKS · WEBSITE RESEARCH</small><h2>Website Analytics</h2><p>What people visit, how long they stay, and what we should test next.</p><p><b>'+(connected?(site.partial?'Data connection: partial':'Data connection: available'):'Data connection: needs attention')+'</b> · '+html(site.message || 'Awaiting website data')+'</p><p class="wda-note">Summary dates: '+html(usDay(site.range?.start))+' through '+html(usDay(shiftDay(site.range?.end,-1)))+'. Time zone: Central. Last checked: '+html(checkedUS(site.checkedAt))+'.</p><div class="wda-caution"><b>Testing traffic is included.</b> Most current activity may be your own page checks. No owner-traffic exclusion has been applied. A healthy connection does not mean marketing performance is healthy.</div></div>' + kpis +
       section('Gold nuggets: observations and next tests','<div class="wda-nuggets">'+insights(site,weeks).map(t=>'<p>'+html(t)+'</p>').join('')+'</div>','Small samples and owner testing limit conclusions. These are prompts for investigation, not proven causes.') +
       section('Pages with visitors, ranked by visitors',ranking+pageTable,rangeLabel+'. Average page time reflects Wix reporting, not an individual visit. Unmeasured time remains “Not measured”.') +
       section('Traffic history','<div class="wda-charts">'+weeklyChart(weeks,'sessions','Sessions')+weeklyChart(weeks,'visitors','Tracked visitors')+weeklyChart(weeks,'views','Page views')+'</div>'+weekTable,'The first and current week may be partial. Growth observations compare only consecutive complete weeks.') +
