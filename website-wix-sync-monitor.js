@@ -1,11 +1,11 @@
 /* DJOMS · Wix visitor-breakdown refresh while the owner is viewing reports.
    Wix summary and visitor-type reports can update at different times.
-   Run at most once per 30 minutes, only in a visible signed-in dashboard.
+   Run at most once per 10 minutes while pending, only in a visible signed-in dashboard.
    Do not schedule on the server, replace good reports with connection errors,
    or overwrite a date range changed during an in-flight request. */
 (function wixVisitorSyncMonitor(){
   'use strict';
-  const INTERVAL_MS=30*60*1000;
+  const INTERVAL_MS=10*60*1000;
   const VIEWS=new Set(['Mission Control','Platform Details','Website Analytics']);
   let lastAttemptAt=0;
   let inFlight=false;
@@ -28,7 +28,7 @@
     return {snapshot,range,query};
   }
 
-  async function checkIfDue(){
+  async function checkIfDue(force=false){
     if(inFlight)return;
     let selection;
     try{selection=currentState();}catch(_){return;}
@@ -38,7 +38,7 @@
     // so we don't immediately duplicate the initial Wix API request.
     const checkedAt=Date.parse(selection.snapshot?.checkedAt||'');
     const mostRecent=Math.max(lastAttemptAt,Number.isFinite(checkedAt)?checkedAt:0);
-    if(now-mostRecent<INTERVAL_MS)return;
+    if(!force&&now-mostRecent<INTERVAL_MS)return;
     lastAttemptAt=now;
     inFlight=true;
     try{
@@ -62,19 +62,52 @@
       }else if(activeView==='Website Analytics'){
         render();
       }
-      if(!wasMatched&&next.visitorReconciliation?.status==='reconciled'&&
-         typeof notice==='function'){
-        notice('Wix visitor totals now reconcile: New + Returning = Website Visitors.');
+      const agreement=next.visitorReconciliation;
+      if(!wasMatched&&agreement?.status==='reconciled'&&typeof notice==='function'){
+        notice('Wix visitors reconciled: '+agreement.newVisitors+' New + '+
+          agreement.returningVisitors+' Returning = '+agreement.summaryVisitors+
+          ' Website Visitors.');
+      }else if(force&&typeof notice==='function'){
+        if(agreement?.status==='reconciled'){
+          notice('Wix verified '+agreement.newVisitors+' New + '+
+            agreement.returningVisitors+' Returning = '+agreement.summaryVisitors+
+            ' Website Visitors. Prior-period comparisons '+(
+            agreement.previousReconciled?'also reconcile.':'are still catching up.'));
+        }else{
+          notice('Wix was checked again. Current summary: '+
+            (agreement?.summaryVisitors??'N/A')+' visitors; New + Returning: '+
+            (agreement?.classifiedVisitors??'N/A')+
+            '. The figures still disagree. DJOMS will not guess the difference.');
+        }
       }
-    }catch(_){
-      // Keep all previous verified readings; next attempt is throttled.
+    }catch(error){
+      // Keep all previous verified readings; the owner can retry manually.
+      if(force&&typeof notice==='function')
+        notice('Wix refresh did not complete: '+String(error?.message||'Connection interrupted.'),true);
     }finally{
       inFlight=false;
     }
   }
 
+  // Manual refresh is never subject to the automatic ten-minute guard.
+  // Delegated handling survives full report redraws and view switching.
+  document.addEventListener('click',event=>{
+    const button=event.target?.closest?.('[data-wix-split-refresh]');
+    if(!button)return;
+    event.preventDefault();
+    if(inFlight)return;
+    button.disabled=true;
+    button.textContent='CHECKING WIX...';
+    void checkIfDue(true).finally(()=>{
+      if(button.isConnected){
+        button.disabled=false;
+        button.textContent='REFRESH WIX NOW';
+      }
+    });
+  });
+
   // A minute timer gives prompt resumed checks without continually querying
-  // Wix; the elapsed-time guard enforces 30 minutes between remote checks.
+  // Wix; the elapsed-time guard enforces ten minutes between automatic checks.
   window.setInterval(()=>{void checkIfDue();},60000);
   window.addEventListener('focus',()=>{void checkIfDue();});
   document.addEventListener('visibilitychange',()=>{
