@@ -810,10 +810,19 @@
       clicksStatus?'Google reported '+number(googleViews)+' appearances but zero Google result clicks.':null
     ].filter(Boolean).join(' ')||
       'Watch click-through rate and ranking before drawing conclusions from appearances alone.';
-    const searchDetails=phr.length?'<h5>MOST COMMON DISCLOSED GOOGLE SEARCH PHRASES</h5>'+
+    const engineDetails=(search?.engines||[]).map(row=>{
+      const prior=row.previous?.impressions,now=row.current?.impressions;
+      const change=dailyMovement(prior,now,false,'count');
+      return '<li><span>'+esc(row.name)+'</span><b>LAST '+esc(number(prior))+
+        ' · NOW '+esc(number(now))+' · <em class="'+esc(change.tone)+'">'+
+        esc(change.text)+'</em></b></li>';
+    }).join('');
+    const searchDetails='<h5>TOP VERIFIED SEARCH ENGINES</h5>'+
+      '<ol>'+(engineDetails||'<li>No comparable engine details reported.</li>')+'</ol>'+
+      (phr.length?'<h5>MOST COMMON DISCLOSED GOOGLE SEARCH PHRASES</h5>'+
       '<ol>'+phr.map(row=>'<li><span>'+esc(row.query)+'</span><b>'+
         number(row.impressions)+' appearances · '+number(row.clicks)+' clicks</b></li>').join('')+'</ol>':
-      '<p>Google has not disclosed enough search phrase details for these dates.</p>';
+      '<p>Google has not disclosed enough search phrase details for these dates.</p>');
     const part1=dailySection(1,'SEARCH APPEARANCES',
       dailyKpi('VERIFIED APPEARANCES',search?.previous,search?.current)+
       dailyKpi('COMBINED CTR',search?.ctrPrevious,search?.ctrCurrent,'percentage')+
@@ -946,7 +955,7 @@
         cash(grossNow)+' in verified paid web item sales was reported.':
         'No verified sales increase is established for this period.';
     const salesConcern=valid(grossNow)&&grossNow===0?
-      'Verified paid web item sales were $0.00 during this period. Visits are not converting into paid online orders yet.':
+      'Verified paid web item sales were $0.00 during this period. No paid online orders recorded from this channel.':
       'Gross online sales are not profit and do not include market purchases or offline transactions.';
     const part5=dailySection(5,'PAID WEB SALES',
       dailyKpi('GROSS ONLINE ITEM SALES',grossLast,grossNow,'cents')+
