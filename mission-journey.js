@@ -1101,13 +1101,17 @@
     // incomplete prior reporting is N/A, never an assumed zero.
     const googleLast=valid(google?.previous?.impressions)?google.previous.impressions:null;
     const bingLast=valid(bing?.previous?.impressions)?bing.previous.impressions:null;
-    const engineTotal=(name,current,previous,engine)=>
-      '<span class="'+engine+'"><i aria-hidden="true"></i>'+
+    const engineTotal=(name,current,previous,engine)=>{
+      const change=dailyMovement(previous,current,false,'count');
+      return '<span class="'+engine+'"><i aria-hidden="true"></i>'+
         '<strong>'+name+'</strong>'+
         '<em class="'+(current===0?'is-zero':'')+'">'+
           esc(formatValue(current))+'</em>'+
         '<small class="mj-engine-last'+(previous===0?' is-zero':!valid(previous)?' is-unavailable':'')+
-          '">LAST '+esc(formatValue(previous))+'</small></span>';
+          '">LAST '+esc(formatValue(previous))+'</small>'+
+        '<b class="mj-engine-change '+esc(change.tone)+'">'+esc(change.text)+'</b>'+
+      '</span>';
+    };
     const totals='<div class="mj-engine-split-totals">'+
       engineTotal('Google',currentGoogle,googleLast,'google')+
       engineTotal('Bing',currentBing,bingLast,'bing')+
