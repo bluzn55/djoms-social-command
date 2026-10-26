@@ -492,16 +492,13 @@
     const engineRows=results.slice(0,5).map((engine,i)=>{
       const prev=engine.previous?.impressions,now=engine.current?.impressions;
       const diff=movement(prev,now);
-      const lastClicks=engine.previous?.clicks,currClicks=engine.current?.clicks;
+      const currClicks=engine.current?.clicks;
       const engineCtr=valid(now)&&now>0&&valid(currClicks)?currClicks/now:null;
-      const clickChange=movement(lastClicks,currClicks);
       return '<div class="mj-dropdown-row mj-engine-detail-row">'+
         '<span class="mj-dropdown-rank">'+esc(i+1)+'.</span>'+
         '<span class="mj-dropdown-desc"><strong>'+esc(engine.name)+'</strong>'+
         '<small>LAST '+esc(number(prev))+' · CURRENT '+esc(number(now))+
           ' · <b class="'+esc(diff.tone)+'">'+esc(diff.text)+'</b></small>'+
-        '<small>SEARCH CLICKS: L '+esc(number(lastClicks))+' / C '+esc(number(currClicks))+
-          ' · <b class="'+esc(clickChange.tone)+'">'+esc(clickChange.text)+'</b></small>'+
         '<small>Search CTR '+esc(formatValue(engineCtr,'percentage'))+
           ' · Average position '+esc(engine.id==='google'?
             formatValue(engine.positionCurrent,'position'):'N/A')+'</small></span>'+
@@ -543,24 +540,42 @@
         ' · Result'+(found.length>1?'s':'')+': '+[...new Set(found)].join(', '):
         ' · Result page not disclosed';
       return mapDetailRow('SEARCH PHRASE: '+p.query,
-        'Google result clicks '+number(p.clicks)+pagesText,
+        'Search appearance'+(p.impressions===1?'':'s')+pagesText,
         number(p.impressions),'appearances',i);
     });
     const pageRows=pages.map((p,i)=>mapDetailRow('RESULT PAGE: '+named(p.page),
-      'Google clicks '+number(p.clicks)+' · Page shown in search results',
+      'Page shown in Google search results',
       number(p.impressions),'appearances',i+termRows.length));
     const rows=[...termRows,...pageRows];
-    const context='Google Search Console: '+number(impressions)+' reported Google appearances, '+
-      number(clicks)+' clicks. Phrases show what people typed when Google discloses it; '+
+    const context='Google Search Console: '+number(impressions)+' reported Google appearances. '+
+      'Search-result clicks and their source breakdown are under Section 2. Phrases show what people typed when Google discloses it; '+
       'result pages show which Doc Jaks pages appeared. Google hides some searches. '+
       'Phrase and page counts overlap and must not be added together or to the engine totals.';
     let empty='Google has not reported individual search phrases or result pages for the selected dates.';
     if(connected&&valid(impressions)&&impressions>0&&clicks===0)
-      empty='Google reported '+number(impressions)+' search appearances and zero clicks, '+
-        'but did not disclose individual phrase or page details for this period.';
+      empty='Google reported '+number(impressions)+' appearances but did not disclose individual phrase or page details for this period. Search clicks are tracked in Section 2.';
     return mapDropdown('google-phrases','GOOGLE SEARCH PHRASES & RESULT PAGES',
       rows,context,empty);
   }
+
+  // Click evidence is deliberately grouped under #2, not scattered among #1
+  // search appearance phrase rows. GSC sometimes suppresses the query itself.
+  function searchClicksByPhraseDropdown(seo){
+    const connected=seo?.status==='connected';
+    const total=connected&&valid(seo?.metrics?.clicks)?seo.metrics.clicks:null;
+    const queries=connected&&Array.isArray(seo?.topQueries)?
+      seo.topQueries.filter(row=>row?.query&&valid(row.clicks)&&row.clicks>0)
+      .sort((a,b)=>b.clicks-a.clicks).slice(0,5):[];
+    const rows=queries.map((p,i)=>mapDetailRow(p.query,
+      'Verified Google Search Console query · '+number(p.impressions)+' appearances',
+      number(p.clicks),'search clicks',i));
+    const empty=total===0?
+      'Google recorded 0 search clicks for the selected dates. Bing and other reported engine clicks are shown above.':
+      'Google did not disclose the individual search phrases responsible for its clicks.';
+    return mapDropdown('search-click-phrases','GOOGLE SEARCH PHRASES THAT GOT CLICKS',
+      rows,'Only Google query clicks actually disclosed by Search Console. These are already part of Google’s engine click total and must not be added again.',empty);
+  }
+
   function clicksByEngineDropdown(search){
     // Each engine in the source breakdown is genuinely included in the
     // matching-date Search totals; 0 clicks is a verified 0, not a missing row.
@@ -1258,14 +1273,20 @@
       '<ol>'+(engineDetails||'<li>No comparable engine details reported.</li>')+'</ol>'+
       (phr.length?'<h5>MOST COMMON DISCLOSED GOOGLE SEARCH PHRASES</h5>'+
       '<ol>'+phr.map(row=>'<li><span>'+esc(row.query)+'</span><b>'+
-        number(row.impressions)+' appearances · '+number(row.clicks)+' clicks</b></li>').join('')+'</ol>':
+        number(row.impressions)+' appearances</b></li>').join('')+'</ol>':
       '<p>Google has not disclosed enough search phrase details for these dates.</p>');
-    const part1=dailySection(1,'SEARCH APPEARANCES',
-      dailyKpi('VERIFIED APPEARANCES',search?.previous,search?.current)+
-      dailyKpi('COMBINED CTR',search?.ctrPrevious,search?.ctrCurrent,'percentage')+
-      dailyKpi('GOOGLE POSITION',priorPosition,googlePosition,'position',true)+
-      dailyKpi('GOOGLE APPEARANCES',googleEngine?.previous?.impressions,
-        googleEngine?.current?.impressions),
+    const part1=dailySection(1,'SEARCH APPEARANCES & CTR',
+      '<div class="mj-daily-search-headlines" aria-label="The two headline search discovery measures">'+
+        dailyKpi('VERIFIED APPEARANCES',search?.previous,search?.current)+
+        dailyKpi('COMBINED CTR',search?.ctrPrevious,search?.ctrCurrent,'percentage')+
+      '</div>'+
+      '<div class="mj-daily-search-supporting">'+
+        '<div class="mj-daily-search-position">'+
+          miniMetric('GOOGLE POSITION · LOWER IS BETTER',
+            priorPosition,googlePosition,'position',true)+
+        '</div>'+
+        historicalSparkline('GOOGLE POSITION',googlePosition,'position',true,priorPosition)+
+      '</div>',
       engineHistoryBars(search,period)+
       dailyLine('GOOGLE DAILY SEARCH APPEARANCES',googleDaily,'count',
         'Google Search Console daily values only. These are not Google + Bing combined. Google may report late.'),
@@ -1301,6 +1322,18 @@
       'Website visits declined from '+number(traffic.sessions.last)+' to '+
         number(traffic.sessions.now)+'. The cause is not yet established.':
       'Search clicks and website visits come from separate sources and cannot be added to infer a conversion rate.';
+    const clickPhrases=google&&Array.isArray(seo?.topQueries)?
+      seo.topQueries.filter(row=>row?.query&&valid(row.clicks)&&row.clicks>0)
+      .sort((a,b)=>b.clicks-a.clicks).slice(0,5):[];
+    const searchClickDetails='<div class="mj-daily-click-phrases">'+
+      '<h5>GOOGLE SEARCH PHRASES THAT EARNED CLICKS</h5>'+
+      (clickPhrases.length?'<ol>'+clickPhrases.map(row=>
+        '<li><span>'+esc(row.query)+'</span><b>'+number(row.clicks)+' '+(row.clicks===1?'click':'clicks')+'</b></li>').join('')+'</ol>':
+        '<p>'+esc(google&&googleClicks===0?
+        'Google reported zero clicks for this period. The click-by-engine chart shows whether Bing had clicks.':
+        'No individual Google search phrases with verified clicks were disclosed.')+'</p>')+
+      '</div>';
+
     const part2=dailySection(2,'SEARCH CLICKS & WEBSITE VISITS',
       '<div class="mj-daily-subarea mj-daily-subarea-clicks">'+
         '<h5>2A · SEARCH CLICKS</h5>'+
@@ -1317,11 +1350,16 @@
           dailyKpi('ALL WEBSITE VISITS',traffic.sessions.last,traffic.sessions.now)+
         '</div>'+visitorSplitNote(site)+
       '</div>',
+      dailyBars('SEARCH CLICKS BY VERIFIED ENGINE',
+        (Array.isArray(search?.engines)?search.engines:[]).map(e=>({
+          label:e.id==='google'?'Google':e.id==='bing'?'Bing':e.name,
+          value:e.current?.clicks
+        })),'count','Google and Bing engine clicks are already included in the Section 2 total. These are not Wix visits.')+
       dailyBars('WHERE WEBSITE VISITS CAME FROM',wixSources,'count',
         'Wix sessions, not search clicks. Source coverage may be partial.')+
       dailyBars('WIX WEEKLY VISIT HISTORY',weeklyBar('sessions'),'count',
         'Verified Wix weekly buckets, potentially including partial weeks. Not a daily trend.'),
-      '',siteGood,siteConcern,
+      searchClickDetails,siteGood,siteConcern,
       'Check the most-used entry pages and whether visitors can quickly find the next step. Use distinct tracking links for supporter posts.',
       'Direct, Google, Facebook, Instagram and other referrals, including which posts lead to actual website visits.',
       'A session is a visit, not a unique person. Wix sessions and search-engine click reports use different definitions.',dailyHealthMeter(dailySectionScore(owner,['sources','visitors'])));
@@ -1598,15 +1636,20 @@
     const scoreArrowLabel=score===null?'Insufficient verified data for direction':
       score>100?'Moving forward above 100':score<100?'Moving backward below 100':
       'Holding at exactly 100';
-    const first=card('search','1','SEARCH APPEARANCES','⌕',
-      heroMetric('Verified engine appearances',search?.previous,
-        search?.current,'count',false,'Google and Bing combined ONLY when their reported dates match.')+
-      '<div class="mj-small-splits">'+
-        miniMetric('COMBINED CTR',search?.ctrPrevious,search?.ctrCurrent,'percentage')+
-        miniMetric('GOOGLE POSITION',search?.positionPrevious,search?.positionCurrent,'position',true)+'</div>'+
+    const first=card('search','1','SEARCH APPEARANCES & CTR','⌕',
+      '<div class="mj-search-headline-kpis" aria-label="Two headline discovery measures">'+
+        heroMetric('VERIFIED APPEARANCES',search?.previous,
+          search?.current,'count',false,'Google + Bing, when report dates match.')+
+        heroMetric('COMBINED CTR',search?.ctrPrevious,
+          search?.ctrCurrent,'percentage',false,'Percentage of appearances that earned a search click.')+
+      '</div>'+
+      '<div class="mj-search-supporting-position">'+
+        miniMetric('GOOGLE POSITION · LOWER IS BETTER',
+          search?.positionPrevious,search?.positionCurrent,'position',true)+
+      '</div>'+
       searchEnginesDropdown(search)+searchAppearancesDetails(seo),
-      'Reporting engines: '+(search?.scope||'N/A')+
-      '. Google position is not an average across engines.');
+      'Appearances and CTR tell us how often Doc Jaks is found and chosen. '+
+      'Actual search click totals and their breakdown are tracked under #2.');
     // #2 groups the journey from verified search-result clicks to ALL
     // Wix website sessions. These are two different sources and measures.
     // We do not infer a one-to-one conversion or add the metrics together.
@@ -1616,6 +1659,7 @@
         heroMetric('SEARCH CLICKS',search?.clicksPrevious,search?.clicksCurrent,'count',false,
           'Reported by the same search engines and dates as Box 1.')+
         clicksByEngineDropdown(search)+
+        searchClicksByPhraseDropdown(seo)+
       '</section>'+
       '<section class="mj-arrival-part mj-arrival-website" aria-label="Website visits and unique visitors">'+
         '<h4 class="mj-arrival-subheading">2B · WEBSITE VISITS · ALL SOURCES</h4>'+
