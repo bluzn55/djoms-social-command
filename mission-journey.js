@@ -766,9 +766,58 @@
       line('WHAT TO WATCH',watch,'')+
     '</div>';
   }
-  function dailySection(index,title,metrics,charts,details,good,concern,action,watch,caveat=''){
+
+  // Match the original eight-stage DJOMS 100-point model without
+  // inventing another weighting system for this seven-section report.
+  // Section 2 combines the existing Traffic and Visitors stages.
+  function dailySectionScore(owner,ids){
+    const stages=Array.isArray(owner?.stages)?owner.stages:[];
+    const group=ids.map(id=>stages.find(row=>row?.id===id)).filter(Boolean);
+    const measured=group.filter(row=>Number.isInteger(row.score)&&
+      row.score>=60&&row.score<=140&&Number.isFinite(row.weight)&&row.weight>0);
+    const weight=measured.reduce((sum,row)=>sum+row.weight,0);
+    const expectedWeight=group.reduce((sum,row)=>sum+(Number.isFinite(row.weight)?row.weight:0),0);
+    return {
+      score:weight>0?Math.round(measured.reduce((sum,row)=>sum+row.score*row.weight,0)/weight):null,
+      covered:measured.length,expected:ids.length,weight,expectedWeight
+    };
+  }
+  function dailyHealthMeter(result,overall=false){
+    const score=Number.isInteger(result?.score)&&result.score>=60&&result.score<=140?
+      result.score:null;
+    const tone=score===null?'na':score>100?'up':score<100?'down':'hold';
+    const arrow=score===null?'?':score>100?'↑':score<100?'↓':'→';
+    const status=score===null?'NOT VERIFIED':score>100?'FORWARD':
+      score<100?'BACKWARD':'HOLDING';
+    const pos=score===null?null:Math.max(0,Math.min(100,(score-60)/80*100));
+    const covered=Number.isInteger(result?.covered)?result.covered:0;
+    const expected=Number.isInteger(result?.expected)?result.expected:0;
+    const weight=Number.isFinite(result?.weight)?result.weight:0;
+    const expectedWeight=Number.isFinite(result?.expectedWeight)?result.expectedWeight:0;
+    const partial=score!==null&&(covered<expected||weight<expectedWeight);
+    const proof=score===null?'No comparable Last and Current evidence for this section.':
+      (partial?'PARTIAL · ':'')+covered+' of '+expected+' scoring stages measured'+
+      (expectedWeight?' · '+weight+' of '+expectedWeight+' importance points':'');
+    const a11y=(overall?'Overall owner direction':'Section health')+': '+(score===null?
+      'not verified':score+' of the DJOMS direction scale, '+status.toLowerCase())+'. '+proof;
+    return '<div class="mj-health-meter '+(overall?'mj-health-overall ':'mj-health-section ')+
+      'mj-health-'+tone+'" role="group" aria-label="'+esc(a11y)+'">'+
+      '<div class="mj-health-top"><span>'+esc(overall?'WEIGHTED OVERALL':'SECTION HEALTH')+'</span>'+
+        '<strong class="mj-health-score">'+esc(arrow)+' '+esc(score===null?'N/A':score)+
+          ' <em>'+esc(status)+'</em></strong></div>'+
+      '<div class="mj-health-track'+(score===null?' mj-health-unavailable':'')+'"'+
+        ' role="img" aria-label="'+esc('Health meter. Below 100 red; 100 yellow; above 100 green. '+a11y)+'">'+
+        (pos===null?'<span class="mj-health-empty">NO VERIFIED TREND</span>':
+          '<span class="mj-health-needle" style="left:'+pos.toFixed(1)+'%"></span>')+
+        '</div>'+
+      '<div class="mj-health-scale"><span>60</span><span>100</span><span>140</span></div>'+
+      '<small class="mj-health-proof">'+esc(proof)+'</small>'+
+    '</div>';
+  }
+
+  function dailySection(index,title,metrics,charts,details,good,concern,action,watch,caveat='',health=''){
     return '<section class="mj-daily-section" id="mjDailySection'+index+'">'+
-      '<header><b class="mj-daily-number">'+index+'</b><h4>'+esc(title)+'</h4></header>'+
+      '<header><div class="mj-daily-title"><b class="mj-daily-number">'+index+'</b><h4>'+esc(title)+'</h4></div>'+health+'</header>'+
       '<div class="mj-daily-metrics">'+metrics+'</div>'+
       '<div class="mj-daily-visuals">'+charts+'</div>'+
       (details?'<div class="mj-daily-details">'+details+'</div>':'')+
@@ -836,7 +885,7 @@
       searchDetails,searchGood,searchConcern,
       'Review the top local BBQ search phrases, the pages shown, and their search titles/descriptions. Make clear whether a result leads to sauces, products or business information.',
       'Google position, Google result clicks, combined CTR, and whether Bing continues to contribute verified appearances.',
-      'Google search phrases overlap result-page totals and are never added to overall appearances.');
+      'Google search phrases overlap result-page totals and are never added to overall appearances.',dailyHealthMeter(dailySectionScore(owner,['search'])));
 
     const siteOkay=site?.connected===true;
     const weekRows=siteOkay&&Array.isArray(site.weekly)?site.weekly:[];
@@ -876,7 +925,7 @@
       '',siteGood,siteConcern,
       'Check the most-used entry pages and whether visitors can quickly find the next step. Use distinct tracking links for supporter posts.',
       'Direct, Google, Facebook, Instagram and other referrals, including which posts lead to actual website visits.',
-      'A session is a visit, not a unique person. Wix sessions and search-engine click reports use different definitions.');
+      'A session is a visit, not a unique person. Wix sessions and search-engine click reports use different definitions.',dailyHealthMeter(dailySectionScore(owner,['sources','visitors'])));
 
     const currentBounce=siteOkay?site.bounceRate:null;
     const previousBounce=wixCmp.bounceRate?.previous;
@@ -909,7 +958,7 @@
       '',pageGood,pageConcern,
       'Clarify the first-screen message and primary button on your busiest landing pages. Verify clicks and completed actions.',
       'Bounce rate, average stay, pages per visit, and the pages with the greatest exits.',
-      'A longer average stay does not automatically establish positive engagement or an actual customer.');
+      'A longer average stay does not automatically establish positive engagement or an actual customer.',dailyHealthMeter(dailySectionScore(owner,['engagement'])));
 
     const radioImport=window.djomsVerifiedReports?.radioImport?.data;
     const radioDaily=music?.current&&Array.isArray(radioImport?.rows)?
@@ -943,7 +992,7 @@
       '',musicGood,musicConcern,
       'Keep station tags working smoothly and obtain consistent Radio.co daily connection and listening-time reports.',
       'Verified stream connections, listening time, repeat audience indicators and which songs earn hearts.',
-      'Radio page views, heart votes, paid music units and radio listening sessions are different measurements.');
+      'Radio page views, heart votes, paid music units and radio listening sessions are different measurements.',dailyHealthMeter(dailySectionScore(owner,['music'])));
 
     const grossNow=paid?sales.itemSalesCents:null;
     const grossLast=comparison?.itemSalesCents;
@@ -967,7 +1016,7 @@
       '',salesGood,salesConcern,
       'Check product availability, checkout experience and clear links from the Trading Post and sauce pages.',
       'Paid orders, gross dollars and which tracked campaign links bring qualified visitors.',
-      'Online paid item sales are not business-wide revenue or profit; music sales are already included once.');
+      'Online paid item sales are not business-wide revenue or profit; music sales are already included once.',dailyHealthMeter(dailySectionScore(owner,['sales'])));
 
     const fb=social?.platforms?.facebook;
     const ig=social?.platforms?.instagram;
@@ -991,7 +1040,7 @@
       '',socialGood,socialConcern,
       'Continue the BBQ, Music and Book rotation. Give supporter posts tagged links and measure the website referrals they actually generate.',
       'Shares, comments, link-driven visits and which posts attract meaningful actions.',
-      'X is manually recorded and excluded from score. Social totals cannot be equated to unique readers or attributed sales.');
+      'X is manually recorded and excluded from score. Social totals cannot be equated to unique readers or attributed sales.',dailyHealthMeter(dailySectionScore(owner,['social'])));
 
     const event=ga4?.status==='connected'&&ga4.actions?.status==='reported'?
       ga4.actions.counts||{}:{};
@@ -1018,7 +1067,7 @@
       '',actionsGood,actionsConcern,
       'Verify contact and Pit Krewe completion events, chapter downloads and Radio.co listening-start reporting before scoring them.',
       'Successful forms, new confirmed Krewe members, chapter downloads and verified listening sessions.',
-      'File downloads are events, not proof that a chapter was read or understood.');
+      'File downloads are events, not proof that a chapter was read or understood.',dailyHealthMeter(dailySectionScore(owner,['actions'])));
 
     const currentScore=Number.isInteger(owner?.score)?owner.score:null;
     const scoreKind=currentScore===null?'na':currentScore>100?'up':
@@ -1036,6 +1085,39 @@
       rankGood?'Google average position improved.':null
     ].filter(Boolean).join(' ')||'See the verified measurements and decisions for each stage below.';
     const sections=[part1,part2,part3,part4,part5,part6,part7].join('');
+
+    const overallScoreSource={
+      score:currentScore,
+      covered:Number.isInteger(owner?.covered)?owner.covered:0,
+      expected:Array.isArray(owner?.stages)?owner.stages.length:8,
+      weight:Number.isFinite(owner?.availableWeight)?owner.availableWeight:0,
+      expectedWeight:Number.isFinite(owner?.totalWeight)?owner.totalWeight:100
+    };
+    const sectionScores=[
+      ['search'],['sources','visitors'],['engagement'],['music'],
+      ['sales'],['social'],['actions']
+    ].map(ids=>dailySectionScore(owner,ids).score);
+    const sectionCounts={
+      up:sectionScores.filter(v=>v!==null&&v>100).length,
+      down:sectionScores.filter(v=>v!==null&&v<100).length,
+      hold:sectionScores.filter(v=>v===100).length,
+      na:sectionScores.filter(v=>v===null).length
+    };
+    const finalHealth='<section class="mj-daily-final-health" aria-label="Overall business direction">'+
+      '<div class="mj-daily-final-heading"><h4>OVERALL BUSINESS DIRECTION</h4>'+
+        '<p>After all seven sections · Same verified DJOMS score as Mission Control</p></div>'+
+      dailyHealthMeter(overallScoreSource,true)+
+      '<div class="mj-daily-final-tally">'+
+        '<span class="up">↑ '+sectionCounts.up+' improving</span>'+
+        '<span class="down">↓ '+sectionCounts.down+' declining</span>'+
+        '<span class="hold">→ '+sectionCounts.hold+' holding</span>'+
+        '<span class="na">? '+sectionCounts.na+' unavailable</span>'+
+      '</div>'+
+      '<p class="mj-daily-caveat">The overall score is a WEIGHTED direction index, not a simple average of seven sections or an absolute business grade. '+
+      'The Website Visits section combines the existing Traffic and Visitors scoring stages; each is counted once. '+
+      'Unverified stages do not count as 100 or as zero.</p>'+
+    '</section>';
+
     const dayLabel=period?.start&&period?.endInclusive?
       period.start+' through '+period.endInclusive:'Selected reporting period';
     const googleRange=search?.currentRange?.start&&search?.currentRange?.end?
@@ -1049,9 +1131,6 @@
           '<p>Selected period: '+esc(dayLabel)+'</p>'+
           '<p>Search-engine verified dates: '+esc(googleRange)+
             '. Google reporting can lag behind the current date.</p></div>'+
-          '<div class="mj-daily-overall '+esc(scoreKind)+'"><span>OWNER DIRECTION</span>'+
-            '<strong>'+esc(currentScore===null?'N/A':currentScore)+'</strong>'+
-            '<b>'+esc(scoreText)+'</b><small>100 = holding · verified online activity only</small></div>'+
         '</header>'+
         '<div class="mj-daily-overview"><strong>THE HEADLINE</strong><p>'+esc(headline)+
           '</p><small>Investigations and suggested actions are hypotheses until tested. '+
@@ -1061,6 +1140,7 @@
             (label,i)=>'<a href="#mjDailySection'+(i+1)+'">'+(i+1)+'. '+label+'</a>').join('')+
         '</nav>'+
         sections+
+        finalHealth+
         '<footer class="mj-daily-footer">'+
           '<p><strong>REPORTING RULE:</strong> No fabricated numbers, no assumed conversions. '+
           'Red/green reflects the direction of the measured KPI, and Google position and bounce rate favor lower values. '+

@@ -12369,3 +12369,247 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
   #connectionStrip .mj-daily-chart{background:#fff!important}
   @page{size:auto;margin:12mm}
 }
+
+
+/* DJOMS SECTION HEALTH METERS · OCT 26 2026
+   Same weighted eight-stage direction index as Mission Control.
+   Seven report sections regroup those stages, not score them twice.
+   Red <100, yellow =100, green >100; unavailable is gray. */
+#connectionStrip .mj-daily-section>header{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;
+}
+#connectionStrip .mj-daily-title{
+  display:flex;align-items:center;gap:13px;
+  flex:1 1 310px;min-width:0;
+}
+#connectionStrip .mj-daily-title h4{min-width:0;overflow-wrap:anywhere;}
+#connectionStrip .mj-health-meter{
+  min-width:0;box-sizing:border-box;
+  border:2px solid #aa8e63;border-radius:8px;
+  padding:10px 12px 9px;
+  background:#fff9eb;color:#271c12!important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.65);
+  font-family:Arial,sans-serif;
+}
+#connectionStrip .mj-health-section{
+  flex:0 1 345px;width:min(345px,100%);
+  margin-left:auto;
+}
+#connectionStrip .mj-health-top{
+  display:flex;gap:5px 10px;flex-wrap:wrap;
+  justify-content:space-between;align-items:center;
+  padding:0 0 7px;
+}
+#connectionStrip .mj-health-top>span{
+  color:#33281c!important;
+  font:900 clamp(13px,.83vw,16px)/1.15 Arial,sans-serif!important;
+  letter-spacing:.025em;
+}
+#connectionStrip .mj-health-score{
+  display:flex;flex-wrap:wrap;gap:5px;align-items:baseline;
+  color:#7b642b!important;
+  font:900 clamp(23px,1.57vw,31px)/1.05 Georgia,serif!important;
+  font-variant-numeric:tabular-nums;
+}
+#connectionStrip .mj-health-score>em{
+  color:inherit!important;font:900 12px/1.2 Arial,sans-serif!important;
+  font-style:normal;letter-spacing:.025em;
+}
+#connectionStrip .mj-health-up .mj-health-score{color:#166a3f!important}
+#connectionStrip .mj-health-down .mj-health-score{color:#ac2d25!important}
+#connectionStrip .mj-health-hold .mj-health-score{color:#86631d!important}
+#connectionStrip .mj-health-na .mj-health-score{color:#615a50!important}
+#connectionStrip .mj-health-track{
+  position:relative;
+  height:17px;width:100%;
+  border:2px solid #59432b;border-radius:999px;
+  background:linear-gradient(to right,
+    #bb4034 0%,#d97450 29%,#e6c477 45%,
+    #eccd64 50%,#cedb83 58%,#69ac71 72%,#20784d 100%);
+  box-sizing:border-box;
+  overflow:visible;
+}
+#connectionStrip .mj-health-track:before{
+  content:"";position:absolute;left:50%;top:-3px;bottom:-3px;
+  width:2px;background:#2a241b;opacity:.8;transform:translateX(-50%);
+}
+#connectionStrip .mj-health-needle{
+  position:absolute;z-index:1;top:-6px;bottom:-6px;
+  width:6px;transform:translateX(-50%);
+  background:#17130c;border:1px solid #f8ebca;
+  border-radius:3px;box-shadow:0 0 0 1px #17130c;
+}
+#connectionStrip .mj-health-unavailable{
+  background:repeating-linear-gradient(120deg,#bbb6ac 0 11px,#d8d1c6 11px 22px);
+}
+#connectionStrip .mj-health-unavailable:before{display:none}
+#connectionStrip .mj-health-empty{
+  display:block;position:absolute;inset:0;
+  color:#332a1f!important;text-align:center;
+  font:900 11px/13px Arial,sans-serif!important;
+}
+#connectionStrip .mj-health-scale{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:6px;margin-top:5px;
+  color:#6a5135!important;font:900 12px/1.1 Arial,sans-serif!important;
+}
+#connectionStrip .mj-health-scale span:nth-child(2){font-weight:900}
+#connectionStrip .mj-health-proof{
+  display:block;margin:5px 0 0!important;
+  color:#57432c!important;
+  font:800 clamp(11px,.72vw,13px)/1.25 Arial,sans-serif!important;
+  overflow-wrap:anywhere;
+}
+#connectionStrip .mj-health-na .mj-health-proof{color:#695b4a!important}
+#connectionStrip .mj-daily-final-health{
+  display:grid;gap:13px;
+  padding:18px 20px;
+  border:3px double #a7834f;border-radius:10px;
+  background:linear-gradient(155deg,#fbefcf,#eddbaf);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.52);
+}
+#connectionStrip .mj-daily-final-heading h4{
+  margin:0 0 6px!important;
+  color:#21170e!important;
+  font:900 clamp(24px,1.7vw,33px)/1.14 Georgia,serif!important;
+}
+#connectionStrip .mj-daily-final-heading p{
+  margin:0!important;color:#4d3a26!important;
+  font:850 clamp(14px,.93vw,17px)/1.27 Arial,sans-serif!important;
+}
+#connectionStrip .mj-health-overall{
+  width:min(100%,800px);
+  padding:18px 18px 15px;
+  border:3px solid #6b5130;
+  background:linear-gradient(160deg,#fffaf0,#f9e9c4);
+}
+#connectionStrip .mj-health-overall .mj-health-top>span{
+  font:900 20px/1.2 Georgia,serif!important;
+}
+#connectionStrip .mj-health-overall .mj-health-score{
+  font-size:clamp(30px,2.5vw,45px)!important;
+}
+#connectionStrip .mj-health-overall .mj-health-score>em{
+  font-size:15px!important;
+}
+#connectionStrip .mj-health-overall .mj-health-track{height:24px}
+#connectionStrip .mj-health-overall .mj-health-scale{font-size:15px!important}
+#connectionStrip .mj-health-overall .mj-health-proof{font-size:15px!important}
+#connectionStrip .mj-daily-final-tally{
+  display:flex;gap:8px 19px;flex-wrap:wrap;
+  border-top:1px solid #bfa274;padding-top:12px;
+}
+#connectionStrip .mj-daily-final-tally span{
+  font:900 clamp(15px,1.02vw,19px)/1.2 Arial,sans-serif!important;
+}
+#connectionStrip .mj-daily-final-tally .up{color:#176a3f!important}
+#connectionStrip .mj-daily-final-tally .down{color:#ae2a20!important}
+#connectionStrip .mj-daily-final-tally .hold{color:#86631d!important}
+#connectionStrip .mj-daily-final-tally .na{color:#675c4c!important}
+#connectionStrip .mj-daily-final-health>.mj-daily-caveat{
+  margin:0!important;color:#56442e!important;
+  font:800 14px/1.36 Arial,sans-serif!important;
+}
+@media(max-width:1130px){
+  #connectionStrip .mj-daily-title{flex-basis:100%}
+  #connectionStrip .mj-health-section{flex:1 1 100%;margin-left:0;width:100%}
+}
+@media(max-width:610px){
+  #connectionStrip .mj-daily-final-health{padding:12px}
+  #connectionStrip .mj-health-top{align-items:flex-start;flex-direction:column;gap:3px}
+  #connectionStrip .mj-health-overall{padding:11px}
+  #connectionStrip .mj-health-section{width:100%}
+}
+@media print{
+  #connectionStrip .mj-health-meter,
+  #connectionStrip .mj-daily-final-health{
+    break-inside:avoid-page;
+    background:#fff!important;
+  }
+  #connectionStrip .mj-health-track{
+    print-color-adjust:exact;-webkit-print-color-adjust:exact;
+  }
+}
+
+
+/* HORIZONTAL SECTION HEALTH STRIPS · OCT 26 2026
+   One row: [section number + title] [number + long health track].
+   Avoid a vertical card under each title on ordinary desktop widths. */
+#connectionStrip .mj-daily-section>header{
+  display:grid!important;
+  grid-template-columns:minmax(260px,36%) minmax(0,1fr);
+  align-items:center;
+  gap:12px 17px;
+  padding-bottom:12px;
+}
+#connectionStrip .mj-daily-title{
+  width:100%;min-width:0;flex:none!important;
+  flex-basis:auto!important;
+  display:flex;align-items:center;gap:12px;
+}
+#connectionStrip .mj-daily-section>header .mj-health-section{
+  display:grid;
+  grid-template-columns:minmax(146px,205px) minmax(150px,1fr);
+  grid-template-rows:minmax(21px,auto) minmax(23px,auto) auto;
+  column-gap:15px;row-gap:0;
+  width:100%!important;max-width:none;min-width:0;
+  margin:0!important;
+  padding:10px 13px!important;
+  align-self:stretch;
+}
+#connectionStrip .mj-daily-section>header .mj-health-section .mj-health-top{
+  grid-column:1;grid-row:1 / span 2;
+  display:flex;flex-direction:column;
+  justify-content:center;align-items:flex-start;
+  padding:0;
+  flex-wrap:nowrap;gap:3px;
+}
+#connectionStrip .mj-daily-section>header .mj-health-section .mj-health-top>span{
+  font-size:13px!important;
+}
+#connectionStrip .mj-daily-section>header .mj-health-section .mj-health-score{
+  font-size:clamp(22px,1.6vw,32px)!important;
+  white-space:nowrap;
+}
+#connectionStrip .mj-daily-section>header .mj-health-section .mj-health-track{
+  grid-column:2;grid-row:2;
+  align-self:center;margin:0;
+  height:20px;
+}
+#connectionStrip .mj-daily-section>header .mj-health-section .mj-health-scale{
+  grid-column:2;grid-row:1;
+  align-self:end;margin:0 0 4px;
+}
+#connectionStrip .mj-daily-section>header .mj-health-section .mj-health-proof{
+  grid-column:1 / -1;grid-row:3;
+  margin-top:7px!important;padding-top:6px;
+  border-top:1px solid #d8c8a8;
+  font-size:12px!important;
+}
+@media(max-width:890px){
+  #connectionStrip .mj-daily-section>header{
+    grid-template-columns:minmax(0,1fr);
+  }
+  #connectionStrip .mj-daily-section>header .mj-health-section{
+    grid-template-columns:minmax(135px,190px) minmax(130px,1fr);
+  }
+}
+@media(max-width:430px){
+  #connectionStrip .mj-daily-section>header .mj-health-section{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:auto auto auto auto;
+  }
+  #connectionStrip .mj-daily-section>header .mj-health-section .mj-health-top{
+    grid-column:1;grid-row:1;
+  }
+  #connectionStrip .mj-daily-section>header .mj-health-section .mj-health-track{
+    grid-column:1;grid-row:3;
+  }
+  #connectionStrip .mj-daily-section>header .mj-health-section .mj-health-scale{
+    grid-column:1;grid-row:2;margin:5px 0 3px;
+  }
+  #connectionStrip .mj-daily-section>header .mj-health-section .mj-health-proof{
+    grid-column:1;grid-row:4;
+  }
+}
