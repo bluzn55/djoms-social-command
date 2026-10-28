@@ -612,59 +612,64 @@
         'No engine reported positive appearances or clicks within the verified coverage.':
         'No compatible, verified search-engine data yet. The connected engine reports remain available below.');
   }
-  function searchAppearancesDetails(seo){
-    // Search phrases describe why Doc Jaks APPEARED, even when nobody clicked.
-    // GSC may omit/suppress queries, so shown rows never equal all impressions.
-    const connected=seo?.status==='connected';
-    const metrics=connected?seo.metrics||{}:{};
-    const impressions=valid(metrics.impressions)?metrics.impressions:null;
-    const clicks=valid(metrics.clicks)?metrics.clicks:null;
-    const pairs=connected&&seo.queryPages?.status==='reported'&&Array.isArray(seo.queryPages.rows)?
-      seo.queryPages.rows.filter(p=>p?.query&&p?.page&&(valid(p.impressions)||valid(p.clicks)))
-        .sort((a,b)=>(b.impressions??0)-(a.impressions??0)).slice(0,60):[];
-    const terms=connected&&Array.isArray(seo.topQueries)?
-      seo.topQueries.filter(p=>p?.query&&(valid(p.impressions)||valid(p.clicks)))
-        .sort((a,b)=>(b.impressions??0)-(a.impressions??0)).slice(0,5):[];
-    const pages=connected&&Array.isArray(seo.topPages)?
-      seo.topPages.filter(p=>p?.page&&(valid(p.impressions)||valid(p.clicks)))
-        .sort((a,b)=>(b.impressions??0)-(a.impressions??0)).slice(0,5):[];
-    const matched=phrase=>pairs.filter(p=>p.query===phrase).slice(0,3)
-      .map(p=>named(p.page)).filter(Boolean);
-    const primary=terms.length?terms:pairs.slice(0,5);
-    // One ranked list: a result page with 33 appearances must precede
-    // a search phrase with 6, regardless of source type. Query and page
-    // appearances overlap; the rows must never be added together.
-    const combined=[
-      ...primary.map(p=>{
-        const found=p.page?[named(p.page)]:matched(p.query);
-        const pagesText=found.length?
-          ' · Result'+(found.length>1?'s':'')+': '+[...new Set(found)].join(', '):
-          ' · Result page not disclosed';
-        return {heading:'SEARCH PHRASE: '+p.query,
-          detail:'Search appearance'+(p.impressions===1?'':'s')+pagesText,
-          appearances:valid(p.impressions)?p.impressions:null,kind:1};
-      }),
-      ...pages.map(p=>({heading:'RESULT PAGE: '+named(p.page),
-        detail:'Page shown in Google search results',
-        appearances:valid(p.impressions)?p.impressions:null,kind:2}))
+  function searchAppearancesDetails(seo,search){
+    // Search Console supplies actual phrase + result URL pairs. Page-only and
+    // phrase-only totals overlap; never invent a link between independent rows.
+    const paired=seo?.status==='connected'&&
+      seo.queryPages?.status==='reported'&&Array.isArray(seo.queryPages.rows)?
+      seo.queryPages.rows.filter(item=>item?.query&&item?.page&&
+        valid(item.impressions)&&item.impressions>0):[];
+    const confirmedEngines=search?.status==='reported'&&Array.isArray(search.engines)?
+      search.engines.filter(engine=>engine?.id!=='google'&&
+        valid(engine.current?.clicks)&&engine.current.clicks>0):[];
+    const items=[
+      ...paired.map(pair=>({
+        name:'GOOGLE',phrase:String(pair.query),page:String(pair.page),
+        impressions:pair.impressions,clicks:pair.clicks,kind:'pair'
+      })),
+      // Bing reports verified clicks, but its current API feed does not
+      // disclose which search phrase produced which result page.
+      ...confirmedEngines.map(engine=>({
+        name:engine.id==='bing'?'BING':String(engine.name||engine.id).toUpperCase(),
+        phrase:null,page:null,impressions:engine.current.impressions,
+        clicks:engine.current.clicks,kind:'engine'
+      }))
     ];
-    combined.sort((a,b)=>{
-      const left=valid(a.appearances)?a.appearances:-1;
-      const right=valid(b.appearances)?b.appearances:-1;
-      return right-left||a.kind-b.kind||a.heading.localeCompare(b.heading);
+    // Do not render empty engines, hypothetical pages, or unattributed
+    // search terms. Equal appearance counts prefer the row with more clicks.
+    if(!items.length)return '';
+    items.sort((a,b)=>(valid(b.impressions)?b.impressions:-1)-
+      (valid(a.impressions)?a.impressions:-1)||
+      (valid(b.clicks)?b.clicks:-1)-(valid(a.clicks)?a.clicks:-1)||
+      a.name.localeCompare(b.name));
+    const rows=items.map((item,i)=>{
+      const pair=item.kind==='pair';
+      const heading=pair?item.name+' · SEARCH: '+item.phrase:
+        item.name+' · VERIFIED SEARCH CLICKS';
+      const subtext=pair?
+        '<small>RESULT PAGE: '+targetLabel(item.page)+
+        ' · <span class="mj-search-exact-url">'+esc(item.page)+'</span></small>':
+        '<small>Search phrase and result page not supplied by this engine.</small>';
+      return '<div class="mj-dropdown-row mj-search-pair-row">'+
+        '<span class="mj-dropdown-rank">'+esc(i+1)+'.</span>'+
+        '<span class="mj-dropdown-desc"><strong>'+esc(heading)+'</strong>'+
+          subtext+'</span>'+
+        '<span class="mj-search-pair-metrics">'+
+          '<span><b>'+esc(number(item.impressions))+
+            '</b><small>appearances</small></span>'+
+          '<span><b>'+esc(number(item.clicks))+
+            '</b><small>clicks</small></span>'+
+        '</span></div>';
     });
-    const rows=combined.map((item,i)=>mapDetailRow(item.heading,item.detail,
-      number(item.appearances),'appearances',i));
-    const context='Google Search Console: '+number(impressions)+' reported Google appearances. '+
-      'Search-result clicks and their source breakdown are under Section 2. Phrases show what people typed when Google discloses it; '+
-      'result pages show which Doc Jaks pages appeared. Google hides some searches. '+
-      'Rows are ranked highest to lowest by appearances across both types. '+
-      'Phrase and page counts overlap and must not be added together or to the engine totals.';
-    let empty='Google has not reported individual search phrases or result pages for the selected dates.';
-    if(connected&&valid(impressions)&&impressions>0&&clicks===0)
-      empty='Google reported '+number(impressions)+' appearances but did not disclose individual phrase or page details for this period. Search clicks are tracked in Section 2.';
-    return mapDropdown('google-phrases','GOOGLE SEARCH PHRASES & RESULT PAGES',
-      rows,context,empty);
+    const text='Only verified data is displayed. Google rows pair the actual '+
+      'search phrase with the result page Google displayed. Search Console '+
+      'withholds some queries. Other engines appear here only after '+
+      'reporting at least one verified search click; if the engine does not '+
+      'disclose phrase-to-page details, only its verified totals are shown. '+
+      'All counts belong to their own engine and are not additive across query rows.';
+    return mapDropdown('google-phrases',
+      'SEARCH ENGINE · SEARCH PHRASE → RESULT PAGE',rows,text,
+      'No verified search-phrase and result-page data was reported.');
   }
 
   // Click evidence is deliberately grouped under #2, not scattered among #1
@@ -2011,7 +2016,7 @@
         heroMetric('GOOGLE POSITION',
           search?.positionPrevious,search?.positionCurrent,'position',true)+
       '</div>'+
-      searchEnginesDropdown(search)+searchAppearancesDetails(seo),
+      searchEnginesDropdown(search)+searchAppearancesDetails(seo,search),
       'Appearances and CTR tell us how often Doc Jaks is found and chosen. '+
       'Actual search click totals and their breakdown are tracked under #2.');
     // #2 groups the journey from verified search-result clicks to ALL
