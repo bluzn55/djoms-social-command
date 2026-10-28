@@ -13969,3 +13969,32 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
     flex-basis:72px;width:72px;
   }
 }
+
+/* DJOMS · A distinctive, compact tracking control on every saved placecard */
+.placecard-track-menu{margin:9px 0 2px;max-width:365px;font-family:inherit}
+.placecard-track-menu>summary{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;
+  list-style:none;padding:10px 14px;border:2px solid #c89b3b;border-radius:8px;
+  background:#201910;color:#ffe6a0;font-weight:900;font-size:13px;letter-spacing:.65px;
+  text-shadow:0 1px #000;box-shadow:0 2px 0 #76531f}
+.placecard-track-menu>summary::-webkit-details-marker{display:none}
+.placecard-track-menu>summary::after{content:" ▾";margin-left:8px}
+.placecard-track-menu[open]>summary::after{content:" ▴"}
+.placecard-track-menu>summary:hover,.placecard-track-menu>summary:focus-visible{background:#47321b;color:#fff5ce}
+.placecard-track-options{margin-top:7px;padding:10px;border:1px solid #b9a37b;
+  border-radius:9px;background:#fff8e8;color:#2b241a;max-width:375px}
+.placecard-track-options small{display:block;font-size:12px;line-height:1.35;font-weight:700;color:#51452d}
+.placecard-track-buttons{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}
+.placecard-track-buttons button{flex:0 1 auto;min-width:74px;padding:10px 12px;
+  border:1px solid #7e5c27;border-radius:7px;background:#f8df9a;color:#272013;
+  font-size:12px;font-weight:900;letter-spacing:.2px;cursor:pointer}
+.placecard-track-buttons button:hover,.placecard-track-buttons button:focus-visible{background:#ebc35f}
+.placecard-track-buttons button:disabled{opacity:.5;cursor:not-allowed}
+.placecard-track-unavailable{display:block;max-width:260px;margin-top:7px;font-size:11px;font-weight:700;color:#8b422e}
+.placecard-track-editor{padding:13px;margin:10px 0;border:2px solid #c89b3b;
+  border-radius:10px;background:#fffaf0}
+.placecard-track-editor>b{font-size:15px;color:#3d2c19;letter-spacing:.5px}
+.placecard-track-editor>p{margin:8px 0 0;color:#352e21;font-size:13px;line-height:1.5}
+@media(max-width:620px){
+ .placecard-track-buttons button{min-width:96px;font-size:14px}
+ .placecard-track-menu>summary{font-size:13px;min-height:44px}
+}

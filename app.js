@@ -930,13 +930,33 @@ function platformsForRow(r) {
     return label+'<small class="x-result-info '+cls+'">'+esc(text)+'</small>';
   }).join('<br>') || 'Choose platforms';
 }
+// A single gold control on each saved placecard reveals its separate,
+ // platform-specific URLs. The backend generates the same IDs used by Wix.
+function trackingLinksHtml(record) {
+  const labels=[['facebook','FB'],['instagram','IG'],['x','X'],['youtube','YT']];
+  const links=record?.trackingLinks||{};
+  const ready=labels.filter(([platform])=>typeof links[platform]==='string'&&
+    /^https:\/\/www\.docjaks\.com\//.test(links[platform]));
+  if(!ready.length)return '<small class="placecard-track-unavailable">TRACKING NEEDS A DOCJAKS WEBSITE LINK</small>';
+  return '<details class="placecard-track-menu">'+
+    '<summary title="Copy a unique tracked website link for this placecard">⚜ TRACK THIS PLACE CARD</summary>'+
+    '<div class="placecard-track-options">'+
+      '<small>Choose where this placecard is being shared:</small>'+
+      '<div class="placecard-track-buttons">'+ready.map(([platform,label])=>
+        '<button type="button" data-track-record="'+esc(record.id)+'"'+
+        ' data-track-platform="'+esc(platform)+'"'+
+        ' title="Copy unique '+esc(label)+' website link for '+esc(record.title)+'">'+
+        'COPY '+esc(label)+' LINK</button>').join('')+'</div>'+
+      '<small>Each link identifies this placecard, campaign and platform.</small>'+
+    '</div></details>';
+}
 function rowsHtml(list) {
   if (!list.length) return '<div class="empty"><h3>No posts here yet.</h3><p>Use New post to start one.</p></div>';
   const withSelection = activeView === 'Content Library';
   return '<div class="table-wrap"><table><thead><tr>' +
     (withSelection ? '<th scope="col">Select</th>' : '') +
     '<th>Photo</th><th>Post</th><th>Platforms</th><th>Status</th><th>Posting time</th><th></th></tr></thead><tbody>' +
-    list.map(r => `<tr>${withSelection ? `<td class="draft-select-cell">${canDeleteDraft(r) ? `<input type="checkbox" class="draft-check" data-draft-id="${esc(r.id)}" aria-label="Select draft ${esc(r.title)}">` : '<span class="draft-not-selectable" title="Only unsent drafts may be selected">—</span>'}</td>` : ''}<td>${r.imageUrl ? `<img class="row-photo" src="${esc(r.imageUrl)}" alt="">` : '<span class="thumb">PHOTO</span>'}</td><td><small class="id">${esc(code(r))}</small><strong>${esc(r.title)}</strong></td><td>${platformsForRow(r)}</td><td>${badge(r.status)}</td><td>${esc(date(r.scheduledAt))}</td><td class="post-row-actions"><button data-open="${esc(r.id)}" aria-label="Open ${esc(r.title)}">Open ›</button>${canDeleteDraft(r) ? `<button class="danger" data-delete-draft="${esc(r.id)}" aria-label="Delete draft ${esc(r.title)}">Delete</button>` : ''}</td></tr>`).join('') +
+    list.map(r => `<tr>${withSelection ? `<td class="draft-select-cell">${canDeleteDraft(r) ? `<input type="checkbox" class="draft-check" data-draft-id="${esc(r.id)}" aria-label="Select draft ${esc(r.title)}">` : '<span class="draft-not-selectable" title="Only unsent drafts may be selected">—</span>'}</td>` : ''}<td>${r.imageUrl ? `<img class="row-photo" src="${esc(r.imageUrl)}" alt="">` : '<span class="thumb">PHOTO</span>'}</td><td><small class="id">${esc(code(r))}</small><strong>${esc(r.title)}</strong>${trackingLinksHtml(r)}</td><td>${platformsForRow(r)}</td><td>${badge(r.status)}</td><td>${esc(date(r.scheduledAt))}</td><td class="post-row-actions"><button data-open="${esc(r.id)}" aria-label="Open ${esc(r.title)}">Open ›</button>${canDeleteDraft(r) ? `<button class="danger" data-delete-draft="${esc(r.id)}" aria-label="Delete draft ${esc(r.title)}">Delete</button>` : ''}</td></tr>`).join('') +
     '</tbody></table></div>';
 }
 function updateDraftSelectionControls() {
@@ -1865,16 +1885,24 @@ async function setView(view) {
 }
 function platformText() {
   const caption = $('postCaption').value.trim();
-  const link = $('postLink').value.trim();
-  const full = caption + (link ? (caption ? '\n\n' : '') + link : '');
-  const ig = full.length > 2200 ? full.slice(0,2197) + '…' : full;
-  const reserve = link ? link.length + 2 : 0;
-  const maxCaption = Math.max(0, 280 - reserve);
-  const xCaption = caption.length > maxCaption ? caption.slice(0, Math.max(0,maxCaption-1)).trimEnd() + '…' : caption;
-  const x = xCaption + (link ? (xCaption ? '\n\n' : '') + link : '');
-  const ytTitle = $('postTitle').value.trim().slice(0,100);
-  const ytDescription = full;
-  return { facebook:full, instagram:ig, x, youtubeTitle:ytTitle, youtubeDescription:ytDescription };
+  const savedLink = $('postLink').value.trim();
+  const linkFor = platform => !dirty && selected?.trackingLinks?.[platform] ?
+    selected.trackingLinks[platform] : savedLink;
+  const combined = platform => {
+    const link=linkFor(platform);
+    return caption + (link ? (caption ? '\n\n' : '') + link : '');
+  };
+  const facebook=combined('facebook');
+  const fullInstagram=combined('instagram');
+  const instagram=fullInstagram.length>2200 ?
+    fullInstagram.slice(0,2197)+'…':fullInstagram;
+  const xLink=linkFor('x');
+  const maxCaption=Math.max(0,280-(xLink?xLink.length+2:0));
+  const xCaption=caption.length>maxCaption ?
+    caption.slice(0,Math.max(0,maxCaption-1)).trimEnd()+'…':caption;
+  const x=xCaption+(xLink?(xCaption?'\n\n':'')+xLink:'');
+  const youtubeTitle=$('postTitle').value.trim().slice(0,100);
+  return {facebook,instagram,x,youtubeTitle,youtubeDescription:combined('youtube')};
 }
 function renderFormats() {
   const t = platformText();
@@ -1898,11 +1926,24 @@ function updatePreview() {
   $('photoPreview').innerHTML = selected?.imageUrl ? `<img src="${esc(selected.imageUrl)}" alt="Post artwork">` : 'Add your photo';
   renderFormats();
 }
+function renderRecordTrackingLinks(r) {
+  const host=$('postTrackingLinks');
+  if(!host)return;
+  host.innerHTML='<div class="placecard-track-editor"><b>⚜ PLACE CARD TRACKING</b>'+
+    trackingLinksHtml(r)+
+    '<p>DJOMS uses the Facebook and Instagram links when it posts automatically. '+
+    'For X or YouTube, copy that platform\'s link into your post. '+
+    'Instagram feed captions are not clickable; use a Story link sticker or profile link.</p></div>';
+}
 function buttons() {
   if (!selected) return;
   const r = selected, locked = ['scheduled','queueing','publishing','published','partial','uncertain'].includes(r.status);
   ['postTitle','postCampaign','postCaption','postLink','targetFacebook','targetInstagram','targetX','targetYouTube','imageFile'].forEach(x => $(x).disabled = locked || busy);
   $('saveButton').disabled = locked || busy;
+  $('postTrackingLinks')?.querySelectorAll('[data-track-record]').forEach(button=>{
+    button.disabled=busy||dirty;
+    button.title=dirty?'Save your changes before copying a link':button.title;
+  });
   $('approveButton').disabled = busy || dirty || !['draft','paused','failed','approved'].includes(r.status);
   const interrupted = r.status === 'publishing' && Date.now() - Date.parse(r.updatedAt) > 180000;
   const retryable = (['approved','failed','partial','processing'].includes(r.status) || interrupted) && r.approvedBy;
@@ -1963,6 +2004,7 @@ function openRecord(r) {
   $('recordCode').textContent = code(r); $('recordTitle').textContent = r.title;
   $('recordStatus').textContent = labels[r.status] || r.status; $('recordStatus').className = 'status state-' + r.status;
   $('postTitle').value = r.title; $('postCaption').value = r.caption; $('postLink').value = r.link;
+  renderRecordTrackingLinks(r);
   $('postCampaign').innerHTML = campaigns.map(c => `<option value="${esc(c.id)}">${esc(c.title)}</option>`).join(''); $('postCampaign').value = r.campaign;
   $('targetFacebook').checked = r.targets.includes('facebook'); $('targetInstagram').checked = r.targets.includes('instagram'); $('targetX').checked = r.targets.includes('x'); $('targetYouTube').checked = r.targets.includes('youtube');
   $('timeZone').textContent = 'Your time: ' + timezone;
@@ -2041,6 +2083,21 @@ async function perform(work) {
 }
 document.addEventListener('click', event => {
   const b = event.target.closest('button,a'); if (!b || b.disabled || busy) return;
+  if(b.dataset.trackRecord && b.dataset.trackPlatform) {
+    const record=records.find(r=>r.id===b.dataset.trackRecord)||
+      (selected?.id===b.dataset.trackRecord?selected:null);
+    if(!record)return notice('That placecard is no longer in the library. Refresh.',true);
+    if(selected?.id===record.id&&dirty)return notice('Save your changes first so the tracking link matches this card.',true);
+    const platform=b.dataset.trackPlatform;
+    const link=record.trackingLinks?.[platform];
+    if(!link)return notice('This placecard needs a Doc Jaks website destination before tracking.',true);
+    const platformName=({facebook:'Facebook',instagram:'Instagram',x:'X',youtube:'YouTube'})[platform]||platform;
+    return navigator.clipboard.writeText(link).then(()=>{
+      notice('Copied '+platformName+' link for '+record.title+'. Share this exact link to attribute website visits to this placecard.');
+    }).catch(()=>{
+      prompt('Copy the '+platformName+' tracking link:',link);
+    });
+  }
   if(b.dataset.websiteRange||b.dataset.websiteCustom) {
     const requested=b.dataset.websiteCustom?'custom':b.dataset.websiteRange;
     return perform(async()=>{

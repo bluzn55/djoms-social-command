@@ -1282,12 +1282,14 @@
             name:row.placecardName||match?.placecardName||row.postTitle,
             title:match?.title||row.postTitle,
             imageUrl:match?.placecardImageUrl||null,
-            visits:0,facebook:0,instagram:0,postIds:new Set()};
+            visits:0,facebook:0,instagram:0,x:0,youtube:0,postIds:new Set()};
           placed.set(key,item);
         }
         item.visits+=row.taggedVisits;
         if(row.platform==='facebook')item.facebook+=row.taggedVisits;
         if(row.platform==='instagram')item.instagram+=row.taggedVisits;
+        if(row.platform==='x')item.x+=row.taggedVisits;
+        if(row.platform==='youtube')item.youtube+=row.taggedVisits;
         item.postIds.add(row.recordId);
       }
     }
@@ -1305,7 +1307,8 @@
           '<div class="mj-placecard-results"><strong>'+
             esc(number(item.visits))+'</strong><small>TAGGED WEBSITE VISITS</small>'+
             '<small>FB '+esc(number(item.facebook))+' · IG '+
-            esc(number(item.instagram))+'</small>'+
+            esc(number(item.instagram))+' · X '+esc(number(item.x))+
+            ' · YT '+esc(number(item.youtube))+'</small>'+
             (item.postIds.size>1?'<small>Used in '+item.postIds.size+
               ' saved posts</small>':'')+'</div></article>').join('')+
         '</div>':
@@ -1314,11 +1317,11 @@
           attribution?.status==='reported'?
             'No measured website visits from tagged placecard links in these selected dates yet.':
             'Checking the saved post links and website visits.')+'</p>')+
-      '<p class="mj-post-traffic-method">Ranked by Wix sessions carrying unique FB/IG post links during the chosen dates. Repeated posts using the same saved image are grouped; no untagged traffic or invented conversions are included.</p>'+
+      '<p class="mj-post-traffic-method">Ranked by Wix sessions carrying unique Facebook, Instagram, X or YouTube placecard links during the selected dates. Repeated designs are grouped; untagged traffic is not credited.</p>'+
       '</section>';
     const rows=selected.map(post=>{
       const change=comparison(post);
-      const platformLabels={facebook:'FB',instagram:'IG',x:'X'};
+      const platformLabels={facebook:'FB',instagram:'IG',x:'X',youtube:'YT'};
       const channels=Array.isArray(post.platforms)?post.platforms:[];
       const placecardDetails=attributable.find(row=>row.recordId===post.id&&
         row.placecardImageId===post.placecardImageId);
@@ -1326,8 +1329,8 @@
         artworkLabel(post.category,placecardDetails?.placecardNumber,
           post.placecardImageId),post.title);
       const sources=channels.map(platform=>{
-        if(!['facebook','instagram'].includes(platform))
-          return '<span class="mj-post-platform">X · website link not measured</span>';
+        if(!['facebook','instagram','x','youtube'].includes(platform))
+          return '<span class="mj-post-platform">WEBSITE LINK NOT MEASURED</span>';
         const found=attributable.find(row=>row.recordId===post.id&&
           row.platform===platform);
         let result='N/A';
@@ -1380,7 +1383,7 @@
         ' · COMPARISON PENDING');
     return '<details class="mj-post-traffic"'+
       (postTrafficExpanded?' open':'')+
-      ' aria-label="Facebook and Instagram posts versus Wix website traffic">'+
+      ' aria-label="Social posts versus Wix website traffic">'+
       '<summary><span>SOCIAL POSTS &amp; WEBSITE TRAFFIC</span>'+
         '<b>'+esc(summary)+' ▾</b></summary>'+
       '<div class="mj-post-traffic-body">'+
@@ -1401,7 +1404,7 @@
               ' most recent of '+posts.length+' confirmed posts.</p>':''))+
         (attribution?.status==='unavailable'?
           '<p class="mj-post-traffic-empty">Tagged-link reporting: '+esc(attribution.error||'Unavailable')+'</p>':'')+
-        '<p class="mj-post-traffic-caveat"><strong>MEASURED VS INFERRED:</strong> All-source visits can increase or decrease independently of a post. Only a visit carrying that post’s unique Doc Jaks link is tagged to it. Existing untagged posts cannot be credited retroactively. Facebook post links can be opened directly; Instagram feed captions do not make URLs clickable, so use the copied Instagram link in a Story link sticker or profile link. Signup actions are tracked separately. Wix reporting can lag.</p>'+
+        '<p class="mj-post-traffic-caveat"><strong>MEASURED VS INFERRED:</strong> All-source visits can change independently of any social post. Only Wix sessions carrying a saved placecard’s unique link are credited to it. Copied X and YouTube links are counted when used, even before DJOMS confirms a publish date. Untagged past posts cannot be credited retroactively. Instagram feed captions do not make URLs clickable; use the copied Instagram link in a Story link sticker or profile link. Signup actions are separate and Wix reporting can lag.</p>'+
       '</div></details>';
   }
 
