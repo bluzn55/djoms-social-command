@@ -59,9 +59,21 @@
     const musicItemSalesCents=whole(musicSales?.itemSalesCents)?musicSales.itemSalesCents:null;
     const last=period?.start&&Number.isInteger(period?.days)&&period.days>0?
       {start:shift(period.start,-period.days),end:shift(period.start,-1)}:null;
-    const current=radio&&period?.start&&period?.endInclusive?
-      exactDays(radio,period.start,period.endInclusive):null;
-    const previous=radio&&last?exactDays(radio,last.start,last.end):null;
+    const newer=typeof window.djomsRadioListenerData==='function'?
+      window.djomsRadioListenerData(period):null;
+    const matching=newer?.status==='reported'&&
+      newer?.range?.start===period?.start&&newer?.range?.end===period?.end;
+    const selectedNew=matching&&newer.summary?.overviewComplete&&
+      newer.summary?.listeningComplete&&
+      whole(newer.summary?.connections)&&valid(newer.summary?.listeningSeconds)?
+      {connections:newer.summary.connections,seconds:newer.summary.listeningSeconds}:null;
+    const selectedPrev=matching&&newer.previous?.overviewComplete&&
+      newer.previous?.listeningComplete&&
+      whole(newer.previous?.connections)&&valid(newer.previous?.listeningSeconds)?
+      {connections:newer.previous.connections,seconds:newer.previous.listeningSeconds}:null;
+    const current=selectedNew||(radio&&period?.start&&period?.endInclusive?
+      exactDays(radio,period.start,period.endInclusive):null);
+    const previous=selectedPrev||(radio&&last?exactDays(radio,last.start,last.end):null);
     const signals=current&&previous?[
       {label:'Verified Radio.co streaming connections',weight:70,
         previous:previous.connections,current:current.connections},
@@ -81,7 +93,8 @@
       uniqueRadioListeners:null,
       note:signals.length?
         'Complete Radio.co imported CSV UTC windows. Streaming connections and duration, not unique listeners.':
-        'Radio.co historical import does not cover both selected and preceding UTC dates. Current listening direction N/A.',
+        selectedNew?'Radio.co reports the selected dates, but previous-period listening is incomplete. Growth direction N/A.':
+        'Radio.co CSV coverage is incomplete for these dates. Visit the listener report below to import Overview and TTSL. Growth direction N/A.',
       caveat:'Music purchases are already included in the main paid Wix sales stage; do not score them twice. Page views and radio link clicks are not confirmed streams.'
     };
   }

@@ -37,6 +37,8 @@
       const data=await r.json().catch(()=>null);
       if(!r.ok||data?.status!=='reported')throw new Error(data?.error||'Radio.co imported report unavailable.');
       cache.set(q,{data,at:Date.now()});
+      document.dispatchEvent(new CustomEvent('djoms:verified-report',
+        {detail:{source:'radioIntelligence'}}));
       return data;
     })().catch(e=>{
       cache.set(q,{data:null,error:String(e?.message||'Radio.co report unavailable'),at:Date.now()});
