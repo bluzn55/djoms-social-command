@@ -13998,3 +13998,53 @@ button.danger:hover:not(:disabled) { background:#f9ded5; }
  .placecard-track-buttons button{min-width:96px;font-size:14px}
  .placecard-track-menu>summary{font-size:13px;min-height:44px}
 }
+
+/* OCT 28 · SM PLACE CARD WEBSITE VISITS · tagged Wix subset in section 2B */
+#connectionStrip .mj-placecard-visit-panel {
+  box-sizing:border-box;min-width:0;margin:11px 0 12px;
+  border:2px solid #a88249;border-radius:9px;
+  padding:13px 14px 10px;background:#fff9eb;color:#271d11;
+}
+#connectionStrip .mj-placecard-visit-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;
+}
+#connectionStrip .mj-placecard-visit-head>div{min-width:0}
+#connectionStrip .mj-placecard-visit-head b{
+  display:block;color:#291a0d;font:900 clamp(17px,1.35vw,24px)/1.2 Georgia,serif!important;
+}
+#connectionStrip .mj-placecard-visit-head small{
+  display:block;font:750 clamp(12px,.92vw,15px)/1.3 Arial,sans-serif!important;color:#6b4b27!important;
+}
+#connectionStrip .mj-placecard-visit-head>strong{
+  font:900 clamp(32px,2.75vw,50px)/1 Georgia,serif!important;
+  color:#234f38!important;text-align:right;font-variant-numeric:tabular-nums;
+}
+#connectionStrip .mj-placecard-visit-platforms{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:12px 0 8px;
+}
+#connectionStrip .mj-placecard-visit-platforms>span{
+  display:flex;align-items:center;justify-content:space-between;gap:6px;
+  background:#f4e6c9;border:1px solid #d1b88a;padding:8px 10px;border-radius:5px;min-width:0;
+}
+#connectionStrip .mj-placecard-visit-platforms b{
+  font:900 clamp(12px,1vw,16px)/1.15 Arial,sans-serif!important;color:#47351a!important;
+}
+#connectionStrip .mj-placecard-visit-platforms strong{
+  font:900 clamp(21px,1.6vw,29px)/1.12 Georgia,serif!important;color:#242015!important;
+  font-variant-numeric:tabular-nums;
+}
+#connectionStrip .mj-placecard-visit-note{
+  margin:6px 0 9px;font:750 clamp(12px,.9vw,14px)/1.35 Arial,sans-serif!important;
+  color:#5a422d!important;
+}
+#connectionStrip .mj-placecard-visit-details{margin:5px 0 0!important}
+#connectionStrip .mj-placecard-visit-details .mj-dropdown-rows{
+  max-height:440px;overflow-y:auto;
+}
+#connectionStrip .mj-placecard-visit-details .mj-dropdown-desc strong{
+  overflow-wrap:anywhere;word-break:break-word;
+}
+@media(max-width:640px){
+  #connectionStrip .mj-placecard-visit-panel{padding:11px 10px}
+  #connectionStrip .mj-placecard-visit-platforms{grid-template-columns:repeat(2,minmax(0,1fr))}
+}

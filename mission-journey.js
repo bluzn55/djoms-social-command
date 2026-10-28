@@ -492,6 +492,98 @@
       (site?.trafficSourcesComplete===false?' Wix source coverage is partial.':''),
       'No verified Wix traffic-source breakdown for these dates.');
   }
+  // SM placecard visits are a tagged subset of the existing Wix Website Visits.
+  // Show them under #2B, never as a sixth traffic source or extra sessions.
+  function socialPlacecardVisitPanel(site,period) {
+    const report=postReferrals(period);
+    const complete=report?.status==='reported'&&
+      report?.range?.start===period?.start&&report?.range?.end===period?.end&&
+      Array.isArray(report.rows);
+    const labeled=['facebook','instagram','x','youtube'];
+    const abbreviations={facebook:'FB',instagram:'IG',x:'X',youtube:'YT'};
+    const totals={facebook:0,instagram:0,x:0,youtube:0};
+    const campaigns={food:0,music:0,book:0};
+    const artwork=new Map();
+    let tagged=0;
+    if(complete)for(const row of report.rows){
+      if(!labeled.includes(row?.platform)||!valid(row.taggedVisits)||
+        row.taggedVisits<=0||!Number.isSafeInteger(row.taggedVisits))continue;
+      const category=row.campaign==='MUSIC'?'music':
+        row.campaign==='BOOK'?'book':
+        ['BBQ','SOSS'].includes(row.campaign)?'food':null;
+      if(!category||!row.recordId)continue;
+      const count=row.taggedVisits;
+      tagged+=count;
+      totals[row.platform]+=count;
+      campaigns[category]+=count;
+      const key=category+'|'+(row.placecardImageId||row.recordId);
+      let item=artwork.get(key);
+      if(!item){
+        const n=Number(row.placecardNumber);
+        const design=Number.isInteger(n)&&n>=1&&n<=15?
+          ' #'+String(n).padStart(2,'0'):'';
+        const title=String(row.placecardName||row.postTitle||'Saved placecard')
+          .replace(/\.(?:png|jpe?g|webp)$/i,'').slice(0,100);
+        item={name:category.toUpperCase()+design+' · '+title,category,
+          visits:0,platforms:{facebook:0,instagram:0,x:0,youtube:0}};
+        artwork.set(key,item);
+      }
+      item.visits+=count;
+      item.platforms[row.platform]+=count;
+    }
+    const siteSessions=site?.connected===true&&valid(site.sessions)?
+      site.sessions:null;
+    // A Wix data disagreement must not be displayed as verified attribution.
+    const mismatch=complete&&siteSessions!==null&&tagged>siteSessions;
+    const verified=complete&&!mismatch;
+    const metric=verified?number(tagged):'N/A';
+    const values=labeled.map(name=>
+      '<span><b>'+abbreviations[name]+'</b><strong>'+
+      (verified?number(totals[name]):'N/A')+'</strong></span>').join('');
+    const cardRows=[...artwork.values()]
+      .sort((a,b)=>b.visits-a.visits||a.name.localeCompare(b.name))
+      .map((item,i)=>mapDetailRow(item.name,
+        'FB '+number(item.platforms.facebook)+' · IG '+
+        number(item.platforms.instagram)+' · X '+number(item.platforms.x)+
+        ' · YT '+number(item.platforms.youtube),
+        number(item.visits),'tagged website visits',i));
+    const status=verified?
+      tagged>0?'Wix verified '+number(tagged)+' visits from placecard links.':
+        'No Wix-tagged placecard website visits recorded in these selected dates yet.':
+      mismatch?'Wix attribution exceeds the all-source visit total. Check reporting coverage.':
+      report?.status==='unavailable'?
+        'Wix placecard attribution is unavailable: '+
+          String(report.error||'The report cannot be verified.').slice(0,160):
+        'Checking Wix placecard link visits for these dates.';
+    const groupLine=verified?
+      'Food '+number(campaigns.food)+' · Music '+number(campaigns.music)+
+      ' · Book '+number(campaigns.book):'Food N/A · Music N/A · Book N/A';
+    return '<section class="mj-placecard-visit-panel" aria-label="Social placecard website visits">'+
+      '<div class="mj-placecard-visit-head">'+
+        '<div><b>SM PLACE CARD VISITS</b>'+
+        '<small>Visits tied to an individual social post link</small></div>'+
+        '<strong>'+metric+'</strong>'+
+      '</div>'+
+      '<div class="mj-placecard-visit-platforms">'+values+'</div>'+
+      '<p class="mj-placecard-visit-note">'+
+        (verified&&siteSessions!==null?
+          '<b>'+number(tagged)+' of '+number(siteSessions)+
+          '</b> Wix website visits carried placecard tracking IDs. ':'')+
+        'Already included in All Website Visits above. Do not add again.</p>'+
+      '<details class="mj-stage-dropdown mj-placecard-visit-details" data-mj-dropdown="sm-placecards">'+
+        '<summary><span>VISITS BY PLACE CARD · BBQ / MUSIC / BOOK</span><b>'+
+          (verified?number(artwork.size)+' cards':'N/A')+
+          '<i aria-hidden="true">▾</i></b></summary>'+
+        '<div class="mj-dropdown-content">'+
+          '<p class="mj-dropdown-explainer">'+esc(groupLine)+'. '+esc(status)+
+          ' Untagged social visits cannot be assigned to a particular card.</p>'+
+          (verified&&cardRows.length?
+            '<div class="mj-dropdown-rows">'+cardRows.join('')+'</div>':
+            '<p class="mj-dropdown-empty">'+esc(status)+'</p>')+
+        '</div>'+
+      '</details>'+
+    '</section>';
+  }
   function searchEnginesDropdown(search){
     const results=Array.isArray(search?.engines)?search.engines:[];
     const engineRows=results.slice(0,5).map((engine,i)=>{
@@ -1610,6 +1702,7 @@
           dailyKpi('WEBSITE VISITORS',wixCmp.visitors?.previousVisitors,siteOkay?site.visitors:null)+
           dailyKpi('ALL WEBSITE VISITS',traffic.sessions.last,traffic.sessions.now)+
         '</div>'+visitorSplitNote(site)+
+        socialPlacecardVisitPanel(site,period)+
       '</div>',
       dailyBars('SEARCH CLICKS BY VERIFIED ENGINE',
         (Array.isArray(search?.engines)?search.engines:[]).map(e=>({
@@ -1929,6 +2022,7 @@
           miniMetric('WEBSITE VISITORS',priorVisitors,wix?site.visitors:null)+
           miniMetric('ALL WEBSITE VISITS',traffic.sessions.last,traffic.sessions.now)+'</div>'+visitorSplitNote(site)+
         wixSourcesDropdown(site)+
+        socialPlacecardVisitPanel(site,period)+
         (typeof window.djomsSupporterPanel==='function'?
           window.djomsSupporterPanel(period):'')+
         locationsDropdown(site)+
