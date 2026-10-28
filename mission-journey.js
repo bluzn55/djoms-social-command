@@ -492,28 +492,28 @@
       (site?.trafficSourcesComplete===false?' Wix source coverage is partial.':''),
       'No verified Wix traffic-source breakdown for these dates.');
   }
-  // SM placecard visits are a tagged subset of the existing Wix Website Visits.
-  // Show them under #2B, never as a sixth traffic source or extra sessions.
+  // DJOMS counts analytics-consented arrivals on SM Welcome independently.
+  // They are NOT Wix sessions; reporting sources may overlap and cannot be added.
   function socialPlacecardVisitPanel(site,period) {
     const report=postReferrals(period);
-    const complete=report?.status==='reported'&&
+    const complete=report?.arrivalStatus==='reported'&&
       report?.range?.start===period?.start&&report?.range?.end===period?.end&&
       Array.isArray(report.rows);
-    const labeled=['facebook','instagram','x','youtube'];
-    const abbreviations={facebook:'FB',instagram:'IG',x:'X',youtube:'YT'};
+    const platforms=['facebook','instagram','x','youtube'];
+    const labels={facebook:'FB',instagram:'IG',x:'X',youtube:'YT'};
     const totals={facebook:0,instagram:0,x:0,youtube:0};
     const campaigns={food:0,music:0,book:0};
     const artwork=new Map();
-    let tagged=0;
-    if(complete)for(const row of report.rows){
-      if(!labeled.includes(row?.platform)||!valid(row.taggedVisits)||
-        row.taggedVisits<=0||!Number.isSafeInteger(row.taggedVisits))continue;
+    let arrivals=0;
+    if(complete)for(const row of report.rows) {
+      if(!platforms.includes(row?.platform)||!valid(row.directArrivals)||
+        !Number.isSafeInteger(row.directArrivals)||row.directArrivals<=0)continue;
       const category=row.campaign==='MUSIC'?'music':
         row.campaign==='BOOK'?'book':
         ['BBQ','SOSS'].includes(row.campaign)?'food':null;
       if(!category||!row.recordId)continue;
-      const count=row.taggedVisits;
-      tagged+=count;
+      const count=row.directArrivals;
+      arrivals+=count;
       totals[row.platform]+=count;
       campaigns[category]+=count;
       const key=category+'|'+(row.placecardImageId||row.recordId);
@@ -522,67 +522,56 @@
         const n=Number(row.placecardNumber);
         const design=Number.isInteger(n)&&n>=1&&n<=15?
           ' #'+String(n).padStart(2,'0'):'';
-        const title=String(row.placecardName||row.postTitle||'Saved placecard')
+        const name=String(row.placecardName||row.postTitle||'Saved placecard')
           .replace(/\.(?:png|jpe?g|webp)$/i,'').slice(0,100);
-        item={name:category.toUpperCase()+design+' · '+title,category,
-          visits:0,platforms:{facebook:0,instagram:0,x:0,youtube:0}};
+        item={name:category.toUpperCase()+design+' · '+name,category,
+          visits:0,channels:{facebook:0,instagram:0,x:0,youtube:0}};
         artwork.set(key,item);
       }
       item.visits+=count;
-      item.platforms[row.platform]+=count;
+      item.channels[row.platform]+=count;
     }
-    const siteSessions=site?.connected===true&&valid(site.sessions)?
-      site.sessions:null;
-    // A Wix data disagreement must not be displayed as verified attribution.
-    const mismatch=complete&&siteSessions!==null&&tagged>siteSessions;
-    const verified=complete&&!mismatch;
-    const metric=verified?number(tagged):'N/A';
-    const values=labeled.map(name=>
-      '<span><b>'+abbreviations[name]+'</b><strong>'+
-      (verified?number(totals[name]):'N/A')+'</strong></span>').join('');
+    const metric=complete?number(arrivals):'N/A';
+    const platformBoxes=platforms.map(p=>
+      '<span><b>'+labels[p]+'</b><strong>'+
+      (complete?number(totals[p]):'N/A')+'</strong></span>').join('');
     const cardRows=[...artwork.values()]
       .sort((a,b)=>b.visits-a.visits||a.name.localeCompare(b.name))
       .map((item,i)=>mapDetailRow(item.name,
-        'FB '+number(item.platforms.facebook)+' · IG '+
-        number(item.platforms.instagram)+' · X '+number(item.platforms.x)+
-        ' · YT '+number(item.platforms.youtube),
-        number(item.visits),'tagged website visits',i));
-    const status=verified?
-      tagged>0?'Wix verified '+number(tagged)+' visits from placecard links.':
-        'No Wix-tagged placecard website visits recorded in these selected dates yet.':
-      mismatch?'Wix attribution exceeds the all-source visit total. Check reporting coverage.':
+        'FB '+number(item.channels.facebook)+' · IG '+
+        number(item.channels.instagram)+' · X '+number(item.channels.x)+
+        ' · YT '+number(item.channels.youtube),
+        number(item.visits),'SM Welcome arrivals',i));
+    const message=complete?
+      arrivals>0?'Recorded '+number(arrivals)+' consented arrivals through placecard URLs.':
+        'No consented SM Welcome placecard arrivals have been recorded for these selected dates yet.':
       report?.status==='unavailable'?
-        'Wix placecard attribution is unavailable: '+
-          String(report.error||'The report cannot be verified.').slice(0,160):
-        'Checking Wix placecard link visits for these dates.';
-    const groupLine=verified?
+        'DJOMS arrival tracker unavailable: '+String(report.error||'No report.').slice(0,170):
+        'Checking the new placecard arrival tracker.';
+    const breakdown=complete?
       'Food '+number(campaigns.food)+' · Music '+number(campaigns.music)+
       ' · Book '+number(campaigns.book):'Food N/A · Music N/A · Book N/A';
-    return '<section class="mj-placecard-visit-panel" aria-label="Social placecard website visits">'+
+    return '<section class="mj-placecard-visit-panel" aria-label="Social placecard arrivals">'+
       '<div class="mj-placecard-visit-head">'+
         '<div><b>SM PLACE CARD VISITS</b>'+
-        '<small>Visits tied to an individual social post link</small></div>'+
-        '<strong>'+metric+'</strong>'+
-      '</div>'+
-      '<div class="mj-placecard-visit-platforms">'+values+'</div>'+
-      '<p class="mj-placecard-visit-note">'+
-        (verified&&siteSessions!==null?
-          '<b>'+number(tagged)+' of '+number(siteSessions)+
-          '</b> Wix website visits carried placecard tracking IDs. ':'')+
-        'Already included in All Website Visits above. Do not add again.</p>'+
+        '<small>DJOMS-measured SM Welcome arrivals · analytics consent</small></div>'+
+        '<strong>'+metric+'</strong></div>'+
+      '<div class="mj-placecard-visit-platforms">'+platformBoxes+'</div>'+
+      '<p class="mj-placecard-visit-note">These are SM Welcome page arrivals from '+
+        'tagged links, counted independently of Wix website visits. '+
+        'A channel identifies the link used, not proof of where someone clicked it. '+
+        'Do not add these to All Website Visits.</p>'+
       '<details class="mj-stage-dropdown mj-placecard-visit-details" data-mj-dropdown="sm-placecards">'+
-        '<summary><span>VISITS BY PLACE CARD · BBQ / MUSIC / BOOK</span><b>'+
-          (verified?number(artwork.size)+' cards':'N/A')+
+        '<summary><span>ARRIVALS BY PLACE CARD · BBQ / MUSIC / BOOK</span>'+
+          '<b>'+(complete?number(artwork.size)+' cards':'N/A')+
           '<i aria-hidden="true">▾</i></b></summary>'+
         '<div class="mj-dropdown-content">'+
-          '<p class="mj-dropdown-explainer">'+esc(groupLine)+'. '+esc(status)+
-          ' Untagged social visits cannot be assigned to a particular card.</p>'+
-          (verified&&cardRows.length?
+          '<p class="mj-dropdown-explainer">'+esc(breakdown)+'. '+esc(message)+
+          ' Older untagged posts cannot be credited; blocked analytics are not counted.</p>'+
+          (complete&&cardRows.length?
             '<div class="mj-dropdown-rows">'+cardRows.join('')+'</div>':
-            '<p class="mj-dropdown-empty">'+esc(status)+'</p>')+
-        '</div>'+
-      '</details>'+
-    '</section>';
+            '<p class="mj-dropdown-empty">'+esc(message)+'</p>')+
+        '</div></details></section>';
   }
   function searchEnginesDropdown(search){
     const results=Array.isArray(search?.engines)?search.engines:[];
@@ -1372,13 +1361,12 @@
           '<small>'+esc(String(name||title||'Untitled').slice(0,100))+'</small>'+
           '<small>'+esc(title||'')+'</small></div></div>';
     };
-    // Rank one design once, even when the same picture was shared to both
-    // platforms or reused in more than one published post. Only real Wix
-    // tagged SESSIONS are summed. Never add unique visitor counts together.
+    // Rank one design once, even when the same picture was shared multiple
+    // times. Count DJOMS-confirmed landing arrivals, never Wix sessions.
     const placed=new Map();
     if(attribution?.status==='reported'&&Array.isArray(inventory)){
       for(const row of attributable){
-        if(!row.placecardImageId||!valid(row.taggedVisits))continue;
+        if(!row.placecardImageId||!valid(row.directArrivals))continue;
         const group=row.campaign==='MUSIC'?'Music':
           row.campaign==='BOOK'?'Book':'Food';
         const key=row.campaign+'|'+row.placecardImageId;
@@ -1394,11 +1382,11 @@
             visits:0,facebook:0,instagram:0,x:0,youtube:0,postIds:new Set()};
           placed.set(key,item);
         }
-        item.visits+=row.taggedVisits;
-        if(row.platform==='facebook')item.facebook+=row.taggedVisits;
-        if(row.platform==='instagram')item.instagram+=row.taggedVisits;
-        if(row.platform==='x')item.x+=row.taggedVisits;
-        if(row.platform==='youtube')item.youtube+=row.taggedVisits;
+        item.visits+=row.directArrivals;
+        if(row.platform==='facebook')item.facebook+=row.directArrivals;
+        if(row.platform==='instagram')item.instagram+=row.directArrivals;
+        if(row.platform==='x')item.x+=row.directArrivals;
+        if(row.platform==='youtube')item.youtube+=row.directArrivals;
         item.postIds.add(row.recordId);
       }
     }
@@ -1406,15 +1394,15 @@
       .sort((a,b)=>b.visits-a.visits||
         String(a.name).localeCompare(String(b.name))).slice(0,5);
     const winners='<section class="mj-placecard-winners"'+
-      ' aria-label="Placecards with verified link-attributed website visits">'+
-      '<h5>PLACE CARDS BRINGING TRACKED WEBSITE VISITS</h5>'+
+      ' aria-label="Placecards with DJOMS-confirmed SM Welcome arrivals">'+
+      '<h5>PLACE CARDS BRINGING TRACKED SM WELCOME ARRIVALS</h5>'+
       (ranked.length?'<div class="mj-placecard-winners-grid">'+
         ranked.map((item,i)=>'<article class="mj-placecard-winner">'+
           '<span class="mj-placecard-rank">#'+(i+1)+'</span>'+
           pictureCell(item.name,item.imageUrl,
             artworkLabel(item.category,item.number,item.imageId),item.title)+
           '<div class="mj-placecard-results"><strong>'+
-            esc(number(item.visits))+'</strong><small>TAGGED WEBSITE VISITS</small>'+
+            esc(number(item.visits))+'</strong><small>TRACKED ARRIVALS</small>'+
             '<small>FB '+esc(number(item.facebook))+' · IG '+
             esc(number(item.instagram))+' · X '+esc(number(item.x))+
             ' · YT '+esc(number(item.youtube))+'</small>'+
@@ -1422,11 +1410,11 @@
               ' saved posts</small>':'')+'</div></article>').join('')+
         '</div>':
         '<p class="mj-post-traffic-empty">'+
-          (attribution?.status==='unavailable'?'Wix placecard attribution is unavailable.':
-          attribution?.status==='reported'?
-            'No measured website visits from tagged placecard links in these selected dates yet.':
-            'Checking the saved post links and website visits.')+'</p>')+
-      '<p class="mj-post-traffic-method">Ranked by Wix sessions carrying unique Facebook, Instagram, X or YouTube placecard links during the selected dates. Repeated designs are grouped; untagged traffic is not credited.</p>'+
+          (attribution?.arrivalStatus==='unavailable'?'DJOMS arrival tracking is unavailable.':
+          attribution?.arrivalStatus==='reported'?
+            'No consented arrivals from placecard links in these selected dates yet.':
+            'Checking the saved placecard links and arrivals.')+'</p>')+
+      '<p class="mj-post-traffic-method">Ranked by consented DJOMS arrivals to SM Welcome through unique Facebook, Instagram, X or YouTube placecard links. Link labels do not prove the visitor came from that social platform. These are not Wix sessions.</p>'+
       '</section>';
     const rows=selected.map(post=>{
       const change=comparison(post);
@@ -1443,10 +1431,10 @@
         const found=attributable.find(row=>row.recordId===post.id&&
           row.platform===platform);
         let result='N/A';
-        if(found&&valid(found.taggedVisits)){
-          result=number(found.taggedVisits)+' tagged '+(found.taggedVisits===1?'visit':'visits');
-        }else if(attribution?.status==='unavailable'){
-          result='Wix report unavailable';
+        if(found&&valid(found.directArrivals)){
+          result=number(found.directArrivals)+' tracked '+(found.directArrivals===1?'arrival':'arrivals');
+        }else if(attribution?.arrivalStatus==='unavailable'){
+          result='Arrival report unavailable';
         }else if(found?.metricStatus==='other-destination'){
           result='Other website · N/A';
         }else if(attribution?.status==='reported'){
@@ -1511,9 +1499,9 @@
           (posts.length>selected.length?
             '<p class="mj-post-traffic-method">Showing the '+selected.length+
               ' most recent of '+posts.length+' confirmed posts.</p>':''))+
-        (attribution?.status==='unavailable'?
-          '<p class="mj-post-traffic-empty">Tagged-link reporting: '+esc(attribution.error||'Unavailable')+'</p>':'')+
-        '<p class="mj-post-traffic-caveat"><strong>MEASURED VS INFERRED:</strong> All-source visits can change independently of any social post. Only Wix sessions carrying a saved placecard’s unique link are credited to it. Copied X and YouTube links are counted when used, even before DJOMS confirms a publish date. Untagged past posts cannot be credited retroactively. Instagram feed captions do not make URLs clickable; use the copied Instagram link in a Story link sticker or profile link. Signup actions are separate and Wix reporting can lag.</p>'+
+        (attribution?.arrivalStatus==='unavailable'?
+          '<p class="mj-post-traffic-empty">Arrival reporting: '+esc(attribution.error||'Unavailable')+'</p>':'')+
+        '<p class="mj-post-traffic-caveat"><strong>MEASURED VS INFERRED:</strong> All-source Wix visits can change independently of any social post. DJOMS arrival events are recorded only after a consented visit to SM Welcome using the unique placecard link; they are not Wix sessions, and must never be added to Wix website totals. Labels identify links, not a verified social referrer. Repeated visits within a browser session are deduplicated. Older untagged posts cannot be credited. Instagram feed captions are not clickable; use a Story link sticker or profile link.</p>'+
       '</div></details>';
   }
 
