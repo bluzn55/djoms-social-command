@@ -631,22 +631,34 @@
     const matched=phrase=>pairs.filter(p=>p.query===phrase).slice(0,3)
       .map(p=>named(p.page)).filter(Boolean);
     const primary=terms.length?terms:pairs.slice(0,5);
-    const termRows=primary.map((p,i)=>{
-      const found=p.page?[named(p.page)]:matched(p.query);
-      const pagesText=found.length?
-        ' · Result'+(found.length>1?'s':'')+': '+[...new Set(found)].join(', '):
-        ' · Result page not disclosed';
-      return mapDetailRow('SEARCH PHRASE: '+p.query,
-        'Search appearance'+(p.impressions===1?'':'s')+pagesText,
-        number(p.impressions),'appearances',i);
+    // One ranked list: a result page with 33 appearances must precede
+    // a search phrase with 6, regardless of source type. Query and page
+    // appearances overlap; the rows must never be added together.
+    const combined=[
+      ...primary.map(p=>{
+        const found=p.page?[named(p.page)]:matched(p.query);
+        const pagesText=found.length?
+          ' · Result'+(found.length>1?'s':'')+': '+[...new Set(found)].join(', '):
+          ' · Result page not disclosed';
+        return {heading:'SEARCH PHRASE: '+p.query,
+          detail:'Search appearance'+(p.impressions===1?'':'s')+pagesText,
+          appearances:valid(p.impressions)?p.impressions:null,kind:1};
+      }),
+      ...pages.map(p=>({heading:'RESULT PAGE: '+named(p.page),
+        detail:'Page shown in Google search results',
+        appearances:valid(p.impressions)?p.impressions:null,kind:2}))
+    ];
+    combined.sort((a,b)=>{
+      const left=valid(a.appearances)?a.appearances:-1;
+      const right=valid(b.appearances)?b.appearances:-1;
+      return right-left||a.kind-b.kind||a.heading.localeCompare(b.heading);
     });
-    const pageRows=pages.map((p,i)=>mapDetailRow('RESULT PAGE: '+named(p.page),
-      'Page shown in Google search results',
-      number(p.impressions),'appearances',i+termRows.length));
-    const rows=[...termRows,...pageRows];
+    const rows=combined.map((item,i)=>mapDetailRow(item.heading,item.detail,
+      number(item.appearances),'appearances',i));
     const context='Google Search Console: '+number(impressions)+' reported Google appearances. '+
       'Search-result clicks and their source breakdown are under Section 2. Phrases show what people typed when Google discloses it; '+
       'result pages show which Doc Jaks pages appeared. Google hides some searches. '+
+      'Rows are ranked highest to lowest by appearances across both types. '+
       'Phrase and page counts overlap and must not be added together or to the engine totals.';
     let empty='Google has not reported individual search phrases or result pages for the selected dates.';
     if(connected&&valid(impressions)&&impressions>0&&clicks===0)
