@@ -814,6 +814,8 @@
         row('UNIQUE RADIO LISTENERS',formatValue(music?.uniqueRadioListeners),
           'N/A until Radio.co listener reporting is connected')+
       '</div>'+importNote+
+      (typeof window.djomsRadioListenerSection==='function'?
+        window.djomsRadioListenerSection(typeof websiteReportPeriod==='function'?websiteReportPeriod():null):'')+
       '<p class="mj-music-caveat">'+esc(music?.note||
         'Verified listening and streaming comparison pending.')+' '+
         esc(music?.caveat||'Music sales are already included in total paid web sales.')+
