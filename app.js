@@ -936,7 +936,8 @@ function trackingLinksHtml(record) {
   const labels=[['facebook','FB'],['instagram','IG'],['x','X'],['youtube','YT']];
   const links=record?.trackingLinks||{};
   const ready=labels.filter(([platform])=>typeof links[platform]==='string'&&
-    /^https:\/\/www\.docjaks\.com\//.test(links[platform]));
+    /^https:\/\/(?:www\.)?docjaks\.com\//.test(links[platform]));
+  const outside=!!record?.link&&!/^https:\/\/(?:www\.)?docjaks\.com(?:\/|$)/i.test(record.link);
   if(!ready.length)return '<small class="placecard-track-unavailable">TRACKING NEEDS A DOCJAKS WEBSITE LINK</small>';
   return '<details class="placecard-track-menu">'+
     '<summary title="Copy a unique tracked website link for this placecard">⚜ TRACK THIS PLACE CARD</summary>'+
@@ -947,7 +948,9 @@ function trackingLinksHtml(record) {
         ' data-track-platform="'+esc(platform)+'"'+
         ' title="Copy unique '+esc(label)+' website link for '+esc(record.title)+'">'+
         'COPY '+esc(label)+' LINK</button>').join('')+'</div>'+
-      '<small>Each link identifies this placecard, campaign and platform.</small>'+
+      '<small>'+(outside?
+        'Copied links visit Doc Jaks; automatic posts retain your outside website link.':
+        'Each link identifies this placecard, campaign and platform.')+'</small>'+
     '</div></details>';
 }
 function rowsHtml(list) {
@@ -1886,7 +1889,10 @@ async function setView(view) {
 function platformText() {
   const caption = $('postCaption').value.trim();
   const savedLink = $('postLink').value.trim();
-  const linkFor = platform => !dirty && selected?.trackingLinks?.[platform] ?
+  const originalOnDocJaks=!savedLink||
+    /^https:\/\/(?:www\.)?docjaks\.com(?:\/|$)/i.test(savedLink);
+  const linkFor = platform => !dirty && originalOnDocJaks &&
+    selected?.trackingLinks?.[platform] ?
     selected.trackingLinks[platform] : savedLink;
   const combined = platform => {
     const link=linkFor(platform);
@@ -1933,7 +1939,9 @@ function renderRecordTrackingLinks(r) {
     trackingLinksHtml(r)+
     '<p>DJOMS uses the Facebook and Instagram links when it posts automatically. '+
     'For X or YouTube, copy that platform\'s link into your post. '+
-    'Instagram feed captions are not clickable; use a Story link sticker or profile link.</p></div>';
+    'Instagram feed captions are not clickable; use a Story link sticker or profile link. '+
+    'When the saved destination is outside Doc Jaks, these copied tracking links lead to '+
+    'Doc Jaks instead; automatic posts keep the original external destination.</p></div>';
 }
 function buttons() {
   if (!selected) return;
