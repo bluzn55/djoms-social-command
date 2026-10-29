@@ -99,6 +99,7 @@ function detailHtml(data,loc,compact){
       '<small>'+esc(coverage)+'</small></div>'+
       '<div class="dj-quality-grid">'+cards+'</div>'+
       '<p class="dj-quality-note">'+esc(note)+'</p>'+
+      watchHtml+
       '<button type="button" class="dj-quality-see" data-quality-open-world="1">'+
         'VIEW COUNTRIES & DETAILS</button></div>';
   }
@@ -115,6 +116,7 @@ function detailHtml(data,loc,compact){
       '<span>'+esc(coverage)+'</span></header>'+
     '<div class="dj-quality-grid">'+cards+'</div>'+
     '<p class="dj-quality-note">'+esc(note)+'</p>'+
+      watchHtml+
     '<details class="dj-quality-evidence"><summary>WHY WERE VISITS FLAGGED? · '+
       esc(n(list.length))+' rapid-scan patterns</summary>'+
       '<p>At least eight different public pages were opened within three minutes, '+
