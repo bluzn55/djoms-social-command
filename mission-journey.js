@@ -786,41 +786,93 @@
         'Waiting for verified engine-level search-result click totals.',
       'No search engine returned compatible search-click data.');
   }
-  function socialPanel(social){
+  // #6 puts real actions ahead of passive exposure. Meta reports clicks,
+  // comments, shares and reactions on the posts published in the selected
+  // date cohort; DJOMS separately observes consented tagged-page arrivals.
+  // These are different event types, not people or one conversion count.
+  function socialPanel(social,period){
     const icons={facebook:'f',instagram:'◎',x:'𝕏'};
-    const rows=['facebook','instagram','x'].map(platform=>{
-      const d=social?.platforms?.[platform];
-      const isX=platform==='x';
-      const label={facebook:'FACEBOOK',instagram:'INSTAGRAM',x:'X'}[platform];
-      const each=(key,title)=>{
-        const now=d?.now?.[key],last=d?.last?.[key];
-        const pct=d?.displayPct?.[key];
-        const hue=isX?'na':pct==='NEW'?'up':
+    const platforms=['facebook','instagram','x'];
+    const arrivalsReport=postReferrals(period);
+    const ready=arrivalsReport?.arrivalStatus==='reported'&&
+      arrivalsReport?.range?.start===period?.start&&
+      arrivalsReport?.range?.end===period?.end&&
+      Array.isArray(arrivalsReport.rows);
+    const priorPeriod=previousPlacecardPeriod(period);
+    const priorReport=priorPeriod?postReferrals(priorPeriod):null;
+    const priorReady=priorReport?.arrivalStatus==='reported'&&
+      priorReport?.range?.start===priorPeriod?.start&&
+      priorReport?.range?.end===priorPeriod?.end&&
+      Array.isArray(priorReport.rows);
+    const counts=report=>{
+      const result={facebook:0,instagram:0,x:0,youtube:0};
+      for(const item of report.rows){
+        if(!Object.hasOwn(result,item?.platform)||
+          !Number.isSafeInteger(item.directArrivals)||item.directArrivals<0||
+          !item.recordId||!['BBQ','SOSS','MUSIC','BOOK'].includes(item.campaign))continue;
+        result[item.platform]+=item.directArrivals;
+      }
+      return result;
+    };
+    const tagged=ready?counts(arrivalsReport):null;
+    const priorTagged=priorReady?counts(priorReport):null;
+    const rows=platforms.map(platform=>{
+      const d=social?.platforms?.[platform],isX=platform==='x';
+      const name={facebook:'FACEBOOK',instagram:'INSTAGRAM',x:'X'}[platform];
+      const metric=(key,title)=>{
+        const now=d?.now?.[key],last=d?.last?.[key],pct=d?.displayPct?.[key];
+        const tone=isX?'na':pct==='NEW'?'up':
           typeof pct==='number'&&Number.isFinite(pct)?
           pct>0?'up':pct<0?'down':'hold':'na';
         return '<div class="mj-social-stat"><small>'+esc(title)+'</small>'+
           '<b>'+esc(formatValue(now))+'</b>'+
-          '<span>L '+esc(formatValue(last))+'</span>'+
+          '<span>LAST '+esc(formatValue(last))+'</span>'+
           (!isX&&pct==='NEW'?'<em class="up">↑ NEW</em>':
-           !isX&&typeof pct==='number'&&Number.isFinite(pct)?
-            '<em class="'+hue+'">'+(pct>0?'↑ +':pct<0?'↓ ':'→ ')+
-              esc(pct.toFixed(1))+'%</em>':'')+'</div>';
+            !isX&&typeof pct==='number'&&Number.isFinite(pct)?
+              '<em class="'+tone+'">'+(pct>0?'↑ +':pct<0?'↓ ':'→ ')+
+                esc(pct.toFixed(1))+'%</em>':'')+'</div>';
       };
-      return '<section class="mj-social-platform"><div class="mj-social-brand">'+
-        '<b class="mj-social-symbol">'+icons[platform]+'</b>'+
-        '<strong>'+label+'</strong><small>'+
-          (isX?'Owner-entered · not scored':
-            d?.verified?'Verified Meta cohort':'Comparison N/A')+'</small></div>'+
+      const current=tagged?.[platform]??null;
+      const last=priorTagged?.[platform]??null;
+      const changed=movement(last,current);
+      const arrivalBox='<div class="mj-social-stat mj-social-arrivals">'+
+        '<small>TAGGED ARRIVALS</small><b>'+esc(formatValue(current))+'</b>'+
+        '<span>LAST '+esc(formatValue(last))+'</span>'+
+        (valid(last)&&valid(current)?
+          '<em class="'+esc(changed.tone)+'">'+esc(changed.text)+'</em>':'')+
+        '</div>';
+      const verifiedLabel=isX?'Owner-entered · unscored':
+        d?.verified?valid(d.now?.clicks)?
+          'Meta clicks measured':'Meta posts · clicks N/A':'Meta measurement pending';
+      return '<section class="mj-social-platform">'+
+        '<div class="mj-social-brand">'+
+          '<b class="mj-social-symbol">'+icons[platform]+'</b>'+
+          '<strong>'+name+'</strong>'+
+          '<small>'+esc(verifiedLabel)+'</small></div>'+
         '<div class="mj-social-stats">'+
-          each('views','VIEWS')+each('reactions','LIKES')+
-          each('shares','SHARES')+each('comments','COMMENTS')+'</div></section>';
+          arrivalBox+metric('clicks','LINK CLICKS')+
+          metric('shares','SHARES')+metric('comments','COMMENTS')+'</div>'+
+        '<p class="mj-social-reactions">♥ REACTIONS '+esc(formatValue(d?.now?.reactions))+
+          ' · Meta post activity, not website visits</p>'+
+      '</section>';
     }).join('');
     const socialEvidence=social?.availableWeight>0;
     return card('social','6','SOCIAL MEDIA','♟',
       '<div class="mj-social-inner">'+rows+'</div>'+
-      '<div class="mj-social-impact"><strong>SOCIAL HEALTH · '+(socialEvidence?'COUNTS':'N/A')+'</strong>'+
-        '<small>'+esc('15 of 100 points when FB/IG are comparable. X is manual only.')+'</small></div>',
-      'Social is a second discovery current, not a continuation of Google clicks. Meta figures are current lifetime totals on posts published in each period.');
+      '<p class="mj-social-explainer">TAGGED ARRIVALS = an analytics-consented '+
+        'visit to the SM Welcome page using a placecard link (tracking began Oct 28). '+
+        'LINK CLICKS = a provider-reported post link click when available; '+
+        'Facebook and Instagram measurements may be N/A. The same person can '+
+        'click or visit more than once. Do not add these event counts together.</p>'+
+      '<button type="button" class="mj-social-post-detail" data-view="Analytics">'+
+        'OPEN POST-BY-POST ACTION REPORT</button>'+
+      '<div class="mj-social-impact"><strong>SOCIAL HEALTH · '+
+        (socialEvidence?'ACTIONS':'N/A')+'</strong>'+
+        '<small>Based on comparable clicks, shares, comments and reactions. '+
+        'Passive views excluded · 15 of 100 importance points.</small></div>',
+      'Tracked arrivals are DJOMS events; Meta link clicks, comments, shares and '+
+      'reactions are lifetime totals for posts published in each date cohort. '+
+      'They are not verified customer identities, and clicks are not confirmed sales.');
   }
   // #4 MUSIC is the existing verified music reporting, brought INTO the
   // numbered boardwalk. This function never infers plays from Wix page visits
@@ -2280,7 +2332,7 @@
         '</svg>'+
         first+second+third+musicPanel(music,owner,period)+fifth+
         '<div class="mj-lower-left" aria-label="Actions, social and owner bottom-line summary">'+
-          seventh+socialPanel(social)+quickBrief+
+          seventh+socialPanel(social,period)+quickBrief+
         '</div>'+
       '</div>'+
       '<div class="mj-swamp-disclaimer">⚜ Every stop is a separate reported measurement. '+
@@ -2290,7 +2342,7 @@
       '<details class="mj-map-evidence"><summary>OPEN SEARCH PHRASES, VISITED PAGES, CTAs &amp; OTHER EVIDENCE ▾</summary>'+
         evidence(seo,site,ga4)+'</details>'+
       testsPanel(site,seo,ga4,sales,period)+
-      '<p class="mj-caveat">Meta views, likes and shares are current lifetime totals for posts published in the selected and preceding periods, not interactions on those dates. '+
+      '<p class="mj-caveat">Meta post clicks, reactions, comments and shares are current lifetime totals for posts published in the selected and preceding periods, not actions that occurred solely during those dates. Passive Meta views are not scored in Social Health. '+
       'Per-post Social comparisons are provisional; older posts have had longer to gain engagement. '+
       'Facebook and Instagram contribute up to 15 of the owner index’s 100 importance points only when comparable. '+
       'X is owner-entered and excluded from scoring. Google and Bing are combined only on matching reported dates. '+
