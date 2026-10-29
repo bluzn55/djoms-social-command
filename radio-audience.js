@@ -7,8 +7,8 @@ const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=x=>Number.isSafeInteger(x)&&x>=0?x.toLocaleString('en-US'):'N/A';
 const dur=x=>{
  if(typeof x!=='number'||!Number.isFinite(x)||x<0)return 'N/A';
- const s=Math.round(x);
- return Math.floor(s/3600)+'h '+Math.floor(s%3600/60)+'m '+s%60+'s';
+ const s=Math.round(x),h=Math.floor(s/3600),m=Math.floor(s%3600/60);
+ return (h?h+'h ':'')+m+'m '+s%60+'s';
 };
 const editDur=x=>{
  if(typeof x!=='number'||!Number.isFinite(x)||x<0)return '';
@@ -34,6 +34,22 @@ const currentPeriod=()=>typeof websiteReportPeriod==='function'?websiteReportPer
 function content(q){
  const item=cache.get(q),data=item?.data||null,overview=data?.overview||null;
  const saved=Array.isArray(data?.liveLocations)?data.liveLocations:[];
+ const screenshot=overview?.sourceKind==='screenshot';
+ const trends=overview?.comparisonPercent||null;
+ const delta=(name,value)=>{
+  if(typeof value!=='number'||!Number.isFinite(value))return '';
+  return name+' '+(value>0?'↑ +':value<0?'↓ ':'→ ')+
+    Math.abs(value)+'%';
+ };
+ const trendText=trends?[
+  delta('Connections',trends.totalConnections),
+  delta('Unique',trends.uniqueListeners),
+  delta('Average',trends.averageSeconds),
+  delta('Peak',trends.peakConnections)
+ ].filter(Boolean).join(' · '):'';
+ const regions=Array.isArray(overview?.countrySharePercent)?
+  overview.countrySharePercent.filter(x=>x&&typeof x.country==='string'&&
+    typeof x.percentage==='number').map(x=>x.country+' '+x.percentage+'%').join(' · '):'';
  const period=data?.range||currentPeriod()||{};
  const from=date(period.start),to=date(period.endInclusive);
  const areas=saved.length?saved.map(x=>
@@ -41,17 +57,28 @@ function content(q){
   '<small>'+esc(num(x.connections))+' live connection'+(x.connections===1?'':'s')+
   ' observed · '+esc(when(x.capturedAt))+'</small></div>').join(''):
   '<p class="ra-note">No verified live towns or countries saved for this period.</p>';
- return '<div class="ra-head"><strong>VERIFIED LISTENER AUDIENCE</strong>'+
-  '<small>'+esc(overview?'RECORDED RADIO.CO OVERVIEW':'PERIOD UNIQUE / AVERAGE PENDING')+'</small></div>'+
+ return '<div class="ra-head"><strong>RADIO.CO · AUDIENCE OVERVIEW</strong>'+
+  '<small>'+esc(screenshot?'SCREENSHOT · OCT 29 · PROVISIONAL':
+    overview?'OWNER-RECORDED RADIO.CO OVERVIEW':'PERIOD UNIQUE / AVERAGE PENDING')+'</small></div>'+
   '<div class="ra-grid">'+
-   metric('PERIOD UNIQUE',num(overview?.uniqueListeners),'Radio.co selected-period total')+
-   metric('AVERAGE LISTEN',dur(overview?.averageSeconds),'Radio.co selected-period average')+
+   metric('TOTAL CONNECTIONS',num(overview?.totalConnections),'Radio.co Overview')+
+   metric('UNIQUE LISTENERS',num(overview?.uniqueListeners),'Selected-period Radio.co estimate')+
+   metric('AVERAGE LISTEN',dur(overview?.averageSeconds),'Radio.co average listening time')+
   '</div>'+
-  '<p class="ra-note">'+(overview?'Owner-recorded Radio.co Overview for '+esc(from)+' to '+
-    esc(to)+' UTC; recorded '+esc(when(overview.capturedAt))+'.':
+  (trendText?'<p class="ra-overview-change">RADIO.CO CHANGE · '+
+    esc(trendText)+' <small>Displayed comparison; prior raw totals not independently verified</small></p>':'')+
+  (regions?'<p class="ra-country-note">RADIO.CO COUNTRIES · '+
+    esc(regions)+' <small>Individually rounded; country percentages may total more than 100%.</small></p>':'')+
+  '<p class="ra-note">'+(screenshot?
+    'Your Radio.co screenshot shows '+esc(from)+' to '+esc(to)+
+    ' UTC, observed on Oct 29 before the selected period was finished. '+
+    'The 43 total connections here and the 37 in the six-day CSV cover different reports. '+
+    'Do not add them. Refresh the Overview snapshot after the final day.':
+    overview?'Radio.co Overview saved for '+esc(from)+' to '+esc(to)+
+      ' UTC; recorded '+esc(when(overview.capturedAt))+'.':
     'Daily CSV unique figures cannot be added together. Save the matching period totals from Radio.co Overview.')+'</p>'+
   '<details class="rli-details ra-details" data-ra-section="overview">'+
-   '<summary>RECORD RADIO.CO OVERVIEW · UNIQUE / AVERAGE</summary>'+
+   '<summary>UPDATE RADIO.CO OVERVIEW · UNIQUE / AVERAGE</summary>'+
    '<p class="ra-note">In Radio.co Statistics → Overview, select '+esc(from)+' to '+
     esc(to)+' (UTC date labels), then enter exactly what Radio.co displays.</p>'+
    '<div class="ra-fields">'+
