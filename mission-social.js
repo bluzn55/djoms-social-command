@@ -19,6 +19,7 @@
   const emptyRow=(platform)=>({
     platform,kind:platform==='x'?'owner-entered':'Meta',
     currentPosts:null,previousPosts:null,now:{},last:{},movements:{},displayPct:{},
+    exposureTrend:null,
     verified:false,sourceNote:'No matched reporting periods received.'
   });
   const cache=new Map();
@@ -81,7 +82,16 @@
     if(!validPeriod)return {...empty,status:'unavailable',note:'Select a valid reporting window.'};
     const key=period.start+'|'+period.endInclusive;
     if(!cache.has(key)&&!inFlight.has(key)&&typeof api==='function')void load(period,key);
-    const entry=cache.get(key);
+    let entry=cache.get(key);
+    // An explicit Meta refresh can supply a newer same-post view snapshot.
+    // Replace only the current matched cohort, never the previous cohort.
+    const incoming=typeof analyticsData!=='undefined'&&
+      isCurrent(analyticsData,period.start,period.endInclusive)?analyticsData:null;
+    if(entry?.status==='reported'&&incoming&&
+      Date.parse(incoming.checkedAt||'')>Date.parse(entry.current?.checkedAt||'')){
+      entry={...entry,current:incoming,checkedAt:incoming.checkedAt};
+      cache.set(key,entry);
+    }
     if(!entry)return {...empty};
     const result={status:entry.status,note:'Lifetime performance, as of now, of posts PUBLISHED in each window. These are not interactions that occurred solely during these dates. Older posts have had longer to accumulate reactions.',
       platforms:{},scoreSignals:[],availableWeight:0,checkedAt:entry.checkedAt,
@@ -93,6 +103,7 @@
       row.currentPosts=Number.isInteger(first?.posts)?first.posts:null;
       row.previousPosts=Number.isInteger(second?.posts)?second.posts:null;
       row.now={};row.last={};row.movements={};row.displayPct={};
+      row.exposureTrend=name==='x'?null:first?.exposureTrend||null;
       row.verified=name!=='x'&&result.status==='reported'&&
         first?.inventory?.complete===true&&second?.inventory?.complete===true&&
         entry.current?.coverage?.recordInventoryComplete===true&&
