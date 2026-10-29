@@ -492,10 +492,33 @@
       (site?.trafficSourcesComplete===false?' Wix source coverage is partial.':''),
       'No verified Wix traffic-source breakdown for these dates.');
   }
+  // Compare two identical Central-time report windows only after the
+  // SM Welcome listener had full-day coverage. The listener was introduced
+  // October 28; October 29 is the first possible complete comparison day.
+  function previousPlacecardPeriod(period){
+    if(!Number.isInteger(period?.days)||period.days<1||period.days>366||
+      !/^\d{4}-\d{2}-\d{2}$/.test(period.start||''))return null;
+    const shifted=offset=>{
+      const d=new Date(period.start+'T12:00:00Z');
+      d.setUTCDate(d.getUTCDate()+offset);
+      return d.toISOString().slice(0,10);
+    };
+    const start=shifted(-period.days),endInclusive=shifted(-1);
+    if(start<'2026-10-29')return null;
+    return {start,end:period.start,endInclusive,days:period.days,
+      query:'range=custom&start='+encodeURIComponent(start)+
+        '&end='+encodeURIComponent(endInclusive)};
+  }
   // DJOMS counts analytics-consented arrivals on SM Welcome independently.
   // They are NOT Wix sessions; reporting sources may overlap and cannot be added.
   function socialPlacecardVisitPanel(site,period) {
     const report=postReferrals(period);
+    const priorPeriod=previousPlacecardPeriod(period);
+    const priorReport=priorPeriod?postReferrals(priorPeriod):null;
+    const priorComplete=priorReport?.arrivalStatus==='reported'&&
+      priorReport?.range?.start===priorPeriod?.start&&
+      priorReport?.range?.end===priorPeriod?.end&&
+      Array.isArray(priorReport.rows);
     const complete=report?.arrivalStatus==='reported'&&
       report?.range?.start===period?.start&&report?.range?.end===period?.end&&
       Array.isArray(report.rows);
@@ -504,7 +527,24 @@
     const totals={facebook:0,instagram:0,x:0,youtube:0};
     const campaigns={food:0,music:0,book:0};
     const artwork=new Map();
-    let arrivals=0;
+    const previousByCard=new Map();
+    const previousPlatforms={facebook:0,instagram:0,x:0,youtube:0};
+    const previousCampaigns={food:0,music:0,book:0};
+    let arrivals=0,previousArrivals=0;
+    if(priorComplete)for(const row of priorReport.rows){
+      if(!platforms.includes(row?.platform)||!Number.isSafeInteger(row.directArrivals)||
+        row.directArrivals<=0||!row.recordId)continue;
+      const category=row.campaign==='MUSIC'?'music':
+        row.campaign==='BOOK'?'book':
+        ['BBQ','SOSS'].includes(row.campaign)?'food':null;
+      if(!category)continue;
+      const count=row.directArrivals;
+      previousArrivals+=count;
+      previousPlatforms[row.platform]+=count;
+      previousCampaigns[category]+=count;
+      const key=category+'|'+(row.placecardImageId||row.recordId);
+      previousByCard.set(key,(previousByCard.get(key)||0)+count);
+    }
     if(complete)for(const row of report.rows) {
       if(!platforms.includes(row?.platform)||!valid(row.directArrivals)||
         !Number.isSafeInteger(row.directArrivals)||row.directArrivals<=0)continue;
@@ -524,7 +564,7 @@
           ' #'+String(n).padStart(2,'0'):'';
         const name=String(row.placecardName||row.postTitle||'Saved placecard')
           .replace(/\.(?:png|jpe?g|webp)$/i,'').slice(0,100);
-        item={name:category.toUpperCase()+design+' · '+name,category,
+        item={key,name:category.toUpperCase()+design+' · '+name,category,
           visits:0,channels:{facebook:0,instagram:0,x:0,youtube:0}};
         artwork.set(key,item);
       }
@@ -532,16 +572,30 @@
       item.channels[row.platform]+=count;
     }
     const metric=complete?number(arrivals):'N/A';
-    const platformBoxes=platforms.map(p=>
-      '<span><b>'+labels[p]+'</b><strong>'+
-      (complete?number(totals[p]):'N/A')+'</strong></span>').join('');
+    const trend=priorComplete&&complete?
+      movement(previousArrivals,arrivals):{tone:'na',text:'N/A'};
+    const platformBoxes=platforms.map(p=>{
+      const change=priorComplete&&complete?
+        movement(previousPlatforms[p],totals[p]).text:'N/A';
+      return '<span style="display:grid;grid-template-columns:1fr auto;gap:4px 6px">'+
+        '<b>'+labels[p]+'</b><strong>'+
+        (complete?number(totals[p]):'N/A')+'</strong>'+
+        '<small style="grid-column:1/-1;color:#59452b;font-weight:800">'+
+        'LAST '+(priorComplete?number(previousPlatforms[p]):'N/A')+
+        ' · '+esc(change)+'</small></span>';
+    }).join('');
     const cardRows=[...artwork.values()]
       .sort((a,b)=>b.visits-a.visits||a.name.localeCompare(b.name))
-      .map((item,i)=>mapDetailRow(item.name,
-        'FB '+number(item.channels.facebook)+' · IG '+
-        number(item.channels.instagram)+' · X '+number(item.channels.x)+
-        ' · YT '+number(item.channels.youtube),
-        number(item.visits),'SM Welcome arrivals',i));
+      .map((item,i)=>{
+        const last=priorComplete?previousByCard.get(item.key)||0:null;
+        const change=priorComplete?movement(last,item.visits).text:'N/A';
+        return mapDetailRow(item.name,
+          'LAST '+number(last)+' · '+change+' · FB '+
+          number(item.channels.facebook)+' · IG '+
+          number(item.channels.instagram)+' · X '+number(item.channels.x)+
+          ' · YT '+number(item.channels.youtube),
+          number(item.visits),'SM Welcome arrivals',i);
+      });
     const message=complete?
       arrivals>0?'Recorded '+number(arrivals)+' consented arrivals through placecard URLs.':
         'No consented SM Welcome placecard arrivals have been recorded for these selected dates yet.':
@@ -549,24 +603,34 @@
         'DJOMS arrival tracker unavailable: '+String(report.error||'No report.').slice(0,170):
         'Checking the new placecard arrival tracker.';
     const breakdown=complete?
-      'Food '+number(campaigns.food)+' · Music '+number(campaigns.music)+
-      ' · Book '+number(campaigns.book):'Food N/A · Music N/A · Book N/A';
+      'CURRENT Food '+number(campaigns.food)+' · Music '+number(campaigns.music)+
+      ' · Book '+number(campaigns.book):'CURRENT Food N/A · Music N/A · Book N/A';
+    const priorBreakdown=priorComplete?
+      'LAST Food '+number(previousCampaigns.food)+' · Music '+
+      number(previousCampaigns.music)+' · Book '+number(previousCampaigns.book):
+      'LAST campaign totals unavailable until full prior tracking period';
     return '<section class="mj-placecard-visit-panel" aria-label="Social placecard arrivals">'+
       '<div class="mj-placecard-visit-head">'+
         '<div><b>SM PLACE CARD VISITS</b>'+
-        '<small>DJOMS-measured SM Welcome arrivals · analytics consent</small></div>'+
-        '<strong>'+metric+'</strong></div>'+
+        '<small>DJOMS-measured SM Welcome arrivals · analytics consent</small>'+
+        '<small style="margin-top:4px;font-weight:900;color:'+
+          (trend.tone==='up'?'#17623a':trend.tone==='down'?'#a12f2b':'#604926')+
+          '">LAST '+(priorComplete?number(previousArrivals):'N/A')+
+          ' · '+esc(trend.text)+'</small></div>'+
+        '<strong title="Current period">'+metric+'</strong></div>'+
       '<div class="mj-placecard-visit-platforms">'+platformBoxes+'</div>'+
       '<p class="mj-placecard-visit-note">These are SM Welcome page arrivals from '+
         'tagged links, counted independently of Wix website visits. '+
         'A channel identifies the link used, not proof of where someone clicked it. '+
-        'Do not add these to All Website Visits.</p>'+
+        'Do not add these to All Website Visits. '+
+        'Tracking began October 28, 2026; earlier days have no baseline for comparison.</p>'+
       '<details class="mj-stage-dropdown mj-placecard-visit-details" data-mj-dropdown="sm-placecards">'+
         '<summary><span>ARRIVALS BY PLACE CARD · BBQ / MUSIC / BOOK</span>'+
           '<b>'+(complete?number(artwork.size)+' cards':'N/A')+
           '<i aria-hidden="true">▾</i></b></summary>'+
         '<div class="mj-dropdown-content">'+
-          '<p class="mj-dropdown-explainer">'+esc(breakdown)+'. '+esc(message)+
+          '<p class="mj-dropdown-explainer">'+esc(breakdown)+'. '+
+          esc(priorBreakdown)+'. '+esc(message)+
           ' Older untagged posts cannot be credited; blocked analytics are not counted.</p>'+
           (complete&&cardRows.length?
             '<div class="mj-dropdown-rows">'+cardRows.join('')+'</div>':
@@ -1281,8 +1345,11 @@
       }).finally(()=>{
         postReferralsPending.delete(key);
         if(typeof activeView!=='undefined'&&activeView==='Mission Control'&&
-          typeof websiteReportPeriod==='function'&&websiteReportPeriod()?.query===key)
-          paintTop();
+          typeof websiteReportPeriod==='function'){
+          const selected=websiteReportPeriod();
+          if(selected?.query===key||previousPlacecardPeriod(selected)?.query===key)
+            paintTop();
+        }
       });
       postReferralsPending.set(key,task);
     }
