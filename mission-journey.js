@@ -878,25 +878,23 @@
           arrivalBox+metric('clicks','LINK CLICKS')+
           metric('shares','SHARES')+metric('comments','COMMENTS')+'</div>'+
         '<p class="mj-social-reactions">♥ REACTIONS '+esc(formatValue(d?.now?.reactions))+
-          ' · Meta post activity, not website visits</p>'+
+          (isX?' · Owner-entered, not website visits':' · Meta post interactions, not website visits')+'</p>'+
         exposureLine+
       '</section>';
     }).join('');
     const socialEvidence=social?.availableWeight>0;
     return card('social','6','SOCIAL MEDIA','♟',
       '<div class="mj-social-inner">'+rows+'</div>'+
-      '<p class="mj-social-explainer">TAGGED ARRIVALS = an analytics-consented '+
-        'visit to the SM Welcome page using a placecard link (tracking began Oct 28). '+
-        'LINK CLICKS = a provider-reported post link click when available; '+
-        'Facebook and Instagram measurements may be N/A. The same person can '+
-        'click or visit more than once. Do not add these event counts together. '+
-        'Views measure exposure; only repeated checks of the same posts show an exposure change.</p>'+
+      '<p class="mj-social-explainer"><b>Tagged arrivals</b> are measured visits via '+
+        'placecard links (tracking since Oct 28). <b>Link clicks</b> come from Meta '+
+        'when supplied; N/A is not zero. <b>Views</b> show exposure, not people. '+
+        'Exposure changes compare checks of the same posts. Counts can overlap.</p>'+
       '<button type="button" class="mj-social-post-detail" data-view="Analytics">'+
         'OPEN POST-BY-POST ACTION REPORT</button>'+
       '<div class="mj-social-impact"><strong>SOCIAL HEALTH · '+
         (socialEvidence?'ACTIONS':'N/A')+'</strong>'+
-        '<small>Based on comparable clicks, shares, comments and reactions. '+
-        'Passive views excluded · 15 of 100 importance points.</small></div>',
+        '<small>Clicks, shares, comments, reactions only · views unscored. '+
+        '15 of 100 importance points.</small></div>',
       'Tracked arrivals are DJOMS events; Meta link clicks, comments, shares and '+
       'reactions are lifetime totals for posts published in each date cohort. '+
       'They are not verified customer identities, and clicks are not confirmed sales. '+
