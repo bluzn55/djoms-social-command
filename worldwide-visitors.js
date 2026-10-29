@@ -46,6 +46,7 @@ function cityRows(rows){
 function overview(d){
  const countries=Array.isArray(d.countries)?d.countries:[],cities=Array.isArray(d.locations)?d.locations:[];
  return '<p class="world-caption">'+esc(date(d.range?.start))+' to '+esc(date(d.range?.endInclusive))+' · '+esc(time(d.checkedAt))+'</p>'+
+  '<div id="worldTrafficQuality" aria-label="Traffic quality evidence"></div>'+
   '<h3>COUNTRIES · '+num(countries.length)+'</h3><div class="world-countries">'+
   countries.map(r=>'<article class="world-country"><h4>'+esc(r.country)+'</h4><b>'+num(r.visitors)+' visitors</b>'+
     '<small>'+num(r.visits)+' visits · '+num(r.views)+' page views</small>'+btn(r,true)+'</article>').join('')+
@@ -65,6 +66,7 @@ function detail(d){
  return '<button type="button" data-world-back="1">‹ ALL COUNTRIES & CITIES</button>'+
   '<h3 class="world-selected-place">'+esc(name(d.location||chosen))+'</h3>'+
   '<p class="world-caption">'+esc(date(d.range?.start))+' to '+esc(date(d.range?.endInclusive))+' · '+esc(time(d.checkedAt))+'</p>'+
+  '<div id="worldTrafficQuality" aria-label="Location traffic quality evidence"></div>'+
   '<div class="world-metrics">'+
     metric('VISITORS',s.visitors,'Wix unique')+metric('VISITS',s.visits,'Sessions')+
     metric('PAGE VIEWS',s.views,'Includes repeat views')+
@@ -113,6 +115,8 @@ function show(d){
   return;
  }
  host.innerHTML=chosen?.country?detail(d):overview(d);
+ if(typeof window.djomsTrafficQuality?.mount==='function')
+   window.djomsTrafficQuality.mount('worldTrafficQuality',d.range,chosen);
 }
 function refresh(force=false){
  if(!active())return;
