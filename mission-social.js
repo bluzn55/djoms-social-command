@@ -7,7 +7,8 @@
 (function socialJourneyModule(){
   'use strict';
   const keys=['facebook','instagram','x'];
-  const measureKeys=['views','reactions','comments','shares'];
+  // Keep exposure in the detailed post report, but score actions only.
+  const measureKeys=['views','clicks','reactions','comments','shares'];
   const valid=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0;
   const shift=(day,amount)=>{
     if(!/^\d{4}-\d{2}-\d{2}$/.test(day||''))return null;
@@ -115,9 +116,9 @@
       result.platforms[name]=row;
     }
     // Two Meta platforms only; per-post movement and measured field coverage.
-    // Shares carry the greatest weight (conversation/community referrals);
-    // likes and views are positive but do not directly prove website visits.
-    const fieldWeights={shares:40,reactions:30,comments:20,views:10};
+    // Stronger engagement first: clicks, shares, comments, reactions.
+    // Passive post views never contribute to Social Health.
+    const fieldWeights={clicks:45,shares:30,comments:15,reactions:10};
     for(const name of ['facebook','instagram']){
       const row=result.platforms[name];
       for(const [metric,weight] of Object.entries(fieldWeights)){
