@@ -1,0 +1,81 @@
+/* DJOMS #6 · ACTUAL SOCIAL ACTIONS, NOT PASSIVE POST VIEWS.
+   Four high-value metrics per platform, with verified analytics source labels. */
+#connectionStrip .mj-card-social .mj-social-platform{
+  padding:6px 5px!important;
+}
+#connectionStrip .mj-card-social .mj-social-brand{
+  gap:5px;flex-wrap:wrap;padding:0 2px 5px;
+}
+#connectionStrip .mj-card-social .mj-social-brand>small{
+  font:750 10px/1.25 Arial,sans-serif!important;
+  margin-left:auto;max-width:58%;text-align:right;color:#6d502b!important;
+}
+#connectionStrip .mj-card-social .mj-social-stats{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px;
+}
+#connectionStrip .mj-card-social .mj-social-stat{
+  padding:7px 3px!important;
+  border:1px solid #dcc6a4;
+  border-radius:5px;
+  background:#f3e2bf;
+  min-width:0;
+}
+#connectionStrip .mj-card-social .mj-social-stat.mj-social-arrivals{
+  border-color:#b58c4b;background:#ffedc7;
+}
+#connectionStrip .mj-card-social .mj-social-stat>small{
+  font:900 10px/1.23 Arial,sans-serif!important;
+  min-height:26px;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  overflow-wrap:break-word;color:#392713!important;
+}
+#connectionStrip .mj-card-social .mj-social-stat>b{
+  color:#2e2114!important;
+  font:900 clamp(17px,1.23vw,24px)/1.15 Georgia,serif!important;
+}
+#connectionStrip .mj-card-social .mj-social-stat.mj-social-arrivals>b{
+  color:#275637!important;
+}
+#connectionStrip .mj-card-social .mj-social-stat>span{
+  font:750 10px/1.15 Arial,sans-serif!important;color:#6d5234!important;
+}
+#connectionStrip .mj-card-social .mj-social-stat>em{
+  font:900 10px/1.2 Arial,sans-serif!important;
+}
+#connectionStrip .mj-card-social .mj-social-reactions{
+  margin:6px 2px 0!important;
+  font:800 11px/1.25 Arial,sans-serif!important;color:#604329!important;
+}
+#connectionStrip .mj-card-social .mj-social-explainer{
+  padding:8px 4px;margin:4px 0 6px!important;
+  font:750 11px/1.35 Arial,sans-serif!important;
+  color:#5d4427!important;
+}
+#connectionStrip .mj-card-social .mj-social-post-detail{
+  display:block;width:100%;padding:9px 10px;
+  border:1px solid #a17c49;border-radius:5px;
+  background:#f1ddba;color:#3b2918!important;
+  font:900 12px/1.25 Arial,sans-serif!important;
+  text-align:left;cursor:pointer;
+}
+#connectionStrip .mj-card-social .mj-social-post-detail:hover{
+  color:#fff7e7!important;background:#6e4a24;
+}
+#connectionStrip .mj-card-social .mj-social-post-detail:focus-visible{
+  outline:3px solid #b57c3a;outline-offset:2px;
+}
+#connectionStrip .mj-card-social .mj-social-impact{
+  align-items:flex-start!important;
+  border-top:1px solid #d7b985;
+  padding-top:8px!important;margin-top:9px!important;
+}
+#connectionStrip .mj-card-social .mj-social-impact>small{
+  max-width:65%;line-height:1.34!important;
+}
+@media(max-width:470px){
+  #connectionStrip .mj-card-social .mj-social-stat{padding:5px 2px!important}
+  #connectionStrip .mj-card-social .mj-social-stat>small{font-size:9px!important}
+  #connectionStrip .mj-card-social .mj-social-stat>b{font-size:18px!important}
+  #connectionStrip .mj-card-social .mj-social-brand>small{max-width:50%}
+}
