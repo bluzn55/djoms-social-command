@@ -65,7 +65,9 @@ function detailHtml(data,loc,compact){
   const cards=metric('WIX VISITS · ORIGINAL',total,'Unchanged source total')+
     metric('LIKELY AUTOMATED',auto,'Rapid crawler-like page sweeps','automation')+
     metric('ENGAGED-LOOKING',engaged,'2+ pages or measured stay ≥30 sec','engagement')+
-    metric('UNCLASSIFIED',undecided,'Neither pattern is proven','unknown');
+    metric('UNCLASSIFIED',undecided,'Neither pattern is proven','unknown')+
+    metric('POSSIBLE RELATED ACTIVITY',data.relatedActivity?.totalGroups,
+      'Similar visits close together, not a confirmed identity');
   const note='These are website sessions, not unique people. Rapid scanning is not an attack. '+
     'Engaged-looking does not prove a human. Unclassified is not automatically a bot. '+
     'We do not subtract these estimates from Wix visitor or sales totals.';
