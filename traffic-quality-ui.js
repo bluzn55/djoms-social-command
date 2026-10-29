@@ -9,6 +9,10 @@ const n=v=>Number.isSafeInteger(v)&&v>=0?v.toLocaleString('en-US'):'N/A';
 const moment=v=>v&&Number.isFinite(Date.parse(v))?
   new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago',
     month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}).format(new Date(v)):'N/A';
+const exact=v=>v&&Number.isFinite(Date.parse(v))?
+  new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago',
+    month:'short',day:'numeric',hour:'numeric',minute:'2-digit',
+    second:'2-digit'}).format(new Date(v)):'N/A';
 const cache=new Map(),pending=new Map(),TTL=120000;
 const keyFor=period=>{
   const choice=period?.selection||period?.range;
