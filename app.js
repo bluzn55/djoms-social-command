@@ -946,7 +946,7 @@ function trackingLinksHtml(record) {
         '<button type="button" data-track-record="'+esc(record.id)+'"'+
         ' data-track-platform="'+esc(platform)+'"'+
         ' title="Copy unique '+esc(label)+' website link for '+esc(record.title)+'">'+
-        'COPY '+esc(label)+' LINK</button>').join('')+'</div>'+
+        (platform==='instagram'?'COPY IG STORY LINK':'COPY '+esc(label)+' LINK')+'</button>').join('')+'</div>'+
       '<small>All four links open SM Welcome. Each identifies this placecard, campaign and platform.</small>'+
     '</div></details>';
 }
@@ -1894,26 +1894,59 @@ async function setView(view) {
   if (dirty && !confirm('Leave without saving your changes?')) return;
   activeView = view; campaignFilter = ''; searchTerm = ''; render();
 }
+// Exactly one tracked SM Welcome link in each posting preview, matching
+// the backend's publishing-time caption cleanup. No older embedded URLs.
+function preparePlacecardPreviewCopy(caption){
+  const lines=[],tags=[];
+  const regex=/(?:https?:\/\/[^\s<>"']+|(?:www\.)?docjaks\.com(?:\/[^\s<>"']*)?)/gi;
+  const hashtag=/^(?:#[\p{L}\p{N}_]+(?:[\s,]+|$))+$/u;
+  const cta=/^[^\p{L}\p{N}]*(?:discover|learn|visit|explore|read|listen|shop|see|find|join|order|check|click|support|follow|go|get)\b/i;
+  for(const raw of String(caption||'').replace(/\r\n?/g,'\n').replace(/\*\*/g,'').split('\n')){
+    const original=raw.trim();
+    if(!original){lines.push('');continue;}
+    regex.lastIndex=0;
+    const had=regex.test(original);
+    regex.lastIndex=0;
+    const clean=original.replace(regex,'').replace(/[ \t]{2,}/g,' ').trim();
+    if(had&&cta.test(clean))continue;
+    if(!clean)continue;
+    if(hashtag.test(clean)){
+      tags.push(...(clean.match(/#[\p{L}\p{N}_]+/gu)||[]));continue;
+    }
+    lines.push(clean);
+  }
+  return {
+    body:lines.join('\n').replace(/\n{3,}/g,'\n\n').trim(),
+    hashtags:[...new Set(tags)].join(' ')
+  };
+}
 function platformText() {
-  const caption = $('postCaption').value.trim();
-  const savedLink = $('postLink').value.trim();
-  // Every future social placecard points first to the shared SM Welcome page,
-  // even when an old draft has an outside URL in its optional source-link field.
-  const linkFor = platform => !dirty && selected?.trackingLinks?.[platform] ?
-    selected.trackingLinks[platform] : savedLink;
-  const combined = platform => {
+  const caption=$('postCaption').value.trim();
+  const sameCampaign=selected?.campaign===$('postCampaign').value;
+  const copy=preparePlacecardPreviewCopy(caption);
+  const campaign=$('postCampaign').value;
+  const titles={
+    BBQ:'🔥 Explore the Smokehouse',SOSS:'🔥 Explore the Smokehouse',
+    MUSIC:'🎵 Hear the music',BOOK:'📖 Discover the story'
+  };
+  const title=titles[campaign]||'⚜ Explore Doc Jaks';
+  const linkFor=platform=>sameCampaign?selected?.trackingLinks?.[platform]||'':'';
+  const combined=platform=>{
     const link=linkFor(platform);
-    return caption + (link ? (caption ? '\n\n' : '') + link : '');
+    const header=link?title+': '+link:'';
+    return [header,copy.body,copy.hashtags].filter(Boolean).join('\n\n');
   };
   const facebook=combined('facebook');
   const fullInstagram=combined('instagram');
   const instagram=fullInstagram.length>2200 ?
     fullInstagram.slice(0,2197)+'…':fullInstagram;
   const xLink=linkFor('x');
-  const maxCaption=Math.max(0,280-(xLink?xLink.length+2:0));
-  const xCaption=caption.length>maxCaption ?
-    caption.slice(0,Math.max(0,maxCaption-1)).trimEnd()+'…':caption;
-  const x=xCaption+(xLink?(xCaption?'\n\n':'')+xLink:'');
+  const xFixed=xLink?title+': '+xLink:'';
+  const xTags=copy.hashtags.split(/\s+/).filter(Boolean).slice(0,2).join(' ');
+  const maxCaption=Math.max(0,280-xFixed.length-xTags.length-6);
+  const xBody=(copy.body||String($('postTitle').value||'Doc Jaks')).replace(/\s+/g,' ').trim();
+  const xShort=xBody.length>maxCaption?xBody.slice(0,Math.max(0,maxCaption-1)).trimEnd()+'…':xBody;
+  const x=[xFixed,xShort,xTags].filter(Boolean).join('\n\n').slice(0,280);
   const youtubeTitle=$('postTitle').value.trim().slice(0,100);
   return {facebook,instagram,x,youtubeTitle,youtubeDescription:combined('youtube')};
 }
@@ -1944,10 +1977,10 @@ function renderRecordTrackingLinks(r) {
   if(!host)return;
   host.innerHTML='<div class="placecard-track-editor"><b>⚜ PLACE CARD TRACKING</b>'+
     trackingLinksHtml(r)+
-    '<p>Future Facebook and Instagram posts automatically link to SM Welcome. '+
-    'For X or YouTube, copy that platform\'s SM Welcome link into your post. '+
-    'Instagram feed captions are not clickable; use a Story link sticker or profile link. '+
-    'Already-published social posts retain their original links.</p></div>';
+    '<p><b>One link per post:</b> new Facebook and Instagram feed posts use their saved SM Welcome link. '+
+    '<b>Instagram feed captions are not clickable.</b> To give people a clickable link, '+
+    'copy <b>IG STORY LINK</b>, then in Instagram open a Story, select Stickers → Link, paste it, and publish. '+
+    'For X or YouTube, copy that platform\'s own link. Already-published posts keep their existing links.</p></div>';
 }
 function buttons() {
   if (!selected) return;
