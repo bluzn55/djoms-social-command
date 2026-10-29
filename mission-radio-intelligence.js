@@ -86,10 +86,8 @@
   }
   function content(q){
     const stored=cache.get(q),data=stored?.data||null,s=data?.summary||null;
-    const covered=data?
-      number(s?.overviewDays)+'/'+number(s?.requestedDays)+' UTC overview days · '+
-      number(s?.listeningDays)+'/'+number(s?.requestedDays)+' listening days':
-      'No complete selected-period import checked yet';
+    const covered=data?'IMPORTED CSV · NOT LIVE':
+      'CHECKING IMPORTED REPORTS';
     return '<div class="rli-toolbar"><b>OUTLAW RADIO 5150 · LISTENER REPORTS</b>'+
       '<small>'+esc(covered)+' · Manual Radio.co CSV, not live statistics</small></div>'+
       (data?'<details class="rli-details"><summary>DAILY LISTENING · '+
@@ -104,7 +102,7 @@
           '</div><p class="rli-note">These figures count stream connections, not individual people.</p></details>':
         '<p class="rli-note">'+esc(stored?.error||'Checking saved Radio.co listening reports…')+'</p>')+
       '<details class="rli-details rli-import-details">'+
-        '<summary>IMPORT / UPDATE RADIO.CO REPORT · OVERVIEW OR TTSL CSV</summary>'+
+        '<summary>IMPORT / UPDATE RADIO.CO CSV</summary>'+
         '<section class="rli-upload"><h5>IMPORT RADIO.CO REPORT</h5>'+
           '<p>Export an Overview or TTSL CSV from Radio.co Statistics. '+
           'The selected daily and listening figures update after import. '+
@@ -116,10 +114,9 @@
             '<button type="button" data-rli-import>IMPORT CSV</button></div>'+
           '<p class="rli-status" role="status"></p><div class="rli-conflict" hidden></div>'+
         '</section></details>'+
-      '<p class="rli-note">Daily Radio.co dates are UTC. The full period and growth trend '+
-      'remain N/A until every selected and comparison day is imported. '+
-      'Period-unique, new and returning listeners cannot be derived from these aggregate files. ' +
-      'Your own listening sessions may also be included.</p>';
+      '<p class="rli-note">UTC dates. Connections are not unique listeners; '+
+      'new and returning listeners cannot be determined from aggregate exports. '+
+      'Your listening may also be included.</p>';
   }
   window.djomsRadioListenerSection=period=>{
     const q=period?.query;
