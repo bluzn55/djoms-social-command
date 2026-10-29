@@ -1,0 +1,69 @@
+/* DJOMS #6: compact Wix Welcome destination actions.
+ * Native Wix all-click totals and per-card matched clicks overlap.
+ */
+#connectionStrip .mj-card-social .mj-sm-next{
+  margin:8px 0 7px;
+  background:#fff6df;
+  border:1px solid #c7a672;
+  border-radius:5px;
+  padding:8px;
+}
+#connectionStrip .mj-card-social .sm-next-top{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:7px;flex-wrap:wrap;
+}
+#connectionStrip .mj-card-social .sm-next-top>div:first-child{
+  min-width:120px;flex:1 1 170px;
+}
+#connectionStrip .mj-card-social .sm-next-top b{
+  color:#362713;font:900 12px/1.25 Arial,sans-serif;
+}
+#connectionStrip .mj-card-social .sm-next-top small{
+  display:block;margin-top:3px;
+  font:750 10px/1.3 Arial,sans-serif;color:#725638;
+}
+#connectionStrip .mj-card-social .sm-next-totals{
+  display:flex;gap:6px;align-items:center;flex:1 1 180px;
+}
+#connectionStrip .mj-card-social .sm-next-totals>span{
+  flex:1 1 50%;display:flex;flex-direction:column;
+  text-align:center;justify-content:center;gap:3px;
+  background:#f0deba;border-radius:4px;padding:5px;
+  font:900 9px/1.2 Arial,sans-serif;color:#4d381e;
+}
+#connectionStrip .mj-card-social .sm-next-totals strong{
+  font:900 21px/1.1 Georgia,serif;color:#2a4b2c;
+}
+#connectionStrip .mj-card-social .mj-sm-next-details{margin:7px 0 0!important}
+#connectionStrip .mj-card-social .sm-next-subhead{
+  margin:8px 0 4px;color:#3e2a18;font:900 11px/1.3 Arial,sans-serif;
+  border-bottom:1px solid #cfb18b;padding-bottom:3px;
+}
+#connectionStrip .mj-card-social .sm-next-hint{
+  font:750 10px/1.35 Arial,sans-serif;color:#655031;
+  margin:3px 0 6px!important;
+}
+#connectionStrip .mj-card-social .sm-next-rows p{
+  font:750 11px/1.35 Arial,sans-serif;color:#60462c;
+}
+#connectionStrip .mj-card-social .sm-next-row{
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid #e1cba6;padding:5px 3px;gap:9px;
+}
+#connectionStrip .mj-card-social .sm-next-row>span{
+  display:flex;flex-direction:column;gap:1px;min-width:0;
+}
+#connectionStrip .mj-card-social .sm-next-row b{
+  color:#392613;font:900 11px/1.3 Arial,sans-serif;
+}
+#connectionStrip .mj-card-social .sm-next-row small{
+  color:#735a37;font:750 9px/1.25 Arial,sans-serif;
+}
+#connectionStrip .mj-card-social .sm-next-row>strong{
+  font:900 16px/1 Georgia,serif;color:#302115;
+}
+@media(max-width:520px){
+  #connectionStrip .mj-card-social .sm-next-top{gap:5px}
+  #connectionStrip .mj-card-social .sm-next-top>div:first-child{flex:1 1 100%}
+  #connectionStrip .mj-card-social .sm-next-totals{flex:1 1 100%}
+}
