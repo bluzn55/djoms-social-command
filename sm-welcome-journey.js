@@ -18,6 +18,97 @@ const dates=p=>p&&p.start&&p.endInclusive;
 const row=(name,value,small)=>'<div class="sm-next-row">'+
  '<span><b>'+esc(name)+'</b><small>'+esc(small||'')+'</small></span>'+
  '<strong>'+esc(num(value))+'</strong></div>';
+// Exact card-level arrivals come from the SAME consented post-referrals
+// report already used in #2. Each unique tracking ID identifies a saved
+// DJOMS record and a platform-specific URL, not a verified social-site tap.
+function exactPlacecardArrivals(period){
+ const source=typeof window.djomsSocialPostReferrals==='function'?
+   window.djomsSocialPostReferrals(period):null;
+ const verified=source?.arrivalStatus==='reported'&&
+   source?.range?.start===period.start&&source?.range?.end===period.end&&
+   Array.isArray(source.rows);
+ const records=verified?source.rows.filter(item=>
+   item&&typeof item.recordId==='string'&&
+   Number.isSafeInteger(item.directArrivals)&&item.directArrivals>0&&
+   ['facebook','instagram','x','youtube'].includes(item.platform)&&
+   ['BBQ','SOSS','MUSIC','BOOK'].includes(item.campaign)):[];
+ const arrivals=records.reduce((sum,item)=>sum+item.directArrivals,0);
+ const cardCount=new Set(records.map(item=>item.recordId)).size;
+ const platformName={facebook:'Facebook',instagram:'Instagram',x:'X',youtube:'YouTube'};
+ const groupName={BBQ:'BBQ',SOSS:'Sosses',MUSIC:'Music',BOOK:'Book'};
+ const photo=(url,title,large)=>{
+   const ok=typeof url==='string'&&/^https:\/\/[a-z0-9.-]+\//i.test(url);
+   return ok?'<img loading="lazy" referrerpolicy="no-referrer" src="'+
+     esc(url)+'" alt="'+esc(title)+' · saved Doc Jaks placecard artwork"'+
+     (large?' class="sm-card-art-large"':' class="sm-card-art-thumb"')+'>':
+     '<span class="sm-card-no-image">Artwork not available</span>';
+ };
+ const views=records.sort((a,b)=>b.directArrivals-a.directArrivals||
+   a.recordId.localeCompare(b.recordId)||a.platform.localeCompare(b.platform))
+  .map(item=>{
+    const meta=typeof window.djomsPlacecardMeta==='function'?
+      window.djomsPlacecardMeta(item.recordId,item.platform):null;
+    const title=String(meta?.placecardName||item.placecardName||
+      item.postTitle||'Saved DJOMS placecard').replace(/\.(?:png|jpe?g|webp)$/i,'').slice(0,140);
+    const n=Number(item.placecardNumber);
+    const numbered=Number.isInteger(n)&&n>=1&&n<=15?
+      groupName[item.campaign]+' #'+String(n).padStart(2,'0'):
+      groupName[item.campaign];
+    const cardId=meta?.code||'Card '+item.recordId.slice(-8).toUpperCase();
+    const platform=(platformName[item.platform]||item.platform)+' tracking link';
+    const text=String(meta?.postingText||meta?.caption||'').trim();
+    const short=text.replace(/\s+/g,' ').slice(0,155);
+    const snippet=short?(short+(text.replace(/\s+/g,' ').length>155?'…':'')):
+      'Caption unavailable in saved DJOMS records';
+    const image=photo(meta?.imageUrl,title,false);
+    const detailImage=photo(meta?.imageUrl,title,true);
+    const copySource=meta?.textSource||
+      'Saved posting text not in the current DJOMS library.';
+    return '<article class="sm-card-arrival">'+
+      '<div class="sm-card-arrival-summary">'+
+        '<span class="sm-card-thumbnail">'+image+'</span>'+
+        '<span class="sm-card-info">'+
+          '<b>'+esc(numbered+' · '+title)+'</b>'+
+          '<small>'+esc(platform+' · '+cardId)+'</small>'+
+          '<span class="sm-card-copy-excerpt">'+esc(snippet)+'</span>'+
+        '</span>'+
+        '<span class="sm-card-arrival-count"><strong>'+
+          num(item.directArrivals)+'</strong><small>arrivals</small></span>'+
+      '</div>'+
+      '<details class="sm-card-creative-detail">'+
+        '<summary>VIEW THIS PLACE CARD · FULL IMAGE & POST TEXT</summary>'+
+        '<div class="sm-card-creative-open">'+
+          '<div class="sm-card-creative-image">'+detailImage+'</div>'+
+          '<div class="sm-card-creative-text">'+
+            '<strong>TEXT ON THE SAVED PLACE CARD</strong>'+
+            '<small>'+esc(copySource)+'</small>'+
+            (text?'<p class="sm-card-full-caption">'+esc(text)+'</p>':
+              '<p class="sm-card-full-caption">Saved post wording not available.</p>')+
+            '<button type="button" data-sm-card-open="'+esc(item.recordId)+'">'+
+              'OPEN EXACT PLACE CARD IN CONTENT LIBRARY</button>'+
+          '</div>'+
+        '</div>'+
+      '</details>'+
+    '</article>';
+  }).join('');
+ const status=verified?
+   records.length?'<strong>'+num(arrivals)+' arrivals · '+
+     num(cardCount)+' exact cards</strong>':
+     '<strong>0 tracked arrivals</strong>':
+     '<strong>N/A · reporting</strong>';
+ const empty=verified?'No tracked placecard arrivals in the selected dates.':
+   'Checking exact placecard link attribution. Older untagged posts cannot be identified.';
+ return '<details class="mj-stage-dropdown mj-sm-exact-arrivals" data-mj-dropdown="exact-placecards">'+
+  '<summary><span>EXACT PLACE CARDS THAT BROUGHT VISITORS</span>'+
+    '<b>'+status+' ▾</b></summary>'+
+  '<div class="mj-dropdown-content">'+
+    '<p class="sm-next-hint">Each arrival is a consented SM Welcome landing through '+
+      'one uniquely tagged card link. Artwork and text are taken from the '+
+      'saved DJOMS post. The named platform identifies which link was used, '+
+      'not proof of where the person physically clicked it.</p>'+
+    (views||'<p class="sm-next-hint">'+esc(empty)+'</p>')+
+  '</div></details>';
+}
 function paint(data){
  const wix=data?.wix||{};
  const tracked=data?.tracked||{};
@@ -89,7 +180,8 @@ function section(period){
    '<small>'+esc(saved?.error||'Checking Wix button clicks and placecard matches…')+'</small></div>'+
    '<div class="sm-next-totals"><span>WIX BUTTON CLICKS <strong>N/A</strong></span>'+
    '<span>PLACE CARD MATCHES <strong>N/A</strong></span></div></div>';
- return '<section class="mj-sm-next" aria-label="Welcome page next actions">'+html+'</section>';
+ return '<section class="mj-sm-next" aria-label="Exact placecard arrivals and Welcome page next actions">'+
+   exactPlacecardArrivals(period)+html+'</section>';
 }
 window.djomsSmWelcomeJourneySection=section;
 })();
