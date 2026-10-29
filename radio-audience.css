@@ -18,7 +18,7 @@
  font:900 10px/1.2 Arial,sans-serif!important;color:#7d6039;
 }
 #connectionStrip .mj-card-music .ra-grid{
- display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:8px 0;
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:8px 0;
 }
 #connectionStrip .mj-card-music .ra-metric{
  display:flex;flex-direction:column;min-width:0;gap:4px;
@@ -95,4 +95,37 @@
 @media(max-width:450px){
  #connectionStrip .mj-card-music .ra-fields{grid-template-columns:1fr}
  #connectionStrip .mj-card-music .ra-metric strong{font-size:20px!important}
+}
+/* OCT 29 Radio.co Overview screenshot figures and source context */
+#connectionStrip .mj-card-music .ra-grid>.ra-metric strong{
+  font:900 clamp(17px,1.18vw,24px)/1.16 Georgia,serif!important;
+}
+#connectionStrip .mj-card-music .ra-overview-change{
+  margin:7px 0 4px!important;padding:7px 9px;background:#f1e5cb;
+  border:1px solid #d2b991;border-radius:4px;
+  color:#4b361e!important;font:850 11px/1.36 Arial,sans-serif!important;
+}
+#connectionStrip .mj-card-music .ra-overview-change small{
+  display:block;margin-top:4px;color:#76563b!important;
+  font:750 10px/1.32 Arial,sans-serif!important;
+}
+#connectionStrip .mj-card-music .ra-country-note{
+  margin:5px 0!important;padding:7px 9px;
+  background:#fffdf5;border:1px solid #ddc6a1;border-radius:4px;
+  color:#40301d!important;font:850 11px/1.35 Arial,sans-serif!important;
+}
+#connectionStrip .mj-card-music .ra-country-note small{
+  display:block;margin-top:2px;color:#715c41!important;
+  font:750 10px/1.3 Arial,sans-serif!important;
+}
+@media(max-width:510px){
+  #connectionStrip .mj-card-music .ra-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+  #connectionStrip .mj-card-music .ra-grid>.ra-metric{
+    padding:5px!important;
+  }
+  #connectionStrip .mj-card-music .ra-grid>.ra-metric strong{
+    font-size:18px!important;
+  }
 }
