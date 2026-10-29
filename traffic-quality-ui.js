@@ -70,7 +70,9 @@ function detailHtml(data,loc,compact){
     ' networks · '+esc(x.browser)+' / '+esc(x.os)+'</small></div>').join('');
   const watchHtml='<section class="dj-related-watch"><strong>RELATED ACTIVITY WATCH · '+
     esc(n(relatedCount))+' PATTERNS</strong>'+relatedRows+
-    (!related.length?'<p>No matching close-together cross-network visits reported.</p>':'')+
+    (!related.length?'<p>'+(data.relatedActivity?.status==='reported'?
+      'No matching close-together cross-network visits reported.':
+      'Matching-visit evidence unavailable or incomplete.')+'</p>':'')+
     '<small>Same country, page, browser and device within 90 seconds; different networks. '+
     'Possible connection only, not proof of one person, a bot, or an attack.</small></section>';
   if(!selected)return '<p class="dj-quality-note">Wix location coverage is not complete. Cannot classify these visits.</p>';
