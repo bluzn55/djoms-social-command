@@ -79,6 +79,7 @@
     sitePageViews:{label:'Wix page views',unit:'count',higher:true,source:'Wix'},
     formSubmissions:{label:'Wix form submissions',unit:'count',higher:true,source:'Wix'},
     fileDownloads:{label:'GA4 download events',unit:'count',higher:true,source:'GA4'},
+    contactActions:{label:'Wix contact actions (clicks + forms)',unit:'count',higher:true,source:'Wix'},
     radioLinkClicks:{label:'GA4 radio link clicks',unit:'count',higher:true,source:'GA4'},
     paidOrders:{label:'Wix paid web orders',unit:'count',higher:true,source:'Wix paid store'},
     grossSalesCents:{label:'Gross web item sales',unit:'cents',higher:true,source:'Wix paid store'}
@@ -92,6 +93,7 @@
       searchCtr:google?g.ctr:null,searchClicks:google?g.clicks:null,
       siteVisitors:wix?site.visitors:null,siteBounceRate:wix?site.bounceRate:null,
       sitePageViews:wix?site.pageViews:null,formSubmissions:wix?site.formsSubmitted:null,
+      contactActions:wix?site.metricComparisons?.contactActions?.current:null,
       fileDownloads:event.fileDownload??null,
       radioLinkClicks:ga4?.status==='connected'&&ga4.actions?.radioLinkStatus==='reported'?ga4.actions.radioLinkClicks:null,
       paidOrders:paid?sales.paidOrders:null,
@@ -1114,7 +1116,7 @@
     'INSTAGRAM POST VIEWS':'instagramViews',
     'FACEBOOK REACTIONS':'facebookLikes',
     'INSTAGRAM LIKES':'instagramLikes',
-    'INQUIRIES':'inquiries',
+    'INQUIRIES':'inquiries','CONTACT ACTIONS':'inquiries',
     'FILE DOWNLOAD EVENTS':'fileDownloads',
     'CONFIRMED PIT KREWE SIGNUPS':'pitKreweSignups',
     'VERIFIED UNIQUE RADIO LISTENERS':'uniqueRadioListeners'
@@ -2093,13 +2095,13 @@
       valid(downloaded)&&downloaded>0?
         number(downloaded)+' file download events were recorded. Downloads do not prove reading.':
         'No verified increase in meaningful actions is established for these dates.';
-    const actionsConcern='Confirmed Pit Krewe signups and actual unique radio listeners are not measured end-to-end yet. Do not treat an unverified source as zero.';
+    const actionsConcern='Confirmed Pit Krewe registrations and website-to-radio listening attribution are not verified end-to-end yet. Radio.co audience figures are measured separately in #4.';
     const part7=dailySection(7,'MEANINGFUL ACTIONS',
-      dailyKpi('INQUIRIES',contactsLast,contactsNow)+
+      dailyKpi('CONTACT ACTIONS',contactsLast,contactsNow)+
       dailyKpi('FILE DOWNLOAD EVENTS',lastDownloads,downloaded)+
       dailyKpi('CONFIRMED PIT KREWE SIGNUPS',null,null)+
-      dailyKpi('VERIFIED UNIQUE RADIO LISTENERS',null,null),
-      dailyCompare('INQUIRY ACTIONS · LAST VS CURRENT',contactsLast,contactsNow,'count',
+      dailyKpi('SITE-ATTRIBUTED RADIO LISTENS',null,null),
+      dailyCompare('CONTACT ACTIONS · LAST VS CURRENT',contactsLast,contactsNow,'count',
         'Contact clicks plus Wix forms. Not confirmed unique people.')+
       dailyCompare('FILE DOWNLOAD EVENTS',lastDownloads,downloaded,'count',
         'GA4 events if the selected dates have complete verified coverage.'),
@@ -2225,10 +2227,12 @@
     const gaEvent=ga4?.status==='connected'&&ga4.actions?.status==='reported'?ga4.actions.counts||{}:{};
     const previousEvents=ga4?.actions?.comparison?.status==='reported'?ga4.actions.comparison.counts||{}:{};
     const traffic=sources(site);
-    const contactsNow=wix&&valid(site.contactClicks)&&valid(site.formsSubmitted)?
-      site.contactClicks+site.formsSubmitted:null;
-    const contactsLast=valid(wixCmp.clicksToContact?.previous)&&valid(wixCmp.formsSubmitted?.previous)?
-      wixCmp.clicksToContact.previous+wixCmp.formsSubmitted.previous:null;
+    // Wix verifies contact clicks and submitted forms as separate events.
+    // These are ACTIONS, not confirmed conversations or distinct people.
+    const contactsNow=wix&&valid(wixCmp.contactActions?.current)?
+      wixCmp.contactActions.current:null;
+    const contactsLast=wix&&valid(wixCmp.contactActions?.previous)?
+      wixCmp.contactActions.previous:null;
     const owner=typeof window.djomsOwnerScore==='function'?
       window.djomsOwnerScore(site,ga4,seo,sales,period,social,music):null;
     const score=Number.isInteger(owner?.score)?owner.score:null;
@@ -2293,12 +2297,12 @@
       'Explore the pages visited and engagement. Lower bounce is favorable.');
     const seventh=card('actions','7','MEANINGFUL ACTIONS','✦',
       '<div class="mj-minis">'+
-        miniMetric('INQUIRIES',contactsLast,contactsNow)+
+        miniMetric('CONTACT ACTIONS',contactsLast,contactsNow)+
         miniMetric('PIT KREWE',null,null)+
-        miniMetric('RADIO LISTENERS',null,null)+
+        miniMetric('RADIO FROM SITE',null,null)+
         miniMetric('FILE DOWNLOAD EVENTS',
           previousEvents.fileDownload?.previous,gaEvent.fileDownload)+'</div>',
-      'Actual listeners and confirmed Pit Krewe members remain N/A until their own proof is connected.');
+      'Website-to-radio listening and confirmed Pit Krewe memberships remain N/A until attribution is verified. Station listeners are counted separately in #4.');
     const fifth=card('sales','5','PAID WEB SALES','▣',
       heroMetric('Gross item sales',comparison?.itemSalesCents,
         paid?sales.itemSalesCents:null,'cents')+
@@ -2328,7 +2332,9 @@
           '<p>'+esc(periodTitle(period))+' · Verified figures only</p></div>'+
         '<div class="mj-quick-score '+esc(scoreStyle)+'">'+
           '<strong>'+esc(scoreArrow)+' '+esc(score===null?'N/A':score)+' '+esc(scoreName)+'</strong>'+
-          '<small>100 = Holding · Above 100 = Forward</small></div>'+
+          '<small>100 = Holding · Above 100 = Forward</small>'+ 
+          '<small>'+esc(Number.isFinite(owner?.availableWeight)?owner.availableWeight:0)+
+            ' of 100 importance points verified · Online direction, not profit</small></div>'+
       '</header>'+
       '<div class="mj-quick-metrics" aria-label="Six key results and their changes">'+
         quickMetric('SEARCH APPEARANCES',search?.previous,search?.current,'count',
@@ -2339,8 +2345,8 @@
           'All sources, Wix sessions')+
         quickMetric('PAGE VIEWS',wixCmp.pageViews?.previous,wix?site.pageViews:null,'count',
           'Pages opened, including repeats')+
-        quickMetric('INQUIRIES',contactsLast,contactsNow,'count',
-          'Contact clicks + forms')+
+        quickMetric('CONTACT ACTIONS',contactsLast,contactsNow,'count',
+          'Wix contact taps + submitted forms · not confirmed leads')+
         quickMetric('GROSS WEB SALES',comparison?.itemSalesCents,
           paid?sales.itemSalesCents:null,'cents','Online item sales, not profit')+
       '</div>'+
@@ -2348,12 +2354,12 @@
         '<div class="mj-quick-answer"><b>WHAT HAPPENED?</b><p>'+esc(note.evidence)+'</p></div>'+
         '<div class="mj-quick-answer"><b>WHY? · POSSIBLE CAUSE</b><p>'+esc(note.why)+'</p></div>'+
         '<div class="mj-quick-answer"><b>WHAT SHOULD WE CHANGE?</b><p>'+esc(note.next)+'</p></div>'+
-        '<div class="mj-quick-answer"><b>DID IT WORK?</b>'+
+        '<div class="mj-quick-answer"><b>LAST VS CURRENT · KPI TREND</b>'+
           '<strong class="mj-quick-verdict '+esc(direction.tone)+'">'+
             esc(canCompare?direction.text:'NOT YET PROVEN')+'</strong>'+
           '<p>'+esc(metricDefs[key]?.label||'Tracked metric')+': Last '+
             esc(showMetric(key,lastMetric))+' · Now '+esc(showMetric(key,curr))+'</p>'+
-          '<small>Trend only. A page edit has not been proven to cause this.</small></div>'+
+          '<small>A comparison, not proof that a specific change caused it. Record a baseline below to test changes.</small></div>'+
       '</div>'+
       '<p class="mj-quick-legend"><span class="up">↑ GREEN · Improving</span>'+
         '<span class="down">↓ RED · Losing ground</span>'+
