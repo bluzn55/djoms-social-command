@@ -895,8 +895,10 @@
       '</section>';
     }).join('');
     const socialEvidence=social?.availableWeight>0;
+    const nextSteps=typeof window.djomsSmWelcomeJourneySection==='function'?
+      window.djomsSmWelcomeJourneySection(period):'';
     return card('social','6','SOCIAL MEDIA','♟',
-      '<div class="mj-social-inner">'+rows+'</div>'+
+      '<div class="mj-social-inner">'+rows+'</div>'+nextSteps+
       '<p class="mj-social-explainer"><b>Views</b> = displays, not people. '+
         '<b>Tagged arrivals</b> = measured visits. '+
         '<b>N/A</b> = data unavailable, not zero. '+
