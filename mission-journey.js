@@ -816,6 +816,13 @@
     };
     const tagged=ready?counts(arrivalsReport):null;
     const priorTagged=priorReady?counts(priorReport):null;
+    const checkedAtLabel=stamp=>{
+      if(!stamp||!Number.isFinite(Date.parse(stamp)))return 'N/A';
+      return new Intl.DateTimeFormat('en-US',{
+        timeZone:'America/Chicago',month:'short',day:'numeric',
+        hour:'numeric',minute:'2-digit',hour12:true
+      }).format(new Date(stamp));
+    };
     const rows=platforms.map(platform=>{
       const d=social?.platforms?.[platform],isX=platform==='x';
       const name={facebook:'FACEBOOK',instagram:'INSTAGRAM',x:'X'}[platform];
@@ -844,6 +851,24 @@
       const verifiedLabel=isX?'Owner-entered · unscored':
         d?.verified?valid(d.now?.clicks)?
           'Meta clicks measured':'Meta posts · clicks N/A':'Meta measurement pending';
+      const exposure=d?.exposureTrend;
+      const hasTrend=!isX&&exposure?.status==='reported'&&
+        typeof exposure.change==='number'&&Number.isFinite(exposure.change)&&
+        Number.isInteger(exposure.measuredPosts)&&exposure.measuredPosts>0;
+      const deltaText=hasTrend?
+        (exposure.change>0?'↑ +':exposure.change<0?'↓ ':'→ ')+
+        number(Math.abs(exposure.change))+' views since '+
+        checkedAtLabel(exposure.previousCheckedAt)+' · '+
+        number(exposure.measuredPosts)+' same posts':
+        isX?'Manually entered exposure only':
+          'Trend N/A · needs another check of the same posts';
+      const exposureLine='<div class="mj-social-exposure">'+
+        '<span><b>EXPOSURE · POST VIEWS</b>'+
+          '<small>Displayed / played · not unique people</small></span>'+
+        '<strong>'+esc(formatValue(d?.now?.views))+'</strong>'+
+        '<em class="'+(hasTrend?(exposure.change>0?'up':
+          exposure.change<0?'down':'hold'):'na')+'">'+
+          esc(deltaText)+'</em></div>';
       return '<section class="mj-social-platform">'+
         '<div class="mj-social-brand">'+
           '<b class="mj-social-symbol">'+icons[platform]+'</b>'+
@@ -854,6 +879,7 @@
           metric('shares','SHARES')+metric('comments','COMMENTS')+'</div>'+
         '<p class="mj-social-reactions">♥ REACTIONS '+esc(formatValue(d?.now?.reactions))+
           ' · Meta post activity, not website visits</p>'+
+        exposureLine+
       '</section>';
     }).join('');
     const socialEvidence=social?.availableWeight>0;
@@ -863,7 +889,8 @@
         'visit to the SM Welcome page using a placecard link (tracking began Oct 28). '+
         'LINK CLICKS = a provider-reported post link click when available; '+
         'Facebook and Instagram measurements may be N/A. The same person can '+
-        'click or visit more than once. Do not add these event counts together.</p>'+
+        'click or visit more than once. Do not add these event counts together. '+
+        'Views measure exposure; only repeated checks of the same posts show an exposure change.</p>'+
       '<button type="button" class="mj-social-post-detail" data-view="Analytics">'+
         'OPEN POST-BY-POST ACTION REPORT</button>'+
       '<div class="mj-social-impact"><strong>SOCIAL HEALTH · '+
@@ -872,7 +899,8 @@
         'Passive views excluded · 15 of 100 importance points.</small></div>',
       'Tracked arrivals are DJOMS events; Meta link clicks, comments, shares and '+
       'reactions are lifetime totals for posts published in each date cohort. '+
-      'They are not verified customer identities, and clicks are not confirmed sales.');
+      'They are not verified customer identities, and clicks are not confirmed sales. '+
+      'Exposure shows post displays / plays, not unique people. Same-post trends compare checks, not publication cohorts.');
   }
   // #4 MUSIC is the existing verified music reporting, brought INTO the
   // numbered boardwalk. This function never infers plays from Wix page visits
