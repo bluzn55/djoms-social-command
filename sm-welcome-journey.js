@@ -89,6 +89,7 @@ function exactPlacecardArrivals(period){
           '</div>'+
         '</div>'+
       '</details>'+
+      pageTime(period,item.recordId,item.platform)+
     '</article>';
   }).join('');
  const status=verified?
@@ -108,6 +109,54 @@ function exactPlacecardArrivals(period){
       'not proof of where the person physically clicked it.</p>'+
     (views||'<p class="sm-next-hint">'+esc(empty)+'</p>')+
   '</div></details>';
+}
+// On-demand aggregate page activity for one tagged placecard link.
+const pageCache=new Map(),pagePending=new Map();
+const duration=v=>{
+ if(!Number.isSafeInteger(v)||v<=0)return 'N/A';
+ const mins=Math.floor(v/60),sec=v%60;
+ return (mins?mins+'m ':'')+sec+'s';
+};
+function pageTimeHtml(data,err){
+ if(!data)return '<p class="sm-next-hint">'+esc(err||'Checking verified page-time measurements…')+'</p>';
+ if(data.status==='not_started')
+   return '<p class="sm-next-hint">No card-specific page-time measurements have started yet. Earlier arrivals cannot be assigned a duration or page journey.</p>';
+ const pages=Array.isArray(data.pages)?data.pages:[];
+ if(!pages.length)return '<p class="sm-next-hint">No measured page opens for this card in the selected dates. This does not prove the person left.</p>';
+ return '<div class="sm-page-rows">'+pages.map(item=>
+   '<div class="sm-page-row"><b>'+esc(item.path)+'</b>'+
+   '<span>'+num(item.pageViews)+' opens</span>'+
+   '<strong>'+esc(duration(item.measuredActiveSeconds))+' active</strong></div>').join('')+
+   '</div><p class="sm-next-hint">Measured visible-tab time aggregated for this card, not full visit duration or an individual browsing trail. A zero/blank measurement displays as N/A.</p>';
+}
+function pageTime(period,record,platform){
+ const normalized=String(record||'').replace(/-/g,'').toLowerCase();
+ if(!/^[a-f0-9]{32,48}$/.test(normalized))return '';
+ const tag='docjaks_post_'+normalized+'_'+platform;
+ const k=period.query+'|'+tag;
+ const existing=pageCache.get(k);
+ if(!existing&&!pagePending.has(k)&&typeof api==='function'){
+   const job=api('sm-welcome-journey?'+period.query+'&trackingId='+encodeURIComponent(tag))
+     .then(data=>{
+       if(data?.range?.start!==period.start||data?.range?.end!==period.end)
+         throw Error('Page report dates mismatch.');
+       pageCache.set(k,{data});
+     }).catch(err=>pageCache.set(k,{error:String(err?.message||'Not available')}))
+     .finally(()=>{
+       pagePending.delete(k);
+       document.querySelectorAll('[data-sm-time-key]').forEach(node=>{
+         if(node.getAttribute('data-sm-time-key')===k){
+           const current=pageCache.get(k);
+           node.innerHTML=pageTimeHtml(current?.data,current?.error);
+         }
+       });
+     });
+   pagePending.set(k,job);
+ }
+ return '<details class="mj-stage-dropdown sm-card-page-time" data-mj-dropdown="page-'+
+   esc(tag)+'"><summary><span>PAGES VISITED & MEASURED TIME</span><b>▾</b></summary>'+
+   '<div class="mj-dropdown-content" data-sm-time-key="'+esc(k)+'">'+
+     pageTimeHtml(existing?.data,existing?.error)+'</div></details>';
 }
 function paint(data){
  const wix=data?.wix||{};
