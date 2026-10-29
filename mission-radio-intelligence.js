@@ -86,39 +86,39 @@
   }
   function content(q){
     const stored=cache.get(q),data=stored?.data||null,s=data?.summary||null;
-    const note=data?
-      (s?.overviewComplete?'Overview covers selected UTC day labels.':
-        'Partial coverage: '+number(s?.overviewDays)+' of '+number(s?.requestedDays)+' UTC days.')+
-        ' CSV import, not live Radio.co statistics.':
-      stored?.error?'Report unavailable: '+stored.error:
-        'Checking saved Radio.co CSV reports…';
-    return '<div class="rli-title"><b>OUTLAW RADIO · LISTENER INTELLIGENCE</b>'+
-      '<small>Date · Duration · Country · Device</small></div>'+
-      '<p class="rli-note">'+esc(note)+'</p>'+
-      '<div class="rli-kpis">'+
-        kpi('LISTENING CONNECTIONS',number(s?.connections),'Not unique listeners')+
-        kpi('TOTAL LISTENING',time(s?.listeningSeconds),'Known imported listening hours')+
-        kpi('PEAK SIMULTANEOUS',number(s?.peak),'Highest recorded peak')+
-        kpi('PERIOD UNIQUE','N/A','Cannot sum daily unique')+
-        kpi('NEW LISTENERS','N/A','Not available from aggregate CSV')+
-        kpi('RETURNING LISTENERS','N/A','Not available from aggregate CSV')+
-      '</div>'+
-      (data?'<details class="rli-details" open><summary>DAILY LISTENING · '+number(data.rows?.length)+' DAYS</summary>'+
+    const covered=data?
+      number(s?.overviewDays)+'/'+number(s?.requestedDays)+' UTC overview days · '+
+      number(s?.listeningDays)+'/'+number(s?.requestedDays)+' listening days':
+      'No complete selected-period import checked yet';
+    return '<div class="rli-toolbar"><b>OUTLAW RADIO 5150 · LISTENER REPORTS</b>'+
+      '<small>'+esc(covered)+' · Manual Radio.co CSV, not live statistics</small></div>'+
+      (data?'<details class="rli-details"><summary>DAILY LISTENING · '+
+        number(data.rows?.length)+' IMPORTED DAYS</summary>'+
         daily(data.rows||[])+'</details>'+
-        '<details class="rli-details"><summary>TIME OF DAY · HOURLY LISTENING</summary>'+
-          hourly(data.hourly||[])+'</details>'+
+        '<details class="rli-details"><summary>TIME OF DAY · HOURLY LISTENING'+
+        (data.hourly?.length?' · '+number(data.hourly.length)+' ROWS':' · N/A')+
+        '</summary>'+hourly(data.hourly||[])+'</details>'+
         '<details class="rli-details"><summary>COUNTRIES · DEVICES · LISTENING APPS</summary>'+
           '<div class="rli-groups">'+group('Country',s?.countries,country)+
-          group('Device',s?.devices)+group('Client / app',s?.clients)+'</div></details>':'')+
-      '<p class="rli-note">Daily dates are UTC in multi-day Radio.co exports. Country and device figures count stream connections, not individual people. Repeated connections do not establish returning listeners. Personal shed listening may be included.</p>'+
-      '<section class="rli-upload"><h5>IMPORT RADIO.CO REPORT</h5>'+
-      '<p>From Radio.co Statistics, download an Overview or TTSL CSV for the desired dates. Select the file here to update the reports.</p>'+
-      '<div class="rli-controls"><label>Report type<select data-rli-kind>'+
-        '<option value="overview">Overview · listeners / location / device</option>'+
-        '<option value="ttsl">TTSL · listening hours</option></select></label>'+
-      '<label>CSV file<input type="file" data-rli-file accept=".csv,text/csv"></label>'+
-      '<button type="button" data-rli-import>IMPORT CSV</button></div>'+
-      '<p class="rli-status" role="status"></p><div class="rli-conflict" hidden></div></section>';
+          group('Device',s?.devices)+group('Client / app',s?.clients)+
+          '</div><p class="rli-note">These figures count stream connections, not individual people.</p></details>':
+        '<p class="rli-note">'+esc(stored?.error||'Checking saved Radio.co listening reports…')+'</p>')+
+      '<details class="rli-details rli-import-details">'+
+        '<summary>IMPORT / UPDATE RADIO.CO REPORT · OVERVIEW OR TTSL CSV</summary>'+
+        '<section class="rli-upload"><h5>IMPORT RADIO.CO REPORT</h5>'+
+          '<p>Export an Overview or TTSL CSV from Radio.co Statistics. '+
+          'The selected daily and listening figures update after import. '+
+          'Missing UTC days remain unreported, not zero.</p>'+
+          '<div class="rli-controls"><label>Report type<select data-rli-kind>'+
+            '<option value="overview">Overview · connections / geography / devices</option>'+
+            '<option value="ttsl">TTSL · listening duration</option></select></label>'+
+            '<label>CSV file<input type="file" data-rli-file accept=".csv,text/csv"></label>'+
+            '<button type="button" data-rli-import>IMPORT CSV</button></div>'+
+          '<p class="rli-status" role="status"></p><div class="rli-conflict" hidden></div>'+
+        '</section></details>'+
+      '<p class="rli-note">Daily Radio.co dates are UTC. The full period and growth trend '+
+      'remain N/A until every selected and comparison day is imported. '+
+      'Period-unique, new and returning listeners cannot be derived from these aggregate files.</p>';
   }
   window.djomsRadioListenerSection=period=>{
     const q=period?.query;
