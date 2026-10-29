@@ -1830,6 +1830,13 @@ function render() {
     renderWebsiteAnalytics();
     return;
   }
+  if (activeView === 'Website Security') {
+    $('content').innerHTML = '';
+    if(typeof window.djomsWebsiteSecurity?.render==='function')
+      window.djomsWebsiteSecurity.render();
+    else $('content').innerHTML = '<div class="empty"><h3>Website Security report unavailable.</h3><p>Reload DJOMS to check the security module.</p></div>';
+    return;
+  }
   if (activeView === 'Analytics') {
     const count = p => records.filter(r => r.results?.[p]?.status === 'published').length;
     const xStats = analyticsData?.platforms?.x || {};
