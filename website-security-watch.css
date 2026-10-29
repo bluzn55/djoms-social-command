@@ -1,0 +1,123 @@
+/* OCT 29 · DJOMS Website Security Watch · distinct from Marketing Analytics */
+#content .dj-security{
+  color:#251a10;background:#fbf2dc;border:2px solid #8f6631;
+  border-radius:12px;padding:16px;margin:0 0 28px;
+  font:700 16px/1.4 Arial,sans-serif;
+}
+#content .dj-security *{box-sizing:border-box}
+#content .dj-security-header{
+  background:#eed29b;border:1px solid #b58c51;border-radius:8px;
+  padding:17px 20px;display:flex;align-items:center;justify-content:space-between;
+  gap:16px;flex-wrap:wrap;
+}
+#content .dj-security-header small{display:block;color:#79521c;font-weight:900;letter-spacing:.09em;font-size:12px}
+#content .dj-security-header h2{
+  color:#2a1b11;font:900 clamp(23px,2vw,35px)/1.1 Georgia,serif!important;
+  margin:5px 0 8px;
+}
+#content .dj-security-header p{color:#5b4327;margin:0;font-weight:750;font-size:15px}
+#content .dj-security-status{
+  background:#fff8e9;border:1px solid #b89b69;border-radius:30px;
+  color:#66502a;padding:9px 14px;font-weight:900;font-size:12px;
+}
+#content .dj-security-toolbar{
+  display:flex;align-items:center;flex-wrap:wrap;gap:12px;
+  border-bottom:2px solid #d7bc89;padding:15px 2px;
+}
+#content .dj-security-toolbar>strong{font-size:13px;color:#604220;letter-spacing:.04em}
+#content .dj-security-choices{display:flex;gap:6px;flex-wrap:wrap}
+#content .dj-security button{
+  border:1px solid #9b793f;border-radius:6px;background:#f3e3c3;color:#352413;
+  padding:8px 13px;font-size:14px;font-weight:900;cursor:pointer;
+}
+#content .dj-security button:hover,#content .dj-security button.active{
+  background:#764b1f;color:#fff7e5;
+}
+#content .dj-security button:focus-visible,
+#content .dj-security summary:focus-visible{outline:3px solid #b27b24;outline-offset:3px}
+#content .dj-security-refresh{margin-left:auto}
+#content .dj-security-pending,
+#content .dj-security-unavailable{padding:24px 12px;color:#63492d}
+#content .dj-security-unavailable{
+  border:2px solid #b76e46;background:#fff5e6;border-radius:7px;margin:14px 0;
+}
+#content .dj-security-unavailable h3{font-size:18px;color:#843b25;margin:0}
+#content .dj-security-coverage{
+  padding:15px 2px 10px;display:flex;flex-wrap:wrap;justify-content:space-between;
+  gap:8px;align-items:center;color:#614222;font-size:13px;
+}
+#content .dj-security-coverage>strong{font-size:15px;color:#2b1d10}
+#content .dj-security-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#content .dj-security-metric{
+  padding:15px;background:#fff9ef;border:1px solid #d3b887;border-radius:8px;
+  display:flex;flex-direction:column;gap:3px;min-width:0;
+}
+#content .dj-security-metric small{
+  font-size:12px;font-weight:900;color:#5a3f22;letter-spacing:.03em;
+}
+#content .dj-security-metric strong{
+  font:900 clamp(28px,2.5vw,44px)/1.1 Georgia,serif!important;color:#2b1c11;
+}
+#content .dj-security-metric span{color:#685239;font-size:12px;font-weight:750}
+#content .dj-security-summary{
+  margin:14px 0;border-left:5px solid #c2a064;padding:12px 14px;
+  background:#f9ebcf;display:flex;gap:5px;flex-direction:column;
+}
+#content .dj-security-summary.flagged{border-left-color:#b26835;background:#fff0d6}
+#content .dj-security-summary strong{font-size:15px;color:#372417}
+#content .dj-security-summary small{font-size:12px;color:#675039}
+#content .dj-security-detail-header{
+  display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;
+  padding:8px 0 10px;
+}
+#content .dj-security-detail-header h3{font:900 19px Georgia,serif!important;margin:0}
+#content .dj-security-detail-header span{font-size:13px;color:#64492e}
+#content .dj-security-alerts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:11px}
+#content .dj-security-alert{
+  border:1px solid #c6a479;border-top:5px solid #ae8548;border-radius:7px;
+  background:#fff9ec;padding:13px;min-width:0;
+}
+#content .dj-security-alert.priority{border-top-color:#af5532}
+#content .dj-security-alert-head{display:flex;gap:6px;justify-content:space-between;flex-wrap:wrap;align-items:center}
+#content .dj-security-alert-rank{font-size:11px;font-weight:900;color:#855528}
+#content .dj-security-alert.priority .dj-security-alert-rank{color:#9c3f26}
+#content .dj-security-alert-head>strong{font-size:14px}
+#content .dj-security-alert h3{font:900 22px Georgia,serif!important;margin:9px 0 5px}
+#content .dj-security-when{font-size:13px;color:#68482a;margin:0 0 10px}
+#content .dj-security-alert-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+#content .dj-security-alert-facts span{
+  padding:8px;background:#f4e4c6;border:1px solid #ead2a5;
+  border-radius:5px;font-size:12px;overflow-wrap:anywhere;
+}
+#content .dj-security-alert-facts b{font-size:17px}
+#content .dj-security-caution{
+  font-size:12px;color:#67513b;border-top:1px solid #e1c79f;
+  padding-top:9px;margin:11px 0 8px;
+}
+#content .dj-security details{
+  background:#f8ecd7;border:1px solid #d6bc8f;border-radius:5px;
+  padding:10px 12px;margin-top:9px;
+}
+#content .dj-security summary{font-size:13px;font-weight:900;cursor:pointer}
+#content .dj-security-path-list{
+  margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;
+}
+#content .dj-security-path-list code{
+  padding:5px 7px;background:#fffaf0;border:1px solid #ddc49a;
+  border-radius:4px;font-size:11px;overflow-wrap:anywhere;
+  white-space:normal;
+}
+#content .dj-security-method{margin-top:16px!important}
+#content .dj-security-method p{font-size:13px;color:#604d39}
+#content .dj-security-empty{
+  padding:24px;background:#fff8e8;border:1px solid #ddcbac;border-radius:7px;
+  font-size:14px;color:#5a4832;
+}
+@media(max-width:660px){
+  #content .dj-security{padding:10px}
+  #content .dj-security-header{padding:12px}
+  #content .dj-security-metrics{grid-template-columns:1fr}
+  #content .dj-security-alert-facts{grid-template-columns:1fr 1fr}
+  #content .dj-security-refresh{margin-left:0}
+  #content .dj-security-coverage{flex-direction:column;align-items:flex-start}
+}
