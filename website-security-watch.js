@@ -17,6 +17,33 @@
     if(!Number.isSafeInteger(seconds)||seconds<0)return 'N/A';
     return seconds<60?seconds+' sec':Math.floor(seconds/60)+' min '+(seconds%60)+' sec';
   };
+  // A separate timestamp for each recorded one-page visit. It does not
+  // establish that one person followed the path through these URLs.
+  const clock=stamp=>{
+    if(!stamp||!Number.isFinite(Date.parse(stamp)))return 'N/A';
+    return new Intl.DateTimeFormat('en-US',{
+      timeZone:'America/Chicago',hour:'numeric',minute:'2-digit',
+      second:'2-digit',fractionalSecondDigits:3,hour12:true
+    }).format(new Date(stamp));
+  };
+  const interval=seconds=>{
+    if(typeof seconds!=='number'||!Number.isFinite(seconds)||seconds<0)return 'FIRST';
+    return seconds<60?seconds.toFixed(1)+' sec':
+      Math.floor(seconds/60)+' min '+(seconds%60).toFixed(1)+' sec';
+  };
+  const wixAverage=seconds=>{
+    if(typeof seconds!=='number'||!Number.isFinite(seconds)||seconds<0)return 'N/A';
+    return seconds<60?seconds.toFixed(1)+' sec':
+      Math.floor(seconds/60)+' min '+(seconds%60).toFixed(0)+' sec';
+  };
+  const pageTitle=path=>{
+    const parts=String(path||'').split('/').filter(Boolean);
+    if(!parts.length)return 'Home';
+    let name=parts[parts.length-1].replace(/-/g,' ');
+    try{name=decodeURIComponent(name)}catch{}
+    name=name.replace(/\b\w/g,ch=>ch.toUpperCase());
+    return parts.includes('product-page')?'Product: '+name:name;
+  };
   const dates=range=>range?.start&&range?.endInclusive?
     range.start+' to '+range.endInclusive+' · Louisiana time':'Selected period';
   const live=()=>typeof activeView!=='undefined'&&activeView==='Website Security';
@@ -75,6 +102,21 @@
     const status=row?.priority==='priority'?'PRIORITY REVIEW':'REVIEW';
     const severity=row?.priority==='priority'?'priority':'review';
     const paths=Array.isArray(row?.samplePaths)?row.samplePaths:[];
+    const timeline=Array.isArray(row?.timeline)?row.timeline:[];
+    const pageRows=timeline.map((entry,i)=>{
+      const path=String(entry?.path||'');
+      const safePath=/^\/[a-z0-9/%._~\-]*$/i.test(path);
+      return '<tr>'+
+        '<td class="dj-security-timeline-rank">'+esc(i+1)+'</td>'+
+        '<td class="dj-security-open-time">'+esc(clock(entry?.openedAt))+'</td>'+
+        '<td class="dj-security-open-path"><strong>'+esc(pageTitle(path))+'</strong>'+
+          '<code>'+esc(path)+'</code>'+
+          (safePath?'<a href="https://www.docjaks.com'+esc(path)+'" target="_blank" rel="noopener noreferrer">View page</a>':'')+
+        '</td>'+
+        '<td>'+esc(interval(entry?.gapFromPriorSeconds))+'</td>'+
+        '<td>'+esc(wixAverage(entry?.pageAverageSeconds))+'</td>'+
+      '</tr>';
+    }).join('');
     return '<article class="dj-security-alert '+severity+'">'+
       '<div class="dj-security-alert-head">'+
         '<span class="dj-security-alert-rank">'+esc(index+1)+'. '+esc(status)+'</span>'+
@@ -89,11 +131,22 @@
         '<span>Wix source: '+esc(row?.source||'unknown')+'</span></div>'+
       '<p class="dj-security-caution">Likely automation pattern, not confirmed unauthorized access. '+
         'The location and browser group does not identify an individual, device or IP address.</p>'+
-      '<details class="dj-security-paths"><summary>Pages opened · evidence</summary>'+
-        '<div class="dj-security-path-list">'+paths.map(path=>
-          '<code>'+esc(path)+'</code>').join('')+'</div>'+
-        (Number(row?.uniquePages)>paths.length?
-          '<small>Showing '+paths.length+' of '+esc(number(row.uniquePages))+' unique paths.</small>':'')+
+      '<details class="dj-security-paths"><summary>PAGE-BY-PAGE DETAILS · '+esc(number(row?.visitEvents))+' opens</summary>'+
+        '<p class="dj-security-timeline-note"><b>OPENED</b> is the time Wix recorded each page visit (Louisiana time). '+
+        '<b>GAP</b> is the difference between recorded visit timestamps, NOT time spent on a page. '+
+        '<b>WIX PAGE AVG</b> is an average where Wix provides it, NOT an individual visit duration. '+
+        'N/A means Wix has not measured it.</p>'+
+        (timeline.length?
+          '<div class="dj-security-timeline-scroll"><table class="dj-security-timeline-table">'+
+            '<thead><tr><th>#</th><th>OPENED · LOUISIANA</th><th>PAGE OPENED</th>'+
+              '<th>GAP FROM PRIOR</th><th>WIX PAGE AVG</th></tr></thead>'+
+            '<tbody>'+pageRows+'</tbody></table></div>'+
+            (row?.timelineTruncated?'<p class="dj-security-timeline-note">Showing the first '+
+              esc(number(timeline.length))+' of '+esc(number(row.timelineEvents))+
+              ' recorded opens in this pattern.</p>':''):
+          '<div class="dj-security-path-list">'+paths.map(path=>
+            '<code>'+esc(path)+'</code>').join('')+'</div>'+
+          '<small>Exact page timestamps are not available from this report version. Refresh to load the latest data.</small>')+
       '</details></article>';
   }
   function paint(){
@@ -136,7 +189,7 @@
       '<details class="dj-security-method"><summary>What we can and cannot verify</summary>'+
         '<p>Wix records public-page traffic. DJOMS looks for 8 or more different pages, each visited in a single-page session, within 3 minutes from the same approximate location and browser/device category. '+
         'Legitimate crawlers, content previews and shared networks can match. '+
-        'Missing session timing or aggregated rows are not silently treated as suspicious.</p>'+
+        'Missing session timing or aggregated rows are not silently treated as suspicious. The page-by-page time gap is not dwell time, because each row may represent a different visitor or session.</p>'+
         '<p>'+esc(number(data.coverage?.analyzedRows))+' Wix analytics rows scanned. '+
           esc(number(data.observationsNotEvaluated))+' rows lacked enough evidence for this specific rule. '+
           'Actual requests blocked by a firewall, attempted passwords, server errors and unauthorized changes cannot be proven from this Wix report.</p>'+
