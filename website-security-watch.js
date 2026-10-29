@@ -99,7 +99,7 @@
       '<strong>'+esc(number(value))+'</strong><span>'+esc(detail)+'</span></div>';
   }
   function alertRow(row,index){
-    const status=row?.priority==='priority'?'PRIORITY REVIEW':'REVIEW';
+    const status=row?.priority==='priority'?'LIKELY AUTOMATED · LARGE BURST':'LIKELY AUTOMATED · PAGE SWEEP';
     const severity=row?.priority==='priority'?'priority':'review';
     const paths=Array.isArray(row?.samplePaths)?row.samplePaths:[];
     const timeline=Array.isArray(row?.timeline)?row.timeline:[];
@@ -165,14 +165,14 @@
     const partial=data.status==='partial'||data.coverage?.partial===true;
     const coverage=partial?'PARTIAL TRAFFIC COVERAGE':'WIX TRAFFIC REVIEWED';
     const status=rows.length?
-      'Potential automated page sweeps detected. Review the evidence below.':
-      'No rapid page sweeps matched the current rules in the Wix traffic reviewed.';
+      'Likely automated public-page traffic detected. This does not establish a security attack.':
+      'No matching rapid page sweeps in Wix data. Other threats may still exist.';
     host.innerHTML='<div class="dj-security-report">'+
       '<div class="dj-security-coverage">'+
         '<strong>'+esc(coverage)+'</strong>'+
         '<span>'+esc(dates(data.range))+' · Checked '+esc(time(data.checkedAt))+'</span></div>'+
       '<div class="dj-security-metrics">'+
-        metric('RAPID PAGE-SWEEP PATTERNS',data.totalPatterns,'Pattern groups, not unique people')+
+        metric('CRAWLER-LIKE PAGE SWEEPS',data.totalPatterns,'Behavioral patterns, not proven attacks')+
         metric('VISITS IN FLAGGED PATTERNS',data.flaggedVisitEvents,'Possible non-customer activity')+
         metric('BLOCKED ATTACKS',null,'N/A · Firewall event feed not connected')+
       '</div>'+
@@ -193,6 +193,7 @@
         '<p>'+esc(number(data.coverage?.analyzedRows))+' Wix analytics rows scanned. '+
           esc(number(data.observationsNotEvaluated))+' rows lacked enough evidence for this specific rule. '+
           'Actual requests blocked by a firewall, attempted passwords, server errors and unauthorized changes cannot be proven from this Wix report.</p>'+
+        '<p>Traffic Quality classifies crawler-like sessions separately for marketing. Website Security only reviews patterns; it does not identify attacks or modify Wix totals.</p>'+ 
         '<p>No visitors are blocked or deleted, and published visitor totals are not automatically altered.</p>'+
       '</details></div>';
   }
