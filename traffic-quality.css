@@ -1,0 +1,28 @@
+/* DJOMS · Traffic Quality. Mutually exclusive visit categories, not people. */
+.dj-quality-full,.dj-quality-compact{margin:14px 0;padding:13px;background:#fbf2dd;border:1px solid #bba37e;border-radius:8px;color:#342514}
+.dj-quality-full header,.dj-quality-title{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.dj-quality-full header strong,.dj-quality-title strong{font:900 19px Georgia,serif;color:#3c2917}
+.dj-quality-full header small,.dj-quality-title small{display:block;font-size:12px;font-weight:800;color:#674c28}
+.dj-quality-full header span{font-size:12px;color:#6a5035;font-weight:900}
+.dj-quality-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.dj-quality-metric{display:flex;min-width:0;flex-direction:column;gap:4px;border:1px solid #d0ba94;background:#fffaf0;padding:11px;border-radius:6px}
+.dj-quality-metric small{font:900 11px/1.3 Arial,sans-serif;color:#655036}
+.dj-quality-metric strong{font:900 clamp(20px,1.7vw,30px) Georgia,serif;color:#3b3326}
+.dj-quality-metric.automation strong{color:#915325}
+.dj-quality-metric.engagement strong{color:#27603b}
+.dj-quality-metric span{font-size:11px;font-weight:750;color:#67513b}
+.dj-quality-note{font:750 12px/1.5 Arial,sans-serif;color:#604a2f;padding:8px 0;margin:7px 0}
+.dj-quality-evidence{border-top:1px solid #dec69f;padding-top:10px;margin-top:7px}
+.dj-quality-evidence summary{font-size:13px;font-weight:900;cursor:pointer}
+.dj-quality-evidence p{font-size:13px;color:#684f32}
+.dj-quality-case{border-top:1px solid #e4ceac;padding:8px 2px}
+.dj-quality-case strong,.dj-quality-case small{display:block}
+.dj-quality-case small{font-size:12px;color:#685037;margin-top:3px}
+.dj-quality-loading{padding:10px;font-weight:750;color:#674c29;background:#f6ead3;border:1px solid #d0b990;border-radius:6px}
+.dj-quality-compact .dj-quality-metric{padding:8px}
+.dj-quality-compact .dj-quality-title strong{font:900 15px Georgia,serif}
+.dj-quality-compact .dj-quality-metric strong{font-size:23px}
+.dj-quality-compact .dj-quality-see{display:inline-block;background:#f1dfbd;border:1px solid #ad844e;border-radius:5px;padding:7px 12px;font-size:12px;font-weight:900;color:#593716;cursor:pointer}
+.dj-quality-compact .dj-quality-see:hover{background:#774b20;color:#fff}
+@media(max-width:900px){.dj-quality-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:390px){.dj-quality-metric{padding:7px}.dj-quality-metric strong{font-size:19px}}
