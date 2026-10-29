@@ -121,3 +121,67 @@
   #content .dj-security-refresh{margin-left:0}
   #content .dj-security-coverage{flex-direction:column;align-items:flex-start}
 }
+
+/* Security evidence timeline · precise page opens with measured timestamps */
+#content .dj-security-alert:has(> .dj-security-paths[open]){
+  grid-column:1/-1;
+}
+#content .dj-security-paths[open]{
+  margin-top:14px;background:#fff7e7;
+}
+#content .dj-security-paths[open]>summary{
+  border-bottom:1px solid #dac49e;padding-bottom:9px;
+}
+#content .dj-security-timeline-note{
+  padding:9px 3px;margin:7px 0 10px!important;
+  font-size:clamp(13px,.92vw,15px)!important;
+  color:#5a462d!important;line-height:1.5;
+}
+#content .dj-security-timeline-scroll{
+  max-height:470px;overflow:auto;overscroll-behavior:contain;
+  border:1px solid #d0b68e;border-radius:6px;background:#fffaf0;
+}
+#content .dj-security-timeline-table{
+  border-collapse:separate;border-spacing:0;min-width:770px;
+  width:100%;font:750 14px/1.35 Arial,sans-serif!important;color:#2b1b0f;
+}
+#content .dj-security-timeline-table th{
+  position:sticky;top:0;z-index:1;
+  background:#e7cc9e;color:#3b2815;border-bottom:2px solid #be9b61;
+  font:900 12px/1.3 Arial,sans-serif!important;letter-spacing:.02em;
+  text-align:left;padding:9px 10px;white-space:nowrap;
+}
+#content .dj-security-timeline-table td{
+  padding:10px;vertical-align:top;border-bottom:1px solid #e7d2ad;
+  font-size:14px!important;font-variant-numeric:tabular-nums;
+}
+#content .dj-security-timeline-table tr:nth-child(even) td{
+  background:#fbf0da;
+}
+#content .dj-security-timeline-rank{
+  width:37px;color:#91652e;font-weight:900!important;
+}
+#content .dj-security-open-time{
+  white-space:nowrap;font-weight:900!important;color:#452c13;
+}
+#content .dj-security-open-path{min-width:260px}
+#content .dj-security-open-path strong{
+  display:block;font-weight:900!important;font-size:15px!important;color:#2b2218;
+}
+#content .dj-security-open-path code{
+  display:block;margin:4px 0;font-size:12px!important;color:#65503a;
+  overflow-wrap:anywhere;white-space:normal;
+}
+#content .dj-security-open-path a{
+  color:#795022;font-weight:900!important;font-size:12px!important;
+  text-decoration:underline;
+}
+#content .dj-security-timeline-table td:nth-child(4),
+#content .dj-security-timeline-table td:nth-child(5){
+  white-space:nowrap;
+}
+@media(max-width:650px){
+  #content .dj-security-timeline-note{font-size:14px!important}
+  #content .dj-security-timeline-table{min-width:750px}
+  #content .dj-security-timeline-scroll{max-height:430px}
+}
