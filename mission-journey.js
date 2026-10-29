@@ -825,14 +825,58 @@
   // #4 MUSIC is the existing verified music reporting, brought INTO the
   // numbered boardwalk. This function never infers plays from Wix page visits
   // or link clicks, and music sales remain scored in SALES only.
-  function musicPanel(music,owner){
+  function musicPanel(music,owner,period){
     const ms=owner?.stages?.find(stage=>stage.id==='music');
     const score=Number.isInteger(ms?.score)?ms.score:null;
-    const grade=score===null?'N/A':String(score);
-    const historic=music?.radioImport;
-    const radioDates=historic?.start&&historic?.end?
-      displayWindow(historic.start,historic.end)+' (UTC)':'Not imported';
+    const report=typeof window.djomsRadioListenerData==='function'?
+      window.djomsRadioListenerData(period):null;
+    const matched=report?.status==='reported'&&
+      report.range?.start===period?.start&&report.range?.end===period?.end;
+    const saved=matched?report.summary||null:null;
+    const requested=valid(saved?.requestedDays)?saved.requestedDays:
+      Number.isInteger(period?.days)?period.days:null;
+    const overviewDays=valid(saved?.overviewDays)?saved.overviewDays:0;
+    const listeningDays=valid(saved?.listeningDays)?saved.listeningDays:0;
+    const allDays=!!saved&&overviewDays===requested&&listeningDays===requested;
+    // The compact KPIs show explicitly PARTIAL imported evidence where present.
+    // They must never masquerade as full-window Radio.co comparisons.
+    const connections=overviewDays>0&&valid(saved?.connections)?saved.connections:
+      valid(music?.current?.connections)?music.current.connections:null;
+    const listening=listeningDays>0&&valid(saved?.listeningSeconds)?saved.listeningSeconds:
+      valid(music?.current?.seconds)?music.current.seconds:null;
+    const peak=overviewDays>0&&valid(saved?.peak)?saved.peak:null;
     const current=music?.current,previous=music?.previous;
+    const trend=(label,oldValue,newValue,unit)=>'<div class="mj-radio-trend-row">'+
+      '<b>'+esc(label)+'</b>'+
+      '<span>LAST '+esc(formatValue(oldValue,unit))+'</span>'+
+      '<span>CURRENT '+esc(formatValue(newValue,unit))+'</span>'+
+      '<em class="'+esc(movement(oldValue,newValue).tone)+'">'+
+        esc(movement(oldValue,newValue).text)+'</em></div>';
+    const hours=value=>{
+      if(!valid(value))return 'N/A';
+      const s=Math.round(value);
+      return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m '+(s%60)+'s';
+    };
+    const isComplete=!!current&&valid(current.connections)&&valid(current.seconds);
+    const verifiedComparison=isComplete&&!!previous&&
+      valid(previous.connections)&&valid(previous.seconds);
+    const state=!matched?'CHECKING IMPORT':
+      allDays?'COMPLETE · '+number(requested)+'/'+number(requested)+' DAYS':
+      'PARTIAL · '+number(overviewDays)+'/'+number(requested)+' DAYS';
+    const covered=matched&&Array.isArray(report.rows)?
+      report.rows.filter(row=>valid(row.connections)||valid(row.listeningSeconds))
+        .map(row=>row.date).sort():[];
+    const coveredDates=covered.length?
+      displayWindow(covered[0],covered.at(-1)):'No imported daily rows';
+    const summaryNote=matched?
+      'Imported '+number(overviewDays)+'/'+number(requested)+' UTC connection days · '+
+      number(listeningDays)+'/'+number(requested)+' listening days · '+
+      coveredDates+' UTC. Missing days are N/A, never counted as zero.':
+      'Checking the selected dates against manually imported Radio.co CSV data.';
+    const radioKpi=(label,value,description,featured=false)=>
+      '<div class="mj-radio-focus-kpi'+(featured?' featured':'')+'">'+
+      '<small>'+esc(label)+'</small><strong>'+esc(value)+'</strong>'+
+      '<span>'+esc(description)+'</span></div>';
     const best=songLikes.status==='reported'?songLikes.top:null;
     const lifetime=songLikes.status==='reported';
     const ranked=lifetime&&Array.isArray(songLikes.songs)?songLikes.songs:[];
@@ -841,64 +885,75 @@
       '<div class="mj-liked-row"><span class="mj-liked-rank">'+(index+1)+'</span>'+
       '<span class="mj-liked-name">'+esc(song.title)+'</span>'+
       '<strong>♥ '+number(song.likes)+'</strong></div>').join(''):
-      '<p class="mj-liked-empty">'+(lifetime?'No songs liked yet.':'Wix listener votes are not available right now.')+'</p>';
-    const likedHTML='<section class="mj-song-likes" aria-label="Outlaw Radio 5150 song likes">'+
+      '<p class="mj-liked-empty">'+(lifetime?'No songs liked yet.':'Song-vote report unavailable.')+'</p>';
+    const likedHTML='<section class="mj-song-likes" aria-label="Song heart-button engagement">'+
       '<div class="mj-top-liked"><span>♥ #1 MOST-LIKED SONG</span>'+
       '<strong>'+esc(best?.title??(lifetime?'No likes yet':'N/A'))+'</strong>'+
       '<b>'+esc(best?number(best.likes)+' '+(best.likes===1?'LIKE':'LIKES'):'')+'</b>'+
-      (ties>1?'<small>'+ties+' songs tied for first</small>':'')+
-      '</div>'+
+      (ties>1?'<small>'+ties+' songs tied for first</small>':'')+'</div>'+
       '<details class="mj-stage-dropdown mj-liked-details" data-mj-dropdown="song-likes">'+
-      '<summary><span>ALL SONG LIKES</span><b>'+esc(lifetime?ranked.length+' SONGS':'N/A')+' ▾</b></summary>'+
-      '<div class="mj-liked-list">'+likedRows+'</div>'+
-      '<p class="mj-liked-source">Wix radio heart-button votes · All time. Not song plays or social likes.</p>'+
+        '<summary><span>ALL SONG LIKES</span><b>'+
+          esc(lifetime?ranked.length+' SONGS':'N/A')+' ▾</b></summary>'+
+        '<div class="mj-liked-list">'+likedRows+'</div>'+
+        '<p class="mj-liked-source">Wix heart votes · all time. Votes are not confirmed radio listens.</p>'+
       '</details></section>';
-    const row=(label,value,source)=>
-      '<div class="mj-music-stat"><span>'+esc(label)+'</span>'+
-        '<strong>'+esc(value)+'</strong><small>'+esc(source)+'</small></div>';
-    const importNote=historic&&valid(historic.connections)?
-      '<details class="mj-stage-dropdown mj-music-history" data-mj-dropdown="radio-history">'+
-        '<summary><span>HISTORICAL RADIO.CO EXPORT</span><b>DETAILS <i aria-hidden="true">▾</i></b></summary>'+
-        '<p>'+esc(radioDates)+' · '+number(historic.connections)+' streaming connections'+
-        (valid(historic.averageDurationSeconds)?
-          ' · average listening duration '+duration(historic.averageDurationSeconds):'')+
-        '. This CSV is historical. It is not a current/live listener count and is not automatically used for other dates.</p></details>':'';
+    const stat=(label,value,description)=>'<div class="mj-music-stat">'+
+      '<span>'+esc(label)+'</span><strong>'+esc(value)+'</strong>'+
+      '<small>'+esc(description)+'</small></div>';
     return card('music','4','MUSIC / RADIO / STREAMING','♫',
-      '<div class="mj-music-score-line">'+
-        '<span class="mj-music-score">MUSIC HEALTH <b>'+esc(grade)+
-          '</b><small>10 of 100 points, when listening is verified</small></span>'+
-        '<small>Independent listening activity, not radio-site clicks</small></div>'+
-      likedHTML+
-      heroMetric('RADIO.CO STREAM CONNECTIONS',previous?.connections,current?.connections,
-        'count',false,'Imported Radio.co CSV for the selected UTC dates; connections are not unique listeners.')+
-      '<div class="mj-minis">'+
-        miniMetric('TOTAL LISTENING TIME',previous?.seconds,current?.seconds,'time')+
-      '</div>'+
-      '<div class="mj-music-grid">'+
-        row('PAID MUSIC UNITS',formatValue(music?.musicUnits),
-          'Wix Music category · counted in #5 Sales')+
-        row('PAID MUSIC SALES',formatValue(music?.musicItemSalesCents,'cents'),
-          'Wix Music category · counted in #5 Sales')+
-        row('MUSIC PAGE VIEWS',formatValue(music?.musicPageViews),
-          'Wix pages · not music plays')+
-        row('OUTLAW RADIO PAGE VIEWS',formatValue(music?.radioPageViews),
-          'Wix page · not radio listeners')+
-        row('SPOTIFY STREAMS',formatValue(music?.spotifyStreams),
-          'N/A until verified streaming data is connected')+
-        row('APPLE MUSIC STREAMS',formatValue(music?.appleMusicStreams),
-          'N/A until verified streaming data is connected')+
-        row('YOUTUBE MUSIC STREAMS',formatValue(music?.youtubeMusicStreams),
-          'N/A until verified streaming data is connected')+
-        row('UNIQUE RADIO LISTENERS',formatValue(music?.uniqueRadioListeners),
-          'N/A until Radio.co listener reporting is connected')+
-      '</div>'+importNote+
+      '<section class="mj-radio-focus" aria-label="Outlaw Radio 5150 listening summary">'+
+        '<div class="mj-radio-focus-heading">'+
+          '<div><strong>4A · OUTLAW RADIO 5150</strong>'+
+            '<small>Streaming evidence from Radio.co CSV, not website clicks</small></div>'+
+          '<span class="mj-radio-focus-status'+(matched&&!allDays?' incomplete':'')+'">'+
+            esc(state)+'</span></div>'+
+        '<div class="mj-radio-focus-kpis">'+
+          radioKpi('STREAM CONNECTIONS',number(connections),
+            'Imported connections · not unique listeners',true)+
+          radioKpi('TOTAL LISTENING',hours(listening),
+            'Known imported listening duration')+
+          radioKpi('PEAK AT ONCE',number(peak),
+            'Highest reported simultaneous count')+'</div>'+
+        '<div class="mj-radio-focus-coverage">'+esc(summaryNote)+'</div>'+
+        '<div class="mj-radio-trends" aria-label="Last versus current period radio comparison">'+
+          trend('CONNECTIONS',previous?.connections,current?.connections,'count')+
+          trend('LISTENING',previous?.seconds,current?.seconds,'time')+'</div>'+
+        '<p class="mj-radio-trend-note">'+
+          (verifiedComparison?
+            'Matched complete current and previous UTC reporting windows.':
+            'Last vs Current growth remains N/A until both complete periods are imported.')+
+        '</p>'+
+        '<div class="mj-radio-health">MUSIC HEALTH <b>'+esc(score===null?'N/A':score)+
+          '</b><small>10 of 100 owner health points only when complete-period listening trends are verified</small></div>'+
+      '</section>'+
       (typeof window.djomsRadioListenerSection==='function'?
-        window.djomsRadioListenerSection(typeof websiteReportPeriod==='function'?websiteReportPeriod():null):'')+
-      '<p class="mj-music-caveat">'+esc(music?.note||
-        'Verified listening and streaming comparison pending.')+' '+
-        esc(music?.caveat||'Music sales are already included in total paid web sales.')+
-      '</p>',
-      'This is a separate music-performance channel. Paid music is already included in total web sales and is not counted twice.');
+        window.djomsRadioListenerSection(period):'')+
+      '<section class="mj-music-secondary" aria-label="Music and audience engagement">'+
+        '<h4>4B · MUSIC & AUDIENCE RESPONSE</h4>'+likedHTML+
+        '<div class="mj-music-grid">'+
+          stat('OUTLAW RADIO PAGE VIEWS',formatValue(music?.radioPageViews),
+            'Wix page views · not listeners')+
+          stat('MUSIC PAGE VIEWS',formatValue(music?.musicPageViews),
+            'Wix page views · not plays')+
+          stat('PAID MUSIC UNITS',formatValue(music?.musicUnits),
+            'Wix sales · already included in #5')+
+          stat('PAID MUSIC SALES',formatValue(music?.musicItemSalesCents,'cents'),
+            'Wix gross item sales · already in #5')+
+        '</div>'+
+        '<details class="mj-stage-dropdown mj-music-streaming-extra" data-mj-dropdown="music-platforms">'+
+          '<summary><span>OTHER STREAMING · DATA CONNECTION STATUS</span>'+
+            '<b>DETAILS ▾</b></summary>'+
+          '<p>Spotify '+esc(formatValue(music?.spotifyStreams))+
+            ' · Apple Music '+esc(formatValue(music?.appleMusicStreams))+
+            ' · YouTube Music '+esc(formatValue(music?.youtubeMusicStreams))+
+            ' · Period-unique radio listeners '+esc(formatValue(music?.uniqueRadioListeners))+
+            '. These remain N/A until their actual data sources are connected.</p>'+
+        '</details>'+
+      '</section>'+
+      '<p class="mj-music-caveat">Radio.co connections, listening duration, '+
+        'Wix page views, music purchases and song votes are distinct measurements. '+
+        'Music purchases are counted once in #5 Sales.</p>',
+      'Station listening leads this section. Radio.co totals are manual UTC-day imports; missing dates and unverified new/returning listeners are never guessed.');
   }
 
   // One concise owner summary: reporting-period evidence, never placeholder totals.
@@ -2218,7 +2273,7 @@
           '<path class="mj-path-shadow" d="M 75 160 C 285 70, 460 230, 610 130 S 1040 45, 1135 175 C 1180 290, 1170 390, 1080 490 S 750 590, 575 485 S 245 390, 90 530"/>'+
           '<path class="mj-path-planks" d="M 75 160 C 285 70, 460 230, 610 130 S 1040 45, 1135 175 C 1180 290, 1170 390, 1080 490 S 750 590, 575 485 S 245 390, 90 530"/>'+
         '</svg>'+
-        first+second+third+musicPanel(music,owner)+fifth+
+        first+second+third+musicPanel(music,owner,period)+fifth+
         '<div class="mj-lower-left" aria-label="Actions, social and owner bottom-line summary">'+
           seventh+socialPanel(social)+quickBrief+
         '</div>'+
