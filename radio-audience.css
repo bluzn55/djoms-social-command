@@ -1,0 +1,98 @@
+/* DJOMS · Radio.co unique listeners and optional live town evidence */
+#connectionStrip .mj-card-music .mj-radio-audience{
+ margin:7px 0;padding:9px;
+ border:1px solid #bd9c70;border-radius:6px;
+ background:#fff8e9;color:#332518;
+ font:750 12px/1.3 Arial,sans-serif;
+}
+#connectionStrip .mj-card-music .mj-radio-audience *{box-sizing:border-box}
+#connectionStrip .mj-card-music .ra-head{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:5px 9px;flex-wrap:wrap;padding-bottom:6px;
+ border-bottom:1px solid #dbc39c;
+}
+#connectionStrip .mj-card-music .ra-head strong{
+ color:#382518;font:900 14px/1.2 Georgia,serif!important;
+}
+#connectionStrip .mj-card-music .ra-head small{
+ font:900 10px/1.2 Arial,sans-serif!important;color:#7d6039;
+}
+#connectionStrip .mj-card-music .ra-grid{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:8px 0;
+}
+#connectionStrip .mj-card-music .ra-metric{
+ display:flex;flex-direction:column;min-width:0;gap:4px;
+ background:#fffdf7;border:1px solid #d1b995;border-radius:6px;padding:8px;
+}
+#connectionStrip .mj-card-music .ra-metric small{
+ font:900 11px/1.2 Arial,sans-serif!important;color:#523922;
+}
+#connectionStrip .mj-card-music .ra-metric strong{
+ color:#30583c!important;font:900 clamp(18px,1.5vw,25px)/1.2 Georgia,serif!important;
+ overflow-wrap:anywhere;
+}
+#connectionStrip .mj-card-music .ra-metric em{
+ color:#675037!important;font:750 10px/1.3 Arial,sans-serif!important;
+ font-style:normal;
+}
+#connectionStrip .mj-card-music .ra-note{
+ color:#614c31!important;font:750 11px/1.4 Arial,sans-serif!important;
+ padding:3px 0;margin:7px 0!important;
+}
+#connectionStrip .mj-card-music .ra-details{
+ border:1px solid #c6a679!important;background:#f4e2be!important;
+ margin:6px 0!important;padding:0!important;border-radius:5px;
+}
+#connectionStrip .mj-card-music .ra-details>summary{
+ padding:9px!important;cursor:pointer;
+ font:900 12px/1.25 Arial,sans-serif!important;color:#412d16!important;
+}
+#connectionStrip .mj-card-music .ra-details[open]{
+ padding:7px!important;
+}
+#connectionStrip .mj-card-music .ra-details[open]>summary{
+ padding:4px 0 8px!important;border-bottom:1px solid #d1b38c;
+}
+#connectionStrip .mj-card-music .ra-fields{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+}
+#connectionStrip .mj-card-music .ra-fields label{
+ display:flex;flex-direction:column;gap:5px;min-width:0;
+ font:800 11px/1.25 Arial,sans-serif!important;color:#523d29;
+}
+#connectionStrip .mj-card-music .ra-fields input{
+ padding:8px;max-width:100%;width:100%;min-width:0;
+ border:1px solid #bda07a;border-radius:5px;
+ background:#fffbf4;color:#302415;font:750 12px/1.3 Arial,sans-serif;
+}
+#connectionStrip .mj-card-music .ra-confirm{
+ display:flex;align-items:flex-start;gap:7px;margin:10px 0;
+ font:750 11px/1.3 Arial,sans-serif!important;
+}
+#connectionStrip .mj-card-music .ra-confirm input{flex-shrink:0;margin-top:2px}
+#connectionStrip .mj-card-music [data-ra-save]{
+ border:1px solid #785321;border-radius:5px;
+ padding:8px 12px;background:#785321;color:white;
+ font:900 11px Arial,sans-serif!important;cursor:pointer;
+}
+#connectionStrip .mj-card-music [data-ra-save]:disabled{opacity:.5}
+#connectionStrip .mj-card-music .ra-feedback{
+ display:block;font:800 11px/1.35 Arial,sans-serif!important;color:#65452a;margin-top:6px;
+}
+#connectionStrip .mj-card-music .ra-city-list{
+ background:#fffaf0;border:1px solid #d8c39e;max-height:250px;overflow:auto;margin:7px 0;
+}
+#connectionStrip .mj-card-music .ra-city-row{padding:8px;border-bottom:1px solid #e4d0aa}
+#connectionStrip .mj-card-music .ra-city-row b,
+#connectionStrip .mj-card-music .ra-city-row small{display:block}
+#connectionStrip .mj-card-music .ra-city-row small{font-size:11px;color:#6b5239;margin-top:3px}
+#connectionStrip .mj-card-music .ra-add{
+ border-top:1px solid #d3b78d;margin-top:10px;padding-top:7px;
+}
+#connectionStrip .mj-card-music .ra-add>summary{
+ cursor:pointer;font:900 11px/1.3 Arial,sans-serif!important;
+}
+@media(max-width:450px){
+ #connectionStrip .mj-card-music .ra-fields{grid-template-columns:1fr}
+ #connectionStrip .mj-card-music .ra-metric strong{font-size:20px!important}
+}
