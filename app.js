@@ -1837,6 +1837,13 @@ function render() {
     else $('content').innerHTML = '<div class="empty"><h3>Website Security report unavailable.</h3><p>Reload DJOMS to check the security module.</p></div>';
     return;
   }
+  if (activeView === 'Worldwide Visitors') {
+    $('content').innerHTML = '';
+    if(typeof window.djomsWorldwideVisitors?.render==='function')
+      window.djomsWorldwideVisitors.render();
+    else $('content').innerHTML = '<div class="empty"><h3>Worldwide Visitor Intelligence is unavailable.</h3><p>Refresh the dashboard.</p></div>';
+    return;
+  }
   if (activeView === 'Analytics') {
     const count = p => records.filter(r => r.results?.[p]?.status === 'published').length;
     const xStats = analyticsData?.platforms?.x || {};
