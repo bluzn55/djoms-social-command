@@ -54,6 +54,11 @@ function metric(title,value,description,kind=''){
 function detailHtml(data,loc,compact){
   const selected=locationGroup(data,loc);
   const list=patterns(data,loc);
+  const related=(data.relatedActivity?.groups||[]).filter(x=>!loc?.country||
+    x.country===loc.country&&(!loc.city||x.city===loc.city)&&
+    (!loc.region||x.region===loc.region));
+  const relatedCount=data.relatedActivity?.status==='reported'?
+    loc?.country?related.length:data.relatedActivity.totalGroups:null;
   if(!selected)return '<p class="dj-quality-note">Wix location coverage is not complete. Cannot classify these visits.</p>';
   const complete=data.status==='reported'&&data.reconciled===true;
   const total=selected.total;
@@ -66,7 +71,7 @@ function detailHtml(data,loc,compact){
     metric('LIKELY AUTOMATED',auto,'Rapid crawler-like page sweeps','automation')+
     metric('ENGAGED-LOOKING',engaged,'2+ pages or measured stay ≥30 sec','engagement')+
     metric('UNCLASSIFIED',undecided,'Neither pattern is proven','unknown')+
-    metric('POSSIBLE RELATED ACTIVITY',data.relatedActivity?.totalGroups,
+    metric('POSSIBLE RELATED ACTIVITY',relatedCount,
       'Similar visits close together, not a confirmed identity');
   const note='These are website sessions, not unique people. Rapid scanning is not an attack. '+
     'Engaged-looking does not prove a human. Unclassified is not automatically a bot. '+
