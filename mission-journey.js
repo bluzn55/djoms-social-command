@@ -869,6 +869,18 @@
         '<em class="'+(hasTrend?(exposure.change>0?'up':
           exposure.change<0?'down':'hold'):'na')+'">'+
           esc(deltaText)+'</em></div>';
+      // When X has no owner-entered analytics, don't display four N/A
+      // cards and an empty exposure block. Expand automatically when metrics
+      // are entered; tagged arrival reporting remains visible at all times.
+      if(isX&&!['clicks','shares','comments','reactions','views'].some(key=>
+        valid(d?.now?.[key]))){
+        return '<section class="mj-social-platform mj-social-platform-inactive">'+
+          '<div class="mj-social-brand">'+
+          '<b class="mj-social-symbol">'+icons[platform]+'</b>'+
+          '<strong>'+name+'</strong>'+
+          '<small>'+esc(formatValue(current))+' tagged arrivals · other analytics not entered</small>'+
+          '</div></section>';
+      }
       return '<section class="mj-social-platform">'+
         '<div class="mj-social-brand">'+
           '<b class="mj-social-symbol">'+icons[platform]+'</b>'+
@@ -885,20 +897,15 @@
     const socialEvidence=social?.availableWeight>0;
     return card('social','6','SOCIAL MEDIA','♟',
       '<div class="mj-social-inner">'+rows+'</div>'+
-      '<p class="mj-social-explainer"><b>Tagged arrivals</b> are measured visits via '+
-        'placecard links (tracking since Oct 28). <b>Link clicks</b> come from Meta '+
-        'when supplied; N/A is not zero. <b>Views</b> show exposure, not people. '+
-        'Exposure changes compare checks of the same posts. Counts can overlap.</p>'+
+      '<p class="mj-social-explainer"><b>Views</b> = displays, not people. '+
+        '<b>Tagged arrivals</b> = measured visits. '+
+        '<b>N/A</b> = data unavailable, not zero. '+
+        'Meta post counts are lifetime snapshots.</p>'+
       '<button type="button" class="mj-social-post-detail" data-view="Analytics">'+
         'OPEN POST-BY-POST ACTION REPORT</button>'+
       '<div class="mj-social-impact"><strong>SOCIAL HEALTH · '+
         (socialEvidence?'ACTIONS':'N/A')+'</strong>'+
-        '<small>Clicks, shares, comments, reactions only · views unscored. '+
-        '15 of 100 importance points.</small></div>',
-      'Tracked arrivals are DJOMS events; Meta link clicks, comments, shares and '+
-      'reactions are lifetime totals for posts published in each date cohort. '+
-      'They are not verified customer identities, and clicks are not confirmed sales. '+
-      'Exposure shows post displays / plays, not unique people. Same-post trends compare checks, not publication cohorts.');
+        '<small>15/100 weight · Views not scored</small></div>');
   }
   // #4 MUSIC is the existing verified music reporting, brought INTO the
   // numbered boardwalk. This function never infers plays from Wix page visits
