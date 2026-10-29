@@ -151,6 +151,25 @@ window.djomsPublishedCampaignPosts=function(){
     a.title.localeCompare(b.title));
 };
 
+// Owner-only card metadata for authenticated #6 attribution.
+ // Link ID identifies a DJOMS post; image ID identifies the artwork.
+ // Don't infer which social platform someone physically clicked from a URL.
+window.djomsPlacecardMeta=function(recordId){
+  if(typeof recordId!=='string'||!recordId)return null;
+  const r=records.find(entry=>entry?.id===recordId);
+  if(!r)return null;
+  return {
+    id:r.id,
+    code:code(r),
+    title:String(r.title||'Saved placecard').slice(0,140),
+    placecardName:String(r.placecardName||r.title||'Saved placecard').slice(0,140),
+    campaign:r.campaign,
+    imageUrl:typeof r.imageUrl==='string'&&/^https:\/\//.test(r.imageUrl)?
+      r.imageUrl:null,
+    status:r.status
+  };
+};
+
 async function loadAnalytics(refresh = false) {
   try {
     analyticsData = await api('analytics?range=' + encodeURIComponent(platformMetricRange) + (refresh ? '&refresh=1' : ''));
@@ -2132,6 +2151,18 @@ async function perform(work) {
 }
 document.addEventListener('click', event => {
   const b = event.target.closest('button,a'); if (!b || b.disabled || busy) return;
+  if(b.dataset.smCardOpen){
+    const item=records.find(r=>r.id===b.dataset.smCardOpen);
+    if(!item)return notice('That placecard is no longer in your DJOMS library. Refresh the page.',true);
+    if(dirty&&!confirm('Leave your unsaved changes to inspect this placecard?'))return;
+    activeView='Content Library';
+    campaignFilter='';
+    searchTerm='';
+    render();
+    openRecord(item);
+    notice('Opened the exact DJOMS placecard behind the tracked SM Welcome arrival.');
+    return;
+  }
   if(b.dataset.trackRecord && b.dataset.trackPlatform) {
     const record=records.find(r=>r.id===b.dataset.trackRecord)||
       (selected?.id===b.dataset.trackRecord?selected:null);
