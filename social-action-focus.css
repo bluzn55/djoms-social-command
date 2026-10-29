@@ -108,3 +108,32 @@
 #connectionStrip .mj-card-social .mj-social-exposure>em.up{color:#22653d!important}
 #connectionStrip .mj-card-social .mj-social-exposure>em.down{color:#9d382c!important}
 #connectionStrip .mj-card-social .mj-social-exposure>em.hold{color:#665238!important}
+
+/* Keep unconfigured X visible without wasting space on unavailable metrics. */
+#connectionStrip .mj-card-social .mj-social-platform-inactive{
+  background:#f9edd4!important;
+  border-style:dashed;
+  padding:6px 7px!important;
+}
+#connectionStrip .mj-card-social .mj-social-platform-inactive .mj-social-brand{
+  padding:0!important;margin:0!important;min-height:26px;
+}
+#connectionStrip .mj-card-social .mj-social-platform-inactive .mj-social-brand>small{
+  font-size:11px!important;max-width:70%!important;
+}
+#connectionStrip .mj-card-social .mj-social-impact{
+  display:flex!important;align-items:center!important;
+  flex-wrap:wrap!important;justify-content:space-between!important;
+  gap:4px 9px!important;margin-top:8px!important;
+  padding-top:8px!important;
+}
+#connectionStrip .mj-card-social .mj-social-impact>strong{
+  white-space:nowrap!important;font-size:12px!important;
+}
+#connectionStrip .mj-card-social .mj-social-impact>small{
+  max-width:none!important;font:800 11px/1.25 Arial,sans-serif!important;
+}
+#connectionStrip .mj-card-social .mj-social-explainer{
+  margin:6px 0 8px!important;padding:3px 2px!important;
+  font:750 11px/1.32 Arial,sans-serif!important;
+}
