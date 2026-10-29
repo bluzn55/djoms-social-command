@@ -68,6 +68,11 @@ function detailHtml(data,loc,compact){
     ' · '+esc(x.path)+'</b><small>'+esc(exact(x.firstAt))+' to '+esc(exact(x.lastAt))+
     ' · '+esc(x.separationSeconds)+' seconds · '+esc(x.networkGroups)+
     ' networks · '+esc(x.browser)+' / '+esc(x.os)+'</small></div>').join('');
+  const watchHtml='<section class="dj-related-watch"><strong>RELATED ACTIVITY WATCH · '+
+    esc(n(relatedCount))+' PATTERNS</strong>'+relatedRows+
+    (!related.length?'<p>No matching close-together cross-network visits reported.</p>':'')+
+    '<small>Same country, page, browser and device within 90 seconds; different networks. '+
+    'Possible connection only, not proof of one person, a bot, or an attack.</small></section>';
   if(!selected)return '<p class="dj-quality-note">Wix location coverage is not complete. Cannot classify these visits.</p>';
   const complete=data.status==='reported'&&data.reconciled===true;
   const total=selected.total;
