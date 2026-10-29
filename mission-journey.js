@@ -457,12 +457,26 @@
     const places=site?.connected===true&&Array.isArray(site.geography)?
       site.geography.filter(p=>p&&(p.city||p.region||p.country)&&valid(p.visitors)&&p.visitors>0)
         .sort((a,b)=>b.visitors-a.visitors):[];
-    const placeName=p=>[p.city,p.region].filter(Boolean).join(', ')||p.country||'Location not supplied';
-    const rows=places.map((p,i)=>mapDetailRow(placeName(p),'Approximate Wix geography',
-      number(p.visitors),'visitors',i));
-    return mapDropdown('locations','WHERE VISITORS ARE FROM',rows,
-      'Approximate geographic categories from Wix. Some entries cover whole countries, so these rows should not be added together as unique people.',
-      'Wix has not returned visitor locations for these dates.');
+    const placeName=p=>[p.city,p.region,p.country].filter(Boolean).join(', ')||'Location not supplied';
+    const rows=places.map((p,i)=>'<div class="mj-dropdown-row">'+
+      '<span class="mj-dropdown-rank">'+esc(i+1)+'.</span>'+
+      '<span class="mj-dropdown-desc"><strong>'+esc(placeName(p))+'</strong>'+
+      '<small>Approximate Wix location</small>'+
+      (p.country?'<button type="button" class="mj-worldwide-inspect"'+
+        ' data-mj-world-country="'+esc(p.country)+'"'+
+        ' data-mj-world-city="'+esc(p.city||'')+'"'+
+        ' data-mj-world-region="'+esc(p.region||'')+'">VIEW PAGES & VISITS</button>':'')+
+      '</span><span class="mj-dropdown-stat"><b>'+esc(number(p.visitors))+
+      '</b><small>visitors</small></span></div>');
+    return '<details class="mj-stage-dropdown" data-mj-dropdown="locations">'+
+      '<summary><span>WHERE VISITORS ARE FROM</span><b>'+
+        esc(rows.length?number(rows.length)+' shown':'N/A')+' <i aria-hidden="true">▾</i></b></summary>'+
+      '<div class="mj-dropdown-content">'+
+        '<p class="mj-dropdown-explainer">Browse country or city details to see what visitors looked at, when they arrived, average stay and shared network patterns. Locations are approximate, not identities.</p>'+
+        '<button type="button" class="mj-worldwide-top-link" data-mj-world-all="1">VIEW ALL COUNTRIES & CITIES · PAGE-BY-PAGE REPORT</button>'+
+        (rows.length?'<div class="mj-dropdown-rows">'+rows.join('')+'</div>':
+          '<p class="mj-dropdown-empty">No Wix visitor locations returned for these dates.</p>')+
+      '</div></details>';
   }
   function wixSourcesDropdown(site){
     const current=site?.connected===true&&Array.isArray(site.trafficSources)?
@@ -2322,6 +2336,21 @@
     }
   },true);
 
+  document.addEventListener('click',event=>{
+    const city=event.target.closest?.('[data-mj-world-country], [data-mj-world-all]');
+    if(!city)return;
+    event.preventDefault();
+    const visitor=city.hasAttribute('data-mj-world-all')?null:{
+      country:city.dataset.mjWorldCountry||'',
+      city:city.dataset.mjWorldCity||'',
+      region:city.dataset.mjWorldRegion||''
+    };
+    const period=typeof websiteReportPeriod==='function'?websiteReportPeriod():null;
+    if(typeof window.djomsWorldwideVisitors?.open==='function')
+      window.djomsWorldwideVisitors.open(visitor,period);
+    else if(typeof notice==='function')
+      notice('Worldwide Visitors is not loaded. Refresh the Command Center.',true);
+  });
   document.addEventListener('click',event=>{
     if(event.target.closest?.('[data-mj-daily-open]')){
       const detail=document.getElementById('mjDailyReport');
