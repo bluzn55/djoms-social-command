@@ -928,10 +928,10 @@
           '<p class="mj-radio-pending"><b>LAST VS CURRENT · N/A</b>'+
             '<span>Complete current and previous UTC periods needed. Music Health pending.</span></p>')+
       '</section>'+
-      (typeof window.djomsRadioListenerSection==='function'?
-        window.djomsRadioListenerSection(period):'')+
       (typeof window.djomsRadioAudienceSection==='function'?
         window.djomsRadioAudienceSection(period):'')+
+      (typeof window.djomsRadioListenerSection==='function'?
+        window.djomsRadioListenerSection(period):'')+
       '<section class="mj-music-secondary" aria-label="Music and audience engagement">'+
         '<h4>4B · MUSIC & AUDIENCE RESPONSE</h4>'+likedHTML+
         '<div class="mj-music-grid">'+
