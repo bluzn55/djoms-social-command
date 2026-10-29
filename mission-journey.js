@@ -897,8 +897,18 @@
     const socialEvidence=social?.availableWeight>0;
     const nextSteps=typeof window.djomsSmWelcomeJourneySection==='function'?
       window.djomsSmWelcomeJourneySection(period):'';
+    const instagramGuide='<details class="mj-stage-dropdown" data-mj-dropdown="ig-story">'+
+      '<summary><span>INSTAGRAM · MAKE THE LINK CLICKABLE</span><b>▾</b></summary>'+
+      '<div class="mj-dropdown-content">'+
+        '<p class="mj-dropdown-explainer">Instagram feed captions are not clickable. '+
+        'Open Content Library, choose a saved placecard, expand TRACK THIS PLACE CARD, '+
+        'and choose COPY IG STORY LINK. In Instagram, create a Story, tap Stickers → '+
+        'Link, paste that exact link and publish. Each card has its own tracked Story link.</p>'+
+        '<button type="button" class="mj-social-post-detail" data-view="Content Library">'+
+          'OPEN PLACE CARDS · COPY IG STORY LINK</button>'+
+      '</div></details>';
     return card('social','6','SOCIAL MEDIA','♟',
-      '<div class="mj-social-inner">'+rows+'</div>'+nextSteps+
+      '<div class="mj-social-inner">'+rows+'</div>'+nextSteps+instagramGuide+
       '<p class="mj-social-explainer"><b>Views</b> = displays, not people. '+
         '<b>Tagged arrivals</b> = measured visits. '+
         '<b>N/A</b> = data unavailable, not zero. '+
