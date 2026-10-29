@@ -1968,7 +1968,9 @@ function renderFormats() {
     <div class="copy-card"><strong>YouTube</strong><small>Title ${t.youtubeTitle.length}/100</small><p><b>${esc(t.youtubeTitle || 'Campaign title')}</b><br>${esc(t.youtubeDescription || 'Add your master message.')}</p></div>`;
 }
 function updatePreview() {
-  $('captionPreview').textContent = $('postCaption').value + ($('postLink').value ? '\n\n' + $('postLink').value : '');
+  // Preview the single-link text that will actually be published, not
+  // legacy source-link fields that the backend strips from final captions.
+  $('captionPreview').textContent = platformText().facebook;
   $('photoPreview').innerHTML = selected?.imageUrl ? `<img src="${esc(selected.imageUrl)}" alt="Post artwork">` : 'Add your photo';
   renderFormats();
 }
