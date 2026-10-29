@@ -63,7 +63,7 @@ function detailHtml(data,loc,compact){
     (!loc.region||x.region===loc.region));
   const relatedCount=data.relatedActivity?.status==='reported'?
     loc?.country?related.length:data.relatedActivity.totalGroups:null;
-  const relatedRows=related.slice(0,8).map(x=>
+  const relatedRows=related.slice(0,compact?1:8).map(x=>
     '<div class="dj-related-row"><b>'+esc([x.city,x.region,x.country].filter(Boolean).join(', '))+
     ' · '+esc(x.path)+'</b><small>'+esc(exact(x.firstAt))+' to '+esc(exact(x.lastAt))+
     ' · '+esc(x.separationSeconds)+' seconds · '+esc(x.networkGroups)+
