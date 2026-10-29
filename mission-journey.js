@@ -196,10 +196,23 @@
         metric:'searchCtr',confidence:'Measured low CTR; cause is a hypothesis.'};
     }
     if(valid(bounce)&&bounce>=0.70&&valid(site?.sessions)&&site.sessions>=10){
-      return {evidence:'Wix bounce rate '+ratio(bounce)+' across '+number(site.sessions)+' sessions.',
-        why:'Visitors might not find the promised content or a useful next step quickly enough. High bounce alone does not establish why.',
-        next:'Improve the first-screen explanation and one clear next-step CTA on the most-used entry page. Instrument that CTA.',
-        metric:'siteBounceRate',confidence:'Measured bounce; proposed explanation requires testing.'};
+      // A single-page radio listening session can be useful even when Wix
+      // labels it a bounce. Known crawler-like visits can also distort the
+      // overall bounce rate; never claim 91% lost genuine customers.
+      const homeEntry=site?.landingPages?.find(p=>p.path==='/'&&valid(p.sessions));
+      const radioEntry=site?.landingPages?.find(p=>
+        p.path==='/outlaw-radio-5150'&&valid(p.sessions));
+      const entries=[homeEntry?'Home '+number(homeEntry.sessions)+' entries':null,
+        radioEntry?'Radio '+number(radioEntry.sessions)+' entries':null]
+        .filter(Boolean).join(' · ');
+      return {
+        evidence:'Wix bounce rate '+ratio(bounce)+' across '+number(site.sessions)+
+          ' sessions.'+(entries?' '+entries+'.':''),
+        why:'Crawler-like visits and people listening on one radio page may raise bounce. A high bounce rate alone does not prove visitors are confused.',
+        next:'TEST: Add one visible homepage button, LISTEN LIVE, linking directly to Outlaw Radio 5150. Keep the existing navigation. Check the button clicks in Wix and actual listening in Radio.co.',
+        metric:'siteBounceRate',
+        confidence:'Sitewide bounce is a warning, not a measure of successful radio listening. Compare engaged traffic and native homepage button clicks too.'
+      };
     }
     if(valid(radio)&&radio>0){
       return {evidence:number(radio)+' GA4 radio-related external-link click events; listening starts are not confirmed.',
