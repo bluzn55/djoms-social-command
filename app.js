@@ -154,10 +154,37 @@ window.djomsPublishedCampaignPosts=function(){
 // Owner-only card metadata for authenticated #6 attribution.
  // Link ID identifies a DJOMS post; image ID identifies the artwork.
  // Don't infer which social platform someone physically clicked from a URL.
-window.djomsPlacecardMeta=function(recordId){
+// Owner-authenticated DJOMS record behind a tracked card link.
+ // Gives #6 both the saved artwork and the caption, rather than just a name.
+ // Saved text is distinct from whatever somebody may have reposted manually.
+window.djomsPlacecardMeta=function(recordId,platform){
   if(typeof recordId!=='string'||!recordId)return null;
   const r=records.find(entry=>entry?.id===recordId);
   if(!r)return null;
+  const validPlatform=['facebook','instagram','x','youtube'].includes(platform)?
+    platform:null;
+  const pub=validPlatform?r.results?.[validPlatform]||null:null;
+  const original=String(r.caption||'').slice(0,10000);
+  const cleaned=preparePlacecardPreviewCopy(original);
+  const titles={
+    BBQ:'🔥 Explore the Smokehouse',SOSS:'🔥 Explore the Smokehouse',
+    MUSIC:'🎵 Hear the music',BOOK:'📖 Discover the story'
+  };
+  // For posts published by DJOMS, the per-post stored tracking URL is
+  // the reliable outgoing link. We reconstruct the exact original caption
+  // formatting but do not claim a separately verified live Meta post.
+  const outgoing=pub?.trackingUrl||'';
+  const sourceLabel=pub?.status==='published'&&outgoing&&
+    ['facebook','instagram'].includes(validPlatform)?
+    'DJOMS-formatted posting text (saved record)':
+    'Saved placecard caption (external repost wording not verified)';
+  let postingText=original;
+  if(sourceLabel.startsWith('DJOMS-formatted')){
+    postingText=[(titles[r.campaign]||'⚜ Explore Doc Jaks')+': '+outgoing,
+      cleaned.body,cleaned.hashtags].filter(Boolean).join('\n\n');
+  }else if(pub?.status==='published'&&validPlatform==='x'&&typeof pub.text==='string'){
+    postingText=pub.text.slice(0,5000);
+  }
   return {
     id:r.id,
     code:code(r),
@@ -166,6 +193,10 @@ window.djomsPlacecardMeta=function(recordId){
     campaign:r.campaign,
     imageUrl:typeof r.imageUrl==='string'&&/^https:\/\//.test(r.imageUrl)?
       r.imageUrl:null,
+    caption:original,
+    postingText:postingText.slice(0,10000),
+    textSource:sourceLabel,
+    publishedAt:pub?.status==='published'?pub.publishedAt||null:null,
     status:r.status
   };
 };
