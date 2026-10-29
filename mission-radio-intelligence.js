@@ -118,7 +118,8 @@
         '</section></details>'+
       '<p class="rli-note">Daily Radio.co dates are UTC. The full period and growth trend '+
       'remain N/A until every selected and comparison day is imported. '+
-      'Period-unique, new and returning listeners cannot be derived from these aggregate files.</p>';
+      'Period-unique, new and returning listeners cannot be derived from these aggregate files. ' +
+      'Your own listening sessions may also be included.</p>';
   }
   window.djomsRadioListenerSection=period=>{
     const q=period?.query;
