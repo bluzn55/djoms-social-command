@@ -94,22 +94,51 @@
   function platformPanel(platform, data) {
     const summary = data.platforms?.[platform] || {};
     const rows = (data.posts || []).filter(post => post.platform === platform);
-    const metrics = [['Post views', 'views'], [platform === 'facebook' ? 'Reactions' : 'Likes', 'reactions'],
-      ['Comments', 'comments'], ['Shares', 'shares'], [platform === 'instagram' ? 'Saves' : 'Link clicks', platform === 'instagram' ? 'saves' : 'clicks']];
+    const isFb=platform==='facebook';
+    const metrics = [['Post views', 'views'],
+      [isFb ? 'Reactions' : 'Likes', 'reactions'],
+      ['Comments', 'comments'], ['Shares', 'shares'],
+      [platform === 'instagram' ? 'Saves' : 'Link clicks',
+        platform === 'instagram' ? 'saves' : 'clicks'],
+      ...(isFb?[['All post clicks (not website clicks)', 'allClicks']]:[])
+    ];
+    const fields=['views', 'reach', 'reactions', 'comments', 'shares', 'clicks',
+      ...(isFb?['allClicks']:[])];
+    const cols=1+fields.length;
     const body = rows.map(post => {
       const url = safeLink(post.permalink);
-      const title = url ? '<a target="_blank" rel="noopener noreferrer" href="' + html(url) + '">' + html(post.title) + '</a>' : html(post.title);
-      return '<tr><td><b>' + title + '</b><small>' + html(post.campaign) + ' · Published ' + html(time(post.publishedAt)) + '</small><small>Checked ' + html(time(post.checkedAt)) + '</small></td>' +
-        ['views', 'reach', 'reactions', 'comments', 'shares', 'clicks'].map(key => '<td>' + html(count(post[key])) + '</td>').join('') +
-        '</tr>' + ((post.warnings || []).length ? '<tr class="vr-warning-row"><td colspan="7"><details><summary>Why some numbers are missing</summary>' +
-          post.warnings.map(warning => '<p>' + html(warning) + '</p>').join('') + '</details></td></tr>' : '');
+      const title = url ? '<a target="_blank" rel="noopener noreferrer" href="' +
+        html(url) + '">' + html(post.title) + '</a>' : html(post.title);
+      return '<tr><td><b>' + title + '</b><small>' + html(post.campaign) +
+        ' · Published ' + html(time(post.publishedAt)) + '</small><small>Checked ' +
+        html(time(post.checkedAt)) + '</small></td>' +
+        fields.map(key => '<td>' + html(count(post[key])) + '</td>').join('') +
+        '</tr>' + ((post.warnings || []).length ?
+          '<tr class="vr-warning-row"><td colspan="' + cols +
+          '"><details><summary>Why some numbers are missing</summary>' +
+          post.warnings.map(warning => '<p>' + html(warning) + '</p>').join('') +
+          '</details></td></tr>' : '');
     }).join('');
-    return '<section class="box vr-platform"><h3>' + labels[platform] + '</h3><p><b>' + html(statusLabels[summary.status] || 'Not available') + '</b> · ' + rows.length + ' posts in this report</p>' +
-      '<div class="vr-metrics">' + metrics.map(([label, key]) => metricCell(label, summary[key], summary.coverage?.[key])).join('') + '</div>' +
-      (summary.inventory?.complete === false ? '<p class="vr-note">The full account-post inventory could not be verified. This report may not include every post.</p>' : '') +
-      '<div class="vr-scroll"><table><thead><tr><th>Post</th><th>Views</th><th>Post viewers</th><th>Reactions / likes</th><th>Comments</th><th>Shares</th><th>Link clicks</th></tr></thead><tbody>' +
-      (body || '<tr><td colspan="7">No post rows returned for these dates. This is not a measurement of the whole account.</td></tr>') + '</tbody></table></div>' +
-      '<p class="vr-note">Views and interactions are current lifetime counters for these posts. Post viewers are measured separately for each post and must not be added into a unique audience total.</p></section>';
+    return '<section class="box vr-platform"><h3>' + labels[platform] +
+      '</h3><p><b>' + html(statusLabels[summary.status] || 'Not available') +
+      '</b> · ' + rows.length + ' posts in this report</p>' +
+      '<div class="vr-metrics">' +
+        metrics.map(([label, key]) => metricCell(label, summary[key], summary.coverage?.[key])).join('') +
+      '</div>' +
+      (summary.inventory?.complete === false ?
+        '<p class="vr-note">The full account-post inventory could not be verified. This report may not include every post.</p>' : '') +
+      '<div class="vr-scroll"><table><thead><tr><th>Post</th><th>Views</th>'+
+        '<th>Post viewers</th><th>Reactions / likes</th><th>Comments</th>'+
+        '<th>Shares</th><th>Link clicks</th>' +
+        (isFb?'<th>All post clicks (anywhere)</th>':'') +
+        '</tr></thead><tbody>' +
+        (body || '<tr><td colspan="' + cols +
+          '">No post rows returned for these dates. This is not a measurement of the whole account.</td></tr>') +
+      '</tbody></table></div>' +
+      '<p class="vr-note">Views are displays, not individual people. ' +
+      (isFb?'All post clicks includes interactions with the post itself, '+
+        'so it must never replace missing website link clicks. ' : '') +
+      'Wix-confirmed placecard arrivals are reported separately in #6.</p></section>';
   }
 
   function sourcePanels(report, error) {
