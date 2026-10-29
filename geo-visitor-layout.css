@@ -1,0 +1,25 @@
+.world-dashboard header{background:#e9ca96;padding:18px;border-radius:8px}
+.world-dashboard h2{font-size:27px;color:#372513}
+.world-countries{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:11px}
+.world-country{background:#fff7e5;padding:14px;border:1px solid #b99a64;border-radius:6px;display:flex;flex-direction:column;gap:9px}
+.world-country button{align-self:flex-start}
+.world-toolbar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;padding:12px 0}
+.world-dashboard button{border:1px solid #ab8653;background:#f1dfc0;border-radius:6px;padding:8px;cursor:pointer;color:#463017}
+.world-dashboard button.selected{background:#734d24;color:white}
+.world-city{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;border-bottom:1px solid #c6a477;padding:11px;gap:10px}
+.world-city>div{flex:1}
+.world-city small,.world-city strong{display:block}
+.world-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:8px}
+.world-metric{background:#fff8e6;border:1px solid #d2b992;border-radius:6px;padding:12px;display:flex;flex-direction:column}
+.world-metric strong{font-size:27px;color:#2a5334}
+.world-panel{background:#fff8e7;border:1px solid #d3b98b;border-radius:6px;padding:12px;margin:10px 0}
+.world-panel summary{cursor:pointer}
+.world-table-scroll{overflow:auto;max-height:490px}
+.world-table-scroll table{min-width:750px;width:100%;border-collapse:collapse}
+.world-table-scroll th,.world-table-scroll td{padding:9px;border-bottom:1px solid #ddc298;text-align:left}
+.world-table-scroll th{background:#ead09f;position:sticky;top:0}
+.world-page code,.world-page strong{display:block}
+.world-page code{font-size:11px;overflow-wrap:anywhere}
+.world-note{background:#f1e3ca;border-left:3px solid #b99762;padding:10px;font-size:13px}
+.world-warning{background:#f8e0cd;color:#8a3c21;padding:10px}
+#connectionStrip .mj-worldwide-inspect,#connectionStrip .mj-worldwide-top-link{background:#f7e3c2;border:1px solid #ac8755;border-radius:5px;padding:6px;font-weight:bold;cursor:pointer}
