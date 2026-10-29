@@ -2109,6 +2109,7 @@
             wixCmp.returningVisitors?.current,'count',false,visitorTypesProvisional)+
           miniMetric('WEBSITE VISITORS',priorVisitors,wix?site.visitors:null)+
           miniMetric('ALL WEBSITE VISITS',traffic.sessions.last,traffic.sessions.now)+'</div>'+visitorSplitNote(site)+
+        '<div id="mjTrafficQuality" class="mj-traffic-quality-inline" aria-label="Crawler-like versus engaged website traffic"></div>'+
         wixSourcesDropdown(site)+
         socialPlacecardVisitPanel(site,period)+
         (typeof window.djomsSupporterPanel==='function'?
@@ -2259,6 +2260,8 @@
       const openDropdowns=new Set([...slot.querySelectorAll('details.mj-stage-dropdown[open]')]
         .map(item=>item.dataset.mjDropdown).filter(Boolean));
       slot.innerHTML=journey({site:correctSite,seo,ga4,sales,period,social});
+      if(typeof window.djomsTrafficQuality?.mount==='function')
+        window.djomsTrafficQuality.mount('mjTrafficQuality',period,null,true);
       fetchReportHistory({site:correctSite,seo,ga4,sales,period,social});
       if(dailyWasOpen&&slot.querySelector('#mjDailyReport')){
         slot.querySelector('#mjDailyReport').open=true;
