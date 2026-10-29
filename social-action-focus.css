@@ -79,3 +79,32 @@
   #connectionStrip .mj-card-social .mj-social-stat>b{font-size:18px!important}
   #connectionStrip .mj-card-social .mj-social-brand>small{max-width:50%}
 }
+
+/* Exposure is a secondary signal, not a click or a unique audience. */
+#connectionStrip .mj-card-social .mj-social-exposure{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;
+  gap:3px 9px;align-items:center;
+  margin:7px 2px 1px;padding:7px 9px;
+  background:#fff8e9;border:1px solid #c9ab7b;
+  border-left:4px solid #8e7044;border-radius:5px;
+}
+#connectionStrip .mj-card-social .mj-social-exposure>span{
+  display:flex;flex-direction:column;min-width:0;gap:2px;
+}
+#connectionStrip .mj-card-social .mj-social-exposure>span>b{
+  font:900 12px/1.18 Arial,sans-serif!important;color:#473119!important;
+}
+#connectionStrip .mj-card-social .mj-social-exposure>span>small{
+  font:750 10px/1.22 Arial,sans-serif!important;color:#795c38!important;
+}
+#connectionStrip .mj-card-social .mj-social-exposure>strong{
+  font:900 23px/1.12 Georgia,serif!important;
+  color:#3a2b1b!important;font-variant-numeric:tabular-nums;
+}
+#connectionStrip .mj-card-social .mj-social-exposure>em{
+  grid-column:1/-1;font:900 11px/1.24 Arial,sans-serif!important;
+  font-style:normal;color:#71593a!important;
+}
+#connectionStrip .mj-card-social .mj-social-exposure>em.up{color:#22653d!important}
+#connectionStrip .mj-card-social .mj-social-exposure>em.down{color:#9d382c!important}
+#connectionStrip .mj-card-social .mj-social-exposure>em.hold{color:#665238!important}
