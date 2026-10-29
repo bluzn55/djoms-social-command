@@ -1526,6 +1526,9 @@
     }
     return saved?.data||null;
   }
+  // Same authenticated cached post-referral evidence powers #2 and #6.
+  // One source of truth for exact saved placecard arrivals and platform link.
+  window.djomsSocialPostReferrals=postReferrals;
   function socialPostingTraffic(site,period){
     const inventory=typeof window.djomsPublishedCampaignPosts==='function'?
       window.djomsPublishedCampaignPosts():null;
