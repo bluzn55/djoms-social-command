@@ -571,6 +571,7 @@ function renderConnectionStrip() {
     };
 
     strip.innerHTML = `
+      ${window.djomsDailyMaintenance?.missionHtml?.() || ""}
       <button type="button" class="mission-top-attention ${attentionColor}" data-view="Needs Attention"
         data-base-attention="${baseAttention}" data-base-color="${baseAttentionColor}"
         data-base-description="${esc(baseAttentionText)}">
@@ -807,6 +808,7 @@ function renderConnectionStrip() {
   const platformIssues = statusPlatforms.filter(p => connectionHealth(connection?.[p] || {}).color !== 'green').length;
   const needs = records.filter(attention).length + platformIssues;
   strip.innerHTML = `
+    ${window.djomsDailyMaintenance?.missionHtml?.() || ""}
     <div class="platform-status-toolbar">
       <div><strong>Platform health & engagement</strong><small>${esc(rangeLabels[platformMetricRange] || 'Last 7 Days')}</small></div>
       <div class="platform-range-switch" role="group" aria-label="Engagement time range">
@@ -1878,6 +1880,14 @@ function render() {
   }
   if (activeView === 'Website Analytics') {
     renderWebsiteAnalytics();
+    return;
+  }
+  if (activeView === 'Daily Maintenance') {
+    $('content').innerHTML = '';
+    if (typeof window.djomsDailyMaintenance?.render === 'function')
+      window.djomsDailyMaintenance.render();
+    else
+      $('content').innerHTML = '<div class="empty"><h3>Daily Maintenance is unavailable.</h3><p>Reload DJOMS to check this module.</p></div>';
     return;
   }
   if (activeView === 'Website Security') {

@@ -1,0 +1,55 @@
+/* DOC JAKS: Daily Maintenance, verified results only */
+.connection-strip .dj-maint-mission{display:flex!important;align-items:center;justify-content:space-between;gap:18px;width:100%;min-height:72px;margin:0 0 9px!important;padding:13px 19px!important;box-sizing:border-box;border:2px solid #b68a44;border-left:8px solid #837c65;border-radius:11px;background:linear-gradient(110deg,#20160d,#362616)!important;color:#fff1d0!important;text-align:left;cursor:pointer}
+.connection-strip .dj-maint-mission:hover{background:linear-gradient(110deg,#30200f,#49331b)!important;border-color:#d9b367}
+.connection-strip .dj-maint-tone-green{border-left-color:#319d58}
+.connection-strip .dj-maint-tone-yellow{border-left-color:#d8a121}
+.connection-strip .dj-maint-tone-red{border-left-color:#cb4437}
+.connection-strip .dj-maint-tone-neutral{border-left-color:#898477}
+.dj-maint-dot{display:inline-block;width:27px;height:27px;border-radius:50%;flex:0 0 27px;background:#898477;box-shadow:0 0 0 2px #fbe5b8,inset 0 -3px 5px #0003}
+.dj-maint-dot-green{background:#29a65e}.dj-maint-dot-yellow{background:#ffd149}
+.dj-maint-dot-red{background:#e14b3c}.dj-maint-dot-neutral{background:#85857d}
+.dj-maint-mission-title{display:flex;align-items:center;gap:13px;min-width:0}
+.dj-maint-mission-title b{font-size:21px;color:#ffe7b3;letter-spacing:.45px}
+.dj-maint-mission-title strong{margin-left:8px;color:#fff;font-size:17px}
+.dj-maint-mission-date{color:#f2d9a8;font-size:14px;font-weight:700;white-space:nowrap}
+.dj-maint-mission-next{font-size:15px;color:#fff3d1;font-weight:800;white-space:nowrap}
+.dj-maint-page{max-width:1250px;padding:8px 0 35px;color:#332517}
+.dj-maint-page-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:18px;padding:21px;border-radius:11px;background:linear-gradient(118deg,#24170b,#4b3014);color:#ffe9bb;border:2px solid #b58d50}
+.dj-maint-page-head small{font-size:12px;letter-spacing:1.2px;color:#e2ba77;font-weight:900}
+.dj-maint-page h2{margin:5px 0;color:#fff0d0;font:900 32px/1.2 Georgia,serif}
+.dj-maint-page-head p{margin:5px 0;color:#f0dcb6;font-size:15px}
+.dj-maint-large-status{display:flex;align-items:center;gap:12px;font-size:20px;font-weight:900}
+.dj-maint-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:15px 0}
+.dj-maint-stats>div{background:#fffaf0;border:1px solid #c9b18b;border-radius:10px;padding:15px;min-width:0}
+.dj-maint-stats small{display:block;color:#71552e;font-weight:900;font-size:12px;letter-spacing:.4px}
+.dj-maint-stats b{display:block;margin-top:7px;font-size:20px;color:#2a1e12;overflow-wrap:anywhere}
+.dj-maint-page-note{padding:14px 16px;border:1px solid #cdb990;border-radius:8px;background:#fffdf7}
+.dj-maint-page-note strong{display:block;font-size:16px;color:#4a331a}
+.dj-maint-page-note p{font-size:14px;margin:7px 0 0;line-height:1.5}
+.dj-maint-page-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:13px 0 24px}
+.dj-maint-page-actions button{padding:11px 15px;background:#344e36;color:white;border:1px solid #436b47;border-radius:6px;cursor:pointer}
+.dj-maint-page-actions span{font-size:13px;color:#745c40}
+.dj-maint-page h3{margin:23px 0 10px;color:#342313;font:900 21px Georgia,serif}
+.dj-maint-issues{display:grid;gap:10px}
+.dj-maint-issue{border:1px solid #c6bba3;border-left:6px solid #d8a121;border-radius:8px;background:#fffaf0;padding:14px 16px}
+.dj-maint-issue.dj-maint-tone-red{border-left-color:#cb4437}
+.dj-maint-issue-head{display:flex;align-items:center;gap:10px}
+.dj-maint-issue-head .dj-maint-dot{width:16px;height:16px;flex-basis:16px}
+.dj-maint-issue-head b{flex:1;font-size:17px}
+.dj-maint-issue-head small{font-size:12px;font-weight:900}
+.dj-maint-issue p{font-size:14px;line-height:1.45}
+.dj-maint-issue code{display:inline-block;max-width:100%;overflow-wrap:anywhere;padding:3px 5px;background:#efe4d1;margin-right:12px}
+.dj-maint-issue a{color:#17623a;font-weight:800}
+.dj-maint-history{display:grid;gap:8px}
+.dj-maint-history-entry{border:1px solid #c5b393;border-radius:8px;background:#fffaf0;overflow:hidden}
+.dj-maint-history-entry summary{display:flex;flex-wrap:wrap;align-items:center;gap:13px;cursor:pointer;padding:13px 15px;list-style-position:inside}
+.dj-maint-history-entry summary b{font-size:16px;flex:1}
+.dj-maint-history-entry summary strong{font-size:14px}
+.dj-maint-history-entry summary span{color:#6f5c3e;font-size:13px}
+.dj-maint-history-entry .dj-maint-dot{width:20px;height:20px;flex-basis:20px}
+.dj-maint-history-body{padding:5px 16px 16px}
+.dj-maint-history-body>p{line-height:1.5}
+.dj-maint-coverage,.dj-maint-notes{font-size:13px;color:#6d5a3b}
+.dj-maint-empty{padding:17px;background:#fffdf8;border:1px dashed #cbb78f;border-radius:8px;color:#665039}
+@media(max-width:900px){.connection-strip .dj-maint-mission{flex-wrap:wrap;gap:9px 15px}.dj-maint-mission-date{white-space:normal}.dj-maint-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.connection-strip .dj-maint-mission{padding:12px!important}.dj-maint-mission-title{flex:1 1 100%;gap:10px}.dj-maint-mission-title b{font-size:18px}.dj-maint-mission-title strong{font-size:15px}.dj-maint-mission-date{font-size:12px}.dj-maint-mission-next{font-size:12px}.dj-maint-page-head{padding:14px}.dj-maint-page h2{font-size:25px}.dj-maint-stats{gap:8px}.dj-maint-stats b{font-size:16px}.dj-maint-stats>div{padding:11px}}

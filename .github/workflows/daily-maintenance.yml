@@ -1,0 +1,26 @@
+name: Doc Jaks 4 AM Daily Maintenance
+on:
+  schedule:
+    # 4 AM America/Chicago is 09:00 UTC in CDT and 10:00 UTC in CST.
+    # The scan itself ignores the other hour and skips duplicate local dates.
+    - cron: '0 9,10 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright
+      - run: npx playwright install --with-deps chromium
+      - name: Inspect website and append dated maintenance record
+        run: node scripts/daily-maintenance-scan.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
