@@ -5,6 +5,10 @@ on:
     # The scan itself ignores the other hour and skips duplicate local dates.
     - cron: '0 9,10 * * *'
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/daily-maintenance.yml'
 permissions:
   contents: write
 jobs:
