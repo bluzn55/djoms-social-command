@@ -17,7 +17,7 @@ let pagesChecked = 0, linksChecked = 0, browserPagesChecked = 0, imagesChecked =
 const notes = [], visited = new Set();
 const tracked = new Set([SITE+'/',SITE+'/sm-welcome']);
 const external = new Set();
-const pageLimit = 110;
+const pageLimit = 180;
 function issue(severity,label,problem,url,fix) {
   const key = severity+'|'+label+'|'+url;
   if (!issueMap.has(key)) issueMap.set(key,{severity,label,problem,url,fix});
@@ -109,7 +109,7 @@ async function browserChecks(){
         await page.route(/(?:google-analytics\.com|googletagmanager\.com|doubleclick\.net|analytics\.wix\.com|facebook\.net\/en_US\/fbevents)/i, route=>route.abort());
         try{
           const response=await page.goto(address,{waitUntil:'domcontentloaded',timeout:24000});
-          await page.waitForTimeout(2100);
+          await page.waitForTimeout(4000);
           if (!response || response.status()>=400) {unverified++;notes.push(device+' browser unable to open '+address);continue;}
           const snapshot=await page.evaluate(()=>{
             const text=(document.body?.innerText||'').trim();
@@ -120,9 +120,9 @@ async function browserChecks(){
           });
           browserPagesChecked++; imagesChecked+=snapshot.images;
           for(const u of snapshot.hrefs)add(u,address);
-          if(snapshot.textLength<60)issue('yellow','Page appears blank in browser',
-            'Only '+snapshot.textLength+' visible text characters were detected on '+device+'.',
-            address,'Open the published page on '+device+' and check for hidden or missing sections.');
+          if(snapshot.textLength<60)issue('yellow','Browser content needs verification',
+            'The '+device+' automated browser measured only '+snapshot.textLength+' visible text characters. This may be delayed Wix rendering, not a confirmed blank page.',
+            address,'Open the page manually on '+device+' and check for missing sections or slow loading.');
           if(snapshot.broken.length)issue('yellow','Broken visible image',
             snapshot.broken.length+' image(s) failed to load in the '+device+' browser view.',
             address,'Check media images and relink any missing assets.');
@@ -168,6 +168,11 @@ async function currentHistory() {
   const raw=Buffer.from(f.content.replace(/\n/g,''),'base64').toString('utf8');
   return {data:JSON.parse(raw),sha:f.sha};
 }
+async function scanBatch(urls) {
+  for(let i=0;i<urls.length;i+=6) {
+    await Promise.all(urls.slice(i,i+6).map(checkPage));
+  }
+}
 async function main() {
   const runMode=process.env.GITHUB_EVENT_NAME||'workflow_dispatch';
   if(runMode==='schedule' && !(localHour()>=4&&localHour()<=5)) {
@@ -180,9 +185,9 @@ async function main() {
   }
   try{
     await discoverSitemaps();
-    for(const u of [...tracked].slice(0,pageLimit))await checkPage(u);
+    await scanBatch([...tracked].slice(0,pageLimit));
     // Gather newly found page URLs without an endless crawl.
-    for(const u of [...tracked].filter(u=>!visited.has(u)).slice(0,Math.max(0,pageLimit-visited.size)))await checkPage(u);
+    await scanBatch([...tracked].filter(u=>!visited.has(u)).slice(0,Math.max(0,pageLimit-visited.size)));
     if(tracked.size>visited.size){unverified++;notes.push((tracked.size-visited.size)+' additional discovered URLs were outside the daily scan limit.');}
     await browserChecks();
     await checkExternal();
