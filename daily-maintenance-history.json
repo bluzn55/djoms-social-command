@@ -1,6 +1,100 @@
 {
   "version": 1,
-  "updatedAt": null,
-  "latest": null,
-  "history": []
+  "updatedAt": "2026-11-06T13:20:07.564Z",
+  "latest": {
+    "id": "webscan-2026-11-06T13:20:07.564Z",
+    "checkedAt": "2026-11-06T13:20:07.564Z",
+    "source": "github-actions-technical-scan",
+    "status": "yellow",
+    "summary": "Review flagged items or parts that could not be verified.",
+    "coverage": {
+      "pagesChecked": 110,
+      "linksChecked": 128,
+      "browserPagesChecked": 14,
+      "imagesChecked": 45,
+      "unverified": 1
+    },
+    "issues": [
+      {
+        "severity": "yellow",
+        "label": "Page appears blank in browser",
+        "problem": "Only 22 visible text characters were detected on desktop.",
+        "url": "https://www.docjaks.com/",
+        "fix": "Open the published page on desktop and check for hidden or missing sections."
+      },
+      {
+        "severity": "yellow",
+        "label": "Page appears blank in browser",
+        "problem": "Only 29 visible text characters were detected on desktop.",
+        "url": "https://www.docjaks.com/sm-welcome",
+        "fix": "Open the published page on desktop and check for hidden or missing sections."
+      },
+      {
+        "severity": "yellow",
+        "label": "Page appears blank in browser",
+        "problem": "Only 22 visible text characters were detected on desktop.",
+        "url": "https://www.docjaks.com/pit-krewe",
+        "fix": "Open the published page on desktop and check for hidden or missing sections."
+      },
+      {
+        "severity": "yellow",
+        "label": "Page appears blank in browser",
+        "problem": "Only 22 visible text characters were detected on desktop.",
+        "url": "https://www.docjaks.com/outlaw-radio-5150",
+        "fix": "Open the published page on desktop and check for hidden or missing sections."
+      }
+    ],
+    "notes": [
+      "14 additional discovered URLs were outside the daily scan limit."
+    ]
+  },
+  "history": [
+    {
+      "id": "webscan-2026-11-06T13:20:07.564Z",
+      "checkedAt": "2026-11-06T13:20:07.564Z",
+      "source": "github-actions-technical-scan",
+      "status": "yellow",
+      "summary": "Review flagged items or parts that could not be verified.",
+      "coverage": {
+        "pagesChecked": 110,
+        "linksChecked": 128,
+        "browserPagesChecked": 14,
+        "imagesChecked": 45,
+        "unverified": 1
+      },
+      "issues": [
+        {
+          "severity": "yellow",
+          "label": "Page appears blank in browser",
+          "problem": "Only 22 visible text characters were detected on desktop.",
+          "url": "https://www.docjaks.com/",
+          "fix": "Open the published page on desktop and check for hidden or missing sections."
+        },
+        {
+          "severity": "yellow",
+          "label": "Page appears blank in browser",
+          "problem": "Only 29 visible text characters were detected on desktop.",
+          "url": "https://www.docjaks.com/sm-welcome",
+          "fix": "Open the published page on desktop and check for hidden or missing sections."
+        },
+        {
+          "severity": "yellow",
+          "label": "Page appears blank in browser",
+          "problem": "Only 22 visible text characters were detected on desktop.",
+          "url": "https://www.docjaks.com/pit-krewe",
+          "fix": "Open the published page on desktop and check for hidden or missing sections."
+        },
+        {
+          "severity": "yellow",
+          "label": "Page appears blank in browser",
+          "problem": "Only 22 visible text characters were detected on desktop.",
+          "url": "https://www.docjaks.com/outlaw-radio-5150",
+          "fix": "Open the published page on desktop and check for hidden or missing sections."
+        }
+      ],
+      "notes": [
+        "14 additional discovered URLs were outside the daily scan limit."
+      ]
+    }
+  ]
 }
