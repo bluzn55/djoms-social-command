@@ -1,54 +1,97 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-06T13:20:07.564Z",
+  "updatedAt": "2026-11-07T10:44:09.459Z",
   "latest": {
-    "id": "webscan-2026-11-06T13:20:07.564Z",
-    "checkedAt": "2026-11-06T13:20:07.564Z",
+    "id": "webscan-2026-11-07T10:44:09.459Z",
+    "checkedAt": "2026-11-07T10:44:09.459Z",
     "source": "github-actions-technical-scan",
     "status": "yellow",
     "summary": "Review flagged items or parts that could not be verified.",
     "coverage": {
-      "pagesChecked": 110,
-      "linksChecked": 128,
+      "pagesChecked": 124,
+      "linksChecked": 142,
       "browserPagesChecked": 14,
       "imagesChecked": 45,
-      "unverified": 1
+      "unverified": 0
     },
     "issues": [
       {
         "severity": "yellow",
-        "label": "Page appears blank in browser",
-        "problem": "Only 22 visible text characters were detected on desktop.",
+        "label": "Browser content needs verification",
+        "problem": "The desktop automated browser measured only 22 visible text characters. This may be delayed Wix rendering, not a confirmed blank page.",
         "url": "https://www.docjaks.com/",
-        "fix": "Open the published page on desktop and check for hidden or missing sections."
+        "fix": "Open the page manually on desktop and check for missing sections or slow loading."
       },
       {
         "severity": "yellow",
-        "label": "Page appears blank in browser",
-        "problem": "Only 29 visible text characters were detected on desktop.",
+        "label": "Browser content needs verification",
+        "problem": "The desktop automated browser measured only 29 visible text characters. This may be delayed Wix rendering, not a confirmed blank page.",
         "url": "https://www.docjaks.com/sm-welcome",
-        "fix": "Open the published page on desktop and check for hidden or missing sections."
+        "fix": "Open the page manually on desktop and check for missing sections or slow loading."
       },
       {
         "severity": "yellow",
-        "label": "Page appears blank in browser",
-        "problem": "Only 22 visible text characters were detected on desktop.",
+        "label": "Browser content needs verification",
+        "problem": "The desktop automated browser measured only 22 visible text characters. This may be delayed Wix rendering, not a confirmed blank page.",
         "url": "https://www.docjaks.com/pit-krewe",
-        "fix": "Open the published page on desktop and check for hidden or missing sections."
+        "fix": "Open the page manually on desktop and check for missing sections or slow loading."
       },
       {
         "severity": "yellow",
-        "label": "Page appears blank in browser",
-        "problem": "Only 22 visible text characters were detected on desktop.",
+        "label": "Browser content needs verification",
+        "problem": "The desktop automated browser measured only 22 visible text characters. This may be delayed Wix rendering, not a confirmed blank page.",
         "url": "https://www.docjaks.com/outlaw-radio-5150",
-        "fix": "Open the published page on desktop and check for hidden or missing sections."
+        "fix": "Open the page manually on desktop and check for missing sections or slow loading."
       }
     ],
-    "notes": [
-      "14 additional discovered URLs were outside the daily scan limit."
-    ]
+    "notes": []
   },
   "history": [
+    {
+      "id": "webscan-2026-11-07T10:44:09.459Z",
+      "checkedAt": "2026-11-07T10:44:09.459Z",
+      "source": "github-actions-technical-scan",
+      "status": "yellow",
+      "summary": "Review flagged items or parts that could not be verified.",
+      "coverage": {
+        "pagesChecked": 124,
+        "linksChecked": 142,
+        "browserPagesChecked": 14,
+        "imagesChecked": 45,
+        "unverified": 0
+      },
+      "issues": [
+        {
+          "severity": "yellow",
+          "label": "Browser content needs verification",
+          "problem": "The desktop automated browser measured only 22 visible text characters. This may be delayed Wix rendering, not a confirmed blank page.",
+          "url": "https://www.docjaks.com/",
+          "fix": "Open the page manually on desktop and check for missing sections or slow loading."
+        },
+        {
+          "severity": "yellow",
+          "label": "Browser content needs verification",
+          "problem": "The desktop automated browser measured only 29 visible text characters. This may be delayed Wix rendering, not a confirmed blank page.",
+          "url": "https://www.docjaks.com/sm-welcome",
+          "fix": "Open the page manually on desktop and check for missing sections or slow loading."
+        },
+        {
+          "severity": "yellow",
+          "label": "Browser content needs verification",
+          "problem": "The desktop automated browser measured only 22 visible text characters. This may be delayed Wix rendering, not a confirmed blank page.",
+          "url": "https://www.docjaks.com/pit-krewe",
+          "fix": "Open the page manually on desktop and check for missing sections or slow loading."
+        },
+        {
+          "severity": "yellow",
+          "label": "Browser content needs verification",
+          "problem": "The desktop automated browser measured only 22 visible text characters. This may be delayed Wix rendering, not a confirmed blank page.",
+          "url": "https://www.docjaks.com/outlaw-radio-5150",
+          "fix": "Open the page manually on desktop and check for missing sections or slow loading."
+        }
+      ],
+      "notes": []
+    },
     {
       "id": "webscan-2026-11-06T13:20:07.564Z",
       "checkedAt": "2026-11-06T13:20:07.564Z",
