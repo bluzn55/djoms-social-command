@@ -303,12 +303,14 @@ function possibleTrigger(item){
   return 'Find the common page, integration, or timing change across affected dates. Cause not confirmed.';
 }
 function recurringIssues(current,previous,checkedAt){
-  const all=[...(Array.isArray(previous.history)?previous.history:[]),{checkedAt,issues:current}];
+  const nowIssues=[...current,...autoRecovered.map(item=>({label:'Transient service recovered on retry',url:item.url,problem:item.trigger,fix:'Investigate why this URL intermittently needs a retry.'}))];
+  const all=[...(Array.isArray(previous.history)?previous.history:[]),{checkedAt,issues:nowIssues}];
   const found=new Map();
   for(const run of all){
     if(!run?.checkedAt)continue;
     const day=localDay(run.checkedAt),seen=new Set();
-    for(const item of run.issues||[]){
+    const observed=[...(run.issues||[]),...(run.autoRecovered||[]).map(item=>({label:'Transient service recovered on retry',url:item.url,problem:item.trigger,fix:'Investigate intermittent responses.'}))];
+    for(const item of observed){
       const key=fingerprint(item);
       if(seen.has(key))continue;seen.add(key);
       const e=found.get(key)||{key,item,first:run.checkedAt,last:run.checkedAt,days:new Set()};
@@ -318,7 +320,7 @@ function recurringIssues(current,previous,checkedAt){
       found.set(key,e);
     }
   }
-  const currentKeys=new Set(current.map(fingerprint));
+  const currentKeys=new Set(nowIssues.map(fingerprint));
   const repairs=Array.isArray(previous.repairs)?previous.repairs:[];
   return [...found.values()].filter(e=>e.days.size>=2 &&
     (Date.parse(checkedAt)-Date.parse(e.last))<=7*86400000).map(e=>{
@@ -334,7 +336,7 @@ function recurringIssues(current,previous,checkedAt){
 function determineStatus(){
   const issues=[...issueMap.values()];
   if(issues.some(x=>x.severity==='red'))return 'red';
-  if(issues.length||unverified||!browserPagesChecked)return 'yellow';
+  if(issues.length||unverified||autoRecovered.length||!browserPagesChecked)return 'yellow';
   return 'green';
 }
 async function githubApi(path,method='GET',body){
@@ -377,15 +379,21 @@ async function main() {
     if(tracked.size>visited.size){unverified++;notes.push((tracked.size-visited.size)+' additional discovered URLs were outside the daily scan limit.');}
     await browserChecks();
     await checkExternal();
+    await Promise.all([checkPublicSeo(),checkPublicBackOffice()]);
   }catch(e){unverified++;issue('red','Scan failed','The morning scan was interrupted: '+String(e.message||e),SITE,'Review scanner logs and retry the website inspection.');}
   const issues=[...issueMap.values()],status=determineStatus();
   const checkedAt=new Date().toISOString();
+  const recurringAlerts=recurringIssues(issues,previous.data,checkedAt);
   const run={id:'webscan-'+checkedAt,checkedAt,startedAt,completedAt:checkedAt,
     durationSeconds:Math.max(0,Math.round((Date.parse(checkedAt)-Date.parse(startedAt))/1000)),
     triggerEvent:runMode,source:'github-actions-technical-scan',status,
     summary: status==='green'?'The automated public web checks passed.':status==='red'?
     'Critical website problem detected. Review the red repair items.':'Review flagged items or parts that could not be verified.',
-    coverage:{pagesChecked,linksChecked,browserPagesChecked,imagesChecked,unverified},issues,notes:notes.slice(0,35)};
+    coverage:{pagesChecked,linksChecked,browserPagesChecked,imagesChecked,unverified,
+      publicExternalLinksAttempted:Math.min(external.size,MAX_PUBLIC_LINKS),
+      publicExternalLinksDiscovered:external.size},
+    issues,seoChecks,backendChecks,autoRecovered:autoRecovered.slice(0,60),
+    recurringAlerts,notes:notes.slice(0,35)};
   const all=[run,...(previous.data.history||[])];
   // Preserve the separately verified repair ledger and future metadata with every scan.
   // Scans are observations: they must never erase or invent repair confirmations.
