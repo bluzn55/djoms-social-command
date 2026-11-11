@@ -206,7 +206,9 @@ async function main() {
     'Critical website problem detected. Review the red repair items.':'Review flagged items or parts that could not be verified.',
     coverage:{pagesChecked,linksChecked,browserPagesChecked,imagesChecked,unverified},issues,notes:notes.slice(0,35)};
   const all=[run,...(previous.data.history||[])];
-  const doc={version:1,updatedAt:checkedAt,latest:run,history:all};
+  // Preserve the separately verified repair ledger and future metadata with every scan.
+  // Scans are observations: they must never erase or invent repair confirmations.
+  const doc={...previous.data,version:2,updatedAt:checkedAt,latest:run,history:all};
   const content=Buffer.from(JSON.stringify(doc,null,2)+'\n').toString('base64');
   await githubApi('/contents/'+HISTORY_FILE,'PUT',{message:'Record Doc Jaks website maintenance '+today+' ('+status+')',
     branch:HISTORY_BRANCH,sha:previous.sha,content});
