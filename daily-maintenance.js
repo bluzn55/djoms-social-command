@@ -127,7 +127,13 @@
     return report && Array.isArray(report.history) ? report.history : [];
   }
   function issueKey(item) {
-    return String(item && item.label || '') + '|' + String(item && item.url || '');
+    var label = String(item && item.label || '').toLowerCase();
+    var family = /browser content needs verification|page appears blank/.test(label) ? 'wix-visual-content' :
+      /broken website page|critical page unreachable/.test(label) ? 'page-unreachable' :
+      /seo metadata/.test(label) ? 'seo-metadata' :
+      /external destination/.test(label) ? 'external-link' :
+      label.replace(/[^a-z0-9]+/g,'-');
+    return family + '|' + String(item && item.url || '').replace(/\/$/,'').toLowerCase();
   }
   function issueLedgerHtml() {
     var history = records(), latest = report && report.latest;
@@ -165,7 +171,7 @@
         var item=row.entry.item, now=row.current, tone=now?(item.severity==='red'?'red':'yellow'):'neutral';
         return '<article class="dj-maint-register-entry dj-maint-tone-'+tone+'">' +
           '<div class="dj-maint-register-head"><strong>'+escapeHtml(item.label||'Website issue')+'</strong>' +
-          '<span class="dj-maint-register-state">'+(now?'REPORTED NOW':'NOT REPORTED IN LATEST SCAN')+'</span></div>'+
+          '<span class="dj-maint-register-state">'+(row.entry.days.size >= 2 ? 'REPEATED · '+row.entry.days.size+' DAYS · ' : '')+(now?'REPORTED NOW':'NOT REPORTED IN LATEST SCAN')+'</span></div>'+
           '<p>'+escapeHtml(item.problem||'Needs review.')+'</p>' +
           '<div class="dj-maint-register-meta"><span>'+row.entry.days.size+' scan day(s) affected</span>'+
           '<span>First: '+escapeHtml(fmt(row.entry.first))+'</span>'+
