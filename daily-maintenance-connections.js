@@ -176,7 +176,7 @@
       '<h3>REPEATED CONNECTION FAILURES</h3>'+
       (repeats.length?'<div class="dj-maint-repeat-list">'+repeats.map(function(x){
         return '<article class="dj-maint-repeat-entry"><b>'+escapeHtml(x.name)+'</b>'+
-          '<strong class="dj-maint-secure-repeat-tag">NOT HEALTHY ON '+x.days+' DIFFERENT DAYS</strong>'+
+          '<strong class="dj-maint-secure-repeat-tag">FLAGGED ON '+x.days+' DIFFERENT DAYS</strong>'+
           '<p>'+escapeHtml(x.latest?.message||'Check provider permissions, token refresh and API response logs.')+'</p>'+
           '<p><b>Possible trigger:</b> Expiring permissions, provider delays, or a backend configuration change; diagnosis not confirmed.</p></article>';
       }).join('')+'</div>':'<p class="dj-maint-empty">No provider check has been recorded as unhealthy on two separate days in the saved owner history.</p>')+
