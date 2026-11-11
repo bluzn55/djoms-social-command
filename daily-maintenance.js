@@ -101,6 +101,10 @@
         '<strong>' + escapeHtml(tone.toUpperCase()) + '</strong>' +
         '<span>' + countIssues(run) + ' finding(s)</span></summary>' +
         '<div class="dj-maint-history-body"><p>' + escapeHtml(run.summary || 'Completed site check.') + '</p>' +
+        '<p class="dj-maint-coverage">Completed: ' + escapeHtml(fmt(run.checkedAt)) +
+        (run.startedAt ? ' · Started: ' + escapeHtml(fmt(run.startedAt)) : '') +
+        (Number.isFinite(Number(run.durationSeconds)) ? ' · Duration: ' + escapeHtml(run.durationSeconds) + ' sec' : '') +
+        '</p>' +
         '<p class="dj-maint-coverage">' + escapeHtml(coverage.pagesChecked || 0) + ' pages · ' +
         escapeHtml(coverage.linksChecked || 0) + ' links · ' +
         escapeHtml(coverage.browserPagesChecked || 0) + ' browser views checked' +
@@ -150,6 +154,11 @@
       checkedOnce = true;
     } finally {
       loading = false; drawQuick(); mountMission();
+      // Refresh the standalone maintenance tile at the top of Needs Attention.
+      if (typeof activeView !== 'undefined' && activeView === 'Needs Attention') {
+        var attentionTile = document.querySelector('.dj-maint-attention-strip [data-dj-maint-open]');
+        if (attentionTile) attentionTile.outerHTML = missionHtml();
+      }
       if (typeof activeView !== 'undefined' && activeView === 'Daily Maintenance') render();
     }
   }
