@@ -60,10 +60,12 @@
       return [
         row('gbp',google.connected&&!google.needsLocation?'green':'yellow',
           String(google.message||'Business profile connection needs review.')),
-        row('yelp',data?.yelp?.connected?'green':'yellow',
-          String(data?.yelp?.message||'Yelp live reporting was not confirmed.')),
-        row('tripadvisor',data?.tripadvisor?.connected?'green':'yellow',
-          String(data?.tripadvisor?.message||'Tripadvisor live reporting was not confirmed.')),
+        row('yelp',data?.yelp?.connected?'green':'optional',
+          data?.yelp?.connected ? String(data.yelp.message||'Yelp API reporting is connected.') :
+            'Optional API reporting not connected. '+String(data?.yelp?.message||'No paid API reporting configured.')),
+        row('tripadvisor',data?.tripadvisor?.connected?'green':'optional',
+          data?.tripadvisor?.connected ? String(data.tripadvisor.message||'Tripadvisor API reporting is connected.') :
+            'Optional API reporting not connected. '+String(data?.tripadvisor?.message||'No API reporting configured.')),
         row('wix',website.connected===true?'green':'unverified',
           website.connected===true?'Website reporting connection returned data.':
             'Website reporting endpoint replied; Wix reporting health not independently verified.')
@@ -136,7 +138,7 @@
       var failedDays=new Set(),latestIssue=null;
       history.forEach(function(report){
         var item=(report.rows||[]).find(function(x){return x.id===id;});
-        if(!item||item.state==='green')return;
+        if(!item||item.state==='green'||['yelp','tripadvisor'].includes(id))return;
         var day=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Chicago',year:'numeric',
           month:'2-digit',day:'2-digit'}).format(new Date(report.checkedAt));
         failedDays.add(day);latestIssue=item;
@@ -201,7 +203,7 @@
       ' data-dj-maint-go-view="'+escapeHtml(guide.view)+'" data-dj-maint-focus-local="1">'+
       escapeHtml(guide.secondary)+'</button>';
     return '<details class="dj-maint-remedy">'+
-      '<summary>FIX / VIEW SETUP <span aria-hidden="true">▾</span></summary>'+
+      '<summary>'+(item.state==='optional'?'VIEW API OPTIONS':'FIX / VIEW SETUP')+' <span aria-hidden="true">▾</span></summary>'+
       '<div class="dj-maint-remedy-body"><p><b>What this means:</b> '+escapeHtml(guide.explanation)+'</p>'+
       '<p><b>What to do:</b> '+escapeHtml(guide.steps)+'</p>'+
       (isOptional?'<p class="dj-maint-optional-note">OPTIONAL API REPORTING. Do not buy a plan just to clear this warning.</p>':'')+
@@ -210,7 +212,8 @@
   function rowHtml(item){
     var status=item.state||'unverified';
     var nice={green:'VERIFIED CONNECTED',yellow:'NEEDS ATTENTION',
-      red:'SERVICE PROBLEM',unverified:'UNVERIFIED'}[status]||'UNVERIFIED';
+      red:'SERVICE PROBLEM',unverified:'UNVERIFIED',
+      optional:'OPTIONAL · NOT CONNECTED'}[status]||'UNVERIFIED';
     var needs=status!=='green';
     return '<article class="dj-maint-secure-check dj-maint-tone-'+escapeHtml(status)+'" id="dj-maint-source-'+
       escapeHtml(item.id)+'">'+
@@ -220,9 +223,10 @@
   }
 
   function renderHtml(){
-    var rows=state.rows||[],attention=rows.filter(function(x){return x.state!=='green';}),
-      passed=rows.filter(function(x){return x.state==='green';});
-    var counts={green:0,yellow:0,red:0,unverified:0};
+    var rows=state.rows||[],attention=rows.filter(function(x){return x.state!=='green'&&x.state!=='optional';}),
+      passed=rows.filter(function(x){return x.state==='green';}),
+      optional=rows.filter(function(x){return x.state==='optional';});
+    var counts={green:0,yellow:0,red:0,unverified:0,optional:0};
     rows.forEach(function(r){if(Object.prototype.hasOwnProperty.call(counts,r.state))counts[r.state]++;});
     var repeats=issueRepeats(),last=state.history.slice(0,15);
     return '<section class="dj-maint-secure-section">'+
@@ -234,13 +238,16 @@
       '<span>'+(state.checkedAt?'Last completed: '+escapeHtml(dateFmt(state.checkedAt)):'No owner connection check on record')+'</span></div>'+
       (state.saveError?'<p class="dj-maint-secure-error">'+escapeHtml(state.saveError)+'</p>':'')+
       (rows.length?'<p class="dj-maint-connection-counts"><b>'+counts.green+' connected</b> · '+
-        counts.yellow+' need attention · '+counts.red+' problems · '+counts.unverified+' unverified</p>'+
+        counts.yellow+' need attention · '+counts.optional+' optional · '+counts.red+' problems · '+counts.unverified+' unverified</p>'+
         (attention.length?'<h3 class="dj-maint-attention-header">NEEDS ATTENTION · FIX IT HERE</h3>'+
         '<p class="dj-maint-register-note">Open <b>FIX / VIEW SETUP</b> on each warning below. '+
-        'Yelp and Tripadvisor API reporting are optional; a warning here does not prove the public listing is broken.</p>'+
+        'Only connections that require action are listed here. Optional API reporting is separate below.</p>'+
         '<div class="dj-maint-secure-grid dj-maint-fix-grid">'+attention.map(rowHtml).join('')+'</div>':'')+
         '<h3>WORKING CONNECTIONS</h3>'+
-        '<div class="dj-maint-secure-grid">'+passed.map(rowHtml).join('')+'</div>':
+        '<div class="dj-maint-secure-grid">'+passed.map(rowHtml).join('')+'</div>'+
+        (optional.length?'<h3>OPTIONAL REPORTING · NOT CONNECTED</h3>'+
+          '<p class="dj-maint-register-note">Yelp and Tripadvisor API access is optional. Your public business listings are separate, and no subscription is needed just to clear these notices.</p>'+
+          '<div class="dj-maint-secure-grid dj-maint-optional-grid">'+optional.map(rowHtml).join('')+'</div>':''):
         '<p class="dj-maint-empty">The signed-in provider checks have not completed yet.</p>')+
       '<h3>REPEATED CONNECTION FAILURES</h3>'+
       (repeats.length?'<div class="dj-maint-repeat-list">'+repeats.map(function(x){
@@ -250,11 +257,13 @@
           '<p><b>Likely reason or next diagnostic:</b> '+escapeHtml(x.id==='yelp'?'Developer API trial expired. This is a subscription access issue, not an unexpected outage.':x.id==='tripadvisor'?'No Tripadvisor API key or location ID is configured in the backend.':x.id==='gbp'?'No working Google Business Profile authorization or selected location was returned.':'Investigate permissions, provider response errors, and backend configuration changes.')+'</p></article>';
       }).join('')+'</div>':'<p class="dj-maint-empty">No provider check has been recorded as unhealthy on two separate days in the saved owner history.</p>')+
       '<h3>PRIVATE CONNECTION HISTORY</h3>'+
+      '<p class="dj-maint-register-note">Older saved reports retain their original status labels from before optional services were reclassified.</p>'+
       (last.length?'<div class="dj-maint-history">'+last.map(function(report){
         var totals=report.summary||{};
         return '<details class="dj-maint-history-entry"><summary><b>'+escapeHtml(dateFmt(report.checkedAt))+'</b>'+
           '<span>'+Number(totals.green||0)+' connected · '+Number(totals.yellow||0)+' need attention · '+
-          Number(totals.red||0)+' red · '+Number(totals.unverified||0)+' unverified</span></summary>'+
+          Number(totals.optional||0)+' optional · '+Number(totals.red||0)+' red · '+
+          Number(totals.unverified||0)+' unverified</span></summary>'+
           '<div class="dj-maint-history-body">'+(report.rows||[]).map(function(x){
             return '<p><b>'+escapeHtml(x.label)+'</b> · '+escapeHtml(x.state||'unverified')+
               ' · '+escapeHtml(x.message||'')+'</p>';
@@ -270,7 +279,10 @@
       // Don't create repeated automatic history entries when someone refreshes the page.
       // The explicit Check Connections Now button always forces a fresh run.
       var last=state.history[0]?.checkedAt;
-      if(last&&Number.isFinite(Date.parse(last))&&Date.now()-Date.parse(last)<5*60000)return;
+      var oldOptionalPolicy=state.rows.some(function(r){
+        return ['yelp','tripadvisor'].includes(r.id)&&r.state!=='green'&&r.state!=='optional';
+      });
+      if(!oldOptionalPolicy&&last&&Number.isFinite(Date.parse(last))&&Date.now()-Date.parse(last)<5*60000)return;
       return run();
     }).catch(function(e){
       state.saveError=String(e.message||e);redraw();
