@@ -247,6 +247,90 @@ async function checkPublicSeo(){
   }catch(e){unverified++;recordCheck('seo','Sitemap index','unverified',String(e.message||e),sitemapUrl);}
 }
 
+
+async function checkPublicBackOffice(){
+  // Public probes only: a login gate responding is NOT proof an API token works.
+  const targets=[
+    {label:'DJOMS owner dashboard',url:'https://djoms-social-command.vercel.app/'},
+    {label:'DJOMS account authorization',url:'https://djoms-social-command.vercel.app/api/meta/status',private:true},
+    {label:'Search Console API route',url:'https://djoms-social-command.vercel.app/api/meta/seo-status',private:true},
+    {label:'Bing Webmaster API route',url:'https://djoms-social-command.vercel.app/api/meta/bing-status',private:true},
+    {label:'GA4 analytics API route',url:'https://djoms-social-command.vercel.app/api/meta/ga4-status',private:true},
+    {label:'Outlaw Radio public website',url:'https://outlawradio5150.com/'}
+  ];
+  await Promise.all(targets.map(async(target)=>{
+    try{
+      const response=await fetchWithTimeout(target.url,14000),status=response.status;
+      if(target.private&&[401,403].includes(status)){
+        recordCheck('backend',target.label,'login-required',
+          'HTTP '+status+': sign-in required. Underlying service authorization has not been tested.',target.url);
+      }else if(status>=500 || status===404){
+        recordCheck('backend',target.label,'needs-attention','HTTP '+status,target.url);
+        issue('yellow','Back-office service response','Public request to service returned HTTP '+status+'.',target.url,
+          'Review the Vercel deployment, routing and private service connectivity.');
+      }else if(!response.ok){
+        unverified++;
+        recordCheck('backend',target.label,'unverified','HTTP '+status+'; private connection still not tested.',target.url);
+      }else{
+        recordCheck('backend',target.label,target.private?'unverified':'pass',
+          target.private?'Public route responded without signed-in verification.':'Public site replied HTTP '+status+'.',target.url);
+      }
+    }catch(e){
+      unverified++;recordCheck('backend',target.label,'unverified',
+        'Unable to check this service: '+String(e.message||e),target.url);
+    }
+  }));
+}
+function fingerprint(item){
+  const label=String(item?.label||'').toLowerCase();
+  const family=/browser content needs verification|page appears blank/.test(label)?'wix-visual-content':
+    /broken website page|critical page unreachable/.test(label)?'page-unreachable':
+    /seo metadata/.test(label)?'seo-metadata':
+    /external destination/.test(label)?'external-link':
+    label.replace(/[^a-z0-9]+/g,'-');
+  return family+'|'+String(item?.url||'').replace(/\/$/,'').toLowerCase();
+}
+function possibleTrigger(item){
+  const label=String(item?.label||'').toLowerCase();
+  if(/browser content|page appears blank/.test(label))
+    return 'Possible delayed Wix page hydration or image-heavy content. Compare actual loaded desktop/mobile visuals and DOM text. Cause not confirmed.';
+  if(/seo|robots|sitemap/.test(label))
+    return 'Possible Wix SEO publishing or indexing configuration. Compare Wix site settings and live HTML. Cause not confirmed.';
+  if(/back-office|service response/.test(label))
+    return 'Possible Vercel deployment, proxy routing or authentication fault. Review exact response codes and logs. Cause not confirmed.';
+  if(/external/.test(label))
+    return 'Possible changed destination or bot-blocked response. Compare browser and automated requests. Cause not confirmed.';
+  return 'Find the common page, integration, or timing change across affected dates. Cause not confirmed.';
+}
+function recurringIssues(current,previous,checkedAt){
+  const all=[...(Array.isArray(previous.history)?previous.history:[]),{checkedAt,issues:current}];
+  const found=new Map();
+  for(const run of all){
+    if(!run?.checkedAt)continue;
+    const day=localDay(run.checkedAt),seen=new Set();
+    for(const item of run.issues||[]){
+      const key=fingerprint(item);
+      if(seen.has(key))continue;seen.add(key);
+      const e=found.get(key)||{key,item,first:run.checkedAt,last:run.checkedAt,days:new Set()};
+      e.days.add(day);
+      if(Date.parse(run.checkedAt)>Date.parse(e.last)){e.last=run.checkedAt;e.item=item;}
+      if(Date.parse(run.checkedAt)<Date.parse(e.first))e.first=run.checkedAt;
+      found.set(key,e);
+    }
+  }
+  const currentKeys=new Set(current.map(fingerprint));
+  const repairs=Array.isArray(previous.repairs)?previous.repairs:[];
+  return [...found.values()].filter(e=>e.days.size>=2 &&
+    (Date.parse(checkedAt)-Date.parse(e.last))<=7*86400000).map(e=>{
+      const related=repairs.filter(r=>(r.issueKey===e.key||r.relatedIssueKey===e.key)&&r.status==='verified'&&r.verifiedAt);
+      return {key:e.key,label:e.item.label,url:e.item.url,firstSeen:e.first,lastSeen:e.last,
+        observedDays:e.days.size,current:currentKeys.has(e.key),
+        reopenedAfterVerifiedFix:related.some(r=>Date.parse(e.last)>Date.parse(r.verifiedAt)),
+        verifiedFixCount:related.length,possibleTrigger:possibleTrigger(e.item)};
+    }).sort((a,b)=>Number(b.reopenedAfterVerifiedFix)-Number(a.reopenedAfterVerifiedFix)||
+      Number(b.current)-Number(a.current)||b.observedDays-a.observedDays).slice(0,35);
+}
+
 function determineStatus(){
   const issues=[...issueMap.values()];
   if(issues.some(x=>x.severity==='red'))return 'red';
