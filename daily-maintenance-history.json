@@ -1,22 +1,24 @@
 {
   "version": 2,
-  "updatedAt": "2026-11-11T11:32:21.374Z",
+  "updatedAt": "2026-11-11T11:50:31.031Z",
   "latest": {
-    "id": "webscan-2026-11-11T11:32:21.374Z",
-    "checkedAt": "2026-11-11T11:32:21.374Z",
-    "startedAt": "2026-11-11T11:30:45.121Z",
-    "completedAt": "2026-11-11T11:32:21.374Z",
-    "durationSeconds": 96,
+    "id": "webscan-2026-11-11T11:50:31.031Z",
+    "checkedAt": "2026-11-11T11:50:31.031Z",
+    "startedAt": "2026-11-11T11:48:32.313Z",
+    "completedAt": "2026-11-11T11:50:31.031Z",
+    "durationSeconds": 119,
     "triggerEvent": "push",
     "source": "github-actions-technical-scan",
     "status": "yellow",
     "summary": "Review flagged items or parts that could not be verified.",
     "coverage": {
       "pagesChecked": 124,
-      "linksChecked": 142,
-      "browserPagesChecked": 14,
-      "imagesChecked": 45,
-      "unverified": 0
+      "linksChecked": 173,
+      "browserPagesChecked": 24,
+      "imagesChecked": 72,
+      "unverified": 2,
+      "publicExternalLinksAttempted": 50,
+      "publicExternalLinksDiscovered": 124
     },
     "issues": [
       {
@@ -39,11 +41,409 @@
         "problem": "The desktop automated browser measured only 22 visible text characters. This may be delayed Wix rendering, not a confirmed blank page.",
         "url": "https://www.docjaks.com/outlaw-radio-5150",
         "fix": "Open the page manually on desktop and check for missing sections or slow loading."
+      },
+      {
+        "severity": "yellow",
+        "label": "SEO metadata needs verification",
+        "problem": "A basic SEO tag is absent from the public HTML.",
+        "url": "https://www.docjaks.com/sm-welcome",
+        "fix": "Inspect Wix SEO settings for title, description and canonical URL."
       }
     ],
-    "notes": []
+    "seoChecks": [
+      {
+        "label": "Page title",
+        "state": "pass",
+        "detail": "Title: Doc Jaks | BBQ Sauces, Books &amp; Music",
+        "url": "https://www.docjaks.com/",
+        "checkedAt": "2026-11-11T11:50:30.462Z"
+      },
+      {
+        "label": "Meta description",
+        "state": "pass",
+        "detail": "Meta description present.",
+        "url": "https://www.docjaks.com/",
+        "checkedAt": "2026-11-11T11:50:30.462Z"
+      },
+      {
+        "label": "Canonical URL",
+        "state": "pass",
+        "detail": "Canonical: https://www.docjaks.com",
+        "url": "https://www.docjaks.com/",
+        "checkedAt": "2026-11-11T11:50:30.462Z"
+      },
+      {
+        "label": "Noindex check",
+        "state": "pass",
+        "detail": "No meta noindex detected; indexing itself not verified.",
+        "url": "https://www.docjaks.com/",
+        "checkedAt": "2026-11-11T11:50:30.462Z"
+      },
+      {
+        "label": "Page title",
+        "state": "pass",
+        "detail": "Title: SM Welcome | Doc Jaks",
+        "url": "https://www.docjaks.com/sm-welcome",
+        "checkedAt": "2026-11-11T11:50:30.517Z"
+      },
+      {
+        "label": "Meta description",
+        "state": "needs-attention",
+        "detail": "No public meta description found.",
+        "url": "https://www.docjaks.com/sm-welcome",
+        "checkedAt": "2026-11-11T11:50:30.517Z"
+      },
+      {
+        "label": "Canonical URL",
+        "state": "pass",
+        "detail": "Canonical: https://www.docjaks.com/sm-welcome",
+        "url": "https://www.docjaks.com/sm-welcome",
+        "checkedAt": "2026-11-11T11:50:30.517Z"
+      },
+      {
+        "label": "Noindex check",
+        "state": "pass",
+        "detail": "No meta noindex detected; indexing itself not verified.",
+        "url": "https://www.docjaks.com/sm-welcome",
+        "checkedAt": "2026-11-11T11:50:30.517Z"
+      },
+      {
+        "label": "Robots.txt",
+        "state": "pass",
+        "detail": "Robots file responded; crawling rules may still require review.",
+        "url": "https://www.docjaks.com/robots.txt",
+        "checkedAt": "2026-11-11T11:50:30.596Z"
+      },
+      {
+        "label": "Sitemap index",
+        "state": "pass",
+        "detail": "XML sitemap index has location entries.",
+        "url": "https://www.docjaks.com/sitemap.xml",
+        "checkedAt": "2026-11-11T11:50:30.626Z"
+      }
+    ],
+    "backendChecks": [
+      {
+        "label": "DJOMS owner dashboard",
+        "state": "pass",
+        "detail": "Public site replied HTTP 200.",
+        "url": "https://djoms-social-command.vercel.app/",
+        "checkedAt": "2026-11-11T11:50:30.565Z"
+      },
+      {
+        "label": "Search Console API route",
+        "state": "login-required",
+        "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
+        "url": "https://djoms-social-command.vercel.app/api/meta/seo-status",
+        "checkedAt": "2026-11-11T11:50:30.575Z"
+      },
+      {
+        "label": "GA4 analytics API route",
+        "state": "login-required",
+        "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
+        "url": "https://djoms-social-command.vercel.app/api/meta/ga4-status",
+        "checkedAt": "2026-11-11T11:50:30.613Z"
+      },
+      {
+        "label": "Bing Webmaster API route",
+        "state": "login-required",
+        "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
+        "url": "https://djoms-social-command.vercel.app/api/meta/bing-status",
+        "checkedAt": "2026-11-11T11:50:30.620Z"
+      },
+      {
+        "label": "Outlaw Radio public website",
+        "state": "pass",
+        "detail": "Public site replied HTTP 200.",
+        "url": "https://outlawradio5150.com/",
+        "checkedAt": "2026-11-11T11:50:30.668Z"
+      },
+      {
+        "label": "DJOMS account authorization",
+        "state": "login-required",
+        "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
+        "url": "https://djoms-social-command.vercel.app/api/meta/status",
+        "checkedAt": "2026-11-11T11:50:31.031Z"
+      }
+    ],
+    "autoRecovered": [],
+    "recurringAlerts": [
+      {
+        "key": "wix-visual-content|https://www.docjaks.com",
+        "label": "Browser content needs verification",
+        "url": "https://www.docjaks.com/",
+        "firstSeen": "2026-11-06T13:20:07.564Z",
+        "lastSeen": "2026-11-11T11:50:31.031Z",
+        "observedDays": 3,
+        "current": true,
+        "reopenedAfterVerifiedFix": false,
+        "verifiedFixCount": 0,
+        "possibleTrigger": "Possible delayed Wix page hydration or image-heavy content. Compare actual loaded desktop/mobile visuals and DOM text. Cause not confirmed."
+      },
+      {
+        "key": "wix-visual-content|https://www.docjaks.com/sm-welcome",
+        "label": "Browser content needs verification",
+        "url": "https://www.docjaks.com/sm-welcome",
+        "firstSeen": "2026-11-06T13:20:07.564Z",
+        "lastSeen": "2026-11-11T11:50:31.031Z",
+        "observedDays": 3,
+        "current": true,
+        "reopenedAfterVerifiedFix": false,
+        "verifiedFixCount": 0,
+        "possibleTrigger": "Possible delayed Wix page hydration or image-heavy content. Compare actual loaded desktop/mobile visuals and DOM text. Cause not confirmed."
+      },
+      {
+        "key": "wix-visual-content|https://www.docjaks.com/outlaw-radio-5150",
+        "label": "Browser content needs verification",
+        "url": "https://www.docjaks.com/outlaw-radio-5150",
+        "firstSeen": "2026-11-06T13:20:07.564Z",
+        "lastSeen": "2026-11-11T11:50:31.031Z",
+        "observedDays": 3,
+        "current": true,
+        "reopenedAfterVerifiedFix": false,
+        "verifiedFixCount": 0,
+        "possibleTrigger": "Possible delayed Wix page hydration or image-heavy content. Compare actual loaded desktop/mobile visuals and DOM text. Cause not confirmed."
+      },
+      {
+        "key": "wix-visual-content|https://www.docjaks.com/pit-krewe",
+        "label": "Browser content needs verification",
+        "url": "https://www.docjaks.com/pit-krewe",
+        "firstSeen": "2026-11-06T13:20:07.564Z",
+        "lastSeen": "2026-11-07T10:44:09.459Z",
+        "observedDays": 2,
+        "current": false,
+        "reopenedAfterVerifiedFix": false,
+        "verifiedFixCount": 0,
+        "possibleTrigger": "Possible delayed Wix page hydration or image-heavy content. Compare actual loaded desktop/mobile visuals and DOM text. Cause not confirmed."
+      }
+    ],
+    "notes": [
+      "Unable to verify external link http://place.it",
+      "74 external URLs exceeded the scan limit."
+    ]
   },
   "history": [
+    {
+      "id": "webscan-2026-11-11T11:50:31.031Z",
+      "checkedAt": "2026-11-11T11:50:31.031Z",
+      "startedAt": "2026-11-11T11:48:32.313Z",
+      "completedAt": "2026-11-11T11:50:31.031Z",
+      "durationSeconds": 119,
+      "triggerEvent": "push",
+      "source": "github-actions-technical-scan",
+      "status": "yellow",
+      "summary": "Review flagged items or parts that could not be verified.",
+      "coverage": {
+        "pagesChecked": 124,
+        "linksChecked": 173,
+        "browserPagesChecked": 24,
+        "imagesChecked": 72,
+        "unverified": 2,
+        "publicExternalLinksAttempted": 50,
+        "publicExternalLinksDiscovered": 124
+      },
+      "issues": [
+        {
+          "severity": "yellow",
+          "label": "Browser content needs verification",
+          "problem": "The desktop automated browser measured only 22 visible text characters. This may be delayed Wix rendering, not a confirmed blank page.",
+          "url": "https://www.docjaks.com/",
+          "fix": "Open the page manually on desktop and check for missing sections or slow loading."
+        },
+        {
+          "severity": "yellow",
+          "label": "Browser content needs verification",
+          "problem": "The desktop automated browser measured only 29 visible text characters. This may be delayed Wix rendering, not a confirmed blank page.",
+          "url": "https://www.docjaks.com/sm-welcome",
+          "fix": "Open the page manually on desktop and check for missing sections or slow loading."
+        },
+        {
+          "severity": "yellow",
+          "label": "Browser content needs verification",
+          "problem": "The desktop automated browser measured only 22 visible text characters. This may be delayed Wix rendering, not a confirmed blank page.",
+          "url": "https://www.docjaks.com/outlaw-radio-5150",
+          "fix": "Open the page manually on desktop and check for missing sections or slow loading."
+        },
+        {
+          "severity": "yellow",
+          "label": "SEO metadata needs verification",
+          "problem": "A basic SEO tag is absent from the public HTML.",
+          "url": "https://www.docjaks.com/sm-welcome",
+          "fix": "Inspect Wix SEO settings for title, description and canonical URL."
+        }
+      ],
+      "seoChecks": [
+        {
+          "label": "Page title",
+          "state": "pass",
+          "detail": "Title: Doc Jaks | BBQ Sauces, Books &amp; Music",
+          "url": "https://www.docjaks.com/",
+          "checkedAt": "2026-11-11T11:50:30.462Z"
+        },
+        {
+          "label": "Meta description",
+          "state": "pass",
+          "detail": "Meta description present.",
+          "url": "https://www.docjaks.com/",
+          "checkedAt": "2026-11-11T11:50:30.462Z"
+        },
+        {
+          "label": "Canonical URL",
+          "state": "pass",
+          "detail": "Canonical: https://www.docjaks.com",
+          "url": "https://www.docjaks.com/",
+          "checkedAt": "2026-11-11T11:50:30.462Z"
+        },
+        {
+          "label": "Noindex check",
+          "state": "pass",
+          "detail": "No meta noindex detected; indexing itself not verified.",
+          "url": "https://www.docjaks.com/",
+          "checkedAt": "2026-11-11T11:50:30.462Z"
+        },
+        {
+          "label": "Page title",
+          "state": "pass",
+          "detail": "Title: SM Welcome | Doc Jaks",
+          "url": "https://www.docjaks.com/sm-welcome",
+          "checkedAt": "2026-11-11T11:50:30.517Z"
+        },
+        {
+          "label": "Meta description",
+          "state": "needs-attention",
+          "detail": "No public meta description found.",
+          "url": "https://www.docjaks.com/sm-welcome",
+          "checkedAt": "2026-11-11T11:50:30.517Z"
+        },
+        {
+          "label": "Canonical URL",
+          "state": "pass",
+          "detail": "Canonical: https://www.docjaks.com/sm-welcome",
+          "url": "https://www.docjaks.com/sm-welcome",
+          "checkedAt": "2026-11-11T11:50:30.517Z"
+        },
+        {
+          "label": "Noindex check",
+          "state": "pass",
+          "detail": "No meta noindex detected; indexing itself not verified.",
+          "url": "https://www.docjaks.com/sm-welcome",
+          "checkedAt": "2026-11-11T11:50:30.517Z"
+        },
+        {
+          "label": "Robots.txt",
+          "state": "pass",
+          "detail": "Robots file responded; crawling rules may still require review.",
+          "url": "https://www.docjaks.com/robots.txt",
+          "checkedAt": "2026-11-11T11:50:30.596Z"
+        },
+        {
+          "label": "Sitemap index",
+          "state": "pass",
+          "detail": "XML sitemap index has location entries.",
+          "url": "https://www.docjaks.com/sitemap.xml",
+          "checkedAt": "2026-11-11T11:50:30.626Z"
+        }
+      ],
+      "backendChecks": [
+        {
+          "label": "DJOMS owner dashboard",
+          "state": "pass",
+          "detail": "Public site replied HTTP 200.",
+          "url": "https://djoms-social-command.vercel.app/",
+          "checkedAt": "2026-11-11T11:50:30.565Z"
+        },
+        {
+          "label": "Search Console API route",
+          "state": "login-required",
+          "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
+          "url": "https://djoms-social-command.vercel.app/api/meta/seo-status",
+          "checkedAt": "2026-11-11T11:50:30.575Z"
+        },
+        {
+          "label": "GA4 analytics API route",
+          "state": "login-required",
+          "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
+          "url": "https://djoms-social-command.vercel.app/api/meta/ga4-status",
+          "checkedAt": "2026-11-11T11:50:30.613Z"
+        },
+        {
+          "label": "Bing Webmaster API route",
+          "state": "login-required",
+          "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
+          "url": "https://djoms-social-command.vercel.app/api/meta/bing-status",
+          "checkedAt": "2026-11-11T11:50:30.620Z"
+        },
+        {
+          "label": "Outlaw Radio public website",
+          "state": "pass",
+          "detail": "Public site replied HTTP 200.",
+          "url": "https://outlawradio5150.com/",
+          "checkedAt": "2026-11-11T11:50:30.668Z"
+        },
+        {
+          "label": "DJOMS account authorization",
+          "state": "login-required",
+          "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
+          "url": "https://djoms-social-command.vercel.app/api/meta/status",
+          "checkedAt": "2026-11-11T11:50:31.031Z"
+        }
+      ],
+      "autoRecovered": [],
+      "recurringAlerts": [
+        {
+          "key": "wix-visual-content|https://www.docjaks.com",
+          "label": "Browser content needs verification",
+          "url": "https://www.docjaks.com/",
+          "firstSeen": "2026-11-06T13:20:07.564Z",
+          "lastSeen": "2026-11-11T11:50:31.031Z",
+          "observedDays": 3,
+          "current": true,
+          "reopenedAfterVerifiedFix": false,
+          "verifiedFixCount": 0,
+          "possibleTrigger": "Possible delayed Wix page hydration or image-heavy content. Compare actual loaded desktop/mobile visuals and DOM text. Cause not confirmed."
+        },
+        {
+          "key": "wix-visual-content|https://www.docjaks.com/sm-welcome",
+          "label": "Browser content needs verification",
+          "url": "https://www.docjaks.com/sm-welcome",
+          "firstSeen": "2026-11-06T13:20:07.564Z",
+          "lastSeen": "2026-11-11T11:50:31.031Z",
+          "observedDays": 3,
+          "current": true,
+          "reopenedAfterVerifiedFix": false,
+          "verifiedFixCount": 0,
+          "possibleTrigger": "Possible delayed Wix page hydration or image-heavy content. Compare actual loaded desktop/mobile visuals and DOM text. Cause not confirmed."
+        },
+        {
+          "key": "wix-visual-content|https://www.docjaks.com/outlaw-radio-5150",
+          "label": "Browser content needs verification",
+          "url": "https://www.docjaks.com/outlaw-radio-5150",
+          "firstSeen": "2026-11-06T13:20:07.564Z",
+          "lastSeen": "2026-11-11T11:50:31.031Z",
+          "observedDays": 3,
+          "current": true,
+          "reopenedAfterVerifiedFix": false,
+          "verifiedFixCount": 0,
+          "possibleTrigger": "Possible delayed Wix page hydration or image-heavy content. Compare actual loaded desktop/mobile visuals and DOM text. Cause not confirmed."
+        },
+        {
+          "key": "wix-visual-content|https://www.docjaks.com/pit-krewe",
+          "label": "Browser content needs verification",
+          "url": "https://www.docjaks.com/pit-krewe",
+          "firstSeen": "2026-11-06T13:20:07.564Z",
+          "lastSeen": "2026-11-07T10:44:09.459Z",
+          "observedDays": 2,
+          "current": false,
+          "reopenedAfterVerifiedFix": false,
+          "verifiedFixCount": 0,
+          "possibleTrigger": "Possible delayed Wix page hydration or image-heavy content. Compare actual loaded desktop/mobile visuals and DOM text. Cause not confirmed."
+        }
+      ],
+      "notes": [
+        "Unable to verify external link http://place.it",
+        "74 external URLs exceeded the scan limit."
+      ]
+    },
     {
       "id": "webscan-2026-11-11T11:32:21.374Z",
       "checkedAt": "2026-11-11T11:32:21.374Z",
