@@ -141,7 +141,7 @@ async function browserChecks(){
           browserPagesChecked++; imagesChecked+=snapshot.images;
           for(const u of snapshot.hrefs)add(u,address);
           if(snapshot.textLength<60)issue('yellow','Browser content needs verification',
-            'The '+device+' automated browser measured only '+snapshot.textLength+' visible text characters. This may be delayed Wix rendering, not a confirmed blank page.',
+            'The '+device+' browser measured '+snapshot.textLength+' selectable text characters and '+snapshot.images+' visible images. Image-led design or delayed Wix rendering may trigger this alert; it does not confirm a blank page.',
             address,'Open the page manually on '+device+' and check for missing sections or slow loading.');
           if(snapshot.broken.length)issue('yellow','Broken visible image',
             snapshot.broken.length+' image(s) failed to load in the '+device+' browser view.',
