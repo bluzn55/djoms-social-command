@@ -34,6 +34,9 @@
   function countIssues(run) {
     return run && Array.isArray(run.issues) ? run.issues.length : 0;
   }
+  function recurringCount(run) {
+    return run && Array.isArray(run.recurringAlerts) ? run.recurringAlerts.length : 0;
+  }
   function quickHtml() {
     var state = currentResult(), run = state.run;
     return '<button type="button" class="dj-maint-quick dj-maint-tone-' + state.tone + '" data-dj-maint-open="1" ' +
@@ -52,7 +55,7 @@
       '<strong>' + escapeHtml(state.label) + '</strong></span>' +
       '<span class="dj-maint-mission-date">Last checked: ' + escapeHtml(run ? fmt(run.checkedAt) : 'Not run yet') + '</span>' +
       '<span class="dj-maint-mission-next">' +
-      (state.tone==='yellow'||state.tone==='red'?countIssues(run)+' finding(s) · VIEW FIXES':'CHECK HISTORY') +
+      (state.tone==='yellow'||state.tone==='red'?(recurringCount(run)?recurringCount(run)+' RECURRING · ':'')+countIssues(run)+' finding(s) · VIEW FIXES':'CHECK HISTORY') +
       ' ›</span></button>';
   }
   function mountMission() {
@@ -333,6 +336,11 @@
       '<div><small>PAGES CHECKED</small><b>' + escapeHtml(run ? coverage.pagesChecked || 0 : 'N/A') + '</b></div>' +
       '<div><small>LINKS CHECKED</small><b>' + escapeHtml(run ? coverage.linksChecked || 0 : 'N/A') + '</b></div>' +
       '<div><small>ISSUES TO REVIEW</small><b>' + escapeHtml(run ? countIssues(run) : 'N/A') + '</b></div></div>' +
+      '<p class="dj-maint-register-note">' +
+      'Outbound public links tested: <b>' + escapeHtml(coverage.publicExternalLinksAttempted ?? 'Not recorded') +
+      '</b> of <b>' + escapeHtml(coverage.publicExternalLinksDiscovered ?? 'Not recorded') +
+      '</b> discovered · Browser views: <b>' + escapeHtml(coverage.browserPagesChecked ?? 'Not recorded') +
+      '</b> · Unable to verify: <b>' + escapeHtml(coverage.unverified ?? 'Not recorded') + '</b>.</p>' +
       '<div class="dj-maint-page-note"><strong>' + escapeHtml(state.note) + '</strong>' +
       '<p>Green = tested checks passed. Yellow = needs review or check incomplete. Red = confirmed broken critical page or link. ' +
       'Gray = no verified result yet. Audio playback, protected pages, and other untested features are never marked verified.</p></div>' +
