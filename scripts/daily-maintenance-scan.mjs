@@ -16,6 +16,8 @@ const localHour = ()=>Number(timeFormat.format(new Date()));
 const issueMap = new Map();
 let pagesChecked = 0, linksChecked = 0, browserPagesChecked = 0, imagesChecked = 0, unverified = 0;
 const notes = [], visited = new Set();
+const seoChecks = [], backendChecks = [], autoRecovered = [];
+const MAX_PUBLIC_LINKS = 50;
 const tracked = new Set([SITE+'/',SITE+'/sm-welcome']);
 const external = new Set();
 const pageLimit = 180;
@@ -46,10 +48,26 @@ function urlsFromHtml(body,base) {
   for(const m of body.matchAll(/<a\b[^>]*?\bhref\s*=\s*["']([^"'<>]+)["']/gi)) add(m[1].replace(/&amp;/g,'&'),base);
 }
 async function fetchWithTimeout(url,timeout=13000) {
-  const controller = new AbortController();
-  const timer = setTimeout(()=>controller.abort(),timeout);
-  try {return await fetch(url,{headers:{'user-agent':UA,'accept':'text/html,application/xml;q=0.9,*/*;q=0.8'},signal:controller.signal,redirect:'follow'});}
-  finally {clearTimeout(timer);}
+  let firstFailure;
+  for(let attempt=1;attempt<=2;attempt++){
+    const controller = new AbortController();
+    const timer = setTimeout(()=>controller.abort(),timeout);
+    try {
+      const response=await fetch(url,{headers:{'user-agent':UA,'accept':'text/html,application/xml;q=0.9,*/*;q=0.8'},signal:controller.signal,redirect:'follow'});
+      if(attempt===1&&[429,502,503,504].includes(response.status)){
+        firstFailure='HTTP '+response.status;
+        try{await response.body?.cancel();}catch{}
+      }else{
+        if(attempt===2)autoRecovered.push({url,trigger:firstFailure||'Network failure',outcome:'Retry returned HTTP '+response.status});
+        return response;
+      }
+    }catch(e){
+      if(attempt===2)throw e;
+      firstFailure=String(e.message||e);
+    }finally{clearTimeout(timer);}
+    await new Promise(resolve=>setTimeout(resolve,450));
+  }
+  throw new Error('Request exhausted both attempts.');
 }
 async function discoverSitemaps() {
   const queue=[SITE+'/sitemap.xml'];const checked=new Set();
@@ -100,9 +118,9 @@ async function browserChecks(){
   try {
     const all=[...tracked];
     const pageUrls=[SITE+'/',SITE+'/sm-welcome'];
-    const words=['porch','pit-krewe','original-music','music-hall','outlaw-radio','trading-post','wooden-token'];
+    const words=['porch','pit-krewe','original-music','music-hall','outlaw-radio','trading-post','wooden-token','words-of-wisdom','emberhold','archives','library','contact','smokehouse'];
     for(const word of words) {const match=all.find(u=>u.toLowerCase().includes(word));if(match&&!pageUrls.includes(match))pageUrls.push(match);}
-    for(const address of pageUrls.slice(0,9)){
+    for(const address of pageUrls.slice(0,15)){
       for(const device of ['desktop','mobile']){
         const context=await browser.newContext({viewport:device==='mobile'?{width:390,height:844}:{width:1440,height:900},userAgent:UA});
         const page=await context.newPage();
@@ -110,7 +128,7 @@ async function browserChecks(){
         await page.route(/(?:google-analytics\.com|googletagmanager\.com|doubleclick\.net|analytics\.wix\.com|facebook\.net\/en_US\/fbevents)/i, route=>route.abort());
         try{
           const response=await page.goto(address,{waitUntil:'domcontentloaded',timeout:24000});
-          await page.waitForTimeout(4000);
+          await page.waitForTimeout(2800);
           if (!response || response.status()>=400) {unverified++;notes.push(device+' browser unable to open '+address);continue;}
           const snapshot=await page.evaluate(()=>{
             const text=(document.body?.innerText||'').trim();
