@@ -9,7 +9,8 @@ const HISTORY_BRANCH = 'maintenance-history';
 const HISTORY_FILE = 'daily-maintenance-history.json';
 const UA = 'DocJaks-MorningMaintenance/1.0 (website-quality-monitor)';
 const dateFormat = new Intl.DateTimeFormat('en-CA',{timeZone:'America/Chicago',year:'numeric',month:'2-digit',day:'2-digit'});
-const timeFormat = new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago',hour:'2-digit',hour12:false});
+// Use a 00-23 local hour so midnight is never mistaken for hour 24.
+const timeFormat = new Intl.DateTimeFormat('en-GB',{timeZone:'America/Chicago',hour:'2-digit',hourCycle:'h23'});
 const localDay = (at)=>dateFormat.format(new Date(at)).replaceAll('/','-');
 const localHour = ()=>Number(timeFormat.format(new Date()));
 const issueMap = new Map();
@@ -175,14 +176,18 @@ async function scanBatch(urls) {
 }
 async function main() {
   const runMode=process.env.GITHUB_EVENT_NAME||'workflow_dispatch';
-  if(runMode==='schedule' && !(localHour()>=4&&localHour()<=5)) {
-    console.log('Skipped scheduled run outside local 4-5 AM.');return;
+  // GitHub may start a scheduled job hours late. Never discard a late check.
+  // The two UTC cron entries span daylight-saving changes; the early one
+  // must still wait until 4 AM Central before it is allowed to record.
+  if(runMode==='schedule' && localHour()<4) {
+    console.log('Scheduled candidate started before 4 AM Central; awaiting the 4 AM schedule.');return;
   }
   let previous=await currentHistory();
   const today=localDay(Date.now());
   if((previous.data.history||[]).some(x=>localDay(x.checkedAt)===today)) {
     console.log('Already recorded website check for local day '+today);return;
   }
+  const startedAt = new Date().toISOString();
   try{
     await discoverSitemaps();
     await scanBatch([...tracked].slice(0,pageLimit));
@@ -194,7 +199,9 @@ async function main() {
   }catch(e){unverified++;issue('red','Scan failed','The morning scan was interrupted: '+String(e.message||e),SITE,'Review scanner logs and retry the website inspection.');}
   const issues=[...issueMap.values()],status=determineStatus();
   const checkedAt=new Date().toISOString();
-  const run={id:'webscan-'+checkedAt,checkedAt,source:'github-actions-technical-scan',status,
+  const run={id:'webscan-'+checkedAt,checkedAt,startedAt,completedAt:checkedAt,
+    durationSeconds:Math.max(0,Math.round((Date.parse(checkedAt)-Date.parse(startedAt))/1000)),
+    triggerEvent:runMode,source:'github-actions-technical-scan',status,
     summary: status==='green'?'The automated public web checks passed.':status==='red'?
     'Critical website problem detected. Review the red repair items.':'Review flagged items or parts that could not be verified.',
     coverage:{pagesChecked,linksChecked,browserPagesChecked,imagesChecked,unverified},issues,notes:notes.slice(0,35)};
@@ -203,6 +210,7 @@ async function main() {
   const content=Buffer.from(JSON.stringify(doc,null,2)+'\n').toString('base64');
   await githubApi('/contents/'+HISTORY_FILE,'PUT',{message:'Record Doc Jaks website maintenance '+today+' ('+status+')',
     branch:HISTORY_BRANCH,sha:previous.sha,content});
-  console.log('Recorded',today,status,JSON.stringify(run.coverage),'issues',issues.length);
+  console.log('Recorded',today,'completed at',checkedAt,'Central local date:',localDay(checkedAt),
+    'status',status,'durationSeconds',run.durationSeconds,JSON.stringify(run.coverage),'issues',issues.length);
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});
