@@ -358,6 +358,11 @@
       '<h3>SIGNED-IN GOOGLE, SOCIAL & BACK-OFFICE CONNECTIONS</h3>' +
       (window.djomsMaintenanceConnections?.renderHtml?.() || '<p class="dj-maint-empty">The private connection checker is loading.</p>') +
       '<h3>TRANSIENT FAULTS RECOVERED ON RETRY</h3>' + recoveryHtml(run) +
+      '<h3>WHAT STILL REQUIRES A HUMAN OR AUTHENTICATED TEST</h3>' +
+      '<p class="dj-maint-register-note">Automatic page and link checks cannot prove that Square checkout completes, a paid order is delivered, ' +
+      'Pit Krewe enrollment submits correctly, Outlaw Radio audio is audible, or that every Wix third-party widget works. ' +
+      'These must remain UNVERIFIED until a safe, authorized, end-to-end test is recorded. ' +
+      'The private connections above test provider authorization separately from the 4 AM public scan.</p>' +
       '<h3>ISSUE REGISTER · REPEATED & PREVIOUS FINDINGS</h3>' + issueLedgerHtml() +
       '<h3>REPAIRS MADE & VERIFICATION</h3>' + repairsHtml() +
       '<h3>DAY-BY-DAY MAINTENANCE LOG</h3>' + dayByDayHtml() +
