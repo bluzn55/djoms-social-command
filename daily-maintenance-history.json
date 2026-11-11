@@ -1,9 +1,13 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-07T10:44:09.459Z",
+  "updatedAt": "2026-11-11T11:32:21.374Z",
   "latest": {
-    "id": "webscan-2026-11-07T10:44:09.459Z",
-    "checkedAt": "2026-11-07T10:44:09.459Z",
+    "id": "webscan-2026-11-11T11:32:21.374Z",
+    "checkedAt": "2026-11-11T11:32:21.374Z",
+    "startedAt": "2026-11-11T11:30:45.121Z",
+    "completedAt": "2026-11-11T11:32:21.374Z",
+    "durationSeconds": 96,
+    "triggerEvent": "push",
     "source": "github-actions-technical-scan",
     "status": "yellow",
     "summary": "Review flagged items or parts that could not be verified.",
@@ -33,13 +37,6 @@
         "severity": "yellow",
         "label": "Browser content needs verification",
         "problem": "The desktop automated browser measured only 22 visible text characters. This may be delayed Wix rendering, not a confirmed blank page.",
-        "url": "https://www.docjaks.com/pit-krewe",
-        "fix": "Open the page manually on desktop and check for missing sections or slow loading."
-      },
-      {
-        "severity": "yellow",
-        "label": "Browser content needs verification",
-        "problem": "The desktop automated browser measured only 22 visible text characters. This may be delayed Wix rendering, not a confirmed blank page.",
         "url": "https://www.docjaks.com/outlaw-radio-5150",
         "fix": "Open the page manually on desktop and check for missing sections or slow loading."
       }
@@ -47,6 +44,48 @@
     "notes": []
   },
   "history": [
+    {
+      "id": "webscan-2026-11-11T11:32:21.374Z",
+      "checkedAt": "2026-11-11T11:32:21.374Z",
+      "startedAt": "2026-11-11T11:30:45.121Z",
+      "completedAt": "2026-11-11T11:32:21.374Z",
+      "durationSeconds": 96,
+      "triggerEvent": "push",
+      "source": "github-actions-technical-scan",
+      "status": "yellow",
+      "summary": "Review flagged items or parts that could not be verified.",
+      "coverage": {
+        "pagesChecked": 124,
+        "linksChecked": 142,
+        "browserPagesChecked": 14,
+        "imagesChecked": 45,
+        "unverified": 0
+      },
+      "issues": [
+        {
+          "severity": "yellow",
+          "label": "Browser content needs verification",
+          "problem": "The desktop automated browser measured only 22 visible text characters. This may be delayed Wix rendering, not a confirmed blank page.",
+          "url": "https://www.docjaks.com/",
+          "fix": "Open the page manually on desktop and check for missing sections or slow loading."
+        },
+        {
+          "severity": "yellow",
+          "label": "Browser content needs verification",
+          "problem": "The desktop automated browser measured only 29 visible text characters. This may be delayed Wix rendering, not a confirmed blank page.",
+          "url": "https://www.docjaks.com/sm-welcome",
+          "fix": "Open the page manually on desktop and check for missing sections or slow loading."
+        },
+        {
+          "severity": "yellow",
+          "label": "Browser content needs verification",
+          "problem": "The desktop automated browser measured only 22 visible text characters. This may be delayed Wix rendering, not a confirmed blank page.",
+          "url": "https://www.docjaks.com/outlaw-radio-5150",
+          "fix": "Open the page manually on desktop and check for missing sections or slow loading."
+        }
+      ],
+      "notes": []
+    },
     {
       "id": "webscan-2026-11-07T10:44:09.459Z",
       "checkedAt": "2026-11-07T10:44:09.459Z",
