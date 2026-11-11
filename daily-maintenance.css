@@ -118,3 +118,24 @@
 .dj-maint-secure-repeat-tag{display:inline-block;margin:7px 0;background:#ffe4ae;padding:5px 7px;font-size:11px;border-radius:6px;color:#78500e}
 @media(max-width:800px){.dj-maint-secure-grid{grid-template-columns:1fr}}
 @media(max-width:440px){.dj-maint-repeat-entry,.dj-maint-check{padding:11px}.dj-maint-repeat-heading b,.dj-maint-check b{font-size:14px}}
+
+
+/* Fix / View Setup actions on owner-only maintenance connection cards */
+.dj-maint-attention-header{margin-top:20px!important}
+.dj-maint-fix-grid{margin:10px 0 22px}
+.dj-maint-fix-grid .dj-maint-secure-check{background:#fffaf0}
+.dj-maint-remedy{margin-top:12px;border-top:1px solid #d6c4a5;padding-top:9px}
+.dj-maint-remedy summary{display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;list-style:none;max-width:100%;font-size:12px;font-weight:900;letter-spacing:.3px;color:#3b5c39;padding:7px 9px;border:1px solid #7b9a78;border-radius:6px;background:#f3faee}
+.dj-maint-remedy summary::-webkit-details-marker{display:none}
+.dj-maint-remedy summary:hover,.dj-maint-remedy summary:focus-visible{background:#e3f2df;outline-offset:2px}
+.dj-maint-remedy[open] summary span{transform:rotate(180deg)}
+.dj-maint-remedy-body{padding:6px 1px 2px}
+.dj-maint-remedy-body p{margin:9px 0;font-size:13px;line-height:1.5}
+.dj-maint-optional-note{padding:9px 10px;background:#fff3d5;border-radius:6px;color:#6b4c14;font-size:12px!important;font-weight:800}
+.dj-maint-remedy-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:12px}
+.dj-maint-fix-link,.dj-maint-fix-secondary{display:inline-flex;align-items:center;justify-content:center;text-align:center;min-height:35px;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:900;text-decoration:none!important;cursor:pointer;box-sizing:border-box}
+.dj-maint-fix-link{border:1px solid #234c2b;background:#305a37;color:#fff!important}
+.dj-maint-fix-link:hover,.dj-maint-fix-link:focus-visible{background:#193d22}
+.dj-maint-fix-secondary{border:1px solid #b6a17e;background:#fff9e8;color:#3f381e!important}
+.dj-maint-fix-secondary:hover,.dj-maint-fix-secondary:focus-visible{background:#f5e8c8}
+@media(max-width:550px){.dj-maint-remedy-actions{flex-direction:column;align-items:stretch}.dj-maint-fix-link,.dj-maint-fix-secondary{width:100%;font-size:13px}.dj-maint-remedy-body p{font-size:14px}}
