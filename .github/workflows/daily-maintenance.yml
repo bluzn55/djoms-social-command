@@ -1,9 +1,10 @@
 name: Doc Jaks 4 AM Daily Maintenance
 on:
   schedule:
-    # 4 AM America/Chicago is 09:00 UTC in CDT and 10:00 UTC in CST.
-    # The scan itself ignores the other hour and skips duplicate local dates.
-    - cron: '0 9,10 * * *'
+    # Target 4 AM Central: 09:00 UTC during daylight time, 10:00 UTC otherwise.
+    # 13:00 UTC is a backup attempt if GitHub delays or drops the primary run.
+    # The scanner ignores runs before 4 AM local and avoids duplicate local dates.
+    - cron: '0 9,10,13 * * *'
   workflow_dispatch:
   push:
     branches: [main]
@@ -11,6 +12,9 @@ on:
       - '.github/workflows/daily-maintenance.yml'
 permissions:
   contents: write
+concurrency:
+  group: doc-jaks-daily-maintenance
+  cancel-in-progress: false
 jobs:
   audit:
     runs-on: ubuntu-latest
@@ -25,6 +29,17 @@ jobs:
       - run: npm install --no-save playwright
       - run: npx playwright install --with-deps chromium
       - name: Inspect website and append dated maintenance record
-        run: node scripts/daily-maintenance-scan.mjs
+        run: |
+          for attempt in 1 2; do
+            if node scripts/daily-maintenance-scan.mjs; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 2 ]; then
+              echo "::error::Daily website maintenance failed twice. Check GitHub Actions logs."
+              exit 1
+            fi
+            echo "::warning::Website maintenance encountered an error. Retrying once."
+            sleep 30
+          done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
