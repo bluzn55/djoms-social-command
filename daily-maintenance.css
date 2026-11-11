@@ -85,3 +85,36 @@
 .dj-maint-history-entry{scroll-margin-top:20px}
 @media(max-width:750px){.dj-maint-day{grid-template-columns:1fr 1fr}.dj-maint-day-date{grid-column:1}.dj-maint-day-count{grid-column:1}.dj-maint-day button{grid-column:2;grid-row:2}.dj-maint-register-head strong,.dj-maint-repair-title strong{flex-basis:100%}}
 @media(max-width:440px){.dj-maint-register-entry,.dj-maint-repair{padding:12px}.dj-maint-day{padding:10px;gap:6px}.dj-maint-day-date{font-size:12px}.dj-maint-day-count{font-size:12px}.dj-maint-register-head strong,.dj-maint-repair-title strong{font-size:15px}}
+
+/* Recurring-cause watch and owner-only integration health */
+.dj-maint-repeat-list,.dj-maint-check-list{display:grid;gap:10px;margin:10px 0}
+.dj-maint-repeat-entry,.dj-maint-check{padding:14px 16px;background:#fffaf0;border:1px solid #d1bc95;border-left:6px solid #cb922b;border-radius:8px;overflow-wrap:anywhere}
+.dj-maint-repeat-entry p,.dj-maint-check p{font-size:13px;line-height:1.55;margin:8px 0}
+.dj-maint-repeat-heading,.dj-maint-check>div:first-child{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.dj-maint-repeat-heading b,.dj-maint-check b{font-size:16px;color:#312111}
+.dj-maint-repeat-heading strong,.dj-maint-check small{font-size:11px;letter-spacing:.25px;background:#ffe2a1;color:#664500;border-radius:5px;padding:4px 7px;font-weight:900}
+.dj-maint-repeat-times{color:#6c5437}
+.dj-maint-reopened{padding:7px 10px;background:#f9ded6;color:#9c271b;font-weight:900;border-radius:6px}
+.dj-maint-check.dj-maint-tone-green{border-left-color:#319d58}
+.dj-maint-check.dj-maint-tone-yellow{border-left-color:#d8a121}
+.dj-maint-check.dj-maint-tone-neutral{border-left-color:#98928a}
+.dj-maint-check.dj-maint-tone-green small{background:#d8f0e0;color:#175c32}
+.dj-maint-check code,.dj-maint-repeat-entry code{overflow-wrap:anywhere;font-size:12px;background:#eee2c9;padding:3px;border-radius:3px}
+.dj-maint-check a,.dj-maint-repeat-entry a{color:#1b5e39;font-weight:800;font-size:13px}
+.dj-maint-secure-section{border-top:1px solid #c6b18b;padding-top:3px}
+.dj-maint-secure-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.dj-maint-secure-check{border:1px solid #cab999;border-left:6px solid #9f9a90;background:#fffbf3;border-radius:8px;padding:12px 14px;min-width:0}
+.dj-maint-secure-check.dj-maint-tone-green{border-left-color:#319d58}
+.dj-maint-secure-check.dj-maint-tone-yellow{border-left-color:#d8a121}
+.dj-maint-secure-check.dj-maint-tone-red{border-left-color:#cb4437}
+.dj-maint-secure-check>div{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px}
+.dj-maint-secure-check b{font-size:15px;color:#34220f}
+.dj-maint-secure-check strong{font-size:11px;letter-spacing:.2px;color:#5c492f}
+.dj-maint-secure-check.dj-maint-tone-green strong{color:#247043}
+.dj-maint-secure-check.dj-maint-tone-red strong{color:#aa3825}
+.dj-maint-secure-check p{font-size:13px;line-height:1.45;color:#5e4c37;margin:9px 0 0}
+.dj-maint-connection-counts{font-weight:800;background:#fff7e9;border:1px solid #d5be96;padding:10px;border-radius:8px}
+.dj-maint-secure-error{padding:10px 13px;border-radius:6px;background:#fff1e6;border:1px solid #e4c09b;color:#793d19}
+.dj-maint-secure-repeat-tag{display:inline-block;margin:7px 0;background:#ffe4ae;padding:5px 7px;font-size:11px;border-radius:6px;color:#78500e}
+@media(max-width:800px){.dj-maint-secure-grid{grid-template-columns:1fr}}
+@media(max-width:440px){.dj-maint-repeat-entry,.dj-maint-check{padding:11px}.dj-maint-repeat-heading b,.dj-maint-check b{font-size:14px}}
