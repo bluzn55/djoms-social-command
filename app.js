@@ -1837,7 +1837,7 @@ function render() {
   $('workspace').hidden = false; $('editor').hidden = true; selected = null; dirty = false;
   if (['Mission Control','Platform Details'].includes(activeView)) renderConnectionStrip();
   else $('connectionStrip').hidden = true;
-  $('viewTitle').textContent = activeView === 'Mission Control' ? 'Social Command' : activeView;
+  $('viewTitle').textContent = activeView === 'Mission Control' ? 'Online Command' : activeView;
   document.querySelectorAll('nav [data-view]').forEach(b => b.classList.toggle('active',b.dataset.view === activeView));
   $('campaignCards').hidden = activeView !== 'Campaigns';
   $('campaignCards').innerHTML = campaigns.map(c => {
