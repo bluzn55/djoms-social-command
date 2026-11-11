@@ -18,6 +18,7 @@ let pagesChecked = 0, linksChecked = 0, browserPagesChecked = 0, imagesChecked =
 let publicExternalAttempted=0,publicExternalEligible=0,publicExternalFiltered=0;
 const notes = [], visited = new Set();
 const seoChecks = [], backendChecks = [], autoRecovered = [];
+const pitKreweJourney = [];
 const MAX_PUBLIC_LINKS = 200;
 const tracked = new Set([SITE+'/',SITE+'/sm-welcome']);
 const external = new Set();
@@ -170,6 +171,72 @@ async function browserChecks(){
           }
         }catch(e){unverified++;notes.push('Browser could not verify '+address+' on '+device+': '+String(e.message||e));}
         finally{await context.close();}
+      }
+    }
+  }finally{await browser.close();}
+}
+async function checkPitKreweJourney(){
+  // Read-only visitor journey. Never enter personal data, submit forms or log in.
+  let browser;
+  try {browser=await chromium.launch({headless:true});}
+  catch(e){unverified++;pitKreweJourney.push({result:'unable-to-verify',reason:'Headless browser unavailable: '+String(e.message||e)});return;}
+  const targets=[{url:SITE+'/sm-welcome',label:'Social welcome'}, {url:SITE+'/pit-krewe',label:'Pit Krewe signup'}];
+  try {
+    for(const target of targets){
+      for(const device of ['desktop','mobile']){
+        const ctx=await browser.newContext({
+          viewport:device==='desktop'?{width:1440,height:900}:{width:390,height:844},
+          userAgent:UA
+        });
+        const page=await ctx.newPage();
+        await page.route(/(?:google-analytics\.com|googletagmanager\.com|doubleclick\.net|analytics\.wix\.com|facebook\.net\/en_US\/fbevents)/i,route=>route.abort());
+        try{
+          const response=await page.goto(target.url,{waitUntil:'domcontentloaded',timeout:24000});
+          await page.waitForTimeout(5000);
+          if(!response||response.status()>=400){
+            pitKreweJourney.push({target:target.label,device,url:target.url,result:'page-unreachable',http:response?.status()||null});
+            issue('red','Pit Krewe signup page unavailable','Public visitor page returned '+(response?.status()||'no response')+'.',target.url,
+              'Verify the Wix Pit Krewe page is published and restore its public route.');
+            continue;
+          }
+          const snapshot=await page.evaluate(()=>{
+            const visible=el=>{
+              const b=el.getBoundingClientRect(),css=getComputedStyle(el);
+              return b.width>1&&b.height>1&&css.visibility!=='hidden'&&css.display!=='none';
+            };
+            const actions=[...document.querySelectorAll('a[href],button,[role="button"]')]
+              .filter(visible).map(el=>({
+                text:String(el.innerText||el.textContent||el.getAttribute('aria-label')||el.getAttribute('title')||'')
+                  .replace(/\s+/g,' ').trim().slice(0,110),
+                href:el.href||el.getAttribute('href')||'',
+                tag:el.tagName,role:el.getAttribute('role')||'',
+                type:el.getAttribute('type')||''
+              }));
+            const relevant=actions.filter(x=>/pit\s*krewe|join|sign\s*up|member|register/i.test(x.text+' '+x.href));
+            const forms=[...document.querySelectorAll('form')].filter(visible).map(el=>({
+              method:el.getAttribute('method')||'',
+              inputs:el.querySelectorAll('input,select,textarea').length,
+              required:el.querySelectorAll('[required]').length
+            }));
+            const embeds=[...document.querySelectorAll('iframe')].filter(visible).map(el=>({
+              title:el.title||'',srcHost:el.src?new URL(el.src).hostname:''
+            }));
+            return {actions:actions.length,relevant:relevant.slice(0,20),forms,embeds,
+              textLength:(document.body?.innerText||'').trim().length,
+              bodyImages:[...document.images].filter(im=>im.complete&&im.naturalWidth>0).length};
+          });
+          const frames=page.frames().map(fr=>{
+            try{return new URL(fr.url()).hostname;}catch{return '';}
+          }).filter(Boolean);
+          const discovered=snapshot.relevant.some(v=>v.text.toLowerCase().includes('join')||v.href.includes('pit-krewe'));
+          pitKreweJourney.push({target:target.label,device,url:target.url,http:response.status(),
+            result:discovered||snapshot.forms.length?'public-cta-or-form-detected':'requires-manual-visual-verification',
+            ...snapshot,frameHosts:[...new Set(frames)].slice(0,12),
+            warning:'Page loaded does not prove a completed registration or successful welcome automation.'});
+        }catch(e){
+          unverified++;pitKreweJourney.push({target:target.label,device,url:target.url,
+            result:'unable-to-verify',reason:String(e.message||e).slice(0,200)});
+        }finally{await ctx.close();}
       }
     }
   }finally{await browser.close();}
@@ -402,6 +469,7 @@ async function main() {
     await scanBatch([...tracked].filter(u=>!visited.has(u)).slice(0,Math.max(0,pageLimit-visited.size)));
     if(tracked.size>visited.size){unverified++;notes.push((tracked.size-visited.size)+' additional discovered URLs were outside the daily scan limit.');}
     await browserChecks();
+    await checkPitKreweJourney();
     await checkExternal();
     await Promise.all([checkPublicSeo(),checkPublicBackOffice()]);
   }catch(e){unverified++;issue('red','Scan failed','The morning scan was interrupted: '+String(e.message||e),SITE,'Review scanner logs and retry the website inspection.');}
@@ -417,7 +485,7 @@ async function main() {
       publicExternalLinksAttempted:publicExternalAttempted,
       publicExternalLinksDiscovered:publicExternalEligible,
       publicExternalLinksExcluded:publicExternalFiltered},
-    issues,seoChecks,backendChecks,autoRecovered:autoRecovered.slice(0,60),
+    issues,seoChecks,backendChecks,pitKreweJourney,autoRecovered:autoRecovered.slice(0,60),
     recurringAlerts,notes:notes.slice(0,35)};
   const all=[run,...(previous.data.history||[])];
   // Preserve the separately verified repair ledger and future metadata with every scan.
