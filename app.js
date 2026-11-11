@@ -962,6 +962,9 @@ async function signedIn(s) {
     else notice(result === 'saved' ? 'Facebook authorization saved. Check each account’s status below.' : 'Facebook connection was cancelled.');
     history.replaceState({},'',location.pathname);
     setView('Platforms');
+  } else if (location.pathname === '/maintenance' || params.get('view') === 'Daily Maintenance') {
+    // Owner-only deep link: authenticated session is verified before showing this page.
+    await setView('Daily Maintenance');
   }
 }
 function badge(status) { return `<span class="status state-${esc(status)}">${esc(labels[status] || status)}</span>`; }
