@@ -149,15 +149,79 @@
     });
     return results.sort(function(a,b){return b.days-a.days;});
   }
+
+  function fixGuide(id) {
+    // Each warning should name the actual place to act, not just announce a problem.
+    if(id==='gbp')return {
+      explanation:'The Google Business Profile reporting connection is not authorized in DJOMS. This does NOT mean your public Google listing has disappeared.',
+      steps:'Connect your Google account and select the Doc Jaks business location, then run Check Connections Now again.',
+      action:'Connect Google Business Profile',
+      url:'/api/meta/local-google-connect',
+      secondary:'Open Reviews & Local',
+      view:'Mission Control'
+    };
+    if(id==='yelp')return {
+      explanation:'The Yelp developer API trial has expired. Your normal Yelp listing is not necessarily affected. Automatic review reporting may require a paid API plan.',
+      steps:'Review API access and cost before deciding. No upgrade is needed just to keep a normal Yelp business listing.',
+      action:'Review Yelp API options',
+      url:'https://www.yelp.com/developers/v3/manage_app',
+      secondary:'Manage regular Yelp listing',
+      secondaryUrl:'https://biz.yelp.com/'
+    };
+    if(id==='tripadvisor')return {
+      explanation:'The DJOMS reporting integration is missing a Tripadvisor API key and location ID. This is separate from your regular public listing.',
+      steps:'If you want automated Tripadvisor data, review the API offering and configure the key and location ID privately in the DJOMS backend. Never paste API keys into chat or this report.',
+      action:'Review Tripadvisor API access',
+      url:'https://www.tripadvisor.com/developers',
+      optional:true
+    };
+    var view=({gsc:'SEO Analytics',bing:'SEO Analytics',ga4:'Website Analytics',
+      'ga4-tag':'Website Analytics',facebook:'Platforms',instagram:'Platforms',
+      youtube:'Platforms',x:'Platforms',wix:'Website Analytics',radio:'Mission Control'})[id];
+    return {
+      explanation:'This connected service needs a closer check. Read the error above and inspect the provider settings.',
+      steps:'Open the related DJOMS section and reconnect or correct settings as needed. Then rerun Check Connections Now.',
+      view:view||'Platforms',
+      action:'Open '+(view||'Platforms'),
+      optional:false
+    };
+  }
+  function fixHtml(item){
+    var guide=fixGuide(item.id);
+    var isOptional=item.id==='yelp'||item.id==='tripadvisor';
+    var links='';
+    if(guide.url)links+='<a class="dj-maint-fix-link" href="'+escapeHtml(guide.url)+'"'+
+      (/^https:/.test(guide.url)?' target="_blank" rel="noopener noreferrer"':'')+'>'+
+      escapeHtml(guide.action)+' ↗</a>';
+    else if(guide.view)links+='<button type="button" class="dj-maint-fix-link" data-dj-maint-go-view="'+
+      escapeHtml(guide.view)+'">'+escapeHtml(guide.action)+'</button>';
+    if(guide.secondaryUrl)links+='<a class="dj-maint-fix-secondary" href="'+escapeHtml(guide.secondaryUrl)+
+      '" target="_blank" rel="noopener noreferrer">'+escapeHtml(guide.secondary)+' ↗</a>';
+    else if(guide.secondary&&guide.view)links+='<button type="button" class="dj-maint-fix-secondary"'+
+      ' data-dj-maint-go-view="'+escapeHtml(guide.view)+'" data-dj-maint-focus-local="1">'+
+      escapeHtml(guide.secondary)+'</button>';
+    return '<details class="dj-maint-remedy">'+
+      '<summary>FIX / VIEW SETUP <span aria-hidden="true">▾</span></summary>'+
+      '<div class="dj-maint-remedy-body"><p><b>What this means:</b> '+escapeHtml(guide.explanation)+'</p>'+
+      '<p><b>What to do:</b> '+escapeHtml(guide.steps)+'</p>'+
+      (isOptional?'<p class="dj-maint-optional-note">OPTIONAL API REPORTING. Do not buy a plan just to clear this warning.</p>':'')+
+      '<div class="dj-maint-remedy-actions">'+links+'</div></div></details>';
+  }
+  function rowHtml(item){
+    var status=item.state||'unverified';
+    var nice={green:'VERIFIED CONNECTED',yellow:'NEEDS ATTENTION',
+      red:'SERVICE PROBLEM',unverified:'UNVERIFIED'}[status]||'UNVERIFIED';
+    var needs=status!=='green';
+    return '<article class="dj-maint-secure-check dj-maint-tone-'+escapeHtml(status)+'" id="dj-maint-source-'+
+      escapeHtml(item.id)+'">'+
+      '<div><b>'+escapeHtml(item.label)+'</b><strong>'+escapeHtml(nice)+'</strong></div>'+
+      '<p>'+escapeHtml(item.message||'No details available.')+'</p>'+
+      (needs?fixHtml(item):'')+'</article>';
+  }
+
   function renderHtml(){
-    var rows=state.rows||[],checks=rows.map(function(item){
-      var status=item.state||'unverified';
-      var nice={green:'VERIFIED CONNECTED',yellow:'NEEDS ATTENTION',
-        red:'SERVICE PROBLEM',unverified:'UNVERIFIED'}[status]||'UNVERIFIED';
-      return '<article class="dj-maint-secure-check dj-maint-tone-'+escapeHtml(status)+'">'+
-        '<div><b>'+escapeHtml(item.label)+'</b><strong>'+escapeHtml(nice)+'</strong></div>'+
-        '<p>'+escapeHtml(item.message||'No details available.')+'</p></article>';
-    });
+    var rows=state.rows||[],attention=rows.filter(function(x){return x.state!=='green';}),
+      passed=rows.filter(function(x){return x.state==='green';});
     var counts={green:0,yellow:0,red:0,unverified:0};
     rows.forEach(function(r){if(Object.prototype.hasOwnProperty.call(counts,r.state))counts[r.state]++;});
     var repeats=issueRepeats(),last=state.history.slice(0,15);
@@ -171,14 +235,19 @@
       (state.saveError?'<p class="dj-maint-secure-error">'+escapeHtml(state.saveError)+'</p>':'')+
       (rows.length?'<p class="dj-maint-connection-counts"><b>'+counts.green+' connected</b> · '+
         counts.yellow+' need attention · '+counts.red+' problems · '+counts.unverified+' unverified</p>'+
-        '<div class="dj-maint-secure-grid">'+checks.join('')+'</div>':
+        (attention.length?'<h3 class="dj-maint-attention-header">NEEDS ATTENTION · FIX IT HERE</h3>'+
+        '<p class="dj-maint-register-note">Open <b>FIX / VIEW SETUP</b> on each warning below. '+
+        'Yelp and Tripadvisor API reporting are optional; a warning here does not prove the public listing is broken.</p>'+
+        '<div class="dj-maint-secure-grid dj-maint-fix-grid">'+attention.map(rowHtml).join('')+'</div>':'')+
+        '<h3>WORKING CONNECTIONS</h3>'+
+        '<div class="dj-maint-secure-grid">'+passed.map(rowHtml).join('')+'</div>':
         '<p class="dj-maint-empty">The signed-in provider checks have not completed yet.</p>')+
       '<h3>REPEATED CONNECTION FAILURES</h3>'+
       (repeats.length?'<div class="dj-maint-repeat-list">'+repeats.map(function(x){
         return '<article class="dj-maint-repeat-entry"><b>'+escapeHtml(x.name)+'</b>'+
           '<strong class="dj-maint-secure-repeat-tag">FLAGGED ON '+x.days+' DIFFERENT DAYS</strong>'+
           '<p>'+escapeHtml(x.latest?.message||'Check provider permissions, token refresh and API response logs.')+'</p>'+
-          '<p><b>Possible trigger:</b> Expiring permissions, provider delays, or a backend configuration change; diagnosis not confirmed.</p></article>';
+          '<p><b>Likely reason or next diagnostic:</b> '+escapeHtml(x.id==='yelp'?'Developer API trial expired. This is a subscription access issue, not an unexpected outage.':x.id==='tripadvisor'?'No Tripadvisor API key or location ID is configured in the backend.':x.id==='gbp'?'No working Google Business Profile authorization or selected location was returned.':'Investigate permissions, provider response errors, and backend configuration changes.')+'</p></article>';
       }).join('')+'</div>':'<p class="dj-maint-empty">No provider check has been recorded as unhealthy on two separate days in the saved owner history.</p>')+
       '<h3>PRIVATE CONNECTION HISTORY</h3>'+
       (last.length?'<div class="dj-maint-history">'+last.map(function(report){
@@ -196,13 +265,32 @@
   function onPageOpen(){
     if(state.started)return;
     state.started=true;
-    loadPrivateHistory().then(function(){redraw();return run();}).catch(function(e){
+    loadPrivateHistory().then(function(){
+      redraw();
+      // Don't create repeated automatic history entries when someone refreshes the page.
+      // The explicit Check Connections Now button always forces a fresh run.
+      var last=state.history[0]?.checkedAt;
+      if(last&&Number.isFinite(Date.parse(last))&&Date.now()-Date.parse(last)<5*60000)return;
+      return run();
+    }).catch(function(e){
       state.saveError=String(e.message||e);redraw();
     });
   }
   document.addEventListener('click',function(event){
     if(event.target.closest('[data-dj-maint-connections]')){
-      event.preventDefault();run();
+      event.preventDefault();run();return;
+    }
+    var go=event.target.closest('[data-dj-maint-go-view]');
+    if(go&&typeof setView==='function'){
+      event.preventDefault();
+      var view=go.getAttribute('data-dj-maint-go-view');
+      var local=go.hasAttribute('data-dj-maint-focus-local');
+      Promise.resolve(setView(view)).then(function(){
+        if(local){
+          var target=document.querySelector('.reviews-local-card.reviews-google');
+          target?.scrollIntoView({behavior:'smooth',block:'center'});
+        }
+      });
     }
   });
   window.djomsMaintenanceConnections={renderHtml:renderHtml,onPageOpen:onPageOpen,checkNow:run};
