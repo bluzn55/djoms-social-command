@@ -58,7 +58,7 @@ async function fetchWithTimeout(url,timeout=13000) {
         firstFailure='HTTP '+response.status;
         try{await response.body?.cancel();}catch{}
       }else{
-        if(attempt===2)autoRecovered.push({url,trigger:firstFailure||'Network failure',outcome:'Retry returned HTTP '+response.status});
+        if(attempt===2&&response.ok)autoRecovered.push({url,trigger:firstFailure||'Network failure',outcome:'Retry succeeded with HTTP '+response.status});
         return response;
       }
     }catch(e){
@@ -367,7 +367,7 @@ async function main() {
   }
   let previous=await currentHistory();
   const today=localDay(Date.now());
-  if((previous.data.history||[]).some(x=>localDay(x.checkedAt)===today)) {
+  if(runMode==='schedule' && (previous.data.history||[]).some(x=>localDay(x.checkedAt)===today)) {
     console.log('Already recorded website check for local day '+today);return;
   }
   const startedAt = new Date().toISOString();
