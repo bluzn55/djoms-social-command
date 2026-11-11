@@ -218,7 +218,8 @@ function localCard(key, name) {
   const info = localData?.[key] || {};
   const connected = !!info.connected;
   const needs = connected && (info.needsLocation || info.needsReviewData || info.needsPermission || Number(info.unanswered || 0) > 0);
-  const color = connected ? (needs ? 'yellow' : 'green') : 'red';
+  const optionalApi = key === 'yelp' || key === 'tripadvisor';
+  const color = connected ? (needs ? 'yellow' : 'green') : (optionalApi ? 'neutral' : 'red');
   const reviewCoverage = connected && !info.needsReviewData && Array.isArray(info.reviews);
   const rating = connected && info.rating != null && Number.isFinite(Number(info.rating))
     ? Number(info.rating).toFixed(1) : 'N/A';
@@ -239,7 +240,9 @@ function localCard(key, name) {
   } else if (!connected && info.setup) action = '<span class="reviews-setup-note">Setup needed</span>';
   return '<div class="reviews-local-card reviews-'+esc(key)+'">'+
     '<span class="reviews-local-top"><span class="reviews-local-name">'+esc(name)+'</span><i class="gyr-light '+color+'" aria-hidden="true"></i></span>'+
-    '<span class="reviews-local-status">'+esc(info.message || (connected ? 'Connected' : 'Not connected yet'))+'</span>'+
+    '<span class="reviews-local-status">'+esc(!connected && optionalApi ?
+      'Optional API reporting not connected. '+(info.message || 'No API reporting configured.') :
+      (info.message || (connected ? 'Connected' : 'Not connected yet')))+'</span>'+
     '<span class="reviews-local-metrics">'+
       '<span><small>Rating</small><b>'+esc(rating)+'</b></span>'+
       '<span><small>Reviews</small><b>'+esc(total)+'</b></span>'+
