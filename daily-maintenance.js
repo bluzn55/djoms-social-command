@@ -339,7 +339,9 @@
       '<p class="dj-maint-register-note">' +
       'Outbound public links tested: <b>' + escapeHtml(coverage.publicExternalLinksAttempted ?? 'Not recorded') +
       '</b> of <b>' + escapeHtml(coverage.publicExternalLinksDiscovered ?? 'Not recorded') +
-      '</b> discovered · Browser views: <b>' + escapeHtml(coverage.browserPagesChecked ?? 'Not recorded') +
+      '</b> relevant links · Tracking/infrastructure excluded: <b>' +
+      escapeHtml(coverage.publicExternalLinksExcluded ?? 'Not recorded') +
+      '</b> · Browser views: <b>' + escapeHtml(coverage.browserPagesChecked ?? 'Not recorded') +
       '</b> · Unable to verify: <b>' + escapeHtml(coverage.unverified ?? 'Not recorded') + '</b>.</p>' +
       '<div class="dj-maint-page-note"><strong>' + escapeHtml(state.note) + '</strong>' +
       '<p>Green = tested checks passed. Yellow = needs review or check incomplete. Red = confirmed broken critical page or link. ' +
