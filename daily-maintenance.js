@@ -347,11 +347,14 @@
         'No recorded public SEO audit yet. The expanded scanner now checks SEO titles, descriptions, canonicals, robots.txt, noindex, and sitemaps.') +
       '<h3>BACK-OFFICE PUBLIC REACHABILITY</h3>' + technicalChecksHtml(run&&run.backendChecks,
         'No back-office reachability check has been saved yet. Private service authorization requires a signed-in owner check.') +
+      '<h3>SIGNED-IN GOOGLE, SOCIAL & BACK-OFFICE CONNECTIONS</h3>' +
+      (window.djomsMaintenanceConnections?.renderHtml?.() || '<p class="dj-maint-empty">The private connection checker is loading.</p>') +
       '<h3>TRANSIENT FAULTS RECOVERED ON RETRY</h3>' + recoveryHtml(run) +
       '<h3>ISSUE REGISTER · REPEATED & PREVIOUS FINDINGS</h3>' + issueLedgerHtml() +
       '<h3>REPAIRS MADE & VERIFICATION</h3>' + repairsHtml() +
       '<h3>DAY-BY-DAY MAINTENANCE LOG</h3>' + dayByDayHtml() +
       '<h3>FULL INSPECTION REPORT HISTORY</h3><div class="dj-maint-history">' + historyHtml() + '</div></section>';
+    window.djomsMaintenanceConnections?.onPageOpen?.();
   }
   async function load(force) {
     if (loading) return;
