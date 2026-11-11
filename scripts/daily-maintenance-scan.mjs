@@ -15,6 +15,7 @@ const localDay = (at)=>dateFormat.format(new Date(at)).replaceAll('/','-');
 const localHour = ()=>Number(timeFormat.format(new Date()));
 const issueMap = new Map();
 let pagesChecked = 0, linksChecked = 0, browserPagesChecked = 0, imagesChecked = 0, unverified = 0;
+let publicExternalAttempted=0,publicExternalEligible=0,publicExternalFiltered=0;
 const notes = [], visited = new Set();
 const seoChecks = [], backendChecks = [], autoRecovered = [];
 const MAX_PUBLIC_LINKS = 200;
@@ -159,7 +160,10 @@ async function browserChecks(){
 async function checkExternal(){
   // Test discovered outbound links in bounded parallel groups.
   // A 403/429 from third-party services is UNVERIFIED, not proof the link is broken.
-  const selected=[...external].filter(u=>!/(?:google-analytics|googletagmanager|doubleclick|wixstatic|sentry|cloudflare)/i.test(u)).slice(0,MAX_PUBLIC_LINKS);
+  const candidates=[...external].filter(u=>!/(?:google-analytics|googletagmanager|doubleclick|wixstatic|sentry|cloudflare)/i.test(u));
+  const selected=candidates.slice(0,MAX_PUBLIC_LINKS);
+  publicExternalEligible=candidates.length;publicExternalAttempted=selected.length;
+  publicExternalFiltered=external.size-candidates.length;
   for(let i=0;i<selected.length;i+=5){
     await Promise.all(selected.slice(i,i+5).map(async(address)=>{
       try {
@@ -172,9 +176,10 @@ async function checkExternal(){
       }catch(e){unverified++;notes.push('Unable to verify external link '+address);}
     }));
   }
-  if(external.size>selected.length){
-    unverified++;notes.push((external.size-selected.length)+' external URLs exceeded the scan limit.');
+  if(candidates.length>selected.length){
+    unverified++;notes.push((candidates.length-selected.length)+' relevant external URLs exceeded the scan limit.');
   }
+  if(publicExternalFiltered)notes.push(publicExternalFiltered+' analytics/tracking/infrastructure URLs intentionally excluded from visitor-link testing.');
 }
 
 function recordCheck(group,label,state,detail,url){
@@ -392,8 +397,9 @@ async function main() {
     summary: status==='green'?'The automated public web checks passed.':status==='red'?
     'Critical website problem detected. Review the red repair items.':'Review flagged items or parts that could not be verified.',
     coverage:{pagesChecked,linksChecked,browserPagesChecked,imagesChecked,unverified,
-      publicExternalLinksAttempted:Math.min(external.size,MAX_PUBLIC_LINKS),
-      publicExternalLinksDiscovered:external.size},
+      publicExternalLinksAttempted:publicExternalAttempted,
+      publicExternalLinksDiscovered:publicExternalEligible,
+      publicExternalLinksExcluded:publicExternalFiltered},
     issues,seoChecks,backendChecks,autoRecovered:autoRecovered.slice(0,60),
     recurringAlerts,notes:notes.slice(0,35)};
   const all=[run,...(previous.data.history||[])];
