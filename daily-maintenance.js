@@ -96,7 +96,7 @@
     return history.slice(0,90).map(function (run, index) {
       var tone = ['green','yellow','red'].includes(run.status) ? run.status : 'neutral';
       var coverage = run.coverage || {};
-      return '<details class="dj-maint-history-entry" ' + (index === 0 ? 'open' : '') + '>' +
+      return '<details id="dj-maint-record-' + index + '" class="dj-maint-history-entry" ' + (index === 0 ? 'open' : '') + '>' +
         '<summary>' + dot(tone) + '<b>' + escapeHtml(fmt(run.checkedAt)) + '</b>' +
         '<strong>' + escapeHtml(tone.toUpperCase()) + '</strong>' +
         '<span>' + countIssues(run) + ' finding(s)</span></summary>' +
@@ -114,6 +114,112 @@
           run.notes.map(escapeHtml).join(' · ') + '</p>' : '') + '</div></details>';
     }).join('');
   }
+
+  function localDate(iso) {
+    var date = new Date(iso);
+    if (!Number.isFinite(date.getTime())) return '';
+    var p = {};
+    new Intl.DateTimeFormat('en-US', {timeZone:TZ, year:'numeric',month:'2-digit',day:'2-digit'})
+      .formatToParts(date).forEach(function (piece) {p[piece.type]=piece.value;});
+    return p.year + '-' + p.month + '-' + p.day;
+  }
+  function records() {
+    return report && Array.isArray(report.history) ? report.history : [];
+  }
+  function issueKey(item) {
+    return String(item && item.label || '') + '|' + String(item && item.url || '');
+  }
+  function issueLedgerHtml() {
+    var history = records(), latest = report && report.latest;
+    if (!history.length || !latest) return '<p class="dj-maint-empty">No inspection history yet.</p>';
+    var found = new Map();
+    history.slice().reverse().forEach(function (run) {
+      var day = localDate(run.checkedAt), seen = new Set();
+      (Array.isArray(run.issues) ? run.issues : []).forEach(function (item) {
+        var key = issueKey(item);
+        if (seen.has(key)) return;
+        seen.add(key);
+        var entry = found.get(key);
+        if (!entry) {
+          entry = {item:item, first:run.checkedAt, last:run.checkedAt, days:new Set()};
+          found.set(key,entry);
+        }
+        entry.last=run.checkedAt;
+        entry.item=item;
+        entry.days.add(day);
+      });
+    });
+    var current = new Set((Array.isArray(latest.issues) ? latest.issues : []).map(issueKey));
+    var items = Array.from(found.entries()).map(function(pair) {
+      return {key:pair[0], entry:pair[1], current:current.has(pair[0])};
+    });
+    items.sort(function(a,b) {
+      return Number(b.current)-Number(a.current) ||
+        Number(b.entry.item.severity==='red')-Number(a.entry.item.severity==='red') ||
+        b.entry.days.size-a.entry.days.size;
+    });
+    if (!items.length) return '<p class="dj-maint-empty">No issues have been recorded in the available scans.</p>';
+    return '<div class="dj-maint-register-note">Only issues found in the latest report are marked <b>REPORTED NOW</b>. '+
+      'A problem disappearing from an automated scan is <b>not proof it was repaired</b>.</div>' +
+      '<div class="dj-maint-register">' + items.map(function(row) {
+        var item=row.entry.item, now=row.current, tone=now?(item.severity==='red'?'red':'yellow'):'neutral';
+        return '<article class="dj-maint-register-entry dj-maint-tone-'+tone+'">' +
+          '<div class="dj-maint-register-head"><strong>'+escapeHtml(item.label||'Website issue')+'</strong>' +
+          '<span class="dj-maint-register-state">'+(now?'REPORTED NOW':'NOT REPORTED IN LATEST SCAN')+'</span></div>'+
+          '<p>'+escapeHtml(item.problem||'Needs review.')+'</p>' +
+          '<div class="dj-maint-register-meta"><span>'+row.entry.days.size+' scan day(s) affected</span>'+
+          '<span>First: '+escapeHtml(fmt(row.entry.first))+'</span>'+
+          '<span>Last: '+escapeHtml(fmt(row.entry.last))+'</span></div>'+
+          (item.url ? '<div class="dj-maint-register-url"><code>'+escapeHtml(item.url)+'</code>'+safeLink(item.url)+'</div>' : '')+
+          '<p><b>Suggested fix:</b> '+escapeHtml(item.fix||'Inspect the affected page.')+'</p></article>';
+      }).join('')+'</div>';
+  }
+  function repairsHtml() {
+    var items = report && Array.isArray(report.repairs) ? report.repairs : [];
+    if (!items.length) return '<p class="dj-maint-empty">No verified repairs are recorded. Findings alone are never treated as completed repairs.</p>';
+    return '<div class="dj-maint-repair-list">' + items.slice().sort(function(a,b) {
+      return Date.parse(b.appliedAt||0)-Date.parse(a.appliedAt||0);
+    }).map(function(item) {
+      var verified=item.status==='verified', tone=verified?'green':'yellow';
+      var state=verified?'VERIFIED FIX':'APPLIED · VERIFICATION PENDING';
+      return '<article class="dj-maint-repair dj-maint-tone-'+tone+'">' +
+        '<div class="dj-maint-repair-title"><strong>'+escapeHtml(item.title||'Maintenance repair')+'</strong>' +
+        '<span>'+state+'</span></div>' +
+        (item.problem ? '<p><b>Problem:</b> '+escapeHtml(item.problem)+'</p>' : '')+
+        '<p><b>Change made:</b> '+escapeHtml(item.fix||'No change description saved.')+'</p>'+
+        '<p class="dj-maint-repair-dates"><b>Applied:</b> '+escapeHtml(fmt(item.appliedAt))+
+        (item.verifiedAt?' · <b>Verified:</b> '+escapeHtml(fmt(item.verifiedAt)):' · Verification pending')+'</p>'+
+        '<p><b>Evidence:</b> '+escapeHtml(item.verification||'Awaiting a successful follow-up test.')+
+        (item.evidenceUrl?' '+safeLink(item.evidenceUrl):'')+'</p></article>';
+    }).join('')+'</div>';
+  }
+  function dayByDayHtml() {
+    var history=records();
+    if (!history.length) return '<p class="dj-maint-empty">Daily maintenance records will appear here after the first completed scan.</p>';
+    var first=history.reduce(function(min,run) {var d=localDate(run.checkedAt);return d && (!min||d<min)?d:min;},'');
+    var today=localDate(Date.now()), perDay=new Map();
+    history.forEach(function(run,index){
+      var d=localDate(run.checkedAt);
+      if (!perDay.has(d)) perDay.set(d,[]);
+      perDay.get(d).push({run:run,index:index});
+    });
+    var count=0, logged=0, missing=0, lines=[];
+    var start=Date.parse(today+'T12:00:00Z'), end=Date.parse(first+'T12:00:00Z');
+    for(var at=start;at>=end && count<31;at-=86400000) {
+      var d=new Date(at).toISOString().slice(0,10), matches=perDay.get(d)||[], row=matches[0],tone=row?row.run.status:'neutral';
+      var nice=new Intl.DateTimeFormat('en-US',{timeZone:'UTC',weekday:'short',month:'short',day:'numeric',year:'numeric'}).format(new Date(at));
+      count++;if(row)logged++;else missing++;
+      lines.push('<div class="dj-maint-day dj-maint-tone-'+escapeHtml(tone)+'"><span class="dj-maint-day-date">'+escapeHtml(nice)+'</span>'+
+        '<strong>'+escapeHtml(row?String(tone||'unknown').toUpperCase():'NO SAVED REPORT')+'</strong>'+
+        '<span class="dj-maint-day-count">'+(row?matches.length+' scan(s) · '+countIssues(row.run)+' finding(s)':'Run not recorded')+'</span>'+
+        (row?'<button type="button" data-dj-maint-open-record="'+row.index+'">Open report</button>':'')+
+        '</div>');
+    }
+    return '<p class="dj-maint-register-note">'+logged+' day(s) with a saved report · '+missing+
+      ' day(s) without a saved report since maintenance history began. A missing record does not prove the website failed.</p>'+
+      '<div class="dj-maint-day-list">'+lines.join('')+'</div>';
+  }
+
   function render() {
     var host = document.getElementById('content');
     if (!host) return;
@@ -136,8 +242,12 @@
       (loading ? 'Checking for report…' : 'Refresh recorded results') + '</button>' +
       '<span>' + (loadError ? escapeHtml(loadError) :
         'Technical scan and dated record. The separate 4 AM ChatGPT review provides additional observations.') + '</span></div>' +
-      '<h3>WHAT NEEDS FIXING</h3>' + (run ? issuesHtml(run) : '<p class="dj-maint-empty">No run yet. No green status is assumed.</p>') +
-      '<h3>MAINTENANCE HISTORY</h3><div class="dj-maint-history">' + historyHtml() + '</div></section>';
+      '<h3>LATEST REPORT · ' + escapeHtml(run?localDate(run.checkedAt):'NO DATE') + '</h3>' +
+      (run ? issuesHtml(run) : '<p class="dj-maint-empty">No run yet. No green status is assumed.</p>') +
+      '<h3>ISSUE REGISTER · REPEATED & PREVIOUS FINDINGS</h3>' + issueLedgerHtml() +
+      '<h3>REPAIRS MADE & VERIFICATION</h3>' + repairsHtml() +
+      '<h3>DAY-BY-DAY MAINTENANCE LOG</h3>' + dayByDayHtml() +
+      '<h3>FULL INSPECTION REPORT HISTORY</h3><div class="dj-maint-history">' + historyHtml() + '</div></section>';
   }
   async function load(force) {
     if (loading) return;
@@ -169,6 +279,13 @@
     document.addEventListener('click', function (event) {
       var refresh = event.target.closest('[data-dj-maint-refresh]');
       if (refresh) { event.preventDefault(); load(true); return; }
+      var record = event.target.closest('[data-dj-maint-open-record]');
+      if (record) {
+        event.preventDefault();
+        var details = document.getElementById('dj-maint-record-' + record.getAttribute('data-dj-maint-open-record'));
+        if (details) {details.open=true;details.scrollIntoView({behavior:'smooth',block:'start'});}
+        return;
+      }
       var open = event.target.closest('[data-dj-maint-open]');
       if (open && typeof setView === 'function') { event.preventDefault(); setView('Daily Maintenance'); }
     });
