@@ -135,14 +135,31 @@ async function browserChecks(){
             const text=(document.body?.innerText||'').trim();
             const images=[...document.images].filter(i=>{const r=i.getBoundingClientRect();return r.width>25&&r.height>25&&r.top<window.innerHeight*1.5});
             const broken=images.filter(i=>i.complete&&i.naturalWidth===0&&i.currentSrc).map(i=>i.currentSrc).slice(0,5);
+            const loadedImages=images.filter(i=>i.complete&&i.naturalWidth>0).length;
+            const pendingImages=images.filter(i=>!i.complete).length;
             const hrefs=[...document.querySelectorAll('a[href]')].map(a=>a.href).slice(0,200);
-            return{textLength:text.length,text:text.slice(0,20000),broken,images:images.length,hrefs};
+            return{textLength:text.length,text:text.slice(0,20000),broken,images:images.length,loadedImages,pendingImages,hrefs};
           });
           browserPagesChecked++; imagesChecked+=snapshot.images;
           for(const u of snapshot.hrefs)add(u,address);
-          if(snapshot.textLength<60)issue('yellow','Browser content needs verification',
-            'The '+device+' browser measured '+snapshot.textLength+' selectable text characters and '+snapshot.images+' visible images. Image-led design or delayed Wix rendering may trigger this alert; it does not confirm a blank page.',
-            address,'Open the page manually on '+device+' and check for missing sections or slow loading.');
+          if(snapshot.textLength<60){
+            if(snapshot.loadedImages>=2 && snapshot.broken.length===0){
+              // Doc Jaks' artwork-led Wix pages intentionally contain little live text.
+              // Successful image loads plus HTTP 200 are not a blank-page failure.
+              notes.push('Image-led '+device+' page responded normally: '+address+' ('+
+                snapshot.textLength+' selectable characters, '+snapshot.loadedImages+
+                ' loaded images). Full layout and user interactions are not verified by this check.');
+            } else if(snapshot.loadedImages===0 && snapshot.pendingImages>0){
+              unverified++;
+              notes.push('Browser image rendering still pending on '+device+' for '+address+
+                '; not classified as a broken page without a follow-up visual check.');
+            } else {
+              issue('yellow','Page content may be missing',
+                'The '+device+' browser measured '+snapshot.textLength+' selectable text characters, '+
+                snapshot.loadedImages+' loaded images, and '+snapshot.pendingImages+' pending images.',
+                address,'Open the page on '+device+' and confirm its published artwork and main content are visible.');
+            }
+          }
           if(snapshot.broken.length)issue('yellow','Broken visible image',
             snapshot.broken.length+' image(s) failed to load in the '+device+' browser view.',
             address,'Check media images and relink any missing assets.');
