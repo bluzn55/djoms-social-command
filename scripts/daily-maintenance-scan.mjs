@@ -157,15 +157,23 @@ async function browserChecks(){
   }finally{await browser.close();}
 }
 async function checkExternal(){
-  const selected=[...external].filter(u=>/(youtube|spotify|apple|instagram|facebook|twitter|x\.com|outlaw|radio|square|amazon)/i.test(u)).slice(0,18);
-  for(const address of selected) {
-    try {
-      const response=await fetchWithTimeout(address,9000);
-      linksChecked++;
-      if([404,410].includes(response.status))
-        issue('yellow','External destination missing','External link returned HTTP '+response.status+'.',address,'Open it in a browser and replace the outdated destination.');
-      else if(!response.ok){unverified++;notes.push('External service blocked automated verification: '+address+' ('+response.status+')');}
-    }catch(e){unverified++;notes.push('Unable to verify external link '+address);}
+  // Test discovered outbound links in bounded parallel groups.
+  // A 403/429 from third-party services is UNVERIFIED, not proof the link is broken.
+  const selected=[...external].filter(u=>!/(?:google-analytics|googletagmanager|doubleclick|wixstatic|sentry|cloudflare)/i.test(u)).slice(0,MAX_PUBLIC_LINKS);
+  for(let i=0;i<selected.length;i+=5){
+    await Promise.all(selected.slice(i,i+5).map(async(address)=>{
+      try {
+        const response=await fetchWithTimeout(address,8500);
+        linksChecked++;
+        if([404,410].includes(response.status))
+          issue('yellow','External destination missing','External URL returned HTTP '+response.status+'.',address,
+            'Check the destination manually and replace the obsolete link.');
+        else if(!response.ok){unverified++;notes.push('External destination not verified: '+address+' (HTTP '+response.status+')');}
+      }catch(e){unverified++;notes.push('Unable to verify external link '+address);}
+    }));
+  }
+  if(external.size>selected.length){
+    unverified++;notes.push((external.size-selected.length)+' external URLs exceeded the scan limit.');
   }
 }
 function determineStatus(){
