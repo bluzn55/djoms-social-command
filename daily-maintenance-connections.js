@@ -257,8 +257,13 @@
           '<p><b>Likely reason or next diagnostic:</b> '+escapeHtml(x.id==='yelp'?'Developer API trial expired. This is a subscription access issue, not an unexpected outage.':x.id==='tripadvisor'?'No Tripadvisor API key or location ID is configured in the backend.':x.id==='gbp'?'No working Google Business Profile authorization or selected location was returned.':'Investigate permissions, provider response errors, and backend configuration changes.')+'</p></article>';
       }).join('')+'</div>':'<p class="dj-maint-empty">No provider check has been recorded as unhealthy on two separate days in the saved owner history.</p>')+
       '<h3>PRIVATE CONNECTION HISTORY</h3>'+
-      '<p class="dj-maint-register-note">Older saved reports retain their original status labels from before optional services were reclassified.</p>'+
-      (last.length?'<div class="dj-maint-history">'+last.map(function(report){
+      (last.length?'<details class="dj-maint-history-archive">'+
+        '<summary><span><b>SHOW SAVED CONNECTION REPORTS</b> · '+state.history.length+
+        ' record(s) · Latest: '+escapeHtml(dateFmt(last[0].checkedAt))+'</span>'+
+        '<span class="dj-maint-archive-chevron" aria-hidden="true">▾</span></summary>'+
+        '<div class="dj-maint-history-archive-body">'+
+        '<p class="dj-maint-register-note">Older saved reports retain their original status labels from before optional services were reclassified.</p>'+
+        '<div class="dj-maint-history">'+last.map(function(report){
         var totals=report.summary||{};
         return '<details class="dj-maint-history-entry"><summary><b>'+escapeHtml(dateFmt(report.checkedAt))+'</b>'+
           '<span>'+Number(totals.green||0)+' connected · '+Number(totals.yellow||0)+' need attention · '+
@@ -268,7 +273,10 @@
             return '<p><b>'+escapeHtml(x.label)+'</b> · '+escapeHtml(x.state||'unverified')+
               ' · '+escapeHtml(x.message||'')+'</p>';
           }).join('')+'</div></details>';
-      }).join('')+'</div>':'<p class="dj-maint-empty">No saved owner connection checks yet.</p>')+
+      }).join('')+'</div>'+
+        (state.history.length>last.length?'<p class="dj-maint-register-note">Showing the '+last.length+
+          ' newest saved reports of '+state.history.length+'.</p>':'')+
+        '</div></details>':'<p class="dj-maint-empty">No saved owner connection checks yet.</p>')+
       '</section>';
   }
   function onPageOpen(){
