@@ -176,6 +176,77 @@ async function checkExternal(){
     unverified++;notes.push((external.size-selected.length)+' external URLs exceeded the scan limit.');
   }
 }
+
+function recordCheck(group,label,state,detail,url){
+  (group==='seo'?seoChecks:backendChecks).push({label,state,detail,url,checkedAt:new Date().toISOString()});
+}
+function htmlAttribute(tag,name){
+  const pattern=new RegExp('\\b'+name+'\\s*=\\s*(?:"([^"]*)"|'+String.fromCharCode(39)+'([^'+String.fromCharCode(39)+']*)'+String.fromCharCode(39)+')','i');
+  const found=String(tag||'').match(pattern);
+  return found?(found[1]??found[2]):null;
+}
+function htmlTagByAttribute(html,element,key,value){
+  const tagPattern=new RegExp('<'+element+'\\b[^>]*>','gi');
+  const tags=String(html||'').match(tagPattern)||[];
+  return tags.find(tag=>String(htmlAttribute(tag,key)||'').toLowerCase()===value)||null;
+}
+async function checkPublicSeo(){
+  // HTTP checks establish public SEO configuration, NOT search-engine indexing.
+  for(const url of [SITE+'/',SITE+'/sm-welcome']){
+    try{
+      const response=await fetchWithTimeout(url,14000);
+      if(!response.ok){unverified++;recordCheck('seo','HTML SEO tags','unverified','HTTP '+response.status,url);continue;}
+      const html=await response.text(),head=html.split(/<\/head>/i)[0];
+      const title=head.match(/<title(?:\s[^>]*)?>([\s\S]*?)<\/title>/i)?.[1]?.replace(/<[^>]+>/g,'').trim()||'';
+      const meta=htmlTagByAttribute(head,'meta','name','description');
+      const description=meta?htmlAttribute(meta,'content'):'';
+      const canonicalTag=htmlTagByAttribute(head,'link','rel','canonical');
+      const canonical=canonicalTag?htmlAttribute(canonicalTag,'href'):'';
+      const robotsTag=htmlTagByAttribute(head,'meta','name','robots');
+      const robots=String(robotsTag?htmlAttribute(robotsTag,'content'):'').toLowerCase();
+      recordCheck('seo','Page title',title?'pass':'needs-attention',
+        title?'Title: '+title.slice(0,100):'No public HTML page title found.',url);
+      recordCheck('seo','Meta description',description?'pass':'needs-attention',
+        description?'Meta description present.':'No public meta description found.',url);
+      recordCheck('seo','Canonical URL',canonical?'pass':'needs-attention',
+        canonical?'Canonical: '+canonical.slice(0,150):'No canonical link found in server HTML.',url);
+      recordCheck('seo','Noindex check',robots.includes('noindex')?'needs-attention':'pass',
+        robots.includes('noindex')?'Meta robots explicitly contains noindex.':'No meta noindex detected; indexing itself not verified.',url);
+      if(!title||!description||!canonical){
+        issue('yellow','SEO metadata needs verification','A basic SEO tag is absent from the public HTML.',url,
+          'Inspect Wix SEO settings for title, description and canonical URL.');
+      }
+      if(robots.includes('noindex')){
+        issue('yellow','SEO noindex directive','Search indexing was disabled in meta robots.',url,
+          'Check whether the noindex setting was intentional.');
+      }
+    }catch(e){unverified++;recordCheck('seo','HTML SEO tags','unverified','Not reachable from scanner: '+String(e.message||e),url);}
+  }
+  const robotsUrl=SITE+'/robots.txt',sitemapUrl=SITE+'/sitemap.xml';
+  try{
+    const response=await fetchWithTimeout(robotsUrl);
+    if(!response.ok){unverified++;recordCheck('seo','Robots.txt','unverified','HTTP '+response.status,robotsUrl);}
+    else {
+      const content=await response.text();
+      const blocksAll=/user-agent:\s*\*\s*(?:\r?\n[ \t]*)disallow:\s*\/\s*(?:\r?\n|$)/i.test(content);
+      recordCheck('seo','Robots.txt',blocksAll?'needs-attention':'pass',
+        blocksAll?'Robots rules appear to block the entire site.':'Robots file responded; crawling rules may still require review.',robotsUrl);
+      if(blocksAll)issue('yellow','SEO site-wide robots restriction','Robots.txt appears to disallow all pages.',robotsUrl,'Review public Wix robots rules.');
+    }
+  }catch(e){unverified++;recordCheck('seo','Robots.txt','unverified',String(e.message||e),robotsUrl);}
+  try{
+    const response=await fetchWithTimeout(sitemapUrl);
+    if(!response.ok){unverified++;recordCheck('seo','Sitemap index','unverified','HTTP '+response.status,sitemapUrl);}
+    else {
+      const content=await response.text(),hasUrls=/<loc>\s*https?:\/\//i.test(content);
+      recordCheck('seo','Sitemap index',hasUrls?'pass':'needs-attention',
+        hasUrls?'XML sitemap index has location entries.':'Sitemap index contains no location entries.',sitemapUrl);
+      if(!hasUrls)issue('yellow','SEO sitemap missing URLs','Sitemap index did not contain loc elements.',sitemapUrl,
+        'Check the published Wix sitemap configuration.');
+    }
+  }catch(e){unverified++;recordCheck('seo','Sitemap index','unverified',String(e.message||e),sitemapUrl);}
+}
+
 function determineStatus(){
   const issues=[...issueMap.values()];
   if(issues.some(x=>x.severity==='red'))return 'red';
