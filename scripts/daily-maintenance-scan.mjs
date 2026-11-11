@@ -17,7 +17,7 @@ const issueMap = new Map();
 let pagesChecked = 0, linksChecked = 0, browserPagesChecked = 0, imagesChecked = 0, unverified = 0;
 const notes = [], visited = new Set();
 const seoChecks = [], backendChecks = [], autoRecovered = [];
-const MAX_PUBLIC_LINKS = 50;
+const MAX_PUBLIC_LINKS = 200;
 const tracked = new Set([SITE+'/',SITE+'/sm-welcome']);
 const external = new Set();
 const pageLimit = 180;
@@ -252,7 +252,9 @@ async function checkPublicBackOffice(){
   // Public probes only: a login gate responding is NOT proof an API token works.
   const targets=[
     {label:'DJOMS owner dashboard',url:'https://djoms-social-command.vercel.app/'},
+    {label:'DJOMS Maintenance direct page',url:'https://djoms-social-command.vercel.app/maintenance'},
     {label:'DJOMS account authorization',url:'https://djoms-social-command.vercel.app/api/meta/status',private:true},
+    {label:'Owner Maintenance History service',url:'https://djoms-social-command.vercel.app/api/meta/maintenance-health',private:true},
     {label:'Search Console API route',url:'https://djoms-social-command.vercel.app/api/meta/seo-status',private:true},
     {label:'Bing Webmaster API route',url:'https://djoms-social-command.vercel.app/api/meta/bing-status',private:true},
     {label:'GA4 analytics API route',url:'https://djoms-social-command.vercel.app/api/meta/ga4-status',private:true},
