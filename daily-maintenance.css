@@ -53,3 +53,35 @@
 .dj-maint-empty{padding:17px;background:#fffdf8;border:1px dashed #cbb78f;border-radius:8px;color:#665039}
 @media(max-width:900px){.connection-strip .dj-maint-mission{flex-wrap:wrap;gap:9px 15px}.dj-maint-mission-date{white-space:normal}.dj-maint-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.connection-strip .dj-maint-mission{padding:12px!important}.dj-maint-mission-title{flex:1 1 100%;gap:10px}.dj-maint-mission-title b{font-size:18px}.dj-maint-mission-title strong{font-size:15px}.dj-maint-mission-date{font-size:12px}.dj-maint-mission-next{font-size:12px}.dj-maint-page-head{padding:14px}.dj-maint-page h2{font-size:25px}.dj-maint-stats{gap:8px}.dj-maint-stats b{font-size:16px}.dj-maint-stats>div{padding:11px}}
+
+/* Dedicated maintenance headquarters: issue register, verified repairs and daily log */
+.dj-maint-register-note{padding:12px 15px;margin:10px 0 13px;border:1px solid #d8c4a3;background:#fffaf0;border-radius:8px;font-size:14px;line-height:1.5;color:#514026}
+.dj-maint-register,.dj-maint-repair-list,.dj-maint-day-list{display:grid;gap:10px}
+.dj-maint-register-entry,.dj-maint-repair{border:1px solid #d2c3a4;border-left:6px solid #c5a765;border-radius:9px;background:#fffaf0;padding:15px 17px;min-width:0}
+.dj-maint-register-entry.dj-maint-tone-yellow,.dj-maint-repair.dj-maint-tone-yellow{border-left-color:#d8a121}
+.dj-maint-register-entry.dj-maint-tone-red{border-left-color:#cb4437}
+.dj-maint-repair.dj-maint-tone-green{border-left-color:#319d58}
+.dj-maint-register-entry p,.dj-maint-repair p{margin:8px 0 0;font-size:14px;line-height:1.5}
+.dj-maint-register-head,.dj-maint-repair-title{display:flex;gap:10px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}
+.dj-maint-register-head strong,.dj-maint-repair-title strong{font-size:17px;color:#302111;flex:1 1 280px}
+.dj-maint-register-state,.dj-maint-repair-title span{font-size:11px;font-weight:900;letter-spacing:.3px;padding:6px 8px;border-radius:6px;background:#e7dac1;color:#564327}
+.dj-maint-register-entry.dj-maint-tone-yellow .dj-maint-register-state,.dj-maint-repair.dj-maint-tone-yellow .dj-maint-repair-title span{background:#ffe6a2;color:#654500}
+.dj-maint-register-entry.dj-maint-tone-red .dj-maint-register-state{background:#ffe2dd;color:#8a241a}
+.dj-maint-repair.dj-maint-tone-green .dj-maint-repair-title span{background:#d8f0e0;color:#175c32}
+.dj-maint-register-meta{display:flex;flex-wrap:wrap;gap:7px 17px;margin-top:10px;color:#685437;font-size:12px;font-weight:700}
+.dj-maint-register-url{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:9px}
+.dj-maint-register-url code{font-size:12px;background:#eee3d0;padding:5px;border-radius:4px;overflow-wrap:anywhere}
+.dj-maint-register-url a,.dj-maint-repair a{font-size:13px;color:#17623a;font-weight:800}
+.dj-maint-repair-dates{color:#5e4a30}
+.dj-maint-day{display:grid;grid-template-columns:minmax(145px,1.8fr) minmax(90px,1fr) minmax(150px,1.3fr) auto;gap:10px;align-items:center;border:1px solid #d6c6ab;border-left:6px solid #989187;border-radius:8px;padding:11px 14px;background:#fffcf5;min-width:0}
+.dj-maint-day.dj-maint-tone-green{border-left-color:#319d58}
+.dj-maint-day.dj-maint-tone-yellow{border-left-color:#d8a121}
+.dj-maint-day.dj-maint-tone-red{border-left-color:#cb4437}
+.dj-maint-day-date{font-weight:800;font-size:14px;color:#382818}
+.dj-maint-day strong{font-size:12px;letter-spacing:.4px;color:#51391c}
+.dj-maint-day-count{font-size:13px;color:#756144}
+.dj-maint-day button{background:#3d573f;color:white;border:0;border-radius:6px;padding:9px 11px;font-weight:700;cursor:pointer}
+.dj-maint-day button:hover,.dj-maint-day button:focus-visible{background:#29422c}
+.dj-maint-history-entry{scroll-margin-top:20px}
+@media(max-width:750px){.dj-maint-day{grid-template-columns:1fr 1fr}.dj-maint-day-date{grid-column:1}.dj-maint-day-count{grid-column:1}.dj-maint-day button{grid-column:2;grid-row:2}.dj-maint-register-head strong,.dj-maint-repair-title strong{flex-basis:100%}}
+@media(max-width:440px){.dj-maint-register-entry,.dj-maint-repair{padding:12px}.dj-maint-day{padding:10px;gap:6px}.dj-maint-day-date{font-size:12px}.dj-maint-day-count{font-size:12px}.dj-maint-register-head strong,.dj-maint-repair-title strong{font-size:15px}}
