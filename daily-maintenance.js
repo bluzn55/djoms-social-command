@@ -336,6 +336,8 @@
       '<div><small>PAGES CHECKED</small><b>' + escapeHtml(run ? coverage.pagesChecked || 0 : 'N/A') + '</b></div>' +
       '<div><small>LINKS CHECKED</small><b>' + escapeHtml(run ? coverage.linksChecked || 0 : 'N/A') + '</b></div>' +
       '<div><small>ISSUES TO REVIEW</small><b>' + escapeHtml(run ? countIssues(run) : 'N/A') + '</b></div></div>' +
+      '<h3>CONNECTION HEALTH · CHECK NOW</h3>' +
+      (window.djomsMaintenanceConnections?.renderHtml?.() || '<p class="dj-maint-empty">The private connection checker is loading.</p>') +
       '<p class="dj-maint-register-note">' +
       'Outbound public links tested: <b>' + escapeHtml(coverage.publicExternalLinksAttempted ?? 'Not recorded') +
       '</b> of <b>' + escapeHtml(coverage.publicExternalLinksDiscovered ?? 'Not recorded') +
@@ -357,8 +359,6 @@
         'No recorded public SEO audit yet. The expanded scanner now checks SEO titles, descriptions, canonicals, robots.txt, noindex, and sitemaps.') +
       '<h3>BACK-OFFICE PUBLIC REACHABILITY</h3>' + technicalChecksHtml(run&&run.backendChecks,
         'No back-office reachability check has been saved yet. Private service authorization requires a signed-in owner check.') +
-      '<h3>SIGNED-IN GOOGLE, SOCIAL & BACK-OFFICE CONNECTIONS</h3>' +
-      (window.djomsMaintenanceConnections?.renderHtml?.() || '<p class="dj-maint-empty">The private connection checker is loading.</p>') +
       '<h3>TRANSIENT FAULTS RECOVERED ON RETRY</h3>' + recoveryHtml(run) +
       '<h3>WHAT STILL REQUIRES A HUMAN OR AUTHENTICATED TEST</h3>' +
       '<p class="dj-maint-register-note">Automatic page and link checks cannot prove that Square checkout completes, a paid order is delivered, ' +
