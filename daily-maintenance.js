@@ -226,6 +226,98 @@
       '<div class="dj-maint-day-list">'+lines.join('')+'</div>';
   }
 
+
+  function rootCauseHint(item) {
+    var label=String(item && item.label || '').toLowerCase();
+    if (/browser content|page appears blank/.test(label))
+      return 'Possible Wix rendering delay or image-led page. Compare fully loaded desktop/mobile page and DOM; cause not yet established.';
+    if (/seo|robots|sitemap/.test(label))
+      return 'Possible Wix SEO publishing, indexing, or sitemap settings. Compare Wix settings with public HTML; cause not confirmed.';
+    if (/external/.test(label))
+      return 'Possible stale outbound link or external anti-bot response. Compare manual and automated requests; cause not confirmed.';
+    return 'Compare shared settings, redirects, deployments, timing and error logs across affected dates; cause not confirmed.';
+  }
+  function recurringHtml() {
+    var history=records(),latest=report&&report.latest;
+    if (!history.length) return '<p class="dj-maint-empty">Recurring problems will appear here when there are two or more affected days.</p>';
+    var matched=new Map();
+    history.forEach(function(run){
+      var date=localDate(run.checkedAt), unique=new Set();
+      var observed=(Array.isArray(run.issues)?run.issues:[]).concat(
+        (Array.isArray(run.autoRecovered)?run.autoRecovered:[]).map(function(item){
+          return {label:'Transient service recovered on retry',url:item.url,problem:item.trigger,
+            fix:'Investigate why the same destination repeatedly needs an automatic retry.'};
+        }));
+      observed.forEach(function(item){
+        var key=issueKey(item);
+        if(unique.has(key))return;unique.add(key);
+        var found=matched.get(key);
+        if(!found){found={key:key,item:item,days:new Set(),first:run.checkedAt,last:run.checkedAt};matched.set(key,found);}
+        found.days.add(date);
+        if(Date.parse(run.checkedAt)>Date.parse(found.last)){found.last=run.checkedAt;found.item=item;}
+        if(Date.parse(run.checkedAt)<Date.parse(found.first))found.first=run.checkedAt;
+      });
+    });
+    var current=new Set((Array.isArray(latest&&latest.issues)?latest.issues:[]).map(issueKey));
+    (Array.isArray(latest&&latest.autoRecovered)?latest.autoRecovered:[]).forEach(function(item){
+      current.add(issueKey({label:'Transient service recovered on retry',url:item.url}));
+    });
+    var verified=report&&Array.isArray(report.repairs)?report.repairs.filter(function(r){
+      return r.status==='verified'&&r.verifiedAt;
+    }):[];
+    var repeated=Array.from(matched.values()).filter(function(x){
+      return x.days.size>=2&&(Date.now()-Date.parse(x.last))<=7*86400000;
+    }).map(function(x){
+      x.reopened=verified.some(function(r){
+        return (r.issueKey===x.key||r.relatedIssueKey===x.key)&&Date.parse(x.last)>Date.parse(r.verifiedAt);
+      });
+      return x;
+    }).sort(function(a,b){
+      return Number(b.reopened)-Number(a.reopened)||Number(current.has(b.key))-Number(current.has(a.key))||
+        b.days.size-a.days.size;
+    });
+    if(!repeated.length)return '<p class="dj-maint-empty">No repeating problem found in the past seven days of saved inspections. Continue monitoring.</p>';
+    return '<p class="dj-maint-register-note"><b>Repeated faults stay visible even if they later disappear or recover on retry.</b> '+
+      'A recurring signal is a reason to investigate, not proof of the suspected root cause.</p>'+
+      '<div class="dj-maint-repeat-list">'+repeated.map(function(x){
+        return '<article class="dj-maint-repeat-entry">'+
+          '<div class="dj-maint-repeat-heading"><b>'+escapeHtml(x.item.label||'Repeated issue')+'</b>'+
+          '<strong>'+x.days.size+' DAY(S) OBSERVED</strong></div>'+
+          '<p>'+escapeHtml(x.item.problem||'The same issue was found more than once.')+'</p>'+
+          '<p class="dj-maint-repeat-times">First: '+escapeHtml(fmt(x.first))+
+          ' · Last: '+escapeHtml(fmt(x.last))+
+          ' · '+(current.has(x.key)?'<b>REPORTED NOW</b>':'Not reported in latest scan')+'</p>'+
+          (x.reopened?'<p class="dj-maint-reopened">REOPENED AFTER A VERIFIED REPAIR</p>':'')+
+          (x.item.url?'<p><code>'+escapeHtml(x.item.url)+'</code> '+safeLink(x.item.url)+'</p>':'')+
+          '<p><b>Possible trigger to investigate:</b> '+escapeHtml(rootCauseHint(x.item))+'</p></article>';
+      }).join('')+'</div>';
+  }
+  function technicalChecksHtml(items,missingMessage) {
+    if(!Array.isArray(items)||!items.length)
+      return '<p class="dj-maint-empty">'+escapeHtml(missingMessage||'This check has not yet been recorded.')+'</p>';
+    return '<div class="dj-maint-check-list">'+items.map(function(item){
+      var state=String(item.state||'unverified');
+      var tone=state==='pass'?'green':state==='needs-attention'?'yellow':'neutral';
+      var label=state==='pass'?'PUBLIC CHECK PASSED':
+        state==='needs-attention'?'NEEDS REVIEW':
+        state==='login-required'?'SIGN-IN REQUIRED':'UNVERIFIED';
+      return '<article class="dj-maint-check dj-maint-tone-'+tone+'">'+
+        '<div><b>'+escapeHtml(item.label||'Connection check')+'</b><small>'+escapeHtml(label)+'</small></div>'+
+        '<p>'+escapeHtml(item.detail||'No detail recorded.')+'</p>'+
+        (item.url?'<p><code>'+escapeHtml(item.url)+'</code> '+safeLink(item.url)+'</p>':'')+'</article>';
+    }).join('')+'</div>';
+  }
+  function recoveryHtml(run) {
+    var items=run&&Array.isArray(run.autoRecovered)?run.autoRecovered:[];
+    if(!items.length)return '<p class="dj-maint-empty">No transient request was recorded as recovered during this scan.</p>';
+    return '<div class="dj-maint-check-list">'+items.map(function(item){
+      return '<article class="dj-maint-check dj-maint-tone-yellow"><div><b>RECOVERED ON RETRY</b>'+
+        '<small>INVESTIGATE IF REPEATED</small></div><p>'+escapeHtml(item.trigger||'Initial request failed')+
+        ' · '+escapeHtml(item.outcome||'Retry succeeded')+'</p><p><code>'+escapeHtml(item.url||'')+'</code> '+
+        safeLink(item.url)+'</p></article>';
+    }).join('')+'</div>';
+  }
+
   function render() {
     var host = document.getElementById('content');
     if (!host) return;
@@ -250,6 +342,12 @@
         'Technical scan and dated record. The separate 4 AM ChatGPT review provides additional observations.') + '</span></div>' +
       '<h3>LATEST REPORT · ' + escapeHtml(run?localDate(run.checkedAt):'NO DATE') + '</h3>' +
       (run ? issuesHtml(run) : '<p class="dj-maint-empty">No run yet. No green status is assumed.</p>') +
+      '<h3>RECURRING PROBLEMS · WHY DO THEY KEEP HAPPENING?</h3>' + recurringHtml() +
+      '<h3>PUBLIC SEO HEALTH</h3>' + technicalChecksHtml(run&&run.seoChecks,
+        'No recorded public SEO audit yet. The expanded scanner now checks SEO titles, descriptions, canonicals, robots.txt, noindex, and sitemaps.') +
+      '<h3>BACK-OFFICE PUBLIC REACHABILITY</h3>' + technicalChecksHtml(run&&run.backendChecks,
+        'No back-office reachability check has been saved yet. Private service authorization requires a signed-in owner check.') +
+      '<h3>TRANSIENT FAULTS RECOVERED ON RETRY</h3>' + recoveryHtml(run) +
       '<h3>ISSUE REGISTER · REPEATED & PREVIOUS FINDINGS</h3>' + issueLedgerHtml() +
       '<h3>REPAIRS MADE & VERIFICATION</h3>' + repairsHtml() +
       '<h3>DAY-BY-DAY MAINTENANCE LOG</h3>' + dayByDayHtml() +
