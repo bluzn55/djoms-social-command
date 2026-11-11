@@ -1941,7 +1941,9 @@ function render() {
         (typeof issue.url==='string'&&/^https:\/\//.test(issue.url)
           ?'<a href="'+esc(issue.url)+'" target="_blank" rel="noopener noreferrer">Open setup ↗</a>':'')+
         '</article>').join('')+'</section>' : '';
-  $('content').innerHTML = analyticAlertsHtml + `<div class="filterbar"><label>Find a post<input id="searchPosts" type="search" value="${esc(searchTerm)}" placeholder="Title or caption"></label>${campaignPicker}${campaignFilter && !canSelect ? '<button data-action="allCampaigns">Show all campaigns</button>':''}${bulkTools}<span>${list.length} posts</span></div>` + rowsHtml(list);
+  const maintenanceAlertHtml = activeView==='Needs Attention' && window.djomsDailyMaintenance?.missionHtml
+    ? '<div class="connection-strip dj-maint-attention-strip">'+window.djomsDailyMaintenance.missionHtml()+'</div>' : '';
+  $('content').innerHTML = maintenanceAlertHtml + analyticAlertsHtml + `<div class="filterbar"><label>Find a post<input id="searchPosts" type="search" value="${esc(searchTerm)}" placeholder="Title or caption"></label>${campaignPicker}${campaignFilter && !canSelect ? '<button data-action="allCampaigns">Show all campaigns</button>':''}${bulkTools}<span>${list.length} posts</span></div>` + rowsHtml(list);
 }
 async function setView(view) {
   if (inboxChangingView) return;
