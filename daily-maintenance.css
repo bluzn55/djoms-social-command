@@ -139,3 +139,11 @@
 .dj-maint-fix-secondary{border:1px solid #b6a17e;background:#fff9e8;color:#3f381e!important}
 .dj-maint-fix-secondary:hover,.dj-maint-fix-secondary:focus-visible{background:#f5e8c8}
 @media(max-width:550px){.dj-maint-remedy-actions{flex-direction:column;align-items:stretch}.dj-maint-fix-link,.dj-maint-fix-secondary{width:100%;font-size:13px}.dj-maint-remedy-body p{font-size:14px}}
+
+
+/* Optional reporting is informational, not an alert. */
+.dj-maint-secure-check.dj-maint-tone-optional{border-left-color:#8b8a80;background:#f9f6ef}
+.dj-maint-secure-check.dj-maint-tone-optional strong{color:#665d4c}
+.dj-maint-optional-grid{margin:9px 0 18px}
+.dj-maint-optional-grid .dj-maint-remedy summary{border-color:#c0b5a1;background:#f2ece0;color:#544b3a}
+.dj-maint-optional-grid .dj-maint-remedy summary:hover{background:#eae1d1}
