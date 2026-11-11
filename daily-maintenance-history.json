@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "updatedAt": "2026-11-11T11:32:21.374Z",
   "latest": {
     "id": "webscan-2026-11-11T11:32:21.374Z",
@@ -177,6 +177,29 @@
       "notes": [
         "14 additional discovered URLs were outside the daily scan limit."
       ]
+    }
+  ],
+  "repairs": [
+    {
+      "id": "daily-maintenance-recording-2026-11-11",
+      "title": "Restore daily maintenance recording",
+      "problem": "GitHub reported successful scheduled runs that skipped the website inspection, leaving the last saved technical report on November 7.",
+      "fix": "Removed the time cutoff that discarded late scans, added a backup scheduled attempt and retry, and recorded actual start and completion times.",
+      "appliedAt": "2026-11-11T11:30:17Z",
+      "verifiedAt": "2026-11-11T11:32:21.374Z",
+      "status": "verified",
+      "verification": "On November 11 a fresh GitHub Actions scan completed successfully and saved a dated result covering 124 pages, 142 links and 14 browser views. Verification covers report recording; a future delayed scheduled run still needs observation.",
+      "evidenceUrl": "https://github.com/bluzn55/djoms-social-command/actions/runs/43012469450"
+    },
+    {
+      "id": "daily-maintenance-late-schedule-2026-11-11",
+      "title": "Late-running 4 AM schedule protection",
+      "problem": "A delayed job previously exited without checking the site when it started outside the old 4–5 AM time window.",
+      "fix": "Changed the scheduled-run gate to reject only early runs before 4 AM Central, added a later backup cron entry, and a one-time retry on errors.",
+      "appliedAt": "2026-11-11T11:30:17Z",
+      "status": "applied",
+      "verification": "Code change is saved. Full verification requires observing a future delayed scheduled run instead of a push-triggered run.",
+      "evidenceUrl": "https://github.com/bluzn55/djoms-social-command/blob/main/.github/workflows/daily-maintenance.yml"
     }
   ]
 }
