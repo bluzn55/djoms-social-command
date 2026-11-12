@@ -451,3 +451,63 @@
   #content .dj-security-unclear-panels{grid-template-columns:1fr}
   #content .dj-security-unclear-head button{width:100%}
 }
+
+
+/* Doc Jaks priority #1 · active page time (analytics-consented) */
+#content .dj-security-measured-time{
+  margin:18px 0;padding:16px 17px;background:#fff9ed;
+  border:2px solid #aa8751;border-radius:8px;color:#392714;
+}
+#content .dj-security-time-header{
+  display:flex;flex-wrap:wrap;gap:10px 20px;
+  justify-content:space-between;align-items:flex-start;
+  border-bottom:1px solid #decaab;padding-bottom:10px;
+}
+#content .dj-security-time-header h3,
+#content .dj-security-measured-time h3{
+  font:900 20px/1.25 Georgia,serif!important;
+  margin:0 0 6px;color:#342116;
+}
+#content .dj-security-time-header p{
+  font-size:13px;color:#685037;line-height:1.5;margin:0;
+}
+#content .dj-security-time-header>span{
+  background:#f1e2c2;border-radius:5px;padding:9px 11px;
+  font-size:12px;color:#584226;font-weight:900;
+}
+#content .dj-security-time-metrics{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;margin:13px 0;
+}
+#content .dj-security-time-metric{
+  min-width:0;background:#f4e7cc;border:1px solid #e1cba6;
+  padding:12px;border-radius:6px;display:flex;flex-direction:column;gap:4px;
+}
+#content .dj-security-time-metric small{
+  font-size:11px;color:#614224;letter-spacing:.03em;font-weight:900;
+}
+#content .dj-security-time-metric strong{
+  font:900 clamp(23px,2vw,32px)/1.2 Georgia,serif!important;color:#332011;
+}
+#content .dj-security-time-metric span{
+  font-size:12px;color:#65513a;line-height:1.4;
+}
+#content .dj-security-time-detail{margin-top:10px!important}
+#content .dj-security-time-detail p{
+  font-size:12px;color:#5e4c34;line-height:1.5;
+}
+#content .dj-security-time-table{min-width:775px}
+#content .dj-security-time-table small{
+  display:block;font-size:11px;color:#73593c;overflow-wrap:anywhere;margin-top:5px;
+}
+#content .dj-security-time-table b{display:block}
+#content .dj-security-time-note{
+  color:#66513c;margin:13px 0 0;font-size:12px;line-height:1.6;
+}
+@media(max-width:880px){
+  #content .dj-security-time-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:560px){
+  #content .dj-security-measured-time{padding:10px}
+  #content .dj-security-time-metrics{grid-template-columns:1fr}
+}
