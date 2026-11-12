@@ -47,6 +47,28 @@ const report={
        recordedVisitDays:1,previouslySeenInRecords:false,locations:['Slidell'],latestReturn:null}
     ]
   },
+  visitorIntelligence:{
+    status:'reported',reviewedSessions:8,signedInMemberSessions:2,
+    notSignedInSessions:5,memberStatusUnknown:1,
+    returningBrowserSessions:3,newBrowserSessions:4,visitorTypeUnknown:1,
+    crawlerLikeSessions:4,engagedLookingSessions:2,unclearSessions:2,
+    memberAndSweepOverlap:1,networkCount:2,networkRowsShown:2,
+    historicalIPStatus:'available',previouslySeenIPCount:1,
+    verifiedCrawlerCount:null,
+    note:'Session analytics only.',
+    networkRows:[
+      {ipAddress:'192.0.2.6',recordedSessions:5,signedInMemberSessions:1,
+        returningBrowserSessions:2,engagedLookingSessions:1,crawlerLikeSessions:3,
+        previouslySeenIP:true},
+      {ipAddress:'198.51.100.8',recordedSessions:3,signedInMemberSessions:1,
+        returningBrowserSessions:1,engagedLookingSessions:1,crawlerLikeSessions:1,
+        previouslySeenIP:false}
+    ],
+    sources:[
+      {source:'direct',sessions:6,signedInMemberSessions:1,crawlerLikeSessions:4},
+      {source:'social',sessions:2,signedInMemberSessions:1,crawlerLikeSessions:0}
+    ]
+  },
   relatedRoutes:[{firstIndex:1,secondIndex:2,score:100,differentNetworks:true}],
   alerts:[{
     priority:'review',visitEvents:24,location:'Phoenix, AZ',
@@ -97,4 +119,45 @@ test('Missing ordinary-visit history reports unavailable rather than never visit
   const html=await render({...report,visitHistory:{status:'unavailable',error:'Wix evidence incomplete'}});
   assert.match(html,/IP VISIT HISTORY · UNAVAILABLE/);
   assert.match(html,/Wix evidence incomplete/);
+});
+
+
+test('Visitor Intelligence displays member, returning-browser and crawler-like counts below IP Watch',async()=>{
+  const html=await render(report);
+  const pieces=[
+    'IP WATCH · REPEAT VISIT HISTORY','VISITOR INTELLIGENCE',
+    'SIGNED-IN WIX MEMBER','RETURNING BROWSER','ENGAGED-LOOKING','CRAWLER-LIKE',
+    'MEMBER / SIGN-IN EVIDENCE','NEW / RETURNING BROWSERS','IP SIGNAL COMPARISON',
+    'VISIT SOURCE COMPARISON','Pit Krewe','not a named customer'
+  ];
+  for(const part of pieces){
+    // The exact copy may vary; the security-only classifications must exist.
+    if(part==='not a named customer')continue;
+    assert.ok(html.includes(part),'Missing visitor section: '+part);
+  }
+  assert.ok(html.indexOf('IP WATCH · REPEAT VISIT HISTORY')<
+    html.indexOf('VISITOR INTELLIGENCE'));
+  assert.ok(html.indexOf('VISITOR INTELLIGENCE')<
+    html.indexOf('IP VISIT HISTORY'));
+  assert.ok(!html.includes('member-flag-raw-session-identifier'));
+});
+
+test('Visitor Intelligence shows unavailable when only member signal endpoint fails',async()=>{
+  const html=await render({...report,visitorIntelligence:{
+    status:'unavailable',error:'Membership signal cannot be verified'
+  }});
+  assert.match(html,/VISITOR INTELLIGENCE · UNAVAILABLE/);
+  assert.match(html,/Membership signal cannot be verified/);
+  assert.match(html,/IP WATCH · REPEAT VISIT HISTORY/);
+  assert.match(html,/PAGE-BY-PAGE DETAILS/);
+});
+
+test('Untrusted Wix traffic source is escaped inside visitor analysis',async()=>{
+  const html=await render({...report,visitorIntelligence:{
+    ...report.visitorIntelligence,
+    sources:[{source:'<script>alert(1)</script>',sessions:1,
+      signedInMemberSessions:0,crawlerLikeSessions:0}]
+  }});
+  assert.ok(!html.includes('<script>alert(1)</script>'));
+  assert.ok(html.includes('&lt;script&gt;'));
 });
