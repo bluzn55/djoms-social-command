@@ -240,3 +240,55 @@
   #content .dj-security-metrics{grid-template-columns:1fr}
   #content .dj-security-history-heading button{width:100%}
 }
+
+
+/* Nov 12 · IP observations and dormancy watch */
+#content .dj-security-visit-history{
+  margin:16px 0;padding:15px;background:#fff9ed;
+  border:2px solid #bfa073;border-radius:8px;
+}
+#content .dj-security-visit-history h3{
+  font:900 19px Georgia,serif!important;color:#2c2014;margin:0 0 8px;
+}
+#content .dj-security-visit-history>p{
+  color:#59422a;font-size:13px;line-height:1.5;margin:8px 0;
+}
+#content .dj-security-ip-lookup{
+  display:block;font-size:12px;font-weight:900;color:#654522;margin:12px 0 8px;
+}
+#content .dj-security-ip-lookup input{
+  display:block;width:min(100%,540px);height:40px;margin:7px 0 0;
+  border:2px solid #a47a46;border-radius:6px;background:#fffdf7;color:#281b12;
+  padding:8px 12px;font:700 15px Arial,sans-serif;
+}
+#content .dj-security-ip-lookup input:focus-visible{
+  outline:3px solid #b27b24;outline-offset:2px;
+}
+#content .dj-security-lookup-count{
+  font-size:12px;color:#654a29;margin:7px 0;font-weight:900;
+}
+#content .dj-security-visit-table{min-width:920px}
+#content .dj-security-visit-table code{
+  display:inline-block;font-size:13px;padding:4px;background:#f1e0bf;border-radius:4px;
+  white-space:nowrap;color:#33210e;
+}
+#content .dj-security-visit-table strong{display:block;font-size:12px}
+#content .dj-security-visit-table small{display:block;margin-top:5px;font-size:11px;color:#66503b}
+#content .dj-security-return-flag{
+  display:inline-block;max-width:100%;padding:5px 7px;margin:3px 0;
+  border:1px solid #b08b44;border-radius:4px;background:#ffe2ae;
+  font-size:11px;font-weight:900;color:#64400b;white-space:nowrap;
+}
+#content .dj-security-return-flag.tier-30{
+  background:#fbe0bf;border-color:#bb8043;color:#784617;
+}
+#content .dj-security-return-flag.tier-90{
+  background:#fbceba;border-color:#b36545;color:#812e18;
+}
+#content .dj-security-history-table td small,
+#content .dj-security-visit-table td small{display:block;margin-top:4px}
+#content .dj-security-visit-table tr[hidden]{display:none}
+@media(max-width:650px){
+  #content .dj-security-visit-history{padding:10px}
+  #content .dj-security-visit-table{min-width:860px}
+}

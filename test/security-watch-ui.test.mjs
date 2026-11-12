@@ -34,6 +34,19 @@ const report={
     }],
     latest:[]
   },
+  visitHistory:{
+    status:'saved',networkCount:2,networksShown:2,recordedSessions:28,newSessionsSaved:28,
+    note:'Available records only.',
+    networks:[
+      {ipAddress:'192.0.2.6',firstObservedAt:'2026-10-11T17:00:00Z',
+       lastObservedAt:'2026-11-11T17:00:00Z',recordedSessions:27,
+       recordedVisitDays:2,previouslySeenInRecords:true,locations:['Phoenix'],
+       latestReturn:{gapDays:31,previousSeenAt:'2026-10-11T17:00:00Z',returnedAt:'2026-11-11T17:00:00Z'}},
+      {ipAddress:'198.51.100.8',firstObservedAt:'2026-11-11T15:00:00Z',
+       lastObservedAt:'2026-11-11T15:00:00Z',recordedSessions:1,
+       recordedVisitDays:1,previouslySeenInRecords:false,locations:['Slidell'],latestReturn:null}
+    ]
+  },
   relatedRoutes:[{firstIndex:1,secondIndex:2,score:100,differentNetworks:true}],
   alerts:[{
     priority:'review',visitEvents:24,location:'Phoenix, AZ',
@@ -67,4 +80,21 @@ test('Untrusted location text is escaped',async()=>{
   const html=await render({...report,alerts:[{...report.alerts[0],location:injected}]});
   assert.ok(!html.includes('<img src=x'));
   assert.ok(html.includes('&lt;img src=x'));
+});
+
+test('IP lookup shows earlier recorded dates, repeat sightings and a 30+ day return',async()=>{
+  const html=await render(report);
+  for(const phrase of [
+    'HAVE WE SEEN THIS ADDRESS BEFORE?',
+    'SEARCH RECORDED IP ADDRESS',
+    'SEEN ON PRIOR DATE',
+    'FIRST CAPTURED RECORD',
+    'RETURNED AFTER 31 DAYS',
+    '198.51.100.8'
+  ])assert.ok(html.includes(phrase),'Missing '+phrase);
+});
+test('Missing ordinary-visit history reports unavailable rather than never visited',async()=>{
+  const html=await render({...report,visitHistory:{status:'unavailable',error:'Wix evidence incomplete'}});
+  assert.match(html,/IP VISIT HISTORY · UNAVAILABLE/);
+  assert.match(html,/Wix evidence incomplete/);
 });
