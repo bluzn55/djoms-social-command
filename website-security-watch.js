@@ -98,7 +98,55 @@
     return '<div class="dj-security-metric"><small>'+esc(name)+'</small>'+
       '<strong>'+esc(number(value))+'</strong><span>'+esc(detail)+'</span></div>';
   }
-function historyPanel(history) {
+
+  function returnMarker(event,compact=false) {
+    if(!Number.isSafeInteger(event?.gapDays)||event.gapDays<7)
+      return compact?'<small>No 7+ day gap recorded</small>':'';
+    const tier=event.gapDays>=90?'90':event.gapDays>=30?'30':'7';
+    return '<span class="dj-security-return-flag tier-'+tier+'">RETURNED AFTER '+
+      esc(number(event.gapDays))+' DAYS</span>'+
+      (compact?'<small>Previously '+esc(time(event.previousSeenAt))+
+        ' · Returned '+esc(time(event.returnedAt))+'</small>':'');
+  }
+  function visitHistoryPanel(visits) {
+    if(!visits||visits.status!=='saved') {
+      return '<section class="dj-security-visit-history"><h3>IP VISIT HISTORY · UNAVAILABLE</h3>'+
+        '<p>'+esc(visits?.error||'Wix visit history has not been recorded yet.')+'</p></section>';
+    }
+    const networks=Array.isArray(visits.networks)?visits.networks:[];
+    const tableRows=networks.map(network=>
+      '<tr data-visit-ip="'+esc(network.ipAddress||'')+'">'+
+      '<td><code>'+esc(network.ipAddress||'N/A')+'</code></td>'+
+      '<td><strong>'+esc(network.recordedSessions>1?'SEEN BEFORE':'FIRST CAPTURED RECORD')+
+        '</strong><small>'+esc(number(network.recordedSessions))+' recorded Wix sessions</small></td>'+
+      '<td>'+esc(time(network.firstObservedAt))+'</td>'+
+      '<td>'+esc(time(network.lastObservedAt))+'</td>'+
+      '<td>'+esc((network.locations||[]).join('; ')||'Unavailable')+'</td>'+
+      '<td>'+returnMarker(network.latestReturn,true)+'</td></tr>').join('');
+    return '<section class="dj-security-visit-history">'+
+      '<h3>IP VISIT HISTORY · HAVE WE SEEN THIS ADDRESS BEFORE?</h3>'+
+      '<p>Includes ordinary recorded visits, not just suspicious sweeps. One IP can be used by many people, and this is not an all-time visitor list.</p>'+
+      '<div class="dj-security-history-metrics">'+
+        '<span><b>'+esc(number(visits.networkCount))+'</b> IPs in captured sessions</span>'+
+        '<span><b>'+esc(number(visits.recordedSessions))+'</b> recorded Wix sessions</span>'+
+        '<span><b>'+esc(number(visits.newSessionsSaved))+'</b> newly recorded this check</span></div>'+
+      '<label class="dj-security-ip-lookup" for="securityIpLookup">SEARCH RECORDED IP ADDRESS'+
+        '<input id="securityIpLookup" type="search" placeholder="Enter all or part of an IP address" autocomplete="off" spellcheck="false"></label>'+
+      '<p id="securityIpLookupCount" class="dj-security-lookup-count">'+
+      esc(number(networks.length))+' matching captured IP addresses</p>'+
+      '<div class="dj-security-timeline-scroll"><table class="dj-security-timeline-table dj-security-visit-table">'+
+      '<thead><tr><th>IP ADDRESS</th><th>RECORDED HISTORY</th><th>FIRST CAPTURED</th>'+
+      '<th>LATEST CAPTURED</th><th>REPORTED LOCATION(S)</th><th>RETURN WATCH</th></tr></thead>'+
+      '<tbody>'+(tableRows||'<tr><td colspan="6">No individual Wix sessions could be verified for the reviewed period.</td></tr>')+'</tbody></table></div>'+
+      '<p class="dj-security-timeline-note">'+esc(visits.note||'History is limited to captured Wix sessions.')+
+      (visits.wixSourcePartial||visits.truncated?
+        ' Evidence is incomplete or capacity-limited; some visits may be missing.':'')+
+      (visits.networkCount>visits.networksShown?
+        ' Only the '+esc(number(visits.networksShown))+' most recently seen IPs are displayed.':'')+
+      '</p></section>';
+  }
+
+  function historyPanel(history) {
     if(!history || history.status!=='saved') {
       return '<section class="dj-security-history"><h3>IP HISTORY · NOT SAVED</h3>'+
         '<p>'+esc(history?.error||'Protected network evidence history is unavailable. Do not treat this as an empty log.')+'</p></section>';
@@ -254,7 +302,7 @@ function historyPanel(history) {
         '<small>'+(partial?
           'The report reached its 2,500-row evidence limit. More events may exist, so findings are incomplete.':
           'This is behavioral screening, not intrusion detection or an all-clear.')+'</small></div>'+
-      historyPanel(data.history)+routeMatches(data.relatedRoutes)+
+      historyPanel(data.history)+visitHistoryPanel(data.visitHistory)+routeMatches(data.relatedRoutes)+
       '<div class="dj-security-detail-header"><h3>FLAGGED ACTIVITY</h3>'+ 
         '<span>'+esc(number(data.priorityPatterns))+' priority review · '+
           esc(number(data.totalPatterns))+' patterns</span></div>'+
@@ -271,6 +319,22 @@ function historyPanel(history) {
         '<p>No visitors are blocked or deleted, and published visitor totals are not automatically altered.</p>'+
       '</details></div>';
   }
+  document.addEventListener('input',event=>{
+    if(!live()||event.target?.id!=='securityIpLookup')return;
+    const query=String(event.target.value||'').trim().toLowerCase();
+    const host=document.getElementById('securityWatchResult');
+    if(!host)return;
+    const entries=host.querySelectorAll('[data-visit-ip]');
+    let visible=0;
+    for(const entry of entries) {
+      const matched=String(entry.getAttribute('data-visit-ip')||'').toLowerCase().includes(query);
+      entry.hidden=!matched;
+      if(matched)visible++;
+    }
+    const count=host.querySelector('#securityIpLookupCount');
+    if(count)count.textContent=visible+' matching captured IP addresses'+
+      (visible===0?' · No record found is not proof the IP never visited.':'');
+  });
   document.addEventListener('click',event=>{
     const pick=event.target.closest('[data-security-range]');
     if(pick&&live()){
