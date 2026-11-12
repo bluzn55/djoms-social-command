@@ -158,7 +158,8 @@
       '<td>'+esc(time(network.firstSeen))+'</td>'+
       '<td>'+esc(time(network.lastSeen))+'</td>'+
       '<td>'+esc(number(network.observedSweeps))+'</td>'+
-      '<td>'+esc(number(network.flaggedVisitEvents))+'</td>'+
+      '<td>'+esc(number(network.flaggedVisitEvents))+'</td>'+ 
+      '<td>'+returnMarker(network.latestReturn,true)+'</td>'+
       '</tr>').join('');
     return '<section class="dj-security-history"><div class="dj-security-history-heading">'+
       '<div><h3>IP WATCH · REPEAT VISIT HISTORY</h3>'+
@@ -167,13 +168,15 @@
       '<div class="dj-security-history-metrics">'+
       '<span><b>'+esc(number(history.networkCount))+'</b> distinct network IPs</span>'+
       '<span><b>'+esc(number(history.totalSweepsStored))+'</b> stored sweeps</span>'+
-      '<span><b>'+esc(number(history.newSweepsSaved))+'</b> newly saved this check</span></div>'+
+      '<span><b>'+esc(number(history.newSweepsSaved))+'</b> newly saved this check</span>'+ 
+      '<span><b>'+esc(number(history.returningNetworks))+'</b> IPs returning after 7+ days</span></div>'+
       '<p class="dj-security-timeline-note">'+esc(history.note||'Records update when this owner-only report runs.')+'</p>'+
       '<div class="dj-security-timeline-scroll"><table class="dj-security-timeline-table dj-security-history-table">'+
       '<thead><tr><th>IP ADDRESS</th><th>REPORTED LOCATION(S)</th><th>FIRST SEEN</th>'+
-      '<th>LAST SEEN</th><th>SWEEPS</th><th>PAGE OPENS</th></tr></thead>'+
-      '<tbody>'+(rows||'<tr><td colspan="6">No qualifying recorded sweeps yet.</td></tr>')+'</tbody></table></div>'+
+      '<th>LAST SEEN</th><th>SWEEPS</th><th>PAGE OPENS</th><th>RETURN WATCH</th></tr></thead>'+
+      '<tbody>'+(rows||'<tr><td colspan="7">No qualifying recorded sweeps yet.</td></tr>')+'</tbody></table></div>'+
       '<small>History collects suspicious sweeps only when the owner opens or refreshes Website Security. '+
+      'A return badge means a 7, 30, or 90+ day gap between captured suspicious sweeps, not proof that the IP made no other visits. '+
       'The data is encrypted in DJOMS server storage, not publicly accessible. CSV exports include the latest 100 recorded sweeps.</small></section>';
   }
   function routeMatches(rows) {
@@ -189,7 +192,7 @@
   }
   function csvText(records) {
     const headers=['Date/time (Central source UTC)','Last seen (UTC)','IP address','Location','Traffic source','Flagged page opens',
-      'Distinct sessions','Unique pages','Consecutive duplicate pairs','Page route'];
+      'Distinct sessions','Unique pages','Consecutive duplicate pairs','Days since prior flagged sweep','Previous flagged sweep (UTC)','Page route'];
     const safe=value=>{
       let raw=String(value??'').replace(/\u0000/g,'');
       if(/^\s*[=+\-@\t\r]/.test(raw))raw="'"+raw;
@@ -198,7 +201,7 @@
     const lines=[headers.map(safe).join(',')];
     for(const x of records)lines.push([
       x.firstAt,x.lastAt,x.ipAddress,x.location,x.source,x.visitEvents,
-      x.distinctSessions,x.uniquePages,x.repeatedPairs,
+      x.distinctSessions,x.uniquePages,x.repeatedPairs,x.returnAfterDays,x.previousSweepAt,
       (Array.isArray(x.sequence)?x.sequence:[]).join(' → ')
     ].map(safe).join(','));
     return lines.join('\r\n');
