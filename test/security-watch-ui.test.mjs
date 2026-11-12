@@ -1,0 +1,70 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+
+const script=await readFile(new URL('../website-security-watch.js',import.meta.url),'utf8');
+
+async function render(data) {
+  const items={content:{innerHTML:''},securityWatchResult:{innerHTML:''}};
+  const document={
+    getElementById:name=>items[name]||null,
+    addEventListener:()=>{},
+    querySelectorAll:()=>[]
+  };
+  const window={};
+  new Function('window','document','activeView','api',script)(
+    window,document,'Website Security',async()=>data
+  );
+  window.djomsWebsiteSecurity.render();
+  await new Promise(resolve=>setImmediate(resolve));
+  return items.securityWatchResult.innerHTML;
+}
+
+const report={
+  status:'reported',checkedAt:'2026-11-12T12:00:00Z',
+  range:{selection:'7d',start:'2026-11-06',endInclusive:'2026-11-12'},
+  coverage:{analyzedRows:120,partial:false},totalPatterns:1,
+  flaggedVisitEvents:24,priorityPatterns:0,observationsNotEvaluated:0,
+  history:{
+    status:'saved',networkCount:1,totalSweepsStored:1,newSweepsSaved:1,
+    note:'Data only collected by owner-initiated checks.',
+    networks:[{
+      ipAddress:'192.0.2.6',cities:['Phoenix'],firstSeen:'2026-11-11T17:00:00Z',
+      lastSeen:'2026-11-11T17:01:00Z',observedSweeps:1,flaggedVisitEvents:24
+    }],
+    latest:[]
+  },
+  relatedRoutes:[{firstIndex:1,secondIndex:2,score:100,differentNetworks:true}],
+  alerts:[{
+    priority:'review',visitEvents:24,location:'Phoenix, AZ',
+    start:'2026-11-11T17:00:00Z',end:'2026-11-11T17:01:00Z',
+    uniquePages:12,durationSeconds:60,signature:'desktop',source:'direct',
+    networkVerified:true,ipAddress:'192.0.2.6',distinctSessions:24,
+    repeatedPairs:12,
+    timeline:[{path:'/',openedAt:'2026-11-11T17:00:00Z',gapFromPriorSeconds:null,pageAverageSeconds:null}]
+  }]
+};
+
+test('Owner security report contains IP history, route comparisons and all flagged details',async()=>{
+  const html=await render(report);
+  for(const evidence of [
+    'IP WATCH','192.0.2.6','stored sweeps',
+    'consecutive duplicate pairs','dj-security-alert',
+    'MATCHING PAGE ROUTES','PAGE-BY-PAGE DETAILS',
+    'Export recorded evidence'
+  ])assert.ok(html.includes(evidence),'Missing '+evidence);
+});
+
+test('Missing history is not incorrectly reported as zero security events',async()=>{
+  const html=await render({...report,history:{status:'unavailable',error:'Protected evidence storage offline'}});
+  assert.match(html,/IP HISTORY · NOT SAVED/);
+  assert.match(html,/Protected evidence storage offline/);
+  assert.doesNotMatch(html,/0<\/b> stored sweeps/);
+});
+
+test('Untrusted location text is escaped',async()=>{
+  const injected='<img src=x onerror=alert(1)>';
+  const html=await render({...report,alerts:[{...report.alerts[0],location:injected}]});
+  assert.ok(!html.includes('<img src=x'));
+  assert.ok(html.includes('&lt;img src=x'));
+});
