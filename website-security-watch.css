@@ -47,7 +47,7 @@
   gap:8px;align-items:center;color:#614222;font-size:13px;
 }
 #content .dj-security-coverage>strong{font-size:15px;color:#2b1d10}
-#content .dj-security-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#content .dj-security-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 #content .dj-security-metric{
   padding:15px;background:#fff9ef;border:1px solid #d3b887;border-radius:8px;
   display:flex;flex-direction:column;gap:3px;min-width:0;
@@ -184,4 +184,59 @@
   #content .dj-security-timeline-note{font-size:14px!important}
   #content .dj-security-timeline-table{min-width:750px}
   #content .dj-security-timeline-scroll{max-height:430px}
+}
+
+
+/* Nov 12 · owner-only IP evidence history and cross-IP route comparison */
+#content .dj-security-history{
+  margin:18px 0 15px;padding:15px;
+  background:#fff7e9;border:2px solid #cba96e;border-radius:8px;
+}
+#content .dj-security-history-heading{
+  display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;
+}
+#content .dj-security-history-heading h3,
+#content .dj-security-history h3{
+  font:900 19px Georgia,serif!important;color:#2f2115;margin:0 0 5px;
+}
+#content .dj-security-history-heading p{
+  margin:0 0 11px;font-size:13px;line-height:1.5;color:#604b2f;
+}
+#content .dj-security-history-metrics{
+  display:flex;flex-wrap:wrap;gap:9px;margin:10px 0;
+}
+#content .dj-security-history-metrics span{
+  background:#ecd6ae;border:1px solid #cfae7b;border-radius:5px;
+  padding:9px 12px;font-size:13px;color:#3f2a14;
+}
+#content .dj-security-history-metrics b{font-size:19px}
+#content .dj-security-history-table{min-width:830px}
+#content .dj-security-history-table td{overflow-wrap:anywhere}
+#content .dj-security-history-table code{
+  font-size:13px;background:#f2e3c8;padding:4px 5px;border-radius:3px;
+  white-space:nowrap;color:#392514;
+}
+#content .dj-security-history>small{
+  display:block;margin-top:10px;font-size:12px;color:#594935;line-height:1.5;
+}
+#content .dj-security-route-matches{
+  background:#fff5e1;border:1px solid #d3b680;
+  border-radius:7px;padding:12px 14px;margin:14px 0!important;
+}
+#content .dj-security-match-list{display:grid;gap:6px}
+#content .dj-security-match-list p{
+  margin:0;padding:8px 10px;background:#fcf0da;border-radius:4px;
+  color:#493319;font-size:13px;
+}
+#content .dj-security-alert-facts code{
+  background:#fff7e7;border-radius:3px;padding:3px;
+  font-size:12px;overflow-wrap:anywhere;
+}
+@media(max-width:1000px){
+  #content .dj-security-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:650px){
+  #content .dj-security-history{padding:10px}
+  #content .dj-security-metrics{grid-template-columns:1fr}
+  #content .dj-security-history-heading button{width:100%}
 }
