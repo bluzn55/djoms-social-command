@@ -255,7 +255,7 @@ function historyPanel(history) {
           'The report reached its 2,500-row evidence limit. More events may exist, so findings are incomplete.':
           'This is behavioral screening, not intrusion detection or an all-clear.')+'</small></div>'+
       historyPanel(data.history)+routeMatches(data.relatedRoutes)+
-      '<div class="dj-security-detail-header"><h3>FLAGGED ACTIVITY</h3>'
+      '<div class="dj-security-detail-header"><h3>FLAGGED ACTIVITY</h3>'+ 
         '<span>'+esc(number(data.priorityPatterns))+' priority review · '+
           esc(number(data.totalPatterns))+' patterns</span></div>'+
       (rows.length?'<div class="dj-security-alerts">'+rows.map(alertRow).join('')+'</div>':
