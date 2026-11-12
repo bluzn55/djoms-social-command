@@ -56,6 +56,25 @@ const report={
     historicalIPStatus:'available',previouslySeenIPCount:1,
     verifiedCrawlerCount:null,
     note:'Session analytics only.',
+    unclearDetail:{
+      total:2,
+      reasons:{onePageNoMeasuredTime:1,onePageShortMeasuredTime:1,
+        pageUnreported:0,otherInsufficientEvidence:0},
+      returningBrowserSessions:1,newBrowserSessions:1,visitorTypeUnknown:0,
+      signedInMemberSessions:1,notSignedInSessions:1,memberStatusUnknown:0,
+      sessionsShown:2,partial:false,
+      note:'Wix average is not individual dwell time.',
+      topPages:[{path:'/outlaw-radio-5150',sessions:1},{path:'/the-wooden-token',sessions:1}],
+      sources:[{source:'direct',sessions:1},{source:'social',sessions:1}],
+      sessionRows:[
+        {recordedAt:'2026-11-11T17:00:00Z',ipAddress:'192.0.2.6',
+          page:'/outlaw-radio-5150',source:'direct',browserType:'returning',
+          memberStatus:'not-signed-in',why:'onePageNoMeasuredTime',wixAverageSeconds:null},
+        {recordedAt:'2026-11-11T18:00:00Z',ipAddress:'198.51.100.8',
+          page:'/the-wooden-token',source:'social',browserType:'new',
+          memberStatus:'signed-in',why:'onePageShortMeasuredTime',wixAverageSeconds:10}
+      ]
+    },
     networkRows:[
       {ipAddress:'192.0.2.6',recordedSessions:5,signedInMemberSessions:1,
         returningBrowserSessions:2,engagedLookingSessions:1,crawlerLikeSessions:3,
@@ -160,4 +179,42 @@ test('Untrusted Wix traffic source is escaped inside visitor analysis',async()=>
   }});
   assert.ok(!html.includes('<script>alert(1)</script>'));
   assert.ok(html.includes('&lt;script&gt;'));
+});
+
+
+test('Why Unclear shows the reason for each ambiguous session without calling it a bot',async()=>{
+  const html=await render(report);
+  for(const fragment of [
+    'WHY 2 SESSIONS ARE UNCLEAR',
+    'ONE PAGE · TIME NOT MEASURED',
+    'ONE PAGE · SHORT REPORTED AVERAGE',
+    'VIEW UNCLEAR SESSION DETAILS',
+    'TOP PAGES AMONG UNCLEAR SESSIONS',
+    'REFERRAL SOURCES AMONG UNCLEAR SESSIONS',
+    'Export unclear records (CSV)',
+    'Not measured',
+    'Wix avg'
+  ])assert.ok(html.includes(fragment),'Missing '+fragment);
+});
+
+test('Missing detail is explicitly unavailable rather than claiming zero',async()=>{
+  const html=await render({...report,visitorIntelligence:{
+    ...report.visitorIntelligence,unclearDetail:null
+  }});
+  assert.match(html,/WHY UNCLEAR\? · NO DETAIL AVAILABLE/);
+  assert.doesNotMatch(html,/WHY 0 SESSIONS ARE UNCLEAR/);
+});
+
+test('Untrusted page and source labels are escaped in unclear investigation',async()=>{
+  const malicious='<img src=x onerror=alert(1)>';
+  const html=await render({...report,visitorIntelligence:{
+    ...report.visitorIntelligence,unclearDetail:{
+      ...report.visitorIntelligence.unclearDetail,
+      topPages:[{path:malicious,sessions:1}],
+      sessionRows:[{...report.visitorIntelligence.unclearDetail.sessionRows[0],
+        page:malicious,source:malicious}]
+    }
+  }});
+  assert.ok(!html.includes(malicious));
+  assert.ok(html.includes('&lt;img'));
 });

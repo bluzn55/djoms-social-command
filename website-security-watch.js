@@ -180,6 +180,94 @@
       'The data is encrypted in DJOMS server storage, not publicly accessible. CSV exports include the latest 100 recorded sweeps.</small></section>';
   }
 
+
+  function unclearEvidencePanel(detail) {
+    if(!detail||!Number.isSafeInteger(detail.total)){
+      return '<section class="dj-security-unclear"><h4>WHY UNCLEAR? · NO DETAIL AVAILABLE</h4>'+
+        '<p>Wix did not return enough verified evidence to explain the unclear sessions.</p></section>';
+    }
+    const reasons=detail.reasons||{};
+    const reasonRows=[
+      ['ONE PAGE · TIME NOT MEASURED',reasons.onePageNoMeasuredTime,'Wix did not provide a usable stay-time value'],
+      ['ONE PAGE · SHORT REPORTED AVERAGE',reasons.onePageShortMeasuredTime,'A Wix-reported average under 30 seconds'],
+      ['PAGE NOT IDENTIFIED',reasons.pageUnreported,'No valid public-page path found'],
+      ['OTHER INSUFFICIENT SIGNALS',reasons.otherInsufficientEvidence,'No qualifying engagement or page-sweep evidence']
+    ];
+    const examples=Array.isArray(detail.sessionRows)?detail.sessionRows:[];
+    const visits=examples.map(row=>
+      '<tr><td>'+esc(time(row.recordedAt))+'</td>'+
+      '<td><code>'+esc(row.ipAddress||'Unavailable')+'</code></td>'+
+      '<td><b>'+esc(row.page==='Unavailable'?'Page unavailable':pageTitle(row.page))+
+        '</b><small>'+esc(row.page)+'</small></td>'+
+      '<td>'+esc(row.source||'Unknown')+'</td>'+
+      '<td>'+esc(row.browserType==='returning'?'Returning':row.browserType==='new'?'First-time':'Unknown')+'</td>'+
+      '<td>'+esc(row.memberStatus==='signed-in'?'Signed in':row.memberStatus==='not-signed-in'?'Not signed in':'Unknown')+'</td>'+
+      '<td>'+esc(row.wixAverageSeconds===null||row.wixAverageSeconds===undefined?
+        'Not measured':wixAverage(row.wixAverageSeconds)+' Wix avg')+'</td></tr>'
+    ).join('');
+    const pages=(Array.isArray(detail.topPages)?detail.topPages:[]).map(row=>
+      '<tr><td>'+esc(row.path==='Unavailable'?'Unavailable':pageTitle(row.path))+
+      '<small>'+esc(row.path)+'</small></td><td>'+esc(number(row.sessions))+'</td></tr>').join('');
+    const sources=(Array.isArray(detail.sources)?detail.sources:[]).map(row=>
+      '<tr><td>'+esc(row.source)+'</td><td>'+esc(number(row.sessions))+'</td></tr>').join('');
+    return '<section class="dj-security-unclear">'+
+      '<div class="dj-security-unclear-head"><div><h4>WHY '+esc(number(detail.total))+
+        ' SESSIONS ARE UNCLEAR</h4>'+
+        '<p>They do not have a measurable engagement signal or a qualifying rapid page sweep. '+
+        'An unclear session may still be a genuine reader or listener.</p></div>'+
+        (examples.length?'<button type="button" data-security-export-unclear="1">Export unclear records (CSV)</button>':'')+
+      '</div>'+
+      '<div class="dj-security-unclear-reasons">'+reasonRows.map(([label,value,reason])=>
+        '<div><small>'+esc(label)+'</small><strong>'+esc(number(value))+'</strong>'+
+        '<span>'+esc(reason)+'</span></div>').join('')+'</div>'+
+      '<div class="dj-security-unclear-other">'+
+        '<span>Returning browser: <b>'+esc(number(detail.returningBrowserSessions))+'</b></span>'+
+        '<span>First-time browser: <b>'+esc(number(detail.newBrowserSessions))+'</b></span>'+
+        '<span>Signed-in Wix member: <b>'+esc(number(detail.signedInMemberSessions))+'</b></span>'+
+      '</div>'+
+      '<details class="dj-security-unclear-detail"><summary>VIEW UNCLEAR SESSION DETAILS · '+
+        esc(number(detail.total))+' total ('+esc(number(detail.sessionsShown))+' displayed)</summary>'+
+        '<p>'+esc(detail.note||'')+'</p>'+
+        '<div class="dj-security-timeline-scroll"><table class="dj-security-timeline-table dj-security-unclear-table">'+
+        '<thead><tr><th>WIX RECORDED (CENTRAL)</th><th>IP</th><th>PAGE</th>'+
+          '<th>SOURCE</th><th>VISITOR TYPE</th><th>MEMBER</th><th>TIME</th></tr></thead>'+
+        '<tbody>'+(visits||'<tr><td colspan="7">No individual session rows available.</td></tr>')+'</tbody>'+
+        '</table></div></details>'+
+      '<div class="dj-security-unclear-panels">'+
+        '<details><summary>TOP PAGES AMONG UNCLEAR SESSIONS</summary>'+
+        '<div class="dj-security-timeline-scroll"><table class="dj-security-timeline-table"><thead>'+
+        '<tr><th>PAGE</th><th>SESSIONS</th></tr></thead><tbody>'+pages+'</tbody></table></div></details>'+
+        '<details><summary>REFERRAL SOURCES AMONG UNCLEAR SESSIONS</summary>'+
+        '<div class="dj-security-timeline-scroll"><table class="dj-security-timeline-table"><thead>'+
+        '<tr><th>SOURCE</th><th>SESSIONS</th></tr></thead><tbody>'+sources+'</tbody></table></div></details>'+
+      '</div>'+
+      '<p class="dj-security-unclear-note">Wix not measuring a duration does not mean the visit lasted zero seconds. '+
+      'These are sessions, not people; IP addresses may be shared. No visitors are blocked or identified as human.'+
+      (detail.partial?' This sample is partial.':'')+'</p></section>';
+  }
+  function exportUnclear(){
+    const records=cache.get(selected)?.data?.visitorIntelligence?.unclearDetail?.sessionRows;
+    if(!Array.isArray(records)||!records.length)return;
+    const safe=value=>{
+      let raw=String(value??'').replace(/\u0000/g,'');
+      if(/^\s*[=+\-@\t\r]/.test(raw))raw="'"+raw;
+      return '"'+raw.replace(/"/g,'""')+'"';
+    };
+    const cols=['Wix recorded UTC','IP address','Page','Traffic source','Visitor type',
+      'Member status','Wix reported average seconds','Reason'];
+    const lines=[cols.map(safe).join(',')];
+    for(const row of records)lines.push([
+      row.recordedAt,row.ipAddress,row.page,row.source,row.browserType,
+      row.memberStatus,row.wixAverageSeconds,row.why
+    ].map(safe).join(','));
+    const blob=new Blob([lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='docjaks-unclear-evidence-'+selected+'.csv';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+
   function visitorIntelligencePanel(report) {
     if(!report||report.status==='unavailable'){
       return '<section class="dj-security-visitor-intel">'+
@@ -236,6 +324,7 @@
           '<p>Engaged-looking, not flagged: <b>'+esc(number(report.engagedLookingSessions))+'</b></p>'+
           '<p>No clear behavioral signal: <b>'+esc(number(report.unclearSessions))+'</b></p></div>'+
       '</div>'+
+      unclearEvidencePanel(report.unclearDetail)+
       (report.memberAndSweepOverlap>0?
         '<p class="dj-security-vintel-overlap">Caution: '+esc(number(report.memberAndSweepOverlap))+
         ' session(s) were both marked signed-in and flagged for crawler-like behavior. Do not infer who operated the IP.</p>':'')+
@@ -434,6 +523,9 @@
       if(host)host.innerHTML='<p class="dj-security-pending">Checking the selected dates…</p>';
       void load();
       return;
+    }
+    if(event.target.closest('[data-security-export-unclear]')&&live()){
+      exportUnclear();return;
     }
     if(event.target.closest('[data-security-export]')&&live()){
       exportHistory();return;
