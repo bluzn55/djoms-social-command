@@ -51,7 +51,7 @@ test('Owner security report contains IP history, route comparisons and all flagg
     'IP WATCH','192.0.2.6','stored sweeps',
     'consecutive duplicate pairs','dj-security-alert',
     'MATCHING PAGE ROUTES','PAGE-BY-PAGE DETAILS',
-    'Export recorded evidence'
+    'Export latest 100 sweeps'
   ])assert.ok(html.includes(evidence),'Missing '+evidence);
 });
 
