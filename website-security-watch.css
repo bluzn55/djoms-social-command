@@ -378,3 +378,76 @@
   #content .dj-security-visitor-intel{padding:11px}
   #content .dj-security-vintel-metrics{grid-template-columns:1fr}
 }
+
+
+/* Owner-only Why Unclear evidence drilldown · Nov 12 */
+#content .dj-security-unclear{
+  margin:13px 0 17px;padding:14px 15px;background:#fff8e9;
+  border:2px solid #b79869;border-radius:8px;
+}
+#content .dj-security-unclear-head{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  flex-wrap:wrap;gap:10px;margin-bottom:12px;
+}
+#content .dj-security-unclear h4{
+  font:900 18px/1.25 Georgia,serif!important;
+  margin:0 0 7px;color:#3c2815;
+}
+#content .dj-security-unclear-head p,
+#content .dj-security-unclear-note{
+  font-size:13px;color:#654d35;line-height:1.55;margin:4px 0;
+}
+#content .dj-security-unclear-reasons{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;
+}
+#content .dj-security-unclear-reasons>div{
+  display:flex;flex-direction:column;gap:5px;padding:11px;
+  border:1px solid #dcc199;border-radius:6px;background:#f6e6c9;
+}
+#content .dj-security-unclear-reasons small{
+  font-size:11px;color:#685035;font-weight:900;line-height:1.4;
+}
+#content .dj-security-unclear-reasons strong{
+  font:900 27px Georgia,serif!important;color:#2c1b0e;
+}
+#content .dj-security-unclear-reasons span{
+  font-size:12px;color:#634e37;line-height:1.5;
+}
+#content .dj-security-unclear-other{
+  margin:11px 0;padding:10px 11px;background:#f7eedc;
+  display:flex;flex-wrap:wrap;gap:12px 23px;border-radius:5px;
+  font-size:12px;color:#523e29;
+}
+#content .dj-security-unclear-other b{font-size:15px;color:#2f1c0e}
+#content .dj-security-unclear-detail{margin-top:10px!important}
+#content .dj-security-unclear-detail p{
+  font-size:13px;line-height:1.5;color:#5b472f;
+}
+#content .dj-security-unclear-table{min-width:1060px}
+#content .dj-security-unclear-table code{
+  display:inline-block;background:#f3e2bf;padding:4px 5px;
+  font-size:12px;border-radius:3px;white-space:nowrap;
+}
+#content .dj-security-unclear-table b{
+  display:block;color:#3b2416;font-size:13px;
+}
+#content .dj-security-unclear-table small,
+#content .dj-security-unclear-panels small{
+  display:block;max-width:340px;margin-top:4px;
+  color:#6b533c;font-size:11px;overflow-wrap:anywhere;
+}
+#content .dj-security-unclear-panels{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;
+}
+#content .dj-security-unclear-panels table{min-width:380px}
+#content .dj-security-unclear-panels summary{font-size:12px}
+#content .dj-security-unclear-note{margin-top:13px}
+@media(max-width:1150px){
+  #content .dj-security-unclear-reasons{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:650px){
+  #content .dj-security-unclear{padding:10px}
+  #content .dj-security-unclear-reasons,
+  #content .dj-security-unclear-panels{grid-template-columns:1fr}
+  #content .dj-security-unclear-head button{width:100%}
+}
