@@ -1,0 +1,21 @@
+name: Security Watch UI Checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  security-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check browser script syntax
+        run: node --check website-security-watch.js
+      - name: Run Security Watch interface regression tests
+        run: node --test test/security-watch-ui.test.mjs

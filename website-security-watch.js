@@ -98,6 +98,75 @@
     return '<div class="dj-security-metric"><small>'+esc(name)+'</small>'+
       '<strong>'+esc(number(value))+'</strong><span>'+esc(detail)+'</span></div>';
   }
+function historyPanel(history) {
+    if(!history || history.status!=='saved') {
+      return '<section class="dj-security-history"><h3>IP HISTORY · NOT SAVED</h3>'+
+        '<p>'+esc(history?.error||'Protected network evidence history is unavailable. Do not treat this as an empty log.')+'</p></section>';
+    }
+    const networks=Array.isArray(history.networks)?history.networks:[];
+    const rows=networks.map(network=>'<tr>'+
+      '<td><code>'+esc(network.ipAddress||'N/A')+'</code></td>'+
+      '<td>'+esc((network.cities||[]).join('; ')||'Unknown')+'</td>'+
+      '<td>'+esc(time(network.firstSeen))+'</td>'+
+      '<td>'+esc(time(network.lastSeen))+'</td>'+
+      '<td>'+esc(number(network.observedSweeps))+'</td>'+
+      '<td>'+esc(number(network.flaggedVisitEvents))+'</td>'+
+      '</tr>').join('');
+    return '<section class="dj-security-history"><div class="dj-security-history-heading">'+
+      '<div><h3>IP WATCH · REPEAT VISIT HISTORY</h3>'+
+      '<p>Private owner-only log of repeated automated-looking sweeps. Network IP is not a person or proof of an attack.</p></div>'+
+      '<button type="button" data-security-export="1">Export latest 100 sweeps (CSV)</button></div>'+
+      '<div class="dj-security-history-metrics">'+
+      '<span><b>'+esc(number(history.networkCount))+'</b> distinct network IPs</span>'+
+      '<span><b>'+esc(number(history.totalSweepsStored))+'</b> stored sweeps</span>'+
+      '<span><b>'+esc(number(history.newSweepsSaved))+'</b> newly saved this check</span></div>'+
+      '<p class="dj-security-timeline-note">'+esc(history.note||'Records update when this owner-only report runs.')+'</p>'+
+      '<div class="dj-security-timeline-scroll"><table class="dj-security-timeline-table dj-security-history-table">'+
+      '<thead><tr><th>IP ADDRESS</th><th>REPORTED LOCATION(S)</th><th>FIRST SEEN</th>'+
+      '<th>LAST SEEN</th><th>SWEEPS</th><th>PAGE OPENS</th></tr></thead>'+
+      '<tbody>'+(rows||'<tr><td colspan="6">No qualifying recorded sweeps yet.</td></tr>')+'</tbody></table></div>'+
+      '<small>History collects suspicious sweeps only when the owner opens or refreshes Website Security. '+
+      'The data is encrypted in DJOMS server storage, not publicly accessible. CSV exports include the latest 100 recorded sweeps.</small></section>';
+  }
+  function routeMatches(rows) {
+    if(!Array.isArray(rows)||!rows.length)return '';
+    return '<details class="dj-security-route-matches"><summary>MATCHING PAGE ROUTES ACROSS SWEEPS · '+
+      esc(number(rows.length))+' comparisons</summary>'+
+      '<p class="dj-security-timeline-note">Similarity compares page order after consecutive duplicate opens are collapsed. '+
+      'High similarity suggests reused automated instructions, not confirmed shared ownership.</p>'+
+      '<div class="dj-security-match-list">'+rows.map(row=>
+        '<p><b>Sweep '+esc(row.firstIndex)+' ↔ '+esc(row.secondIndex)+'</b> · '+
+        esc(number(row.score))+'% order similarity · '+
+        (row.differentNetworks?'different recorded IPs':'network comparison unavailable or same IP')+'</p>').join('')+'</div></details>';
+  }
+  function csvText(records) {
+    const headers=['Date/time (Central source UTC)','Last seen (UTC)','IP address','Location','Traffic source','Flagged page opens',
+      'Distinct sessions','Unique pages','Consecutive duplicate pairs','Page route'];
+    const safe=value=>{
+      let raw=String(value??'').replace(/\u0000/g,'');
+      if(/^\s*[=+\-@\t\r]/.test(raw))raw="'"+raw;
+      return '"'+raw.replace(/"/g,'""')+'"';
+    };
+    const lines=[headers.map(safe).join(',')];
+    for(const x of records)lines.push([
+      x.firstAt,x.lastAt,x.ipAddress,x.location,x.source,x.visitEvents,
+      x.distinctSessions,x.uniquePages,x.repeatedPairs,
+      (Array.isArray(x.sequence)?x.sequence:[]).join(' → ')
+    ].map(safe).join(','));
+    return lines.join('\r\n');
+  }
+  function exportHistory(){
+    const data=cache.get(selected)?.data;
+    if(data?.history?.status!=='saved')return;
+    const records=data.history.latest;
+    if(!Array.isArray(records)||!records.length)return;
+    const blob=new Blob([csvText(records)],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const anchor=document.createElement('a');
+    anchor.href=url;anchor.download='docjaks-security-ip-evidence-'+selected+'.csv';
+    document.body.appendChild(anchor);anchor.click();anchor.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
   function alertRow(row,index){
     const status=row?.priority==='priority'?'LIKELY AUTOMATED · LARGE BURST':'LIKELY AUTOMATED · PAGE SWEEP';
     const severity=row?.priority==='priority'?'priority':'review';
@@ -128,9 +197,12 @@
         '<span><b>'+esc(number(row?.uniquePages))+'</b> different public pages</span>'+
         '<span><b>'+esc(duration(row?.durationSeconds))+'</b> observed window</span>'+
         '<span>'+esc(row?.signature||'Browser/device not supplied')+'</span>'+
-        '<span>Wix source: '+esc(row?.source||'unknown')+'</span></div>'+
+        '<span>Wix source: '+esc(row?.source||'unknown')+'</span>'+ 
+        '<span><b>IP: </b><code>'+esc(row?.networkVerified?row.ipAddress:'Not verified')+'</code></span>'+ 
+        '<span><b>'+esc(number(row?.distinctSessions))+'</b> distinct Wix sessions</span>'+ 
+        '<span><b>'+esc(number(row?.repeatedPairs))+'</b> consecutive duplicate pairs</span></div>'+
       '<p class="dj-security-caution">Likely automation pattern, not confirmed unauthorized access. '+
-        'The location and browser group does not identify an individual, device or IP address.</p>'+
+        'The IP identifies a network, not an individual. Repeated page paths may be automated monitoring or a crawler.</p>'+
       '<details class="dj-security-paths"><summary>PAGE-BY-PAGE DETAILS · '+esc(number(row?.visitEvents))+' opens</summary>'+
         '<p class="dj-security-timeline-note"><b>OPENED</b> is the time Wix recorded each page visit (Louisiana time). '+
         '<b>GAP</b> is the difference between recorded visit timestamps, NOT time spent on a page. '+
@@ -173,7 +245,8 @@
         '<span>'+esc(dates(data.range))+' · Checked '+esc(time(data.checkedAt))+'</span></div>'+
       '<div class="dj-security-metrics">'+
         metric('CRAWLER-LIKE PAGE SWEEPS',data.totalPatterns,'Behavioral patterns, not proven attacks')+
-        metric('VISITS IN FLAGGED PATTERNS',data.flaggedVisitEvents,'Possible non-customer activity')+
+        metric('FLAGGED PAGE OPENS',data.flaggedVisitEvents,'Separate one-page sessions, not unique people')+
+        metric('NETWORK IPs RECORDED',data.history?.status==='saved'?data.history.networkCount:null,'From encrypted owner-only history')+
         metric('BLOCKED ATTACKS',null,'N/A · Firewall event feed not connected')+
       '</div>'+
       '<div class="dj-security-summary '+(rows.length?'flagged':'quiet')+'">'+
@@ -181,14 +254,15 @@
         '<small>'+(partial?
           'The report reached its 2,500-row evidence limit. More events may exist, so findings are incomplete.':
           'This is behavioral screening, not intrusion detection or an all-clear.')+'</small></div>'+
-      '<div class="dj-security-detail-header"><h3>FLAGGED ACTIVITY</h3>'+
+      historyPanel(data.history)+routeMatches(data.relatedRoutes)+
+      '<div class="dj-security-detail-header"><h3>FLAGGED ACTIVITY</h3>'+ 
         '<span>'+esc(number(data.priorityPatterns))+' priority review · '+
           esc(number(data.totalPatterns))+' patterns</span></div>'+
       (rows.length?'<div class="dj-security-alerts">'+rows.map(alertRow).join('')+'</div>':
         '<p class="dj-security-empty">No qualifying page sweeps for this selection. That does not prove the website was attack-free.</p>')+
       '<details class="dj-security-method"><summary>What we can and cannot verify</summary>'+
-        '<p>Wix records public-page traffic. DJOMS looks for 8 or more different pages, each visited in a single-page session, within 3 minutes from the same approximate location and browser/device category. '+
-        'Legitimate crawlers, content previews and shared networks can match. '+
+        '<p>Wix records public-page traffic. DJOMS looks for 8 or more different pages, each visited in a single-page session, within 3 minutes from the same network IP and browser/device category when IP is available. '+
+        'Rows without an IP are grouped by location only and can never be presented as a verified network match. Legitimate crawlers, content previews and shared networks can match. '+
         'Missing session timing or aggregated rows are not silently treated as suspicious. The page-by-page time gap is not dwell time, because each row may represent a different visitor or session.</p>'+
         '<p>'+esc(number(data.coverage?.analyzedRows))+' Wix analytics rows scanned. '+
           esc(number(data.observationsNotEvaluated))+' rows lacked enough evidence for this specific rule. '+
@@ -212,6 +286,9 @@
       if(host)host.innerHTML='<p class="dj-security-pending">Checking the selected dates…</p>';
       void load();
       return;
+    }
+    if(event.target.closest('[data-security-export]')&&live()){
+      exportHistory();return;
     }
     if(event.target.closest('[data-security-refresh]')&&live()){
       cache.delete(selected);
