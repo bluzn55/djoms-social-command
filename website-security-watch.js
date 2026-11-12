@@ -83,11 +83,23 @@
     if(pending.has(key))return;
     const host=document.getElementById('securityWatchResult');
     if(host)host.innerHTML='<p class="dj-security-pending">Checking Wix page activity…</p>';
-    const task=Promise.resolve().then(()=>api('security-watch?range='+encodeURIComponent(key)))
-      .then(data=>{
-        if(data?.range?.selection!==key)throw new Error('Security report dates did not match.');
-        cache.set(key,{when:Date.now(),data});
-      }).catch(error=>{
+    const task=Promise.allSettled([
+      Promise.resolve().then(()=>api('security-watch?range='+encodeURIComponent(key))),
+      Promise.resolve().then(()=>api('visitor-intelligence?range='+encodeURIComponent(key)))
+    ]).then(([securityResult,timeResult])=>{
+      if(securityResult.status!=='fulfilled')throw securityResult.reason;
+      const data=securityResult.value;
+      if(data?.range?.selection!==key)throw new Error('Security report dates did not match.');
+      const extra=timeResult.status==='fulfilled'?timeResult.value:null;
+      const matched=extra?.range?.start===data?.range?.start&&
+        extra?.range?.endInclusive===data?.range?.endInclusive;
+      const measuredPageTime=matched&&extra?.activePageTime?
+        extra.activePageTime:{status:'unavailable',
+          error:timeResult.status==='rejected'?
+            'DJOMS browser-time reporting could not be reached.':
+            'DJOMS browser-time report did not match the selected dates.'};
+      cache.set(key,{when:Date.now(),data:{...data,measuredPageTime}});
+    }).catch(error=>{
         cache.set(key,{when:Date.now(),data:{status:'unavailable',error:
           String(error?.message||'Wix security analytics could not be reached.')}})
       }).finally(()=>{pending.delete(key);if(live()&&selected===key)paint();});
@@ -266,6 +278,74 @@
     a.href=url;a.download='docjaks-unclear-evidence-'+selected+'.csv';
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+
+
+  function fmtActiveTime(seconds) {
+    if(!Number.isSafeInteger(seconds)||seconds<0)return 'N/A';
+    const h=Math.floor(seconds/3600),m=Math.floor(seconds%3600/60),s=seconds%60;
+    return (h?h+'h ':'')+(m||h?m+'m ':'')+s+'s';
+  }
+  function measuredPageTimePanel(data) {
+    if(!data||data.status==='unavailable') {
+      return '<section class="dj-security-measured-time">'+
+        '<h3>ACTIVE PAGE TIME · NOT VERIFIED</h3>'+
+        '<p>'+esc(data?.error||'The separate DJOMS consented activity report has not been loaded.')+'</p>'+
+        '<p>Unknown Wix duration is not evidence of a short visit. The Wix security counts remain unchanged.</p></section>';
+    }
+    if(data.status==='not_started') {
+      return '<section class="dj-security-measured-time">'+
+        '<h3>ACTIVE PAGE TIME · NO TRACKER EVIDENCE YET</h3>'+
+        '<p>The analytics-consented Doc Jaks tracker has not recorded activity. '+
+        'This cannot recover duration for historic Wix page views.</p></section>';
+    }
+    const top=Array.isArray(data.pages)?data.pages:[];
+    const metric=(label,value,small)=>{
+      return '<div class="dj-security-time-metric"><small>'+esc(label)+'</small>'+
+        '<strong>'+esc(typeof value==='string'?value:number(value))+'</strong>'+
+        '<span>'+esc(small)+'</span></div>';
+    };
+    const table=top.map(row=>
+      '<tr><td><b>'+esc(pageTitle(row.path))+'</b><small>'+esc(row.path)+'</small></td>'+
+      '<td>'+esc(number(row.trackedPageOpens))+'</td>'+
+      '<td>'+esc(number(row.opensWithRecordedTime))+'</td>'+
+      '<td>'+esc(number(row.opensWith30PlusSeconds))+'</td>'+
+      '<td>'+esc(fmtActiveTime(row.totalRecordedActiveSeconds))+'</td>'+
+      '</tr>').join('');
+    const status=data.status==='partial'||data.pageDetailsPartial||data.partial?
+      'PARTIAL REPORT · Some session or page records could not be included.':
+      'CONSENTED PAGE-TIME EVENTS · Separate from Wix Analytics.';
+    return '<section class="dj-security-measured-time">'+
+      '<div class="dj-security-time-header"><div><h3>ACTIVE PAGE TIME · PRIORITY #1</h3>'+
+      '<p>Measure how long website pages remain actively visible, using the existing Doc Jaks tracker.</p>'+
+      '</div><span>'+esc(status)+'</span></div>'+
+      '<div class="dj-security-time-metrics">'+
+        metric('TRACKED SESSIONS',data.status==='partial'?data.sampledSessions:data.trackedSessions,
+          data.status==='partial'?'Sessions sampled, not the full total':'From the separate consented tracker')+
+        metric('30+ SEC SESSIONS',data.sessionsWith30PlusSeconds,
+          'Sessions with at least 30 recorded active seconds')+
+        metric('SINGLE-PAGE 30+ SEC',data.onePageSessionsWith30PlusSeconds,
+          'Evidence a one-page visit can have measurable activity')+
+        metric('PAGE OPENS 30+ SEC',data.pageOpensWith30PlusSeconds,
+          'Tracked page opens with 30 or more recorded seconds')+
+        metric('REPORTED ACTIVE TIME',fmtActiveTime(data.totalRecordedActiveSeconds),
+          'Total recorded across sampled sessions')+
+        metric('NO SECONDS RECORDED',data.withoutRecordedSeconds,
+          'No reported time; not a confirmed zero-second visit')+
+      '</div>'+
+      '<details class="dj-security-time-detail"><summary>PAGE-BY-PAGE TIME RECORDS · '+
+        esc(number(data.pathsSeen))+' tracked pages</summary>'+
+        '<p>Each row is aggregated across analytics-consented visits. Time is recorded only by the '+
+        'separate DJOMS tracker. It cannot be assigned to a particular Wix unclear session.</p>'+
+        '<div class="dj-security-timeline-scroll"><table class="dj-security-timeline-table dj-security-time-table">'+
+        '<thead><tr><th>PAGE</th><th>TRACKED OPENS</th><th>WITH TIME</th>'+
+        '<th>30+ SEC</th><th>RECORDED ACTIVE TIME</th></tr></thead>'+
+        '<tbody>'+(table||'<tr><td colspan="5">No page-time events reported for these dates.</td></tr>')+
+        '</tbody></table></div></details>'+
+      '<p class="dj-security-time-note">'+esc(data.note||'')+
+      ' Measurements begin only after consent and tracker installation; past Wix visits cannot be backfilled. '+
+      'This panel is NOT added to the Wix session count or used to claim that any of the 51 unclear sessions were human.</p>'+
+      '</section>';
   }
 
   function visitorIntelligencePanel(report) {
@@ -475,7 +555,7 @@
         '<small>'+(partial?
           'The report reached its 2,500-row evidence limit. More events may exist, so findings are incomplete.':
           'This is behavioral screening, not intrusion detection or an all-clear.')+'</small></div>'+
-      historyPanel(data.history)+visitorIntelligencePanel(data.visitorIntelligence)+visitHistoryPanel(data.visitHistory)+routeMatches(data.relatedRoutes)+
+      measuredPageTimePanel(data.measuredPageTime)+historyPanel(data.history)+visitorIntelligencePanel(data.visitorIntelligence)+visitHistoryPanel(data.visitHistory)+routeMatches(data.relatedRoutes)+
       '<div class="dj-security-detail-header"><h3>FLAGGED ACTIVITY</h3>'+ 
         '<span>'+esc(number(data.priorityPatterns))+' priority review · '+
           esc(number(data.totalPatterns))+' patterns</span></div>'+
