@@ -117,7 +117,7 @@
     const tableRows=networks.map(network=>
       '<tr data-visit-ip="'+esc(network.ipAddress||'')+'">'+
       '<td><code>'+esc(network.ipAddress||'N/A')+'</code></td>'+
-      '<td><strong>'+esc(network.recordedSessions>1?'SEEN BEFORE':'FIRST CAPTURED RECORD')+
+      '<td><strong>'+esc(network.previouslySeenInRecords===true?'SEEN ON PRIOR DATE':network.recordedSessions>1?'REPEAT SAME DATE':'FIRST CAPTURED RECORD')+
         '</strong><small>'+esc(number(network.recordedSessions))+' recorded Wix sessions</small></td>'+
       '<td>'+esc(time(network.firstObservedAt))+'</td>'+
       '<td>'+esc(time(network.lastObservedAt))+'</td>'+
