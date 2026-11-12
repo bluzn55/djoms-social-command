@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 
 const script=await readFile(new URL('../website-security-watch.js',import.meta.url),'utf8');
 
-async function render(data) {
+async function render(data,activityData=null) {
   const items={content:{innerHTML:''},securityWatchResult:{innerHTML:''}};
   const document={
     getElementById:name=>items[name]||null,
@@ -13,7 +13,12 @@ async function render(data) {
   };
   const window={};
   new Function('window','document','activeView','api',script)(
-    window,document,'Website Security',async()=>data
+    window,document,'Website Security',async path=>
+      path.startsWith('visitor-intelligence')?
+        (activityData||{
+          range:{start:data.range.start,endInclusive:data.range.endInclusive},
+          activePageTime:{status:'not_started'}
+        }):data
   );
   window.djomsWebsiteSecurity.render();
   await new Promise(resolve=>setImmediate(resolve));
@@ -217,4 +222,54 @@ test('Untrusted page and source labels are escaped in unclear investigation',asy
   }});
   assert.ok(!html.includes(malicious));
   assert.ok(html.includes('&lt;img'));
+});
+
+test('Priority #1 page-time report shows measured consented activity, including single-page sessions',async()=>{
+  const activity={
+    range:{start:report.range.start,endInclusive:report.range.endInclusive},
+    activePageTime:{
+      status:'reported',trackedSessions:4,sampledSessions:4,
+      sessionsWith30PlusSeconds:2,onePageSessionsWith30PlusSeconds:1,
+      totalRecordedActiveSeconds:152,withoutRecordedSeconds:1,
+      pageOpensWith30PlusSeconds:2,trackedPageOpens:5,pathsSeen:3,
+      note:'Separate analytics-consented browser tracker.',
+      pages:[{
+        path:'/the-wooden-token',trackedPageOpens:2,opensWithRecordedTime:2,
+        opensWith30PlusSeconds:1,totalRecordedActiveSeconds:86
+      },{
+        path:'/outlaw-radio-5150',trackedPageOpens:2,opensWithRecordedTime:1,
+        opensWith30PlusSeconds:1,totalRecordedActiveSeconds:66
+      }]
+    }
+  };
+  const html=await render(report,activity);
+  assert.ok(html.includes('ACTIVE PAGE TIME · PRIORITY #1'));
+  assert.ok(html.includes('SINGLE-PAGE 30+ SEC'));
+  assert.ok(html.includes('2m 32s'));
+  assert.ok(html.includes('PAGE-BY-PAGE TIME RECORDS'));
+  assert.ok(html.includes('The Wooden Token'));
+  assert.ok(html.includes('Outlaw Radio 5150'));
+  assert.ok(html.indexOf('ACTIVE PAGE TIME')<html.indexOf('IP WATCH · REPEAT VISIT HISTORY'));
+  assert.ok(html.includes('NOT added to the Wix session count'));
+});
+
+test('Page-time endpoint failure never erases independent Wix security results',async()=>{
+  const activity={
+    range:{start:report.range.start,endInclusive:report.range.endInclusive},
+    activePageTime:{status:'unavailable',error:'Consented timer unavailable'}
+  };
+  const html=await render(report,activity);
+  assert.ok(html.includes('ACTIVE PAGE TIME · NOT VERIFIED'));
+  assert.ok(html.includes('Consented timer unavailable'));
+  assert.ok(html.includes('FLAGGED ACTIVITY'));
+  assert.ok(html.includes('PAGE-BY-PAGE DETAILS'));
+});
+
+test('A mismatched reporting date cannot be silently merged with Wix security',async()=>{
+  const html=await render(report,{
+    range:{start:'2025-01-01',endInclusive:'2025-01-07'},
+    activePageTime:{status:'reported',trackedSessions:99}
+  });
+  assert.ok(html.includes('ACTIVE PAGE TIME · NOT VERIFIED'));
+  assert.ok(html.includes('did not match the selected dates'));
 });
