@@ -179,6 +179,87 @@
       'A return badge means a 7, 30, or 90+ day gap between captured suspicious sweeps, not proof that the IP made no other visits. '+
       'The data is encrypted in DJOMS server storage, not publicly accessible. CSV exports include the latest 100 recorded sweeps.</small></section>';
   }
+
+  function visitorIntelligencePanel(report) {
+    if(!report||report.status==='unavailable'){
+      return '<section class="dj-security-visitor-intel">'+
+        '<h3>VISITOR INTELLIGENCE · UNAVAILABLE</h3>'+
+        '<p>'+esc(report?.error||'Wix member and visitor-type evidence cannot be verified at the moment.')+'</p>'+
+        '</section>';
+    }
+    const networks=Array.isArray(report.networkRows)?report.networkRows:[];
+    const sources=Array.isArray(report.sources)?report.sources:[];
+    const m=(name,value,detail)=>'<div class="dj-security-vintel-metric">'+
+      '<small>'+esc(name)+'</small><strong>'+esc(number(value))+'</strong>'+
+      '<span>'+esc(detail)+'</span></div>';
+    const networkRows=networks.map(n=>
+      '<tr><td><code>'+esc(n.ipAddress||'N/A')+'</code></td>'+
+      '<td>'+esc(number(n.recordedSessions))+'</td>'+
+      '<td>'+esc(number(n.signedInMemberSessions))+'</td>'+
+      '<td>'+esc(number(n.returningBrowserSessions))+'</td>'+
+      '<td>'+esc(number(n.engagedLookingSessions))+'</td>'+
+      '<td>'+esc(number(n.crawlerLikeSessions))+'</td>'+
+      '<td>'+esc(report.historicalIPStatus==='available'?
+        (n.previouslySeenIP?'Earlier date recorded':'Not found in captured prior dates'):'History unavailable')+
+      '</td></tr>').join('');
+    const sourceRows=sources.map(n=>'<tr>'+
+      '<td>'+esc(n.source||'Unknown')+'</td>'+
+      '<td>'+esc(number(n.sessions))+'</td>'+
+      '<td>'+esc(number(n.signedInMemberSessions))+'</td>'+
+      '<td>'+esc(number(n.crawlerLikeSessions))+'</td></tr>').join('');
+    const notes=report.status==='partial'?
+      'PARTIAL DATA · Some Wix rows lacked session evidence or the report reached its sampling limit. Counts are observed minimums.':
+      'SESSION DATA REVIEWED · These are sessions, never unique people.';
+    return '<section class="dj-security-visitor-intel">'+
+      '<div class="dj-security-vintel-heading"><div><h3>VISITOR INTELLIGENCE</h3>'+
+        '<p>Who is signed in, who appears engaged, and what looks automated. No assumption that one IP equals one person.</p></div>'+
+        '<small>'+esc(notes)+'</small></div>'+
+      '<div class="dj-security-vintel-metrics">'+
+        m('WIX SESSIONS REVIEWED',report.reviewedSessions,'Distinct session IDs, not visitors')+
+        m('SIGNED-IN WIX MEMBER',report.signedInMemberSessions,'Logged-in site sessions; Pit Krewe tier not verified')+
+        m('RETURNING BROWSER',report.returningBrowserSessions,'Wix returning-visitor session signal')+
+        m('ENGAGED-LOOKING',report.engagedLookingSessions,'2+ pages/views or 30+ seconds, excluding flagged sweeps')+
+        m('CRAWLER-LIKE',report.crawlerLikeSessions,'Behavioral sweep flag, not confirmed attack')+
+        m('UNCLEAR',report.unclearSessions,'No clear engagement or sweep signal')+
+      '</div>'+
+      '<div class="dj-security-vintel-breakdowns">'+
+        '<div><h4>MEMBER / SIGN-IN EVIDENCE</h4>'+
+          '<p>Signed-in Wix member sessions: <b>'+esc(number(report.signedInMemberSessions))+'</b></p>'+
+          '<p>Not signed in (Wix signal): <b>'+esc(number(report.notSignedInSessions))+'</b></p>'+
+          '<p>Member status unavailable: <b>'+esc(number(report.memberStatusUnknown))+'</b></p></div>'+
+        '<div><h4>NEW / RETURNING BROWSERS</h4>'+
+          '<p>Wix first-time session signal: <b>'+esc(number(report.newBrowserSessions))+'</b></p>'+
+          '<p>Wix returning session signal: <b>'+esc(number(report.returningBrowserSessions))+'</b></p>'+
+          '<p>Visitor type unavailable: <b>'+esc(number(report.visitorTypeUnknown))+'</b></p></div>'+
+        '<div><h4>BEHAVIORAL REVIEW</h4>'+
+          '<p>Crawler-like sweeps: <b>'+esc(number(report.crawlerLikeSessions))+'</b></p>'+
+          '<p>Engaged-looking, not flagged: <b>'+esc(number(report.engagedLookingSessions))+'</b></p>'+
+          '<p>No clear behavioral signal: <b>'+esc(number(report.unclearSessions))+'</b></p></div>'+
+      '</div>'+
+      (report.memberAndSweepOverlap>0?
+        '<p class="dj-security-vintel-overlap">Caution: '+esc(number(report.memberAndSweepOverlap))+
+        ' session(s) were both marked signed-in and flagged for crawler-like behavior. Do not infer who operated the IP.</p>':'')+
+      '<div class="dj-security-vintel-footer"><span>Verified bot identity: <b>N/A</b> · Firewall feed not connected</span>'+
+        '<span>Earlier-date IP matches: <b>'+esc(report.historicalIPStatus==='available'?
+          number(report.previouslySeenIPCount):'N/A')+'</b></span></div>'+
+      '<details class="dj-security-vintel-detail"><summary>IP SIGNAL COMPARISON · '+esc(number(report.networkCount))+
+        ' networks ('+esc(number(report.networkRowsShown))+' displayed)</summary>'+
+        '<p>IP rows can mix different people and automated tools. Each count is a session, not a named customer.</p>'+
+        '<div class="dj-security-timeline-scroll"><table class="dj-security-timeline-table dj-security-vintel-table">'+
+          '<thead><tr><th>IP</th><th>SESSIONS</th><th>MEMBER</th><th>RETURNING BROWSER</th>'+
+          '<th>ENGAGED</th><th>CRAWLER-LIKE</th><th>IP HISTORY</th></tr></thead>'+
+          '<tbody>'+(networkRows||'<tr><td colspan="7">No verified IP signal rows.</td></tr>')+'</tbody>'+
+        '</table></div></details>'+
+      '<details class="dj-security-vintel-detail"><summary>VISIT SOURCE COMPARISON</summary>'+
+        '<div class="dj-security-timeline-scroll"><table class="dj-security-timeline-table dj-security-vintel-table">'+
+          '<thead><tr><th>WIX SOURCE</th><th>SESSIONS</th><th>MEMBER</th><th>CRAWLER-LIKE</th></tr></thead>'+
+          '<tbody>'+(sourceRows||'<tr><td colspan="4">No measurable Wix sources.</td></tr>')+'</tbody></table></div></details>'+
+      '<p class="dj-security-vintel-footnote">'+esc(report.note)+
+      ' Social-media followers cannot be identified as site visitors merely from an IP. '+
+      'Existing consent-based DJOMS browser tracking is a separate source and is not merged with Wix identities.</p>'+
+      '</section>';
+  }
+
   function routeMatches(rows) {
     if(!Array.isArray(rows)||!rows.length)return '';
     return '<details class="dj-security-route-matches"><summary>MATCHING PAGE ROUTES ACROSS SWEEPS · '+
@@ -305,7 +386,7 @@
         '<small>'+(partial?
           'The report reached its 2,500-row evidence limit. More events may exist, so findings are incomplete.':
           'This is behavioral screening, not intrusion detection or an all-clear.')+'</small></div>'+
-      historyPanel(data.history)+visitHistoryPanel(data.visitHistory)+routeMatches(data.relatedRoutes)+
+      historyPanel(data.history)+visitorIntelligencePanel(data.visitorIntelligence)+visitHistoryPanel(data.visitHistory)+routeMatches(data.relatedRoutes)+
       '<div class="dj-security-detail-header"><h3>FLAGGED ACTIVITY</h3>'+ 
         '<span>'+esc(number(data.priorityPatterns))+' priority review · '+
           esc(number(data.totalPatterns))+' patterns</span></div>'+

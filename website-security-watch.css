@@ -292,3 +292,89 @@
   #content .dj-security-visit-history{padding:10px}
   #content .dj-security-visit-table{min-width:860px}
 }
+
+
+/* Visitor Intelligence · security-first session signals, not human identities */
+#content .dj-security-visitor-intel{
+  margin:17px 0;padding:16px;background:#fffaf1;border:2px solid #bda16e;
+  border-radius:9px;color:#302115;
+}
+#content .dj-security-vintel-heading{
+  display:flex;align-items:flex-start;flex-wrap:wrap;justify-content:space-between;
+  gap:12px;border-bottom:1px solid #d8c7a5;padding-bottom:12px;
+}
+#content .dj-security-vintel-heading h3,
+#content .dj-security-visitor-intel>h3{
+  margin:0 0 6px;font:900 21px/1.2 Georgia,serif!important;
+}
+#content .dj-security-vintel-heading p{
+  margin:0;color:#604e39;font-size:14px;font-weight:700;line-height:1.5;
+}
+#content .dj-security-vintel-heading>small{
+  max-width:410px;align-self:center;font-size:12px;font-weight:800;
+  color:#665035;line-height:1.5;
+}
+#content .dj-security-vintel-metrics{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;margin:14px 0;
+}
+#content .dj-security-vintel-metric{
+  display:flex;flex-direction:column;gap:5px;padding:12px;
+  background:#f6e8cd;border:1px solid #dfc59c;border-radius:6px;
+  min-width:0;
+}
+#content .dj-security-vintel-metric small{
+  font-size:12px;font-weight:900;letter-spacing:.025em;color:#674726;
+}
+#content .dj-security-vintel-metric strong{
+  font:900 30px/1.15 Georgia,serif!important;color:#2a1a10;
+}
+#content .dj-security-vintel-metric span{
+  font-size:12px;color:#5d4932;line-height:1.4;
+}
+#content .dj-security-vintel-breakdowns{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;
+  margin:13px 0;
+}
+#content .dj-security-vintel-breakdowns>div{
+  padding:12px;background:#fffcf5;border:1px solid #ddc6a1;border-radius:6px;
+}
+#content .dj-security-vintel-breakdowns h4{
+  color:#65441e;font-size:12px;font-weight:900;margin:0 0 10px;
+}
+#content .dj-security-vintel-breakdowns p{
+  display:flex;justify-content:space-between;gap:9px;align-items:flex-start;
+  margin:6px 0;color:#4b3a28;font-size:12px;
+}
+#content .dj-security-vintel-breakdowns p b{
+  font-size:15px;color:#2f1d0e;font-variant-numeric:tabular-nums;
+}
+#content .dj-security-vintel-footer{
+  display:flex;gap:10px 20px;flex-wrap:wrap;margin:12px 0;
+  padding:11px;background:#f2e3c5;border-radius:6px;
+  font-size:12px;color:#58432a;font-weight:750;
+}
+#content .dj-security-vintel-overlap{
+  border-left:4px solid #b27e37;padding:8px 12px;
+  background:#fff0d8;font-size:13px;color:#704921;
+}
+#content .dj-security-vintel-detail{margin-top:8px!important}
+#content .dj-security-vintel-detail p{
+  font-size:12px;color:#5f4d38;line-height:1.5;
+}
+#content .dj-security-vintel-table{min-width:850px}
+#content .dj-security-vintel-table code{
+  padding:4px;background:#f3e5c9;color:#3e2b1d;
+  font-size:12px;white-space:nowrap;border-radius:3px;
+}
+#content .dj-security-vintel-footnote{
+  font-size:12px;line-height:1.6;color:#63513a;margin:13px 0 0;
+}
+@media(max-width:960px){
+  #content .dj-security-vintel-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #content .dj-security-vintel-breakdowns{grid-template-columns:1fr}
+}
+@media(max-width:550px){
+  #content .dj-security-visitor-intel{padding:11px}
+  #content .dj-security-vintel-metrics{grid-template-columns:1fr}
+}
