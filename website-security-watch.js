@@ -115,7 +115,7 @@ function historyPanel(history) {
     return '<section class="dj-security-history"><div class="dj-security-history-heading">'+
       '<div><h3>IP WATCH · REPEAT VISIT HISTORY</h3>'+
       '<p>Private owner-only log of repeated automated-looking sweeps. Network IP is not a person or proof of an attack.</p></div>'+
-      '<button type="button" data-security-export="1">Export recorded evidence (CSV)</button></div>'+
+      '<button type="button" data-security-export="1">Export latest 100 sweeps (CSV)</button></div>'+
       '<div class="dj-security-history-metrics">'+
       '<span><b>'+esc(number(history.networkCount))+'</b> distinct network IPs</span>'+
       '<span><b>'+esc(number(history.totalSweepsStored))+'</b> stored sweeps</span>'+
@@ -126,7 +126,7 @@ function historyPanel(history) {
       '<th>LAST SEEN</th><th>SWEEPS</th><th>PAGE OPENS</th></tr></thead>'+
       '<tbody>'+(rows||'<tr><td colspan="6">No qualifying recorded sweeps yet.</td></tr>')+'</tbody></table></div>'+
       '<small>History collects suspicious sweeps only when the owner opens or refreshes Website Security. '+
-      'The data is encrypted in DJOMS server storage, not publicly accessible.</small></section>';
+      'The data is encrypted in DJOMS server storage, not publicly accessible. CSV exports include the latest 100 recorded sweeps.</small></section>';
   }
   function routeMatches(rows) {
     if(!Array.isArray(rows)||!rows.length)return '';
