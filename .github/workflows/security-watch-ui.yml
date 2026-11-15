@@ -19,3 +19,7 @@ jobs:
         run: node --check website-security-watch.js
       - name: Run Security Watch interface regression tests
         run: node --test test/security-watch-ui.test.mjs
+      - name: Validate scheduled security audit syntax
+        run: node --check scripts/daily-maintenance-scan.mjs
+      - name: Test owner-access and CORS security classifications
+        run: node --test test/public-security-audit.test.mjs
