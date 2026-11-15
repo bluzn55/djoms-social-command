@@ -511,3 +511,103 @@
   #content .dj-security-measured-time{padding:10px}
   #content .dj-security-time-metrics{grid-template-columns:1fr}
 }
+
+
+/* Doc Jaks attack watch: yellow=review, red=independently verified incident.
+   Motion stays below rapid-flash ranges and respects reduced-motion. */
+#content .dj-attack-watch,
+#connectionStrip .dj-attack-watch{
+  display:flex;flex-direction:column;gap:6px;
+  padding:16px 18px;margin:13px 0;
+  border:3px solid #9e927d;border-radius:11px;
+  background:#fff8ea;color:#392a20;
+  line-height:1.4;text-align:left;max-width:100%;
+}
+#content .dj-attack-watch *,
+#connectionStrip .dj-attack-watch *{box-sizing:border-box}
+#content .dj-attack-head,
+#connectionStrip .dj-attack-head{
+  display:flex;align-items:center;gap:11px;flex-wrap:wrap;
+}
+#content .dj-attack-head strong,
+#connectionStrip .dj-attack-head strong{
+  font:900 clamp(17px,2.1vw,24px)/1.2 Arial,sans-serif!important;
+  letter-spacing:.015em;color:inherit;
+}
+#content .dj-attack-light,
+#connectionStrip .dj-attack-light{
+  display:inline-block;flex:0 0 18px;width:18px;height:18px;
+  border-radius:50%;background:#928c82;border:2px solid #fff;
+  box-shadow:0 0 0 2px #6a6258;
+}
+#content .dj-attack-watch p,
+#connectionStrip .dj-attack-watch p{
+  font:700 15px/1.45 Arial,sans-serif!important;
+  color:inherit;margin:2px 0!important;
+}
+#content .dj-attack-watch small,
+#connectionStrip .dj-attack-watch small{
+  font:700 12px/1.45 Arial,sans-serif!important;
+  color:#5e5246;overflow-wrap:anywhere;
+}
+#content .dj-attack-watch a,
+#connectionStrip .dj-attack-watch button{
+  display:inline-block;align-self:flex-start;margin-top:5px;
+  padding:8px 12px;border-radius:5px;border:1px solid #84622c;
+  background:#fff4d7;color:#342716;text-decoration:none;
+  font:900 13px/1.4 Arial,sans-serif;cursor:pointer;
+}
+#content .dj-attack-watch a:focus-visible,
+#connectionStrip .dj-attack-watch button:focus-visible{
+  outline:3px solid #9e651a;outline-offset:3px;
+}
+#content .dj-attack-yellow,
+#connectionStrip .dj-attack-yellow{
+  background:#fff0b4;color:#523706;border-color:#b47a09;
+  animation:djAttackAmberPulse 2.2s ease-in-out infinite;
+}
+#content .dj-attack-yellow .dj-attack-light,
+#connectionStrip .dj-attack-yellow .dj-attack-light{
+  background:#f3b316;box-shadow:0 0 0 2px #ac7311;
+  animation:djAttackLamp 1.55s ease-in-out infinite;
+}
+#content .dj-attack-red,
+#connectionStrip .dj-attack-red{
+  background:#ffe3e3;color:#731515;border-color:#b11d25;
+  animation:djAttackRedPulse 1.45s ease-in-out infinite;
+}
+#content .dj-attack-red .dj-attack-light,
+#connectionStrip .dj-attack-red .dj-attack-light{
+  background:#df252c;box-shadow:0 0 0 2px #a41620;
+  animation:djAttackLamp 1.1s ease-in-out infinite;
+}
+#content .dj-attack-red small,
+#connectionStrip .dj-attack-red small{color:#703333}
+#content .dj-attack-unknown,
+#connectionStrip .dj-attack-unknown{background:#f1f1ec;border-color:#aca69c}
+#content .dj-attack-quiet,
+#connectionStrip .dj-attack-quiet{background:#f8f2df;border-color:#cbb68a}
+#connectionStrip .dj-attack-mission{width:100%;min-width:0}
+#connectionStrip .dj-attack-watch{margin:0 0 12px}
+@keyframes djAttackAmberPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(183,126,14,.12)}
+  50%{box-shadow:0 0 0 6px rgba(183,126,14,.28)}
+}
+@keyframes djAttackRedPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(179,30,36,.16)}
+  50%{box-shadow:0 0 0 7px rgba(179,30,36,.30)}
+}
+@keyframes djAttackLamp{
+  0%,100%{opacity:1}
+  50%{opacity:.35}
+}
+@media(max-width:650px){
+  #content .dj-attack-watch,
+  #connectionStrip .dj-attack-watch{padding:14px 12px;margin:9px 0}
+}
+@media(prefers-reduced-motion:reduce){
+  #content .dj-attack-watch,#connectionStrip .dj-attack-watch,
+  #content .dj-attack-light,#connectionStrip .dj-attack-light{
+    animation:none!important;
+  }
+}
