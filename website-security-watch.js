@@ -52,17 +52,12 @@
   // Suspicious page sweeps are NOT proof that someone attacked the site.
   // A red alert requires independent, verified incident evidence.
   function attackSignal(data){
-    if(!data||!['reported','partial'].includes(data.status))return {
-      tone:'unknown',title:'ATTACK WATCH · NOT VERIFIED',
-      body:'Security evidence is loading or unavailable. No all-clear can be given.',
-      stamp:'No verified attack result'
-    };
-    const proof=data.securityProof||{},incident=proof.confirmedAttack;
-    const confirmed=proof.status==='verified_incident'&&incident?.verified===true&&
+    const proof=data?.securityProof||{},incident=proof.confirmedAttack;
+    const verified=proof.status==='verified_incident'&&incident?.verified===true&&
       ['unauthorized_access','confirmed_malicious_attack'].includes(incident?.type)&&
       typeof incident.evidenceSource==='string'&&incident.evidenceSource.trim().length>=5&&
       typeof incident.lastSeenAt==='string'&&Number.isFinite(Date.parse(incident.lastSeenAt));
-    if(confirmed){
+    if(verified){
       const age=Date.now()-Date.parse(incident.lastSeenAt);
       const active=incident.active===true&&age>=0&&age<=15*60*1000;
       return {
@@ -73,21 +68,44 @@
         stamp:'Verified '+time(incident.lastSeenAt)+' · Source: '+incident.evidenceSource
       };
     }
-    const rows=Array.isArray(data.alerts)?data.alerts:[];
-    if(rows.length){
+    const rows=['reported','partial'].includes(data?.status)&&Array.isArray(data?.alerts)?
+      data.alerts:[];
+    const failed=proof.status==='connected'&&Number.isSafeInteger(proof.failedAdminLogins)?
+      proof.failedAdminLogins:0;
+    const locked=proof.status==='connected'&&Number.isSafeInteger(proof.rateLimitLockouts)?
+      proof.rateLimitLockouts:0;
+    const abnormalLogin=locked>0||failed>=5;
+    if(rows.length||abnormalLogin){
       const last=rows.map(row=>row.end||row.start)
         .filter(stamp=>typeof stamp==='string'&&Number.isFinite(Date.parse(stamp)))
         .sort((a,b)=>Date.parse(b)-Date.parse(a))[0];
+      const signals=[];
+      if(locked>0)signals.push(locked+' owner sign-in lockout window'+(locked===1?'':'s'));
+      if(failed>=5)signals.push(failed+' rejected owner passwords');
+      if(rows.length)signals.push(rows.length+' rapid page-sweep pattern'+(rows.length===1?'':'s'));
+      const lastAuth=[proof.lastLockoutAt,proof.lastFailureAt]
+        .filter(stamp=>typeof stamp==='string'&&Number.isFinite(Date.parse(stamp)))
+        .sort((a,b)=>Date.parse(b)-Date.parse(a))[0];
+      const recent=[last,lastAuth]
+        .filter(Boolean).sort((a,b)=>Date.parse(b)-Date.parse(a))[0];
       return {
-        tone:'yellow',title:'TAKE A LOOK · SUSPICIOUS TRAFFIC',
-        body:rows.length+' rapid page-sweep pattern'+(rows.length===1?'':'s')+
-          ' in this period. These may be crawlers or monitors, not a confirmed attack.',
-        stamp:(last?'Last observed '+time(last)+' · ':'')+'Review flagged activity'
+        tone:'yellow',
+        title:abnormalLogin?'TAKE A LOOK · SIGN-IN WARNING':'TAKE A LOOK · SUSPICIOUS TRAFFIC',
+        body:signals.join(' · ')+'. Could be mistakes, legitimate crawlers, or automated requests. This does NOT confirm a successful attack.',
+        stamp:(recent?'Last observed '+time(recent)+' · ':'')+'Investigate in Website Security'
       };
     }
+    if(!data||!['reported','partial'].includes(data.status))return {
+      tone:'unknown',title:'ATTACK WATCH · NOT VERIFIED',
+      body:proof.status==='connected'?
+        'DJOMS sign-in security counters are connected, but Wix traffic is unavailable. No all-clear can be given.':
+        'Security evidence is loading or unavailable. No all-clear can be given.',
+      stamp:proof.status==='connected'?'Sign-in evidence checked; website traffic not verified':
+        'No verified attack result'
+    };
     return {
       tone:'quiet',title:'NO ATTACK PATTERN DETECTED IN THIS CHECK',
-      body:'No matching rapid page sweeps were found. Firewall and login-attack evidence are not connected, so this is not an all-clear.',
+      body:'No matching rapid page sweeps or qualifying DJOMS sign-in warnings were found. Wix firewall and login-attack evidence are not connected, so this is not an all-clear.',
       stamp:'Checked '+time(data.checkedAt)+' · '+dates(data.range)
     };
   }
@@ -119,12 +137,26 @@
       drawMission();return Promise.resolve();
     }
     if(missionRequest)return missionRequest;
-    missionRequest=Promise.resolve().then(()=>api('security-watch?range=today'))
+    const server=Promise.resolve().then(()=>api('security-events?range=today'))
+      .then(result=>{
+        if(result?.securityProof){
+          missionData={...(missionData||{status:'unavailable'}),securityProof:result.securityProof};
+          missionAt=Date.now();
+          drawMission();
+        }
+      }).catch(()=>{});
+    const wix=Promise.resolve().then(()=>api('security-watch?range=today'))
       .then(data=>{
-        missionData=data?.range?.selection==='today'?data:{status:'unavailable'};
+        const latest=data?.range?.selection==='today'?data:{status:'unavailable'};
+        missionData={...latest,securityProof:missionData?.securityProof||latest.securityProof};
         missionAt=Date.now();
-      })
-      .catch(()=>{missionData={status:'unavailable'};missionAt=Date.now();})
+        drawMission();
+      }).catch(()=>{
+        missionData={...(missionData||{}),status:'unavailable'};
+        missionAt=Date.now();
+        drawMission();
+      });
+    missionRequest=Promise.allSettled([server,wix])
       .finally(()=>{missionRequest=null;drawMission();});
     return missionRequest;
   }
