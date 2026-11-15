@@ -357,6 +357,9 @@
       '<h3>RECURRING PROBLEMS · WHY DO THEY KEEP HAPPENING?</h3>' + recurringHtml() +
       '<h3>PUBLIC SEO HEALTH</h3>' + technicalChecksHtml(run&&run.seoChecks,
         'No recorded public SEO audit yet. The expanded scanner now checks SEO titles, descriptions, canonicals, robots.txt, noindex, and sitemaps.') +
+      '<h3>SECURITY ACCESS CHECKS · READ ONLY</h3>' + technicalChecksHtml(run&&run.securityChecks,
+        'No daily access-gate results recorded yet. The next scan will test signed-out report access and foreign-origin browser requests.') +
+      '<p class="dj-maint-register-note">These checks test whether public callers can read two owner-only reports and whether an unrelated website origin is allowed by the visitor-event endpoint. A passing check does not prove every attack is blocked, and no visitor IPs are blocked by the scanner.</p>' +
       '<h3>BACK-OFFICE PUBLIC REACHABILITY</h3>' + technicalChecksHtml(run&&run.backendChecks,
         'No back-office reachability check has been saved yet. Private service authorization requires a signed-in owner check.') +
       '<h3>TRANSIENT FAULTS RECOVERED ON RETRY</h3>' + recoveryHtml(run) +

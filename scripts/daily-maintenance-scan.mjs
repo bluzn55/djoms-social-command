@@ -1,6 +1,7 @@
 // Doc Jaks daily technical maintenance scan. Runs in GitHub Actions, not in visitors' browsers.
 // Writes dated evidence into the maintenance-history branch, not the deployed app branch.
 import { chromium } from 'playwright';
+import { classifySignedOutReport, classifyForeignOrigin } from './public-security-audit.mjs';
 
 const SITE = 'https://www.docjaks.com';
 const REPO = process.env.GITHUB_REPOSITORY || 'bluzn55/djoms-social-command';
@@ -17,7 +18,7 @@ const issueMap = new Map();
 let pagesChecked = 0, linksChecked = 0, browserPagesChecked = 0, imagesChecked = 0, unverified = 0;
 let publicExternalAttempted=0,publicExternalEligible=0,publicExternalFiltered=0;
 const notes = [], visited = new Set();
-const seoChecks = [], backendChecks = [], autoRecovered = [];
+const seoChecks = [], backendChecks = [], securityChecks = [], autoRecovered = [];
 const pitKreweJourney = [];
 const MAX_PUBLIC_LINKS = 200;
 const tracked = new Set([SITE+'/',SITE+'/sm-welcome']);
@@ -267,7 +268,8 @@ async function checkExternal(){
 }
 
 function recordCheck(group,label,state,detail,url){
-  (group==='seo'?seoChecks:backendChecks).push({label,state,detail,url,checkedAt:new Date().toISOString()});
+  (group==='seo'?seoChecks:group==='security'?securityChecks:backendChecks)
+    .push({label,state,detail,url,checkedAt:new Date().toISOString()});
 }
 function htmlAttribute(tag,name){
   const pattern=new RegExp('\\b'+name+'\\s*=\\s*(?:"([^"]*)"|'+String.fromCharCode(39)+'([^'+String.fromCharCode(39)+']*)'+String.fromCharCode(39)+')','i');
@@ -372,6 +374,65 @@ async function checkPublicBackOffice(){
     }
   }));
 }
+// Read-only security probes: no tracking events, login attempts, or data mutations.
+async function checkPublicSecurity() {
+  const ownerRoutes = [
+    {label:'Owner-only security report',url:'https://djoms-meta-bridge.vercel.app/api/meta/security-watch?range=today'},
+    {label:'Owner-only visitor intelligence',url:'https://djoms-meta-bridge.vercel.app/api/meta/visitor-intelligence?range=today'}
+  ];
+  await Promise.all(ownerRoutes.map(async target => {
+    try {
+      const response = await fetchWithTimeout(target.url,14000);
+      const result = classifySignedOutReport(
+        response.status,response.headers.get('content-type')||'',response.redirected
+      );
+      recordCheck('security',target.label,result.state,result.detail,target.url);
+      if (result.critical) {
+        issue('red','Owner data exposed without login',result.detail,target.url,
+          'Require an authenticated DJOMS owner session before returning any report data.');
+      } else if (result.state==='unverified') {
+        unverified++;
+      }
+    } catch (error) {
+      unverified++;
+      recordCheck('security',target.label,'unverified',
+        'Could not verify signed-out access: '+String(error.message||error),target.url);
+    }
+  }));
+
+  // A foreign-origin CORS preflight is safe: OPTIONS does not store visitor activity.
+  const url='https://djoms-meta-bridge.vercel.app/api/meta/visitor-event';
+  const origin='https://security-probe.invalid';
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),14000);
+  try {
+    const response=await fetch(url,{
+      method:'OPTIONS',
+      headers:{
+        'Origin':origin,
+        'Access-Control-Request-Method':'POST',
+        'Access-Control-Request-Headers':'content-type'
+      },
+      signal:controller.signal
+    });
+    const result=classifyForeignOrigin(response.status,
+      response.headers.get('access-control-allow-origin')||'',origin);
+    recordCheck('security','Foreign-origin browser preflight',result.state,result.detail,url);
+    if (result.critical) {
+      issue('red','Untrusted website origin authorized by CORS',result.detail,url,
+        'Restrict CORS permissions to the approved Doc Jaks website origins.');
+    } else if (result.state==='unverified') {
+      unverified++;
+    }
+  } catch(error) {
+    unverified++;
+    recordCheck('security','Foreign-origin browser preflight','unverified',
+      'Public CORS preflight could not be tested: '+String(error.message||error),url);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function fingerprint(item){
   const label=String(item?.label||'').toLowerCase();
   const family=/browser content needs verification|page appears blank/.test(label)?'wix-visual-content':
@@ -471,7 +532,7 @@ async function main() {
     await browserChecks();
     await checkPitKreweJourney();
     await checkExternal();
-    await Promise.all([checkPublicSeo(),checkPublicBackOffice()]);
+    await Promise.all([checkPublicSeo(),checkPublicBackOffice(),checkPublicSecurity()]);
   }catch(e){unverified++;issue('red','Scan failed','The morning scan was interrupted: '+String(e.message||e),SITE,'Review scanner logs and retry the website inspection.');}
   const issues=[...issueMap.values()],status=determineStatus();
   const checkedAt=new Date().toISOString();
@@ -485,7 +546,7 @@ async function main() {
       publicExternalLinksAttempted:publicExternalAttempted,
       publicExternalLinksDiscovered:publicExternalEligible,
       publicExternalLinksExcluded:publicExternalFiltered},
-    issues,seoChecks,backendChecks,pitKreweJourney,autoRecovered:autoRecovered.slice(0,60),
+    issues,seoChecks,backendChecks,securityChecks,pitKreweJourney,autoRecovered:autoRecovered.slice(0,60),
     recurringAlerts,notes:notes.slice(0,35)};
   const all=[run,...(previous.data.history||[])];
   // Preserve the separately verified repair ledger and future metadata with every scan.
