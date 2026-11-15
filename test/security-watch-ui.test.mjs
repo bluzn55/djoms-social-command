@@ -279,7 +279,7 @@ test('Suspicious page sweeps pulse yellow and never claim a verified attack',asy
   const html=await render(report);
   assert.match(html,/dj-attack-watch dj-attack-yellow/);
   assert.match(html,/TAKE A LOOK · SUSPICIOUS TRAFFIC/);
-  assert.match(html,/not a confirmed attack/);
+  assert.match(html,/does NOT confirm a successful attack/);
   assert.doesNotMatch(html,/dj-attack-red/);
   assert.match(html,/href="#djSecurityFlaggedActivity"/);
 });
@@ -287,7 +287,7 @@ test('Suspicious page sweeps pulse yellow and never claim a verified attack',asy
 test('A quiet Wix traffic result is not presented as a complete security all-clear',async()=>{
   const html=await render({...report,alerts:[],totalPatterns:0,priorityPatterns:0});
   assert.match(html,/dj-attack-quiet/);
-  assert.match(html,/Firewall and login-attack evidence are not connected/);
+  assert.match(html,/Wix firewall and login-attack evidence are not connected/);
   assert.doesNotMatch(html,/dj-attack-red/);
   assert.doesNotMatch(html,/dj-attack-yellow/);
 });
@@ -346,4 +346,46 @@ test('Pulsing attack alerts stop animating for reduced-motion preferences',async
   const style=await readFile(new URL('../website-security-watch.css',import.meta.url),'utf8');
   assert.match(style,/@media\(prefers-reduced-motion:reduce\)/);
   assert.match(style,/animation:none!important/);
+});
+
+test('Five rejected owner sign-ins give a giant yellow warning, not a red breach claim',async()=>{
+  const html=await render({...report,alerts:[],totalPatterns:0,securityProof:{
+    status:'connected',failedAdminLogins:5,rateLimitLockouts:0,
+    lastFailureAt:'2026-11-12T11:00:00.000Z'
+  }});
+  assert.match(html,/dj-attack-watch dj-attack-yellow/);
+  assert.match(html,/YELLOW ALERT/);
+  assert.match(html,/TAKE A LOOK · SIGN-IN WARNING/);
+  assert.match(html,/5 rejected owner passwords/);
+  assert.doesNotMatch(html,/dj-attack-red/);
+});
+test('One rate-limit lockout warns yellow even when Wix traffic is unavailable',async()=>{
+  const html=await render({...report,status:'unavailable',alerts:[],securityProof:{
+    status:'connected',failedAdminLogins:15,rateLimitLockouts:1,
+    lastLockoutAt:'2026-11-12T11:30:00.000Z'
+  }});
+  assert.match(html,/YELLOW ALERT/);
+  assert.match(html,/1 owner sign-in lockout window/);
+  assert.doesNotMatch(html,/RED ALERT/);
+});
+test('One mistyped password does not create a high-visibility alarm',async()=>{
+  const html=await render({...report,alerts:[],totalPatterns:0,securityProof:{
+    status:'connected',failedAdminLogins:1,rateLimitLockouts:0
+  }});
+  assert.doesNotMatch(html,/YELLOW ALERT/);
+  assert.doesNotMatch(html,/RED ALERT/);
+});
+test('The red incident and yellow anomaly banners use billboard-sized styling',async()=>{
+  const style=await readFile(new URL('../website-security-watch.css',import.meta.url),'utf8');
+  assert.match(style,/\.dj-attack-severity/);
+  assert.match(style,/clamp\(35px,6\.2vw,80px\)/);
+  assert.match(style,/min-height:205px/);
+  assert.match(style,/prefers-reduced-motion:reduce/);
+  const html=await render({...report,securityProof:{
+    status:'verified_incident',
+    confirmedAttack:{verified:true,type:'unauthorized_access',
+      evidenceSource:'Authenticated security log',lastSeenAt:'2026-11-12T12:00:00Z',active:false}
+  }});
+  assert.match(html,/RED ALERT/);
+  assert.match(html,/dj-attack-severity/);
 });

@@ -611,3 +611,90 @@
     animation:none!important;
   }
 }
+
+
+/* NOV 15 · HIGH-VISIBILITY DJOMS SECURITY SIGNAL · priority visual lockup */
+#content .dj-attack-watch.dj-attack-yellow,
+#content .dj-attack-watch.dj-attack-red,
+#connectionStrip .dj-attack-watch.dj-attack-yellow,
+#connectionStrip .dj-attack-watch.dj-attack-red {
+  min-height:205px;
+  padding:24px 26px;
+  border-width:7px;
+  border-radius:18px;
+  gap:12px;
+  margin:15px 0 20px;
+}
+#content .dj-attack-yellow .dj-attack-severity,
+#connectionStrip .dj-attack-yellow .dj-attack-severity {
+  display:block;
+  color:#493006;
+}
+#content .dj-attack-red .dj-attack-severity,
+#connectionStrip .dj-attack-red .dj-attack-severity {
+  display:block;
+  color:#8c0f1c;
+}
+#content .dj-attack-watch .dj-attack-severity,
+#connectionStrip .dj-attack-watch .dj-attack-severity{
+  font:1000 clamp(35px,6.2vw,80px)/.99 Arial,sans-serif!important;
+  letter-spacing:.025em;
+  overflow-wrap:break-word;
+}
+#content .dj-attack-yellow .dj-attack-head,
+#content .dj-attack-red .dj-attack-head,
+#connectionStrip .dj-attack-yellow .dj-attack-head,
+#connectionStrip .dj-attack-red .dj-attack-head {align-items:center;gap:17px}
+#content .dj-attack-yellow .dj-attack-head strong,
+#content .dj-attack-red .dj-attack-head strong,
+#connectionStrip .dj-attack-yellow .dj-attack-head strong,
+#connectionStrip .dj-attack-red .dj-attack-head strong {
+  font:900 clamp(23px,3.3vw,41px)/1.05 Arial,sans-serif!important;
+  letter-spacing:.01em;
+}
+#content .dj-attack-yellow .dj-attack-light,
+#content .dj-attack-red .dj-attack-light,
+#connectionStrip .dj-attack-yellow .dj-attack-light,
+#connectionStrip .dj-attack-red .dj-attack-light {
+  flex:0 0 51px;
+  width:51px;
+  height:51px;
+  border:5px solid #fff9df;
+  box-shadow:0 0 0 4px currentColor;
+}
+#content .dj-attack-yellow p,#content .dj-attack-red p,
+#connectionStrip .dj-attack-yellow p,#connectionStrip .dj-attack-red p {
+  font-size:clamp(18px,2.2vw,23px)!important;
+  font-weight:800!important;
+  line-height:1.28!important;
+}
+#content .dj-attack-yellow small,#content .dj-attack-red small,
+#connectionStrip .dj-attack-yellow small,#connectionStrip .dj-attack-red small {
+  font-size:clamp(14px,1.5vw,17px)!important;
+  font-weight:850!important;
+}
+#content .dj-attack-yellow { background:#ffde4a!important; border-color:#b27b0c!important }
+#connectionStrip .dj-attack-yellow { background:#ffde4a!important; border-color:#b27b0c!important }
+#content .dj-attack-red { background:#ffb7bd!important; border-color:#bd1427!important }
+#connectionStrip .dj-attack-red { background:#ffb7bd!important; border-color:#bd1427!important }
+#content .dj-attack-yellow a,#content .dj-attack-red a,
+#connectionStrip .dj-attack-yellow button,#connectionStrip .dj-attack-red button {
+  font-size:clamp(16px,1.8vw,19px)!important;
+  padding:11px 16px!important;
+}
+@media(max-width:600px){
+  #content .dj-attack-watch.dj-attack-yellow,
+  #content .dj-attack-watch.dj-attack-red,
+  #connectionStrip .dj-attack-watch.dj-attack-yellow,
+  #connectionStrip .dj-attack-watch.dj-attack-red {
+    min-height:180px;
+    padding:18px 15px;
+    border-width:6px;
+  }
+  #content .dj-attack-yellow .dj-attack-light,
+  #content .dj-attack-red .dj-attack-light,
+  #connectionStrip .dj-attack-yellow .dj-attack-light,
+  #connectionStrip .dj-attack-red .dj-attack-light {
+    flex-basis:35px;width:35px;height:35px;border-width:3px;
+  }
+}
