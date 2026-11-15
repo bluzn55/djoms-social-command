@@ -703,4 +703,13 @@
     missionHtml,
     refreshMission
   };
+  // While an owner has these panels open, check again every five minutes.
+  // Polling does not block visitors or change site settings.
+  if(typeof window.setInterval==='function')window.setInterval(()=>{
+    if(live()){
+      cache.delete(selected);
+      void load(true);
+    }
+    if(document.getElementById('djomsSecurityMissionBox'))void refreshMission(true);
+  },5*60*1000);
 })();
