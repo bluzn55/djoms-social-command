@@ -16,7 +16,9 @@ jobs:
         with:
           node-version: '22'
       - name: Check browser script syntax
-        run: node --check website-security-watch.js
+        run: |
+          node --check website-security-watch.js
+          node --check app.js
       - name: Run Security Watch interface regression tests
         run: node --test test/security-watch-ui.test.mjs
       - name: Validate scheduled security audit syntax

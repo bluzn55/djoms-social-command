@@ -49,6 +49,83 @@
   const live=()=>typeof activeView!=='undefined'&&activeView==='Website Security';
   const cache=new Map(),pending=new Map();
   let selected='7d';
+  // Suspicious page sweeps are NOT proof that someone attacked the site.
+  // A red alert requires independent, verified incident evidence.
+  function attackSignal(data){
+    if(!data||!['reported','partial'].includes(data.status))return {
+      tone:'unknown',title:'ATTACK WATCH · NOT VERIFIED',
+      body:'Security evidence is loading or unavailable. No all-clear can be given.',
+      stamp:'No verified attack result'
+    };
+    const proof=data.securityProof||{},incident=proof.confirmedAttack;
+    const confirmed=proof.status==='verified_incident'&&incident?.verified===true&&
+      ['unauthorized_access','confirmed_malicious_attack'].includes(incident?.type)&&
+      typeof incident.evidenceSource==='string'&&incident.evidenceSource.trim().length>=5&&
+      typeof incident.lastSeenAt==='string'&&Number.isFinite(Date.parse(incident.lastSeenAt));
+    if(confirmed){
+      const age=Date.now()-Date.parse(incident.lastSeenAt);
+      const active=incident.active===true&&age>=0&&age<=15*60*1000;
+      return {
+        tone:'red',
+        title:active?'UNDER ATTACK · VERIFIED INCIDENT':'CONFIRMED ATTACK · RECORDED',
+        body:active?'A verified security feed reports an active incident. Review and contain it immediately.':
+          'A verified security incident was recorded. Investigate its cause and whether it has been contained.',
+        stamp:'Verified '+time(incident.lastSeenAt)+' · Source: '+incident.evidenceSource
+      };
+    }
+    const rows=Array.isArray(data.alerts)?data.alerts:[];
+    if(rows.length){
+      const last=rows.map(row=>row.end||row.start)
+        .filter(stamp=>typeof stamp==='string'&&Number.isFinite(Date.parse(stamp)))
+        .sort((a,b)=>Date.parse(b)-Date.parse(a))[0];
+      return {
+        tone:'yellow',title:'TAKE A LOOK · SUSPICIOUS TRAFFIC',
+        body:rows.length+' rapid page-sweep pattern'+(rows.length===1?'':'s')+
+          ' in this period. These may be crawlers or monitors, not a confirmed attack.',
+        stamp:(last?'Last observed '+time(last)+' · ':'')+'Review flagged activity'
+      };
+    }
+    return {
+      tone:'quiet',title:'NO ATTACK PATTERN DETECTED IN THIS CHECK',
+      body:'No matching rapid page sweeps were found. Firewall and login-attack evidence are not connected, so this is not an all-clear.',
+      stamp:'Checked '+time(data.checkedAt)+' · '+dates(data.range)
+    };
+  }
+  function attackHtml(data,compact=false){
+    const signal=attackSignal(data);
+    return '<section class="dj-attack-watch dj-attack-'+signal.tone+'"'+
+      ' role="'+(signal.tone==='red'?'alert':'status')+'" aria-label="Doc Jaks attack watch">'+
+      '<div class="dj-attack-head"><i aria-hidden="true" class="dj-attack-light"></i>'+
+      '<strong>'+esc(signal.title)+'</strong></div>'+
+      '<p>'+esc(signal.body)+'</p><small>'+esc(signal.stamp)+'</small>'+
+      (compact?'<button type="button" data-view="Website Security">Open Website Security ›</button>':
+        signal.tone==='yellow'?'<a href="#djSecurityFlaggedActivity">Review flagged activity ↓</a>':'')+
+      '</section>';
+  }
+  let missionData=null,missionAt=0,missionRequest=null;
+  function missionHtml(){
+    return '<div id="djomsSecurityMissionBox" class="dj-attack-mission" aria-live="polite">'+
+      attackHtml(missionData,true)+'</div>';
+  }
+  function drawMission(){
+    const host=document.getElementById('djomsSecurityMissionBox');
+    if(host)host.innerHTML=attackHtml(missionData,true);
+  }
+  function refreshMission(force=false){
+    if(!document.getElementById('djomsSecurityMissionBox'))return Promise.resolve();
+    if(!force&&missionData&&Date.now()-missionAt<120000){
+      drawMission();return Promise.resolve();
+    }
+    if(missionRequest)return missionRequest;
+    missionRequest=Promise.resolve().then(()=>api('security-watch?range=today'))
+      .then(data=>{
+        missionData=data?.range?.selection==='today'?data:{status:'unavailable'};
+        missionAt=Date.now();
+      })
+      .catch(()=>{missionData={status:'unavailable'};missionAt=Date.now();})
+      .finally(()=>{missionRequest=null;drawMission();});
+    return missionRequest;
+  }
   function actionButtons(){
     return [['today','Day'],['7d','Week'],['30d','Month']].map(([v,t])=>
       '<button type="button" data-security-range="'+v+'"'+
@@ -64,6 +141,7 @@
         '<h2>WEBSITE SECURITY WATCH</h2>'+
         '<p>Spot unusual public-page traffic without mistaking every crawler for an attacker.</p>'+
       '</div><div class="dj-security-status">WIX ANALYTICS · READ ONLY</div></header>'+
+      '<div id="djSecurityAlertBox" aria-live="polite">'+attackHtml(null)+'</div>'+ 
       '<div class="dj-security-toolbar"><strong>REPORTING PERIOD</strong>'+
         '<div class="dj-security-choices">'+actionButtons()+'</div>'+
         '<button type="button" class="dj-security-refresh" data-security-refresh="1">Refresh check</button>'+
@@ -83,6 +161,8 @@
     if(pending.has(key))return;
     const host=document.getElementById('securityWatchResult');
     if(host)host.innerHTML='<p class="dj-security-pending">Checking Wix page activity…</p>';
+    const alertHost=document.getElementById('djSecurityAlertBox');
+    if(alertHost)alertHost.innerHTML=attackHtml(null);
     const task=Promise.allSettled([
       Promise.resolve().then(()=>api('security-watch?range='+encodeURIComponent(key))),
       Promise.resolve().then(()=>api('visitor-intelligence?range='+encodeURIComponent(key)))
@@ -528,6 +608,8 @@
     if(!host)return;
     const data=cache.get(selected)?.data;
     if(!data)return;
+    const alertHost=document.getElementById('djSecurityAlertBox');
+    if(alertHost)alertHost.innerHTML=attackHtml(data);
     if(data.status==='unavailable'){
       host.innerHTML='<div class="dj-security-unavailable"><h3>SECURITY TRAFFIC REPORT UNAVAILABLE</h3>'+
         '<p>'+esc(data.error||'The Wix security analytics connection needs attention.')+'</p>'+
@@ -556,7 +638,7 @@
           'The report reached its 2,500-row evidence limit. More events may exist, so findings are incomplete.':
           'This is behavioral screening, not intrusion detection or an all-clear.')+'</small></div>'+
       measuredPageTimePanel(data.measuredPageTime)+historyPanel(data.history)+visitorIntelligencePanel(data.visitorIntelligence)+visitHistoryPanel(data.visitHistory)+routeMatches(data.relatedRoutes)+
-      '<div class="dj-security-detail-header"><h3>FLAGGED ACTIVITY</h3>'+ 
+      '<div class="dj-security-detail-header" id="djSecurityFlaggedActivity"><h3>FLAGGED ACTIVITY</h3>'+ 
         '<span>'+esc(number(data.priorityPatterns))+' priority review · '+
           esc(number(data.totalPatterns))+' patterns</span></div>'+
       (rows.length?'<div class="dj-security-alerts">'+rows.map(alertRow).join('')+'</div>':
@@ -615,5 +697,19 @@
       void load(true);
     }
   });
-  window.djomsWebsiteSecurity={render:shell,refresh:()=>{cache.delete(selected);return load(true);}};
+  window.djomsWebsiteSecurity={
+    render:shell,
+    refresh:()=>{cache.delete(selected);return load(true);},
+    missionHtml,
+    refreshMission
+  };
+  // While an owner has these panels open, check again every five minutes.
+  // Polling does not block visitors or change site settings.
+  if(typeof window.setInterval==='function')window.setInterval(()=>{
+    if(live()){
+      cache.delete(selected);
+      void load(true);
+    }
+    if(document.getElementById('djomsSecurityMissionBox'))void refreshMission(true);
+  },5*60*1000);
 })();

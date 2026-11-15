@@ -5,7 +5,8 @@ import {readFile} from 'node:fs/promises';
 const script=await readFile(new URL('../website-security-watch.js',import.meta.url),'utf8');
 
 async function render(data,activityData=null) {
-  const items={content:{innerHTML:''},securityWatchResult:{innerHTML:''}};
+  const items={content:{innerHTML:''},securityWatchResult:{innerHTML:''},
+    djSecurityAlertBox:{innerHTML:''}};
   const document={
     getElementById:name=>items[name]||null,
     addEventListener:()=>{},
@@ -22,7 +23,7 @@ async function render(data,activityData=null) {
   );
   window.djomsWebsiteSecurity.render();
   await new Promise(resolve=>setImmediate(resolve));
-  return items.securityWatchResult.innerHTML;
+  return items.djSecurityAlertBox.innerHTML+items.securityWatchResult.innerHTML;
 }
 
 const report={
@@ -272,4 +273,77 @@ test('A mismatched reporting date cannot be silently merged with Wix security',a
   });
   assert.ok(html.includes('ACTIVE PAGE TIME · NOT VERIFIED'));
   assert.ok(html.includes('did not match the selected dates'));
+});
+
+test('Suspicious page sweeps pulse yellow and never claim a verified attack',async()=>{
+  const html=await render(report);
+  assert.match(html,/dj-attack-watch dj-attack-yellow/);
+  assert.match(html,/TAKE A LOOK · SUSPICIOUS TRAFFIC/);
+  assert.match(html,/not a confirmed attack/);
+  assert.doesNotMatch(html,/dj-attack-red/);
+  assert.match(html,/href="#djSecurityFlaggedActivity"/);
+});
+
+test('A quiet Wix traffic result is not presented as a complete security all-clear',async()=>{
+  const html=await render({...report,alerts:[],totalPatterns:0,priorityPatterns:0});
+  assert.match(html,/dj-attack-quiet/);
+  assert.match(html,/Firewall and login-attack evidence are not connected/);
+  assert.doesNotMatch(html,/dj-attack-red/);
+  assert.doesNotMatch(html,/dj-attack-yellow/);
+});
+
+test('No verified security data remains neutral, never green',async()=>{
+  const html=await render({...report,status:'unavailable',error:'Wix query unavailable'});
+  assert.match(html,/dj-attack-unknown/);
+  assert.match(html,/ATTACK WATCH · NOT VERIFIED/);
+  assert.doesNotMatch(html,/dj-attack-red/);
+});
+
+test('A bot pattern or unsupported attack claim does not trigger red',async()=>{
+  const html=await render({...report,securityProof:{
+    status:'not_connected',
+    confirmedAttack:{verified:true,type:'unauthorized_access',
+      evidenceSource:'Unverified claim',lastSeenAt:new Date().toISOString(),active:true}
+  }});
+  assert.match(html,/dj-attack-yellow/);
+  assert.doesNotMatch(html,/dj-attack-red/);
+});
+
+test('A separately verified historical incident triggers red, with the evidence source',async()=>{
+  const html=await render({...report,securityProof:{
+    status:'verified_incident',
+    confirmedAttack:{verified:true,type:'unauthorized_access',
+      evidenceSource:'Authenticated incident log',lastSeenAt:'2026-11-11T12:00:00Z',active:false}
+  }});
+  assert.match(html,/dj-attack-watch dj-attack-red/);
+  assert.match(html,/CONFIRMED ATTACK · RECORDED/);
+  assert.match(html,/Authenticated incident log/);
+  assert.doesNotMatch(html,/UNDER ATTACK · VERIFIED INCIDENT/);
+});
+
+test('A currently confirmed incident reports under attack only when recent',async()=>{
+  const html=await render({...report,securityProof:{
+    status:'verified_incident',
+    confirmedAttack:{verified:true,type:'confirmed_malicious_attack',
+      evidenceSource:'Verified firewall feed',lastSeenAt:new Date().toISOString(),active:true}
+  }});
+  assert.match(html,/UNDER ATTACK · VERIFIED INCIDENT/);
+  assert.match(html,/dj-attack-red/);
+});
+
+test('Untrusted incident evidence source is escaped and cannot run HTML',async()=>{
+  const value='<img src=x onerror=alert(1)>';
+  const html=await render({...report,securityProof:{
+    status:'verified_incident',
+    confirmedAttack:{verified:true,type:'unauthorized_access',
+      evidenceSource:value,lastSeenAt:'2026-11-11T12:00:00Z',active:false}
+  }});
+  assert.ok(!html.includes(value));
+  assert.ok(html.includes('&lt;img'));
+});
+
+test('Pulsing attack alerts stop animating for reduced-motion preferences',async()=>{
+  const style=await readFile(new URL('../website-security-watch.css',import.meta.url),'utf8');
+  assert.match(style,/@media\(prefers-reduced-motion:reduce\)/);
+  assert.match(style,/animation:none!important/);
 });

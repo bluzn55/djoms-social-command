@@ -574,6 +574,7 @@ function renderConnectionStrip() {
     };
 
     strip.innerHTML = `
+      ${window.djomsWebsiteSecurity?.missionHtml?.() || ""}
       ${window.djomsDailyMaintenance?.missionHtml?.() || ""}
       <button type="button" class="mission-top-attention ${attentionColor}" data-view="Needs Attention"
         data-base-attention="${baseAttention}" data-base-color="${baseAttentionColor}"
@@ -796,6 +797,7 @@ function renderConnectionStrip() {
         </div>
       </section>
     `;
+    void window.djomsWebsiteSecurity?.refreshMission?.();
     return;
   }
 
@@ -1947,9 +1949,12 @@ function render() {
         (typeof issue.url==='string'&&/^https:\/\//.test(issue.url)
           ?'<a href="'+esc(issue.url)+'" target="_blank" rel="noopener noreferrer">Open setup ↗</a>':'')+
         '</article>').join('')+'</section>' : '';
+  const securityAlertHtml = activeView==='Needs Attention' && window.djomsWebsiteSecurity?.missionHtml
+    ? window.djomsWebsiteSecurity.missionHtml() : '';
   const maintenanceAlertHtml = activeView==='Needs Attention' && window.djomsDailyMaintenance?.missionHtml
     ? '<div class="connection-strip dj-maint-attention-strip">'+window.djomsDailyMaintenance.missionHtml()+'</div>' : '';
-  $('content').innerHTML = maintenanceAlertHtml + analyticAlertsHtml + `<div class="filterbar"><label>Find a post<input id="searchPosts" type="search" value="${esc(searchTerm)}" placeholder="Title or caption"></label>${campaignPicker}${campaignFilter && !canSelect ? '<button data-action="allCampaigns">Show all campaigns</button>':''}${bulkTools}<span>${list.length} posts</span></div>` + rowsHtml(list);
+  $('content').innerHTML = securityAlertHtml + maintenanceAlertHtml + analyticAlertsHtml + `<div class="filterbar"><label>Find a post<input id="searchPosts" type="search" value="${esc(searchTerm)}" placeholder="Title or caption"></label>${campaignPicker}${campaignFilter && !canSelect ? '<button data-action="allCampaigns">Show all campaigns</button>':''}${bulkTools}<span>${list.length} posts</span></div>` + rowsHtml(list);
+  if (activeView==='Needs Attention') void window.djomsWebsiteSecurity?.refreshMission?.();
 }
 async function setView(view) {
   if (inboxChangingView) return;
