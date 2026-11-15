@@ -93,8 +93,10 @@
   }
   function attackHtml(data,compact=false){
     const signal=attackSignal(data);
+    const severity=signal.tone==='red'?'RED ALERT':signal.tone==='yellow'?'YELLOW ALERT':'';
     return '<section class="dj-attack-watch dj-attack-'+signal.tone+'"'+
       ' role="'+(signal.tone==='red'?'alert':'status')+'" aria-label="Doc Jaks attack watch">'+
+      (severity?'<span class="dj-attack-severity">'+severity+'</span>':'')+
       '<div class="dj-attack-head"><i aria-hidden="true" class="dj-attack-light"></i>'+
       '<strong>'+esc(signal.title)+'</strong></div>'+
       '<p>'+esc(signal.body)+'</p><small>'+esc(signal.stamp)+'</small>'+
