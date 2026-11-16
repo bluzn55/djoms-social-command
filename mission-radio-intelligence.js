@@ -42,6 +42,8 @@
       return data;
     })().catch(e=>{
       cache.set(q,{data:null,error:String(e?.message||'Radio.co report unavailable'),at:Date.now()});
+      document.dispatchEvent(new CustomEvent('djoms:verified-report',
+        {detail:{source:'radioIntelligence'}}));
       return null;
     }).finally(()=>{
       pending.delete(q);

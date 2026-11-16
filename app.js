@@ -601,6 +601,10 @@ function renderConnectionStrip() {
         <div class="mj-loading">⚜ DOC JAKS · FOLLOW THE CURRENT · Loading the verified visitor journey…</div>
       </section>
 
+      <details class="organic-full-reports" id="organicFullReports" ${window.djomsOrganicShell?.reportsOpen?'open':''}>
+      <summary>Full source reports &amp; station imports <span>Open detailed evidence, graphs, and existing controls</span></summary>
+      <div class="organic-report-panels">
+      <div id="organicLegacyJourney"></div>
       <section id="missionDirectionPanel" class="mission-direction-panel mission-source-detail-panel" aria-label="Detailed source reports and underlying evidence">
         <p class="mission-source-loading">Checking detailed source reports…</p>
       </section>
@@ -796,6 +800,8 @@ function renderConnectionStrip() {
           </button>`).join('')}
         </div>
       </section>
+      </div>
+      </details>
     `;
     void window.djomsWebsiteSecurity?.refreshMission?.();
     return;
@@ -1836,6 +1842,8 @@ function rotationPauseClick(){
 }
 
 function render() {
+  document.body.classList.toggle('organic-command-view', activeView === 'Mission Control' && !!window.djomsOrganicCommand);
+  window.djomsOrganicShell?.closeTools?.();
   $('workspace').hidden = false; $('editor').hidden = true; selected = null; dirty = false;
   if (['Mission Control','Platform Details'].includes(activeView)) renderConnectionStrip();
   else $('connectionStrip').hidden = true;

@@ -1,0 +1,120 @@
+/* Scoped artwork interface; the original site and report panels keep their own styles. */
+#djOrganicCommand{--oc-ink:#251708;--oc-brass:#ac6917;--oc-paper:#ffe8b4;--oc-deep:#092c25;color:var(--oc-ink);font:400 16px/1.4 Georgia,'Times New Roman',serif;position:relative;width:100%;min-width:0;max-width:1500px;margin:0 auto;padding:0;flex:none;isolation:isolate}
+#djOrganicCommand *{box-sizing:border-box;font-weight:inherit}
+#djOrganicCommand button{margin:0}
+#djOrganicCommand small{font-weight:400!important}
+#djOrganicCommand [hidden]{display:none!important}
+#djOrganicCommand .oc-board{position:relative;container-type:inline-size;width:100%;aspect-ratio:1199/1312;background:#092e26;overflow:hidden}
+#djOrganicCommand .oc-art{display:block;width:100%;height:100%;object-fit:fill;margin:0;border:0;border-radius:0}
+#djOrganicCommand .oc-readout,#djOrganicCommand .oc-label-cover,#djOrganicCommand .oc-hotspot{position:absolute;box-sizing:border-box;margin:0;min-width:0;max-width:none}
+#djOrganicCommand .oc-readout{display:flex;align-items:center;justify-content:center;z-index:2;text-align:center;font-weight:800;color:#160f06;font-size:3.5cqw;line-height:1;white-space:nowrap;pointer-events:none;text-shadow:0 .06cqw #fff7d2}
+#djOrganicCommand .oc-readout.oc-search-value{font-size:3.65cqw;letter-spacing:-.12cqw}
+#djOrganicCommand .oc-readout.oc-search-clicks{font-size:5.8cqw}
+#djOrganicCommand .oc-readout.oc-radio-value{font-size:3.1cqw}
+#djOrganicCommand .oc-readout.oc-radio-time{font-size:2.8cqw;letter-spacing:-.12cqw}
+#djOrganicCommand .oc-readout.oc-referral-value{font-size:3.5cqw}
+#djOrganicCommand .oc-readout.oc-social-value{font-size:3cqw}
+#djOrganicCommand .oc-readout.oc-social-coverage{font:700 .94cqw/1 Arial,sans-serif;color:#fff1c8;background:#123d30;border-radius:.35cqw;letter-spacing:.02cqw;text-shadow:none}
+#djOrganicCommand .oc-readout.oc-engine-label{font-size:1.35cqw;font-style:italic}
+#djOrganicCommand .oc-readout.oc-arrival-value{font-size:4cqw}
+#djOrganicCommand .oc-readout.oc-selected-name{font-style:italic;font-size:2cqw;letter-spacing:-.04cqw;white-space:normal;line-height:.95}
+#djOrganicCommand .oc-readout.oc-selected-name.oc-long{font-size:1.7cqw}
+#djOrganicCommand .oc-readout.oc-page-value{font-size:4.6cqw}
+#djOrganicCommand .oc-readout.oc-time-value{font-size:4.1cqw;letter-spacing:-.08cqw}
+#djOrganicCommand .oc-readout.oc-orders-value{font-size:3.1cqw}
+#djOrganicCommand .oc-readout.oc-odometer{font-size:4cqw;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));font-weight:800;line-height:1;letter-spacing:0}
+#djOrganicCommand .oc-odometer span{display:block;min-width:0;text-align:center}
+#djOrganicCommand .oc-readout.oc-odometer.oc-text-cash{display:flex}
+#djOrganicCommand .oc-readout.oc-odometer.oc-long-cash{display:flex;font-size:2.65cqw;background:linear-gradient(90deg,#f4ce79,#fff5ce 45%,#e7bd64);border-radius:.3cqw;letter-spacing:-.05cqw}
+#djOrganicCommand .oc-readout.oc-verdict{font-size:1.65cqw;font-style:italic;line-height:1.02;white-space:normal;padding:0 .4cqw}
+#djOrganicCommand .oc-readout.oc-verdict.oc-long{font-size:1.4cqw}
+#djOrganicCommand .oc-readout.oc-report-badge{font-size:1.1cqw;color:#fff8de;letter-spacing:.025cqw;line-height:1.1;text-shadow:0 .1cqw #071a14}
+#djOrganicCommand .oc-readout.oc-report-footer{font-size:1.35cqw;color:#231707}
+#djOrganicCommand .oc-label-cover{z-index:3;display:flex;align-items:center;justify-content:center;text-align:center;color:#211305;background:transparent;font-size:2cqw;font-weight:800;font-style:italic;line-height:1;white-space:nowrap;pointer-events:none}
+#djOrganicCommand .oc-label-cover.oc-tiny{font:700 .92cqw/1 Georgia,serif;border-radius:0;background:#ffebbc}
+#djOrganicCommand .oc-label-cover.oc-compact-label{font-size:1.35cqw}
+#djOrganicCommand .oc-label-cover.oc-entry-label{font-size:1.7cqw}
+#djOrganicCommand .oc-label-cover.oc-radio-referral-label{font-size:1.8cqw}
+#djOrganicCommand .oc-label-cover.oc-action-label{font-size:1.65cqw}
+#djOrganicCommand .oc-label-cover.oc-dark-label{font-size:1.75cqw;color:#ffffe4;text-shadow:0 .1cqw #062b23}
+#djOrganicCommand button.oc-hotspot{display:block;z-index:5;border:0!important;background:transparent!important;border-radius:0;padding:0!important;box-shadow:none;color:inherit;cursor:pointer;appearance:none;font-family:Georgia,'Times New Roman',serif;font-size:2cqw!important;font-weight:800!important;line-height:1;min-height:0;outline-offset:.3cqw;transition:filter .15s ease,box-shadow .15s ease}
+#djOrganicCommand button.oc-hotspot:hover{box-shadow:inset 0 0 1cqw .15cqw #ffe28b88;border-radius:28%}
+#djOrganicCommand button.oc-hotspot:focus-visible{outline:.3cqw solid #fff1a1;box-shadow:0 0 0 .45cqw #0c7765;border-radius:18%}
+#djOrganicCommand .oc-page-selector{z-index:7!important;display:flex!important;flex-direction:column;justify-content:center;align-items:center;gap:.3cqw;border-radius:50%!important;padding:.9cqw 1.7cqw!important;line-height:1!important}
+#djOrganicCommand .oc-page-selector .oc-selector-name{font-size:2cqw;font-weight:800;line-height:.95;white-space:normal;color:#181006;text-shadow:0 .07cqw #fff9d6;display:flex;align-items:center;justify-content:center;min-height:4.2cqw;max-width:100%;overflow-wrap:normal}
+#djOrganicCommand .oc-page-selector .oc-selector-count{display:block;font-size:1.85cqw;font-style:italic;line-height:1;color:#211408;white-space:nowrap}
+#djOrganicCommand .oc-page-selector.oc-long-name .oc-selector-name{font-size:1.5cqw;overflow-wrap:anywhere}
+#djOrganicCommand button.oc-page-selector[aria-pressed=true]{box-shadow:0 0 .7cqw .45cqw #ffe343,inset 0 0 .45cqw .16cqw #e6a829}
+#djOrganicCommand button.oc-page-selector:disabled{cursor:default;opacity:.72;box-shadow:none}
+#djOrganicCommand .oc-page-selector:disabled .oc-selector-name{font-size:1.55cqw}
+#djOrganicCommand .oc-social-selector{z-index:8!important;border-radius:25%!important}
+#djOrganicCommand .oc-social-selector[aria-pressed=true]{box-shadow:0 .22cqw .2cqw -.05cqw #fff1a2!important}
+#djOrganicCommand .oc-platform-lamp{position:absolute;top:4%;left:50%;transform:translateX(-50%);width:2.15cqw;height:2.15cqw;background:radial-gradient(circle at 40% 30%,#b7c5bf,#49625a 55%,#203a31 80%);border-radius:50%;border:.15cqw solid #e1a83e;box-shadow:0 0 .4cqw #091d14;pointer-events:none}
+#djOrganicCommand [data-signal=green] .oc-platform-lamp{background:radial-gradient(circle at 40% 30%,#f6ffc3,#8aea31 35%,#11a326 65%,#075a19 92%);box-shadow:0 0 .75cqw #9aef24}
+#djOrganicCommand [data-signal=yellow] .oc-platform-lamp{background:radial-gradient(circle at 40% 30%,#fff8b4,#ffda25 40%,#d68c05 75%);box-shadow:0 0 .6cqw #efbf38}
+#djOrganicCommand .oc-source-note{background:#132e26;color:#f8e7b6;border-top:2px solid #bc7f20;font:13px/1.5 Arial,sans-serif;padding:13px 18px;margin:0}
+#djOrganicCommand .oc-mobile-nav{display:none}
+#djOrganicCommand .oc-art-error{position:absolute;z-index:1;left:12%;right:12%;top:10%;background:#fff0ca;color:#231707;padding:20px;border:3px solid #b87824;font:18px/1.4 Arial,sans-serif}
+#djOrganicCommand .oc-no-art .oc-mobile-nav{display:flex}
+#djOrganicCommand .oc-no-art .oc-board{aspect-ratio:1199/650}
+#djOrganicCommand .oc-no-art .oc-board>:not(.oc-art-error){visibility:hidden}
+#djOrganicCommand .oc-drawer{position:relative;scroll-margin-top:24px;margin:18px 0 8px;padding:0;flex:none;border:8px ridge #c78d39;border-radius:30px 18px 28px 24px;background:linear-gradient(#fff1caeF,#f4db9ff5),url('/assets/organic-command.webp') center 62%/170% auto;box-shadow:0 3px 0 #432508,0 8px 22px #10241b30;overflow:hidden;color:#281809}
+#djOrganicCommand .oc-drawer:before,#djOrganicCommand .oc-drawer:after{content:'';position:absolute;top:14px;width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#fff6bd,#c38a30 50%,#532803 90%);box-shadow:0 1px 3px #593000}
+#djOrganicCommand .oc-drawer:before{left:12px}
+#djOrganicCommand .oc-drawer:after{right:12px}
+#djOrganicCommand .oc-drawer-header{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:23px 27px 18px;border-bottom:2px solid #b5853f;background:linear-gradient(100deg,#f6d591,#fff0c4 52%,#e7bc6b);color:#251507}
+#djOrganicCommand .oc-drawer-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+#djOrganicCommand .oc-drawer-kicker{font:700 11px/1.4 Arial,sans-serif;letter-spacing:1.5px;margin:0 0 5px;color:#6d4717}
+#djOrganicCommand .oc-drawer-header h2{font:800 clamp(21px,2.7vw,31px)/1.14 Georgia,serif;color:#241508;margin:0}
+#djOrganicCommand .oc-close,#djOrganicCommand .oc-brass-button,#djOrganicCommand .oc-drawer-selector button,#djOrganicCommand .oc-mobile-nav button{border:2px solid #9d651c;border-radius:20px;background:linear-gradient(#fff1bb,#e3b458 60%,#f5d58b);box-shadow:inset 0 1px #fff9dc,0 2px 0 #8c5219;color:#291905;font:700 15px/1.2 Georgia,serif;font-size:15px!important;font-weight:700!important;padding:10px 17px;cursor:pointer;min-height:42px;text-shadow:0 1px #ffe5a8;flex:none}
+#djOrganicCommand .oc-close:hover,#djOrganicCommand .oc-brass-button:hover,#djOrganicCommand .oc-drawer-selector button:hover{background:linear-gradient(#fff8db,#f0ca78)}
+#djOrganicCommand .oc-close:focus-visible,#djOrganicCommand .oc-brass-button:focus-visible,#djOrganicCommand .oc-drawer-selector button:focus-visible,#djOrganicCommand .oc-page-list button:focus-visible,#djOrganicCommand .oc-mobile-nav button:focus-visible{outline:3px solid #1a8066;outline-offset:3px}
+#djOrganicCommand .oc-drawer-body{padding:22px 28px 27px;font:16px/1.5 Arial,sans-serif;color:#382711}
+#djOrganicCommand .oc-drawer-body h3{font:800 23px/1.22 Georgia,serif;margin:25px 0 12px;color:#2a1909}
+#djOrganicCommand .oc-drawer-body h3:first-child{margin-top:0}
+#djOrganicCommand .oc-evidence-line{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:13px 0;border-bottom:1px solid #bd955956}
+#djOrganicCommand .oc-evidence-line>span{font-size:16px;color:#3d2a10}
+#djOrganicCommand .oc-evidence-line small{display:block;font-size:12px!important;color:#725528;line-height:1.5;margin-top:3px;max-width:580px}
+#djOrganicCommand .oc-evidence-line>strong{font:800 26px/1.2 Georgia,serif;text-align:right;white-space:nowrap;color:#211407;font-variant-numeric:tabular-nums}
+#djOrganicCommand .oc-note{font:14px/1.55 Arial,sans-serif;color:#654921;margin:15px 0}
+#djOrganicCommand .oc-empty{padding:15px 0;border-bottom:1px solid #b68a4c6b;margin:10px 0 16px;font:15px/1.5 Arial,sans-serif;color:#6c491b}
+#djOrganicCommand .oc-empty strong,#djOrganicCommand .oc-empty span{display:block}
+#djOrganicCommand .oc-empty strong{font:800 22px/1.25 Georgia,serif;color:#57330b;margin-bottom:7px}
+#djOrganicCommand .oc-table-wrap{width:100%;overflow-x:auto;margin:14px 0}
+#djOrganicCommand table{width:100%;min-width:0;border-collapse:collapse;font:14px/1.4 Arial,sans-serif;background:transparent;border:0;color:#39260f}
+#djOrganicCommand th,#djOrganicCommand td{padding:11px 9px;text-align:left;vertical-align:top;border:0;border-bottom:1px solid #b5905759;overflow-wrap:anywhere;max-width:400px;font-size:14px!important;text-transform:none;letter-spacing:normal}
+#djOrganicCommand th{font:800 15px/1.25 Georgia,serif;font-size:15px!important;font-weight:800!important;background:#bd87351c;color:#3c250a}
+#djOrganicCommand td:last-child,#djOrganicCommand th:last-child{text-align:right;font-variant-numeric:tabular-nums}
+#djOrganicCommand caption{text-align:left;font-size:13px;color:#6d5127;padding:8px 0}
+#djOrganicCommand .oc-drawer-selector{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+#djOrganicCommand .oc-drawer-selector button[aria-pressed=true]{background:linear-gradient(#1a6a52,#0c4938);border-color:#be8a34;color:#fff4c6;text-shadow:0 1px #083527;box-shadow:0 0 0 2px #f1cf79}
+#djOrganicCommand .oc-page-list{display:flex;flex-direction:column;gap:0;margin:10px 0}
+#djOrganicCommand .oc-page-list button{display:flex;align-items:center;gap:18px;justify-content:space-between;width:100%;border:0;border-bottom:1px solid #bc955c75;border-radius:0;background:transparent;padding:16px 11px;color:#352108;font:16px/1.3 Arial,sans-serif;font-size:16px!important;font-weight:400!important;text-align:left;cursor:pointer;min-height:66px}
+#djOrganicCommand .oc-page-list button:hover,#djOrganicCommand .oc-page-list button[aria-pressed=true]{background:#bd9a4a20}
+#djOrganicCommand .oc-page-list button>span:first-child{flex:1;min-width:0}
+#djOrganicCommand .oc-page-list b{display:block;font:800 20px/1.2 Georgia,serif}
+#djOrganicCommand .oc-page-list small{display:block;font:13px/1.4 Arial,sans-serif;font-size:13px!important;margin-top:4px;color:#71542b;overflow-wrap:anywhere}
+#djOrganicCommand .oc-page-list strong{font:800 28px/1 Georgia,serif;text-align:right;white-space:nowrap}
+#djOrganicCommand .oc-sr{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+@media(max-width:720px){
+  #djOrganicCommand .oc-mobile-nav{display:flex;flex-wrap:wrap;gap:8px;padding:15px 12px;background:linear-gradient(#123c2d,#092a21);border-top:2px solid #d29734}
+  #djOrganicCommand .oc-mobile-nav button{font-size:13px!important;padding:10px 13px;flex:1 1 auto;min-height:44px}
+  #djOrganicCommand .oc-source-note{font-size:12px;padding:11px 13px}
+  #djOrganicCommand .oc-drawer{border-width:5px;border-radius:20px 14px;margin-top:14px}
+  #djOrganicCommand .oc-drawer-header{padding:22px 15px 16px;align-items:flex-start;gap:10px}
+  #djOrganicCommand .oc-drawer-header h2{font-size:23px}
+  #djOrganicCommand .oc-close{padding:9px 11px;min-height:44px;font-size:13px!important}
+  #djOrganicCommand .oc-drawer-body{padding:18px 15px 22px;font-size:16px}
+  #djOrganicCommand .oc-evidence-line{gap:12px;align-items:flex-start}
+  #djOrganicCommand .oc-evidence-line>span{font-size:15px}
+  #djOrganicCommand .oc-evidence-line>strong{font-size:23px;white-space:normal;flex-shrink:0;max-width:49%;overflow-wrap:anywhere}
+  #djOrganicCommand .oc-evidence-line small{font-size:12px!important}
+  #djOrganicCommand .oc-drawer-selector{gap:8px}
+  #djOrganicCommand .oc-drawer-selector button{font-size:14px!important;padding:9px 12px;min-height:44px;flex:1 1 auto}
+  #djOrganicCommand th,#djOrganicCommand td{padding:10px 6px;font-size:13px!important}
+  #djOrganicCommand .oc-note{font-size:13px}
+  #djOrganicCommand .oc-page-list button{gap:10px;padding:15px 5px}
+  #djOrganicCommand .oc-page-list b{font-size:19px}
+  #djOrganicCommand .oc-page-list strong{font-size:25px}
+}
+@media(prefers-reduced-motion:reduce){#djOrganicCommand button.oc-hotspot{transition:none}}

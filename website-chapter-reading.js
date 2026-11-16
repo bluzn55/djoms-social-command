@@ -58,11 +58,24 @@
     return box;
   }
   const number=n=>Number.isSafeInteger(n)&&n>=0;
+  const readingFields=['openSessions','readingSessions','activeSeconds','avgActiveSeconds','read30','read60','read180','endReached','finished'];
   function validated(value, p) {
-    const k=['openSessions','readingSessions','activeSeconds','avgActiveSeconds','read30','read60','read180','endReached','finished'];
     return !!(value?.connected===true && value?.mode==='active-reading-sessions' &&
-      value.range?.start===p.start && value.range?.end===p.end && k.every(x=>number(value[x])));
+      value.range?.start===p.start && value.range?.end===p.end && readingFields.every(x=>number(value[x])));
   }
+  // Read-only access to the existing authenticated loader's validated cache.
+  // The reader endpoint uses an inclusive end date, unlike Wix's range.end.
+  window.djomsChapterReadingData=period=>{
+    const p={start:period?.start,end:period?.endInclusive};
+    if(!p.start||!p.end||pending||key!==p.start+'|'+p.end||!validated(response,p))return null;
+    return Object.freeze({
+      connected:true,mode:response.mode,source:response.source,
+      range:Object.freeze({start:response.range.start,end:response.range.end}),
+      trackingSince:response.trackingSince,partialCoverage:response.partialCoverage===true,
+      checkedAt:response.checkedAt,caveat:response.caveat,
+      ...Object.fromEntries(readingFields.map(field=>[field,response[field]]))
+    });
+  };
   function metric(label,value,hint='') {
     return '<div><small>'+esc(label)+'</small><strong>'+esc(value)+'</strong>'+
       (hint?'<small>'+esc(hint)+'</small>':'')+'</div>';
@@ -118,9 +131,19 @@
         ?'Reading-time report timed out. Try Refresh again.'
         :(e?.message||'Reading-time report unavailable. No totals estimated.');
     } finally {
-      if(request===sequence){pending=false;loadedAt=Date.now();draw();}
+      if(request===sequence){
+        pending=false;loadedAt=Date.now();draw();
+        document.dispatchEvent(new CustomEvent('djoms:verified-report',{detail:{source:'chapterReading'}}));
+      }
     }
   }
+  // The organic command uses this same cached loader without needing to open
+  // a separate Website Analytics card first. No second request path is added.
+  window.djomsEnsureChapterReading=period=>{
+    const p=selected();
+    if(typeof owner==='undefined'||!owner||!p||p.start!==period?.start||p.end!==period?.endInclusive)return;
+    void load();
+  };
   function check(){
     if(!findTargets().length)return;
     draw();

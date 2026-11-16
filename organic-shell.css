@@ -1,0 +1,52 @@
+/* The illustrated command is the main view; existing tools stay one click away. */
+.organic-app-controls,.organic-tools-close{display:none}
+body.organic-command-view{background:#09281f;color:#fff0c8}
+body.organic-command-view>main{display:block;min-height:100vh}
+body.organic-command-view>main>section{width:100%;flex:none;padding:0 18px 28px;max-width:1536px!important;margin:0 auto;background:#09281f}
+body.organic-command-view>main>aside{display:none}
+body.organic-command-view>main>section>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;margin:0;border:0;min-height:65px}
+body.organic-command-view .command-heading{display:none}
+body.organic-command-view .organic-app-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+body.organic-command-view .organic-app-controls button{border:1px solid #c18d42;background:linear-gradient(#6e4b23,#3e2e18);color:#fff1be;box-shadow:inset 0 1px #deb66366;border-radius:22px;padding:10px 17px;min-height:42px;font:700 15px Georgia,serif;cursor:pointer}
+body.organic-command-view .organic-app-controls button:hover{background:#775628}
+body.organic-command-view .organic-app-controls button:focus-visible{outline:3px solid #89ebcb;outline-offset:3px}
+body.organic-command-view #live{background:#103e31;color:#e2edc9;border-color:#9b7d3a;font-size:12px!important;padding:7px 12px;max-width:44%;line-height:1.4}
+body.organic-command-view #connectionStrip{display:flex;flex-flow:column nowrap;align-items:stretch;gap:0;padding:0;border:0;max-width:1500px;margin:0 auto}
+body.organic-command-view #connectionStrip[hidden]{display:none}
+body.organic-command-view #connectionStrip>.mission-report-dates{order:1;margin:0;padding:11px 14px;border-radius:16px 16px 0 0;background:linear-gradient(100deg,#173e2c,#1b4f3b,#13392b);border:2px ridge #b37e32;border-bottom:0}
+body.organic-command-view #connectionStrip>.mission-report-dates>strong{font-family:Georgia,serif;color:#ffe6a2}
+body.organic-command-view #connectionStrip>.mission-report-dates button{border-radius:18px;background:linear-gradient(#ffe8af,#d4a451);color:#32230b;border-color:#987036}
+body.organic-command-view #connectionStrip>.mission-report-dates button[aria-pressed=true]{background:#28674c;color:#fff7d9;box-shadow:inset 0 0 0 1px #e6cb7d}
+body.organic-command-view #missionJourneyTop{order:2;width:100%;flex:none;margin:0;padding:0;max-width:none;border:0;background:transparent;box-shadow:none}
+body.organic-command-view #djomsSecurityMissionBox{order:0;width:100%}
+body.organic-command-view #djMaintMissionCard{order:3;margin:16px 0 0}
+body.organic-command-view .mission-top-attention{order:4;margin:10px 0}
+body.organic-command-view .organic-full-reports{order:5;width:100%;border:2px ridge #b47e32;border-radius:17px;background:#f1eadb;color:#2d251a;overflow:hidden;margin-top:8px}
+.organic-full-reports>summary{padding:16px 20px;cursor:pointer;background:linear-gradient(100deg,#31543a,#193e2e);color:#ffecc3;font:700 19px/1.3 Georgia,serif}
+.organic-full-reports>summary span{display:block;font:13px/1.45 Arial,sans-serif;color:#d4d5b6;margin:5px 0 0 20px}
+.organic-full-reports>summary:focus-visible{outline:3px solid #84d9b8;outline-offset:-5px}
+.organic-report-panels{padding:18px;display:flex;flex-direction:column;gap:15px;color:#2d251a}
+.organic-report-panels>*{width:100%;max-width:none}
+#organicLegacyJourney{padding:0}
+body.organic-command-view #verifiedStatsNotice{order:6;color:#cfdbbc;font-size:13px!important;padding:9px 10px}
+body.organic-command-view #workspace{display:none}
+body.organic-command-view.organic-tools-open>main>aside{display:block;position:fixed;inset:0 auto 0 0;width:min(330px,90vw);min-width:0;overflow-y:auto;z-index:60;border-right:3px ridge #c49a42;padding:18px 17px 25px;box-shadow:0 0 0 100vmax #03180fbf;background:linear-gradient(#1f3827,#14271d)}
+body.organic-command-view.organic-tools-open aside nav{display:flex;flex-direction:column;overflow:visible;gap:2px}
+body.organic-command-view.organic-tools-open aside nav button{width:100%;white-space:normal;margin:0}
+body.organic-command-view.organic-tools-open aside .ver{position:static;margin:22px 10px 0}
+body.organic-command-view.organic-tools-open .organic-tools-close{display:block;text-align:right;font-size:14px!important;color:#ffedb9;border-bottom:1px solid #967342;margin-bottom:15px}
+@media(max-width:720px){
+  body.organic-command-view>main>section{padding:0 0 20px}
+  body.organic-command-view>main>section>header{padding:10px 12px;gap:8px;min-height:60px}
+  body.organic-command-view .organic-app-controls{gap:7px}
+  body.organic-command-view .organic-app-controls button{font-size:13px;padding:9px 12px;min-height:44px}
+  body.organic-command-view #live{display:none}
+  body.organic-command-view #connectionStrip>.mission-report-dates{border-radius:0;padding:11px 10px;gap:8px}
+  body.organic-command-view #connectionStrip>.mission-report-dates>strong{width:100%;text-align:center}
+  body.organic-command-view .mission-report-dates .website-custom-picker{flex-wrap:wrap;gap:8px;justify-content:center}
+  body.organic-command-view #djMaintMissionCard,body.organic-command-view .mission-top-attention{width:calc(100% - 16px);margin-left:8px;margin-right:8px}
+  body.organic-command-view .organic-full-reports{width:calc(100% - 16px);margin:8px}
+  .organic-full-reports>summary{font-size:17px;padding:16px 13px}
+  .organic-report-panels{padding:9px}
+  body.organic-command-view.organic-tools-open #logout{position:static;width:100%;text-align:left}
+}

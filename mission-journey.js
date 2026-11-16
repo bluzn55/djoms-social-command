@@ -2432,22 +2432,30 @@
       const seo=report('seo',period),ga4=report('ga4',period),sales=report('sales',period);
       const social=typeof window.djomsSocialPeriod==='function'?
         window.djomsSocialPeriod(period):null;
+      const context={site:correctSite,seo,ga4,sales,period,social};
+      // Keep existing source loaders and import controls mounted inside the
+      // expandable reports. The artwork reads those same authenticated caches.
+      const useOrganic=typeof window.djomsOrganicCommand?.mount==='function';
+      const legacy=useOrganic?document.getElementById('organicLegacyJourney'):null;
+      const evidenceSlot=legacy||slot;
       // Keep visitor drilldowns open when a verified source refreshes.
-      const existingPostDetails=slot.querySelector('details.mj-post-traffic');
+      const existingPostDetails=evidenceSlot.querySelector('details.mj-post-traffic');
       if(existingPostDetails)postTrafficExpanded=existingPostDetails.open;
-      const dailyWasOpen=slot.querySelector('#mjDailyReport')?.open===true||keepDailyReportOpen;
-      const openDropdowns=new Set([...slot.querySelectorAll('details.mj-stage-dropdown[open]')]
+      const dailyWasOpen=evidenceSlot.querySelector('#mjDailyReport')?.open===true||keepDailyReportOpen;
+      const openDropdowns=new Set([...evidenceSlot.querySelectorAll('details.mj-stage-dropdown[open]')]
         .map(item=>item.dataset.mjDropdown).filter(Boolean));
-      slot.innerHTML=journey({site:correctSite,seo,ga4,sales,period,social});
+      evidenceSlot.innerHTML=journey(context);
+      if(useOrganic&&legacy)window.djomsOrganicCommand.mount(slot,context);
+      if(useOrganic)window.djomsEnsureChapterReading?.(period);
       if(typeof window.djomsTrafficQuality?.mount==='function')
         window.djomsTrafficQuality.mount('mjTrafficQuality',period,null,true);
       fetchReportHistory({site:correctSite,seo,ga4,sales,period,social});
-      if(dailyWasOpen&&slot.querySelector('#mjDailyReport')){
-        slot.querySelector('#mjDailyReport').open=true;
+      if(dailyWasOpen&&evidenceSlot.querySelector('#mjDailyReport')){
+        evidenceSlot.querySelector('#mjDailyReport').open=true;
         keepDailyReportOpen=true;
       }
       loadSongLikes();
-      for(const detail of slot.querySelectorAll('details.mj-stage-dropdown')){
+      for(const detail of evidenceSlot.querySelectorAll('details.mj-stage-dropdown')){
         if(openDropdowns.has(detail.dataset.mjDropdown))detail.open=true;
       }
     }catch(error){
