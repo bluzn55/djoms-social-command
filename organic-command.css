@@ -35,6 +35,27 @@
 #djOrganicCommand .oc-label-cover.oc-radio-referral-label{font-size:1.8cqw}
 #djOrganicCommand .oc-label-cover.oc-action-label{font-size:1.65cqw}
 #djOrganicCommand .oc-label-cover.oc-dark-label{font-size:1.75cqw;color:#ffffe4;text-shadow:0 .1cqw #062b23}
+#djOrganicCommand .oc-readout.oc-source-caption{font:700 .94cqw/1.05 Georgia,serif;color:#fff4c9;background:#123e30;border:1px solid #b7863d;border-radius:.6cqw;text-shadow:0 .08cqw #062b23}
+#djOrganicCommand .oc-label-cover.oc-heading-cover{font-size:1.75cqw;font-style:normal;letter-spacing:-.03cqw;line-height:1;background:radial-gradient(ellipse at center,#fff2c5 50%,#f9dfa2 88%,#e9bc64);border-radius:.55cqw;color:#170f04;text-shadow:0 .06cqw #fff8d4}
+#djOrganicCommand .oc-promotion-instrument{position:absolute;z-index:6;display:grid;grid-template-rows:25% minmax(0,1fr) 16%;gap:.22cqw;padding:.32cqw .45cqw;background:radial-gradient(ellipse at 50% 100%,#0c7160,#0b392d 64%,#142a1c);border:.22cqw ridge #c08a32;border-radius:1.3cqw;box-shadow:inset 0 0 .7cqw #001d19,0 .12cqw .2cqw #170e05}
+#djOrganicCommand .oc-promotion-platforms,#djOrganicCommand .oc-promotion-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.25cqw;min-height:0;min-width:0}
+#djOrganicCommand .oc-promotion-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+#djOrganicCommand .oc-promotion-instrument button{position:relative;display:flex;align-items:center;justify-content:center;min-height:0;min-width:0;margin:0;padding:.16cqw .2cqw;border:.12cqw solid #b37926;border-radius:.6cqw;background:linear-gradient(105deg,#f4cf7e,#fff0c2 48%,#e7b95e);box-shadow:inset 0 .08cqw .12cqw #fff7d4,0 .1cqw .18cqw #0b211b;color:#241605;font:800 1.1cqw/1.05 Georgia,serif;font-size:1.1cqw!important;font-weight:800!important;cursor:pointer;text-shadow:0 .05cqw #fff4cd}
+#djOrganicCommand .oc-promotion-instrument button:hover{filter:brightness(1.12)}
+#djOrganicCommand .oc-promotion-instrument button:focus-visible{outline:.2cqw solid #fff5af;outline-offset:.1cqw}
+#djOrganicCommand .oc-promotion-platforms button{padding:.12cqw .16cqw;gap:.16cqw}
+#djOrganicCommand .oc-promotion-platforms i{display:block;flex:0 0 .65cqw;width:.65cqw;height:.65cqw;border-radius:50%;border:.08cqw solid #735219;background:radial-gradient(circle at 35% 30%,#c7d5cb,#566d61 60%,#172c24)}
+#djOrganicCommand .oc-promotion-platforms [data-signal=green] i{background:radial-gradient(circle at 35% 30%,#efffae,#64dc20 48%,#08732b 90%);box-shadow:0 0 .25cqw #a6fa43}
+#djOrganicCommand .oc-promotion-platforms [data-signal=yellow] i{background:radial-gradient(circle at 35% 30%,#fff8b4,#ffda25 40%,#d68c05 75%)}
+#djOrganicCommand .oc-promotion-instrument .oc-fit-region{display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;width:100%;height:100%;text-align:center;line-height:1.05;white-space:nowrap}
+#djOrganicCommand .oc-promotion-platforms .oc-fit-region{font-size:.9cqw}
+#djOrganicCommand .oc-promotion-stats button{display:grid;grid-template-rows:35% minmax(0,1fr);padding:.2cqw .15cqw;border-radius:.85cqw}
+#djOrganicCommand .oc-promotion-stats span{font-size:.95cqw;font-style:italic}
+#djOrganicCommand .oc-promotion-stats strong{font-size:2.25cqw;font-weight:800;letter-spacing:-.04cqw}
+#djOrganicCommand .oc-promotion-instrument button.oc-promotion-details{padding:0 .2cqw}
+#djOrganicCommand .oc-promotion-details .oc-fit-region{font-size:.87cqw}
+#djOrganicCommand button.oc-inline-page{background:transparent;border:0;border-radius:0;padding:0;min-height:0;box-shadow:none;font:700 16px/1.35 Georgia,serif;font-size:16px!important;color:#185b47;text-decoration:underline;text-underline-offset:3px;cursor:pointer;text-align:left;white-space:normal}
+#djOrganicCommand small.oc-entry-path{display:block;font:12px/1.4 Arial,sans-serif;color:#70542e;margin-top:4px;overflow-wrap:anywhere}
 #djOrganicCommand button.oc-hotspot{display:block;z-index:5;border:0!important;background:transparent!important;border-radius:0;padding:0!important;box-shadow:none;color:inherit;cursor:pointer;appearance:none;font-family:Georgia,'Times New Roman',serif;font-size:2cqw!important;font-weight:800!important;line-height:1;min-height:0;outline-offset:.3cqw;transition:filter .15s ease,box-shadow .15s ease}
 #djOrganicCommand button.oc-hotspot:hover{box-shadow:inset 0 0 1cqw .15cqw #ffe28b88;border-radius:28%}
 #djOrganicCommand button.oc-hotspot:focus-visible{outline:.3cqw solid #fff1a1;box-shadow:0 0 0 .45cqw #0c7765;border-radius:18%}

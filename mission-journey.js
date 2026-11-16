@@ -1511,6 +1511,7 @@
   // sessions. A correlation is not attribution; keep both measurements apart.
   const postReferralsCache=new Map();
   const postReferralsPending=new Map();
+  let postReferralsRevision=0;
   let postTrafficExpanded=true;
   function postReferrals(period){
     const key=period?.query;
@@ -1518,15 +1519,16 @@
     const saved=postReferralsCache.get(key);
     if(saved&&Date.now()-saved.checked<120000)return saved.data;
     if(!postReferralsPending.has(key)&&typeof api==='function'){
+      const revision=postReferralsRevision;
       const task=api('post-referrals?'+key).then(data=>{
         if(data?.range?.start!==period.start||data?.range?.end!==period.end)
           throw new Error('Post referral report dates did not match.');
-        postReferralsCache.set(key,{data,checked:Date.now()});
+        if(revision===postReferralsRevision)postReferralsCache.set(key,{data,checked:Date.now()});
         return data;
       }).catch(error=>{
         const data={status:'unavailable',rows:[],
           error:String(error?.message||'Tracked visits unavailable.')};
-        postReferralsCache.set(key,{data,checked:Date.now()});
+        if(revision===postReferralsRevision)postReferralsCache.set(key,{data,checked:Date.now()});
         return data;
       }).finally(()=>{
         postReferralsPending.delete(key);
@@ -1544,6 +1546,41 @@
   // Same authenticated cached post-referral evidence powers #2 and #6.
   // One source of truth for exact saved placecard arrivals and platform link.
   window.djomsSocialPostReferrals=postReferrals;
+  const arrivalGroupsCache=new Map(),arrivalGroupsPending=new Map();
+  let arrivalGroupsRevision=0;
+  function websiteArrivalGroups(period){
+    const key=period?.query;
+    if(!key)return null;
+    const saved=arrivalGroupsCache.get(key);
+    if(saved&&Date.now()-saved.checked<120000)return saved.data;
+    if(!arrivalGroupsPending.has(key)&&typeof api==='function'){
+      const revision=arrivalGroupsRevision;
+      const task=api('website-arrival-groups?'+key).then(data=>{
+        if(data?.range?.start!==period.start||data?.range?.end!==period.end)
+          throw new Error('First-page report dates did not match.');
+        if(revision===arrivalGroupsRevision)arrivalGroupsCache.set(key,{data,checked:Date.now()});
+        return data;
+      }).catch(error=>{
+        const data={status:'unavailable',complete:false,groups:[],
+          range:{start:period.start,end:period.end},
+          note:String(error?.message||'The first-page source breakdown is unavailable.')};
+        if(revision===arrivalGroupsRevision)arrivalGroupsCache.set(key,{data,checked:Date.now()});
+        return data;
+      }).finally(()=>{
+        arrivalGroupsPending.delete(key);
+        if(typeof activeView!=='undefined'&&activeView==='Mission Control'&&
+          typeof websiteReportPeriod==='function'&&websiteReportPeriod()?.query===key)paintTop();
+      });
+      arrivalGroupsPending.set(key,task);
+    }
+    return saved?.data||null;
+  }
+  window.djomsWebsiteArrivalGroups=websiteArrivalGroups;
+  window.addEventListener('djoms-acquisition-group-updated',()=>{
+    arrivalGroupsRevision++;postReferralsRevision++;
+    arrivalGroupsCache.clear();postReferralsCache.clear();
+    if(typeof activeView!=='undefined'&&activeView==='Mission Control')paintTop();
+  });
   function socialPostingTraffic(site,period){
     const inventory=typeof window.djomsPublishedCampaignPosts==='function'?
       window.djomsPublishedCampaignPosts():null;
@@ -2432,7 +2469,8 @@
       const seo=report('seo',period),ga4=report('ga4',period),sales=report('sales',period);
       const social=typeof window.djomsSocialPeriod==='function'?
         window.djomsSocialPeriod(period):null;
-      const context={site:correctSite,seo,ga4,sales,period,social};
+      const arrivalGroups=websiteArrivalGroups(period);
+      const context={site:correctSite,seo,ga4,sales,period,social,arrivalGroups};
       // Keep existing source loaders and import controls mounted inside the
       // expandable reports. The artwork reads those same authenticated caches.
       const useOrganic=typeof window.djomsOrganicCommand?.mount==='function';

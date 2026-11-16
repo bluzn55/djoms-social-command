@@ -101,6 +101,10 @@ async function api(path, body, method) {
 }
 function updateRecord(r) { const index = records.findIndex(x => x.id === r.id); if (index >= 0) records[index] = r; else records.unshift(r); selected = r; }
 async function loadRecords() { const data = await api('records'); records = data.records; campaigns = data.campaigns; if (data.limited) notice('Showing the latest 500 posts.'); }
+function postAcquisitionGroup(record){return ['olr5150','docjaks'].includes(record?.acquisitionGroup)?record.acquisitionGroup:null;}
+function postAcquisitionLabel(value){return ({olr5150:'OLR5150 social post',docjaks:'Other Doc Jaks social post'})[value]||'Not classified';}
+function postAcquisitionOptions(value){return [['','Not classified'],['olr5150','OLR5150 social post'],['docjaks','Other Doc Jaks social post']].map(([key,label])=>'<option value="'+key+'" '+((value||'')===key?'selected':'')+'>'+label+'</option>').join('');}
+window.djomsPostAcquisitionGroups=()=>Object.fromEntries(records.map(record=>[record.id,postAcquisitionGroup(record)]));
 
 // The owner report needs actual, confirmed publishing dates and the three
 // campaign families. This read-only accessor shares existing authenticated
@@ -1022,7 +1026,7 @@ function rowsHtml(list) {
   return '<div class="table-wrap"><table><thead><tr>' +
     (withSelection ? '<th scope="col">Select</th>' : '') +
     '<th>Photo</th><th>Post</th><th>Platforms</th><th>Status</th><th>Posting time</th><th></th></tr></thead><tbody>' +
-    list.map(r => `<tr>${withSelection ? `<td class="draft-select-cell">${canDeleteDraft(r) ? `<input type="checkbox" class="draft-check" data-draft-id="${esc(r.id)}" aria-label="Select draft ${esc(r.title)}">` : '<span class="draft-not-selectable" title="Only unsent drafts may be selected">—</span>'}</td>` : ''}<td>${r.imageUrl ? `<img class="row-photo" src="${esc(r.imageUrl)}" alt="">` : '<span class="thumb">PHOTO</span>'}</td><td><small class="id">${esc(code(r))}</small><strong>${esc(r.title)}</strong>${trackingLinksHtml(r)}</td><td>${platformsForRow(r)}</td><td>${badge(r.status)}</td><td>${esc(date(r.scheduledAt))}</td><td class="post-row-actions"><button data-open="${esc(r.id)}" aria-label="Open ${esc(r.title)}">Open ›</button>${canDeleteDraft(r) ? `<button class="danger" data-delete-draft="${esc(r.id)}" aria-label="Delete draft ${esc(r.title)}">Delete</button>` : ''}</td></tr>`).join('') +
+    list.map(r => `<tr>${withSelection ? `<td class="draft-select-cell">${canDeleteDraft(r) ? `<input type="checkbox" class="draft-check" data-draft-id="${esc(r.id)}" aria-label="Select draft ${esc(r.title)}">` : '<span class="draft-not-selectable" title="Only unsent drafts may be selected">—</span>'}</td>` : ''}<td>${r.imageUrl ? `<img class="row-photo" src="${esc(r.imageUrl)}" alt="">` : '<span class="thumb">PHOTO</span>'}</td><td><small class="id">${esc(code(r))}</small><strong>${esc(r.title)}</strong><small>Traffic group: ${esc(postAcquisitionLabel(postAcquisitionGroup(r)))}</small>${trackingLinksHtml(r)}</td><td>${platformsForRow(r)}</td><td>${badge(r.status)}</td><td>${esc(date(r.scheduledAt))}</td><td class="post-row-actions"><button data-open="${esc(r.id)}" aria-label="Open ${esc(r.title)}">Open ›</button>${canDeleteDraft(r) ? `<button class="danger" data-delete-draft="${esc(r.id)}" aria-label="Delete draft ${esc(r.title)}">Delete</button>` : ''}</td></tr>`).join('') +
     '</tbody></table></div>';
 }
 function updateDraftSelectionControls() {
@@ -1265,6 +1269,7 @@ function inboxFieldValues(itemId) {
   return {
     itemId,
     campaign:card.querySelector('[data-inbox-campaign]')?.value || 'BBQ',
+    acquisitionGroup:card.querySelector('[data-inbox-acquisition]')?.value || null,
     title:card.querySelector('[data-inbox-title]')?.value || '',
     caption:card.querySelector('[data-inbox-caption]')?.value || '',
     link:card.querySelector('[data-inbox-link]')?.value || '',
@@ -1327,7 +1332,7 @@ async function saveInboxFields(itemId) {
   if(inboxSaveTimers.has(itemId)) { clearTimeout(inboxSaveTimers.get(itemId)); inboxSaveTimers.delete(itemId); }
   const values=inboxFieldValues(itemId) || {
     itemId, title:item.title || item.filename.replace(/\.[^.]+$/,''),
-    campaign:item.campaign || 'BBQ', caption:item.caption || '',link:item.link || '',
+    campaign:item.campaign || 'BBQ', acquisitionGroup:postAcquisitionGroup(item), caption:item.caption || '',link:item.link || '',
     targets:item.targets || ['facebook','instagram','x'],usePicture:item.usePicture !== false
   };
   if (!isValidInboxLink(values.link)) {
@@ -1397,6 +1402,7 @@ function renderMediaInbox() {
       <div class="inbox-fields">
         <label class="check inbox-use"><input class="inbox-check" type="checkbox" data-inbox-id="${esc(item.id)}" ${enabled ? 'checked' : ''}> Use this picture</label>
         <label>Campaign<select data-inbox-campaign="${esc(item.id)}">${campaignOptions}</select></label>
+        <label>Website traffic group<select data-inbox-acquisition="${esc(item.id)}">${postAcquisitionOptions(postAcquisitionGroup(item))}</select></label>
         <label>Post title<input data-inbox-title="${esc(item.id)}" maxlength="120" value="${esc(item.title ?? item.filename.replace(/\.[^.]+$/,''))}"></label>
         <label>Caption<textarea data-inbox-caption="${esc(item.id)}" rows="5" maxlength="10000" placeholder="What do you want people to hear?">${esc(item.caption || '')}</textarea></label>
         <label>Link <small>(optional; full https:// address)</small><input data-inbox-link="${esc(item.id)}" type="url" value="${esc(item.link || '')}" placeholder="https://www.docjaks.com"></label>
@@ -1439,6 +1445,7 @@ async function buildInboxDraft(itemId) {
   if(!item) throw new Error('That Media Inbox picture is missing.');
   const title=document.querySelector('[data-inbox-title="' + CSS.escape(itemId) + '"]')?.value.trim() || 'New post';
   const campaign=document.querySelector('[data-inbox-campaign="' + CSS.escape(itemId) + '"]')?.value || 'BBQ';
+  const acquisitionGroup=document.querySelector('[data-inbox-acquisition="' + CSS.escape(itemId) + '"]')?.value || null;
   const caption=document.querySelector('[data-inbox-caption="' + CSS.escape(itemId) + '"]')?.value || '';
   const link=document.querySelector('[data-inbox-link="' + CSS.escape(itemId) + '"]')?.value || '';
   const targets=[...document.querySelectorAll('[data-inbox-platform="' + CSS.escape(itemId) + '"]:checked')].map(x=>x.value);
@@ -1455,9 +1462,9 @@ async function buildInboxDraft(itemId) {
     shorts:await uploadVariant(bitmap,1080,1920)
   };
   bitmap.close();
-  const created=await api('records',{action:'create',campaign,title});
+  const created=await api('records',{action:'create',campaign,title,acquisitionGroup});
   const saved=await api('records',{
-    action:'save',id:created.record.id,revision:created.record.revision,title,campaign,caption,link,
+    action:'save',id:created.record.id,revision:created.record.revision,title,campaign,acquisitionGroup,caption,link,
     imageId:item.imageId,
     placecardName:item.filename,
     imageVariants:Object.fromEntries(Object.entries(formats).map(([k,v])=>[k,v.imageId])),
@@ -2065,11 +2072,33 @@ function renderRecordTrackingLinks(r) {
     'copy <b>IG STORY LINK</b>, then in Instagram open a Story, select Stickers → Link, paste it, and publish. '+
     'For X or YouTube, copy that platform\'s own link. Already-published posts keep their existing links.</p></div>';
 }
+function renderAcquisitionGroup(record){
+  let host=$('postAcquisitionPanel');
+  if(!host){
+    host=document.createElement('section');host.id='postAcquisitionPanel';
+    host.className='manual-x-tracker';host.setAttribute('aria-label','Website traffic group');
+    $('editForm').insertAdjacentElement('afterend',host);
+  }
+  host.innerHTML='<h3>Website traffic group</h3>'+
+    '<label>What does this post promote?<select id="postAcquisitionGroup">'+postAcquisitionOptions(postAcquisitionGroup(record))+'</select></label>'+
+    '<button type="button" class="approve" id="saveAcquisitionGroup" data-action="classifyAcquisition">Save traffic group</button>'+
+    '<p>Choose OLR5150 for station promotions, or Other Doc Jaks for book, BBQ, original music, and other posts. Leave uncertain posts unclassified.</p>'+
+    '<p class="locknote">This groups recorded visits from this post\'s tracking link. It does not change the post, campaign, shared link, or posting schedule.</p>';
+}
+async function saveAcquisitionGroup(){
+  if(!selected||dirty)return;
+  const data=await api('records',{action:'classifyAcquisition',id:selected.id,revision:selected.revision,acquisitionGroup:$('postAcquisitionGroup').value||null});
+  updateRecord(data.record);openRecord(data.record);
+  window.dispatchEvent(new CustomEvent('djoms-acquisition-group-updated',{detail:{recordId:data.record.id,acquisitionGroup:postAcquisitionGroup(data.record)}}));
+  notice('Traffic group saved. Existing recorded visits with this post\'s tracking ID can now be grouped.');
+}
 function buttons() {
   if (!selected) return;
   const r = selected, locked = ['scheduled','queueing','publishing','published','partial','uncertain'].includes(r.status);
   ['postTitle','postCampaign','postCaption','postLink','targetFacebook','targetInstagram','targetX','targetYouTube','imageFile'].forEach(x => $(x).disabled = locked || busy);
   $('saveButton').disabled = locked || busy;
+  if($('postAcquisitionGroup'))$('postAcquisitionGroup').disabled=busy||dirty;
+  if($('saveAcquisitionGroup'))$('saveAcquisitionGroup').disabled=busy||dirty||($('postAcquisitionGroup').value||null)===postAcquisitionGroup(r);
   $('postTrackingLinks')?.querySelectorAll('[data-track-record]').forEach(button=>{
     button.disabled=busy||dirty;
     button.title=dirty?'Save your changes before copying a link':button.title;
@@ -2135,6 +2164,7 @@ function openRecord(r) {
   $('recordStatus').textContent = labels[r.status] || r.status; $('recordStatus').className = 'status state-' + r.status;
   $('postTitle').value = r.title; $('postCaption').value = r.caption; $('postLink').value = r.link;
   renderRecordTrackingLinks(r);
+  renderAcquisitionGroup(r);
   $('postCampaign').innerHTML = campaigns.map(c => `<option value="${esc(c.id)}">${esc(c.title)}</option>`).join(''); $('postCampaign').value = r.campaign;
   $('targetFacebook').checked = r.targets.includes('facebook'); $('targetInstagram').checked = r.targets.includes('instagram'); $('targetX').checked = r.targets.includes('x'); $('targetYouTube').checked = r.targets.includes('youtube');
   $('timeZone').textContent = 'Your time: ' + timezone;
@@ -2633,12 +2663,14 @@ document.addEventListener('click', event => {
     else if (action === 'refreshRecord') { if (dirty && !confirm('Refresh and discard unsaved changes?')) return; const currentId=selected.id; await loadRecords(); openRecord(records.find(r=>r.id===currentId)); notice('Showing the latest saved result.'); }
     else if (action === 'checkWebsiteConnection') { const site=await loadWebsiteRange('7d'); render(); notice(site.connected ? 'Wix website connection checked.' : (site.message || 'Wix website reporting needs attention.'), !site.connected); }
     else if (action === 'checkConnection') { await Promise.all([refreshConnection(), loadLocalStatus()]); render(); notice('Platform and website connections checked.'); }
+    else if (action === 'classifyAcquisition') await saveAcquisitionGroup();
     else if (action === 'publish') await publish();
     else if (action === 'schedule') { const at=$('scheduleTime').value; if(!at) throw new Error('Choose a posting date and time.'); await recordAction('schedule',{scheduledAt:new Date(at).toISOString(),timeZone:timezone}); }
     else if (['approve','pause','draft','duplicate'].includes(action)) await recordAction(action);
   });
 });
 document.addEventListener('change', event => {
+  if(event.target.id==='postAcquisitionGroup'){buttons();return;}
   if(event.target.id==='xBillingConsent'){
     const button=$('enableXAuto');
     if(button)button.disabled=!event.target.checked;

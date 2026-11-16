@@ -6,7 +6,7 @@
   const ASSET='/assets/organic-command.webp';
   const CHAPTER_PDF='https://www.docjaks.com/_files/ugd/cf21c8_27ee63f049e5479b8d37c885f638bb2b.pdf';
   const WIDTH=1199,HEIGHT=1312;
-  const state={root:null,slot:null,context:null,model:null,selectedPath:null,platform:'facebook',drawer:null,action:null,lastTrigger:null};
+  const state={root:null,slot:null,context:null,model:null,selectedPath:null,platform:'facebook',promotionPlatform:'all',arrivalGroup:'all',arrivalPlatform:'all',entryPath:null,drawer:null,action:null,lastTrigger:null};
   let fitFrame=0,fitObserver=null;
   const valid=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0;
   const count=n=>valid(n)?new Intl.NumberFormat('en-US',{maximumFractionDigits:0}).format(n):'—';
@@ -58,6 +58,8 @@
   const knownNumber=(source,key)=>source&&valid(source[key])?source[key]:null;
   const unknown=reason=>({value:null,reason});
   const metric=(value,reason)=>({value:valid(value)?value:null,reason:valid(value)?'':reason});
+  const arrivalLabels={search:'Search',olr5150:'OLR5150 social posts',docjaks:'Other Doc Jaks social posts',social_unclassified:'Unclassified social',other:'Direct & other sources'};
+  const platformLabels={facebook:'Facebook',instagram:'Instagram',x:'X',youtube:'YouTube'};
 
   function modelFor(context){
     const period=context?.period||{};
@@ -137,6 +139,22 @@
     }
     const socialCoverage=Object.values(socialTotals).every(t=>t.status==='complete')?'complete':
       Object.values(socialTotals).some(t=>valid(t.value))?'partial':'unavailable';
+    const arrivalReport=matchingReport('arrivalGroups');
+    const arrivalRows=Array.isArray(arrivalReport?.groups)?arrivalReport.groups:[];
+    const arrivalReady=arrivalReport?.status==='reported'&&arrivalReport.complete===true&&Array.isArray(arrivalReport.landingPages)&&
+      arrivalReport.coverage?.reconciled===true&&valid(arrivalReport.totalVisits)&&
+      arrivalRows.length===Object.keys(arrivalLabels).length&&
+      Object.keys(arrivalLabels).every(id=>arrivalRows.filter(row=>row.id===id).length===1)&&
+      arrivalRows.every(row=>valid(row.visits))&&
+      arrivalRows.reduce((sum,row)=>sum+row.visits,0)===arrivalReport.totalVisits;
+    const arrivals=Object.fromEntries(Object.entries(arrivalLabels).map(([id,label])=>{
+      const row=arrivalRows.find(row=>row.id===id);
+      return [id,{...row,id,label,visits:arrivalReady?row.visits:null,
+        landingPages:Array.isArray(row?.landingPages)?row.landingPages:[],
+        platforms:Array.isArray(row?.platforms)?row.platforms:[],
+        posts:Array.isArray(row?.posts)?row.posts:[]}];
+    }));
+    const promotionGroups=social?.promotionGroups||{};
     const paid=sales?.connected===true&&sales?.complete===true&&sameRange(sales.range,period);
     const currency=paid&&typeof sales.currency==='string'?sales.currency:'USD';
     const actionsReady=ga4?.status==='connected'&&sameRange(ga4.range,period)&&ga4.actions?.status==='reported';
@@ -155,11 +173,11 @@
     if(!paid)gaps.push('paid sales');
     if(!actionsReady)gaps.push('actions');
     const next=declined.length?'Review '+String(declined[0].name||'the declining measure').toLowerCase():gaps.length?'Check '+gaps[0]+' coverage':improved.length?'Build on '+String(improved[0].name||'the strongest signal').toLowerCase():'Watch the next reporting period';
-    return {period,site,seo,ga4,sales,search,bing,chapter,reading,pages,rawPages,landings,sourceRows,sourceComplete,radio,summary,platforms,social,socialTotals,socialCoverage,paid,currency,actionsReady,actionCounts,transitions,transitionReady,owner,score,improved,declined,gaps,next,
+    return {period,site,seo,ga4,sales,search,bing,chapter,reading,pages,rawPages,landings,sourceRows,sourceComplete,radio,summary,platforms,social,socialTotals,socialCoverage,promotionGroups,arrivalReport,arrivalReady,arrivals,paid,currency,actionsReady,actionCounts,transitions,transitionReady,owner,score,improved,declined,gaps,next,
       appearances:metric(searchReady?search.current:null,search?.note||'No matching search-engine appearance report.'),
       searchClicks:metric(searchReady?search.clicksCurrent:null,search?.note||'No matching search-engine click report.'),
-      visits:metric(knownNumber(site,'sessions'),siteReason),
-      entryPages:metric(site?.landingPagesComplete===true&&site?.entryPageCoverage?.status==='reported'?
+      visits:metric(arrivalReady?arrivalReport.totalVisits:knownNumber(site,'sessions'),siteReason),
+      entryPages:metric(arrivalReady?arrivalReport.entryPageCount:site?.landingPagesComplete===true&&site?.entryPageCoverage?.status==='reported'?
         knownNumber(site,'distinctEntryPages'):null,site?.entryPageCoverage?.note||'A complete landing-page report must reconcile with the selected website visits before pages reached can be counted.'),
       connections:metric(connections,radio?'The imported Overview does not cover every selected UTC day.':'No matching Radio.co import is available for these dates.'),
       averageListening:metric(averageListening,!radio?'No matching Radio.co import is available.':connections===0?'No stream connections were recorded; average listening is undefined.':'Complete imported connection and listening-time coverage is required.'),
@@ -173,9 +191,7 @@
   const fields=[
     ['appearances',150,173,170,39,'oc-search-value'],['searchClicks',129,311,188,58,'oc-search-clicks'],
     ['searchEngines',117,237,240,21,'oc-engine-label'],
-    ['connections',534,307,73,29,'oc-radio-value'],['averageListening',627,307,112,29,'oc-radio-time'],
-    ['radioReferrals',448,372,81,28,'oc-referral-value'],['socialViews',818,356,125,32,'oc-social-value'],['socialClicks',982,356,97,32,'oc-social-value'],
-    ['socialCoverage',816,412,291,17,'oc-social-coverage'],
+    ['searchArrivals',131,394,190,16,'oc-source-caption'],
     ['visits',350,519,208,38,'oc-arrival-value'],['entryPages',655,519,175,38,'oc-arrival-value'],
     ['selectedName',428,800,322,28,'oc-selected-name'],['pageViews',246,861,175,44,'oc-page-value'],['pageTime',492,861,196,44,'oc-page-value oc-time-value'],['pageBounce',772,861,149,44,'oc-page-value'],
     ['gross',184,1014,237,54,'oc-odometer'],['orders',450,1012,80,37,'oc-orders-value'],
@@ -183,22 +199,27 @@
     ['reportBadge',900,27,247,20,'oc-report-badge'],['reportFooter',412,1243,357,27,'oc-report-footer']
   ];
   const covers=[
-    ['Connections',527,335,88,22,'oc-compact-label'],
-    ['Website visits',533,374,159,25,'oc-radio-referral-label'],['Search clicks',137,371,177,27,''],
-    ['Views total',813,388,117,22,''],['Clicks total',966,388,127,22,''],
-    ['Website visits',345,556,215,24,''],['Entry pages reached',638,556,200,24,'oc-entry-label'],
-    ['Wix · all recorded sources',430,585,337,25,'oc-dark-label'],
+    ['Search clicks',137,369,177,22,''],
+    ['3. OLR5150 SOCIAL POSTS',417,264,322,26,'oc-heading-cover'],
+    ['4. OTHER DOC JAKS SOCIAL',821,264,278,26,'oc-heading-cover'],
+    ['Website visits',345,556,215,24,''],['First pages opened',638,556,200,24,'oc-entry-label'],
+    ['All arrivals · open source breakdown',380,585,439,25,'oc-dark-label'],
     ['Reported actions · open for evidence',698,1068,368,24,'oc-action-label']
   ];
   const selectorRects=[[198,694,185,104],[413,699,174,96],[608,698,174,99],[806,697,185,100]];
   const sections=[
     ['search','1. Search Engines',110,111,258,150],['clicks','2. Result Clicks',106,264,244,147],
-    ['radio','3. Outlaw Radio 5150',401,262,351,149],['social','4. Social Media',805,262,304,34],
+    ['radio','3. OLR5150 Social Posts',401,262,351,149],['social','4. Other Doc Jaks Social Posts',805,262,304,149],
     ['arrivals','5. Website Arrivals',321,463,539,122],['journey','6. Website Journey',353,633,475,54],
     ['sales','7. Paid Web Sales — Gross',133,964,409,119],['actions','8. Meaningful Actions',679,964,413,34],
     ['bottom','9. Bottom Line',220,1100,857,125]
   ];
-  const socialRects=[[805,302,80,53],[885,302,81,53],[967,302,63,53],[1030,302,85,53]];
+  function promotionInstrument(id,x,y,w,h){
+    return '<div class="oc-promotion-instrument" data-oc-promotion="'+id+'" style="'+rect(x,y,w,h)+'">'+
+      '<div class="oc-promotion-platforms">'+Object.entries(platformLabels).map(([key,label])=>'<button type="button" data-oc-group="'+id+'" data-oc-group-platform="'+key+'" aria-label="'+esc(arrivalLabels[id]+' — '+label+' details')+'"><i aria-hidden="true"></i><span class="oc-fit-region">'+label+'</span></button>').join('')+'</div>'+
+      '<div class="oc-promotion-stats">'+[['views','Post views'],['clicks','Link clicks'],['visits','Website visits']].map(([key,label])=>'<button type="button" data-oc-group="'+id+'" '+(key==='visits'?'data-oc-arrival-group="'+id+'"':'')+'><span class="oc-fit-region">'+label+'</span><strong class="oc-fit-region" data-oc-group-value="'+key+'">—</strong></button>').join('')+'</div>'+
+      '<button type="button" class="oc-promotion-details" data-oc-group="'+id+'"><span class="oc-fit-region">Platform &amp; post details</span></button></div>';
+  }
 
   function scaffold(slot){
     const root=document.createElement('section');root.id='djOrganicCommand';root.setAttribute('aria-label','Doc Jaks Social Command Center');
@@ -208,10 +229,10 @@
       fields.map(([key,x,y,w,h,cl])=>'<span class="oc-readout '+cl+'" data-oc-value="'+key+'" style="'+rect(x,y,w,h)+'" aria-hidden="true">—</span>').join('')+
       covers.map(([text,x,y,w,h,cl])=>'<span class="oc-label-cover '+cl+'" style="'+rect(x,y,w,h)+'" aria-hidden="true">'+esc(text)+'</span>').join('')+
       sections.map(([key,label,x,y,w,h])=>'<button type="button" class="oc-hotspot oc-section" data-oc-section="'+key+'" aria-label="'+esc(label)+' — open reported data" style="'+rect(x,y,w,h)+'"></button>').join('')+
+      promotionInstrument('olr5150',405,300,343,112)+promotionInstrument('docjaks',810,300,300,112)+
       selectorRects.map(([x,y,w,h],i)=>'<button type="button" class="oc-hotspot oc-page-selector" data-oc-page-index="'+i+'" style="'+rect(x,y,w,h)+'" aria-pressed="false"><span class="oc-selector-name">—</span><span class="oc-selector-count">—</span></button>').join('')+
       '<button type="button" class="oc-hotspot oc-details-button" data-oc-section="journey" style="'+rect(286,912,279,40)+'" aria-label="Page details and next stops"></button>'+
       '<button type="button" class="oc-hotspot oc-details-button" data-oc-section="pages" style="'+rect(638,914,244,38)+'" aria-label="View all reported pages"></button>'+
-      ['facebook','instagram','x','youtube'].map((key,i)=>'<button type="button" class="oc-hotspot oc-social-selector" data-oc-platform="'+key+'" aria-label="'+esc(key)+' reported social metrics" aria-pressed="false" style="'+rect(...socialRects[i])+'"><span class="oc-platform-lamp" aria-hidden="true"></span></button>').join('')+
       [['read',666,1007,125,51],['listen',810,1007,128,51],['join',959,1007,130,51]].map(([key,x,y,w,h])=>'<button type="button" class="oc-hotspot" data-oc-action="'+key+'" style="'+rect(x,y,w,h)+'" aria-label="'+esc(key)+' — meaningful action evidence"></button>').join('')+
       '<button type="button" class="oc-hotspot" data-oc-section="coverage" aria-label="Report source coverage and dates" style="'+rect(886,21,276,39)+'"></button>'+
       '</div><nav class="oc-mobile-nav" aria-label="Open a readable command instrument">'+sections.map(([key,label])=>'<button type="button" data-oc-section="'+key+'">'+esc(label)+'</button>').join('')+'</nav>'+
@@ -229,6 +250,19 @@
       const button=event.target.closest('button');if(!button||!root.contains(button))return;
       if(button.hasAttribute('data-oc-close')){state.drawer=null;root.querySelector('.oc-drawer').hidden=true;state.lastTrigger?.isConnected&&state.lastTrigger.focus();return;}
       if(button.hasAttribute('data-oc-export')){downloadEvidence();return;}
+      if(button.hasAttribute('data-oc-arrival-group')){
+        const id=button.dataset.ocArrivalGroup;
+        state.arrivalGroup=id==='all'||Object.hasOwn(arrivalLabels,id)?id:'all';
+        state.arrivalPlatform=['olr5150','docjaks'].includes(state.arrivalGroup)&&Object.hasOwn(platformLabels,button.dataset.ocArrivalPlatform)?button.dataset.ocArrivalPlatform:'all';
+        state.entryPath=null;state.drawer='arrivals';state.lastTrigger=button;paintDrawer(true);return;
+      }
+      if(button.hasAttribute('data-oc-entry-page')){state.entryPath=pathOf(button.dataset.ocEntryPage);state.drawer='arrivals';paintDrawer();return;}
+      if(button.hasAttribute('data-oc-entry-back')){state.entryPath=null;paintDrawer();return;}
+      if(button.hasAttribute('data-oc-group')){
+        state.drawer=button.dataset.ocGroup==='olr5150'?'radio':'social';
+        state.promotionPlatform=Object.hasOwn(platformLabels,button.dataset.ocGroupPlatform)?button.dataset.ocGroupPlatform:'all';
+        state.lastTrigger=button;paintDrawer(true);return;
+      }
       if(button.hasAttribute('data-oc-radio-import')){
         const reports=document.getElementById('organicFullReports');
         const target=reports?.querySelector('.mj-radio-intel .rli-import-details');
@@ -242,9 +276,9 @@
         state.selectedPath=page.path;updateBoard();if(state.drawer==='journey'||state.drawer==='pages')paintDrawer();announce(pageName(page.path)+' selected. '+count(page.views)+' page views.');return;
       }
       if(button.hasAttribute('data-oc-page')){state.selectedPath=button.dataset.ocPage;state.drawer='journey';updateBoard();paintDrawer();announce(pageName(state.selectedPath)+' selected.');return;}
-      if(button.dataset.ocPlatform){state.platform=button.dataset.ocPlatform;state.action=null;state.lastTrigger=button;state.drawer='social';updateBoard();paintDrawer(true);return;}
+      if(button.dataset.ocPlatform){state.platform=button.dataset.ocPlatform;state.action=null;state.lastTrigger=button;state.drawer='socialMetrics';updateBoard();paintDrawer(true);return;}
       if(button.dataset.ocAction){state.action=button.dataset.ocAction;state.drawer='actions';state.lastTrigger=button;paintDrawer(true);return;}
-      if(button.dataset.ocSection){state.drawer=button.dataset.ocSection;state.action=null;state.lastTrigger=button;paintDrawer(true);}
+      if(button.dataset.ocSection){state.drawer=button.dataset.ocSection;state.action=null;state.lastTrigger=button;if(state.drawer==='arrivals'){state.arrivalGroup='all';state.arrivalPlatform='all';state.entryPath=null;}if(['radio','social'].includes(state.drawer))state.promotionPlatform='all';paintDrawer(true);}
     });
     root.addEventListener('keydown',event=>{if(event.key==='Escape'&&state.drawer){state.drawer=null;root.querySelector('.oc-drawer').hidden=true;state.lastTrigger?.isConnected&&state.lastTrigger.focus();}});
   }
@@ -284,7 +318,7 @@
     const scale=board.getBoundingClientRect().width/WIDTH;
     const cash=board.querySelector('.oc-odometer');
     const cells=cash.classList.contains('oc-text-cash')?[cash]:[...cash.children];
-    const elements=[...board.querySelectorAll('.oc-readout:not(.oc-odometer),.oc-label-cover,.oc-selector-name,.oc-selector-count'),...cells];
+    const elements=[...board.querySelectorAll('.oc-readout:not(.oc-odometer),.oc-label-cover,.oc-selector-name,.oc-selector-count,.oc-fit-region'),...cells];
     // Start from the responsive CSS size on every pass, so shorter updates
     // and larger screens can grow again. Measure actual glyphs, including
     // wrapped lines, against all four edges of each reserved text area.
@@ -317,10 +351,23 @@
   function selectedPage(){return state.model.pages.find(p=>p.path===state.selectedPath)||null;}
   function updateBoard(){
     const m=state.model,root=state.root,selected=selectedPage();
-    for(const key of ['appearances','searchClicks','visits','entryPages','connections','radioReferrals','orders'])text(key,count(m[key].value));
+    for(const key of ['appearances','searchClicks','visits','entryPages','orders'])text(key,count(m[key].value));
     text('searchEngines',m.search?.status==='reported'?(m.search.engines||[]).map(boardEngineName).join(' · ')+' · Details':'Open search details');
-    text('averageListening',duration(m.averageListening.value));text('socialViews',count(m.socialTotals.views.value));text('socialClicks',count(m.socialTotals.clicks.value));
-    text('socialCoverage',m.socialCoverage==='unavailable'?'TOTALS UNAVAILABLE · OPEN DETAILS':m.socialCoverage==='partial'?'PARTIAL TOTALS · OPEN FOR SOURCES':'REPORTED TOTALS · OPEN FOR SOURCES');
+    text('searchArrivals',count(m.arrivals.search.visits)+' recorded website visits');
+    root.querySelectorAll('[data-oc-promotion]').forEach(instrument=>{
+      const id=instrument.dataset.ocPromotion,group=m.promotionGroups[id],arrival=m.arrivals[id];
+      for(const key of ['views','clicks','visits']){
+        const metric=key==='visits'?{value:arrival.visits,status:m.arrivalReady?'reported':'unavailable'}:group?.totals?.[key];
+        const field=instrument.querySelector('[data-oc-group-value="'+key+'"]');
+        field.textContent=count(metric?.value)+(metric?.status==='partial'&&valid(metric.value)?'*':'');
+        field.parentElement.setAttribute('title',(key==='visits'?'Recorded website arrivals for the selected dates.':metric?.note||'Measured post snapshots for the selected publishing dates.')+(metric?.status==='partial'?' Partial coverage; open details.':''));
+      }
+      instrument.querySelectorAll('[data-oc-group-platform]').forEach(button=>{
+        const platform=group?.platforms?.[button.dataset.ocGroupPlatform];
+        const has=valid(platform?.totals?.views?.value)||valid(platform?.totals?.clicks?.value);
+        button.dataset.signal=platform?.status==='reported'||platform?.status==='complete'?'green':has?'yellow':'unknown';
+      });
+    });
     text('selectedName',state.selectedPath?'Selected: '+boardPageName(state.selectedPath):'No reported pages');
     text('pageViews',count(selected?.views));text('pageTime',duration(selected?.avgTimeSeconds));text('pageBounce',percent(selected?.bounceRate));
     const gross=money(m.gross.value,m.currency),cashNode=root.querySelector('[data-oc-value="gross"]');
@@ -332,10 +379,9 @@
     text('attention',m.declined.length?m.declined[0].name+' declining':m.gaps.length?'Missing '+m.gaps[0]+' data':'No measured decline');
     text('next',m.next);text('reportBadge','REPORTED DATA · VIEW COVERAGE');text('reportFooter',windowLabel(m.period));
     root.querySelectorAll('[data-oc-page-index]').forEach((button,i)=>{const page=m.pages[i],name=page?pageName(page.path):'No reported page';button.disabled=!page;button.dataset.ocPath=page?.path||'';button.setAttribute('aria-pressed',String(!!page&&page.path===state.selectedPath));button.querySelector('.oc-selector-name').textContent=page?boardPageName(page.path):name;button.querySelector('.oc-selector-count').textContent=page?count(page.views)+(page.views===1?' view':' views'):'—';button.setAttribute('title',page?name+' · '+page.path:name);button.setAttribute('aria-label',page?name+', '+count(page.views)+' page views. Select to show page details.':'No reported page in this position');});
-    root.querySelectorAll('.oc-social-selector').forEach(button=>{const p=m.platforms[button.dataset.ocPlatform];button.setAttribute('aria-pressed',String(p.key===state.platform));button.dataset.signal=p.verified?'green':p.has?'yellow':'unknown';button.setAttribute('aria-label',p.name+': '+(p.has?count(p.now.views)+' post views, '+count(p.now.clicks)+' post clicks. ':'Data unavailable. ')+(p.manual?'Owner-entered records. ':'')+'Open source details.');});
-    const sourceValues={search:count(m.appearances.value)+' search appearances',clicks:count(m.searchClicks.value)+' search clicks',radio:count(m.connections.value)+' imported stream connections; '+duration(m.averageListening.value)+' average listening',social:count(m.socialTotals.views.value)+' reported post views and '+count(m.socialTotals.clicks.value)+' reported post clicks across available measured platforms. '+(m.socialCoverage==='partial'?'Partial coverage. ':m.socialCoverage==='unavailable'?'Totals unavailable. ':'')+'Open platform coverage details.',arrivals:count(m.visits.value)+' Wix website sessions',sales:money(m.gross.value,m.currency)+' gross item sales on paid Wix orders',bottom:m.score===null?'Direction is unverified':'Online activity index '+m.score+'; baseline 100'};
+    const sourceValues={search:count(m.appearances.value)+' search appearances',clicks:count(m.searchClicks.value)+' search clicks; '+count(m.arrivals.search.visits)+' recorded website visits',radio:count(m.arrivals.olr5150.visits)+' website visits attributed to OLR5150 social posts',social:count(m.arrivals.docjaks.visits)+' website visits attributed to other Doc Jaks social posts',arrivals:count(m.visits.value)+' website visits; '+count(m.entryPages.value)+' different first pages opened',sales:money(m.gross.value,m.currency)+' gross item sales on paid Wix orders',bottom:m.score===null?'Direction is unverified':'Online activity index '+m.score+'; baseline 100'};
     root.querySelectorAll('.oc-section').forEach(button=>{const key=button.dataset.ocSection,label=sections.find(s=>s[0]===key)?.[1]||key;button.setAttribute('aria-label',label+'. '+(sourceValues[key]||'Open detailed reported evidence.'));});
-    root.querySelector('[data-oc-source-note]').textContent='Selected dates: '+windowLabel(m.period)+'. — means unreported, not zero. Radio figures are imported CSV evidence. Social totals sum available measured platform post snapshots; X owner-entered records are excluded. Click an instrument for its source and coverage.';
+    root.querySelector('[data-oc-source-note]').textContent='Selected dates: '+windowLabel(m.period)+'. Website arrivals count the first page opened in each visit. The total includes Search, OLR5150 posts, other Doc Jaks posts, unclassified social and direct/other sources. Later page views stay in Website Journey. — means unavailable; * means partial post metrics. Open a source to see its coverage.';
     scheduleFit();
   }
 
@@ -354,14 +400,16 @@
   }
   function searchPanel(clicks){
     const m=state.model,s=m.search;
-    if(s?.status!=='reported')return empty(clicks?m.searchClicks.reason:m.appearances.reason);
-    let out=line(clicks?'Search result clicks':'Search appearances',count(clicks?s.clicksCurrent:s.current),'Provider totals, not unique visitors')+
+    let out=s?.status==='reported'?line(clicks?'Search result clicks':'Search appearances',count(clicks?s.clicksCurrent:s.current),'Provider totals, not unique visitors')+
       line('Previous matched period',count(clicks?s.clicksPrevious:s.previous))+
       line('Click-through rate',percent(s.ctrCurrent))+
-      line('Google average position',valid(s.positionCurrent)?s.positionCurrent.toFixed(1):'—','Not a combined Google + Bing ranking');
-    out+=table(['Engine','Appearances','Clicks'],(s.engines||[]).map(e=>[e.name,count(e.current?.impressions),count(e.current?.clicks)]));
-    out+=note('Search reporting days: '+(s.currentRange?.start||'—')+' → '+(s.currentRange?.end||'—')+'. '+(s.note||''));
+      line('Google average position',valid(s.positionCurrent)?s.positionCurrent.toFixed(1):'—','Not a combined Google + Bing ranking'):empty(clicks?m.searchClicks.reason:m.appearances.reason);
+    if(s?.status==='reported'){
+      out+=table(['Engine','Appearances','Clicks'],(s.engines||[]).map(e=>[e.name,count(e.current?.impressions),count(e.current?.clicks)]));
+      out+=note('Search reporting days: '+(s.currentRange?.start||'—')+' → '+(s.currentRange?.end||'—')+'. '+(s.note||''));
+    }
     if(clicks){
+      out+=sectionTitle('Recorded website arrivals from Search')+line('Website visits',count(m.arrivals.search.visits),'Same-date Wix website visits; search-provider click totals above use their own reporting coverage.')+'<button type="button" class="oc-brass-button" data-oc-arrival-group="search">See the first pages they opened</button>';
       const paired=m.seo?.status==='connected'&&m.seo.queryPages?.status==='reported'&&Array.isArray(m.seo.queryPages.rows)?m.seo.queryPages.rows.filter(p=>p?.query&&p.page&&valid(p.clicks)).sort((a,b)=>b.clicks-a.clicks):[];
       out+=sectionTitle('Search phrase → result destination');
       out+=paired.length?table(['Search phrase','Shown URL / page','Clicks'],paired.slice(0,30).map(p=>[p.query,pathOf(p.page)||String(p.page),count(p.clicks)])):empty('The search provider did not return query-and-destination pairs for this window.');
@@ -371,15 +419,58 @@
   }
   function arrivalsPanel(){
     const m=state.model;
-    if(!m.site)return empty(m.visits.reason);
-    let out=line('Website visits',count(m.visits.value),'Wix sessions · all recorded sources')+line('Distinct entry pages reached',count(m.entryPages.value),m.entryPages.reason||'Different pages where a website session began')+line('Website visitors',count(m.site.visitors),'Visitors and sessions are different measures')+line('Page views',count(m.site.pageViews));
-    out+=sectionTitle('Where they entered');
-    out+=m.landings.length?table(['Landing page','Sessions'],m.landings.map(p=>[pageName(p.path)+' · '+p.path,count(p.sessions)])):empty('No measured landing-page breakdown was returned.');
-    if(!valid(m.entryPages.value))out+=note(m.entryPages.reason);
-    out+=sectionTitle('Where visits came from');
-    out+=m.sourceRows.length?table(['Source','Category','Wix sessions'],m.sourceRows.slice().sort((a,b)=>b.sessions-a.sessions).map(r=>[r.source||'Unspecified',r.category||'—',count(r.sessions)])):empty('No matching traffic-source rows were returned.');
-    if(!m.sourceComplete)out+=note('Source coverage is incomplete or does not reconcile to the sessions total. Missing source rows cannot be treated as zero.');
-    return out+note('Direct, search, radio, social and other referrals are separate sources of website sessions. Their platform click totals are never added to the website session total.');
+    let out=line('All website visits',count(m.visits.value),'The total stays intact, including direct and unclassified traffic.')+
+      note('The first page opened is counted once per website visit. Going on to another page, including Outlaw Radio, is shown separately in Website Journey.');
+    out+='<div class="oc-drawer-selector">'+[['all','All arrivals'],...Object.entries(arrivalLabels)].map(([id,label])=>'<button type="button" data-oc-arrival-group="'+id+'" aria-pressed="'+String(state.arrivalGroup===id)+'">'+esc(label)+' · '+count(id==='all'?m.visits.value:m.arrivals[id].visits)+'</button>').join('')+'</div>';
+    const group=state.arrivalGroup==='all'?null:m.arrivals[state.arrivalGroup];
+    const platform=group&&['olr5150','docjaks'].includes(group.id)&&Object.hasOwn(platformLabels,state.arrivalPlatform)?state.arrivalPlatform:null;
+    const incoming=platform?group.platforms.find(row=>row.platform===platform):group;
+    const rows=group?(m.arrivalReady?(incoming?.landingPages||[]):[]):m.arrivalReady?m.arrivalReport.landingPages:m.landings.map(row=>({path:row.path,visits:row.sessions}));
+    const visits=group?(m.arrivalReady?(incoming?.visits??0):null):m.visits.value;
+    const firstPages=group?(m.arrivalReady?(platform?new Set(rows.map(row=>pathOf(row.path)).filter(Boolean)).size:group.entryPageCount):null):m.entryPages.value;
+    if(group&&['olr5150','docjaks'].includes(group.id))out+='<div class="oc-drawer-selector">'+[['all','All platforms'],...Object.entries(platformLabels)].map(([key,label])=>'<button type="button" data-oc-arrival-group="'+group.id+'" data-oc-arrival-platform="'+key+'" aria-pressed="'+String(state.arrivalPlatform===key)+'">'+label+'</button>').join('')+'</div>';
+    out+=sectionTitle(group?group.label+(platform?' · '+platformLabels[platform]:''):'All recorded arrivals')+
+      line('Website visits',count(visits),group?'Visits assigned to this group; each visit belongs to one group.':'Every recorded source.')+
+      line('Different first pages opened',count(firstPages),'The number of distinct pages these visits started on.');
+    if(!m.arrivalReady)out+=empty(m.arrivalReport?.coverage?.reason||m.arrivalReport?.note||'The first-page source breakdown is still loading or unavailable. The all-source total is retained; no source split is guessed.');
+    if(state.entryPath){
+      const path=state.entryPath,row=(rows||[]).find(row=>pathOf(row.path)===path);
+      out+=sectionTitle('First page: '+pageName(path))+
+        line('Visits that started here',count(group&&!m.arrivalReady?null:row?.visits),path)+
+        table(['Arrival group','Visits starting here'],Object.values(m.arrivals).filter(g=>!group||g.id===group.id).map(g=>[g.label+(platform?' · '+platformLabels[platform]:''),m.arrivalReady?count((platform?(g.platforms.find(row=>row.platform===platform)?.landingPages||[]):g.landingPages).filter(p=>pathOf(p.path)===path).reduce((sum,p)=>sum+(valid(p.visits)?p.visits:0),0)):'—']));
+      out+='<div class="oc-drawer-selector"><button type="button" data-oc-entry-back>Back to first pages</button><button type="button" data-oc-page="'+esc(path)+'">View this page’s activity in #6</button></div>';
+    }else{
+      out+=sectionTitle('First page opened · most arrivals first');
+      out+=(rows||[]).length?'<div class="oc-table-wrap"><table><thead><tr><th>First page opened</th><th>Website visits</th></tr></thead><tbody>'+rows.slice().sort((a,b)=>b.visits-a.visits).map(row=>'<tr><td>'+(pathOf(row.path)?'<button type="button" class="oc-inline-page" data-oc-entry-page="'+esc(pathOf(row.path))+'">'+esc(pageName(row.path))+'</button><small class="oc-entry-path">'+esc(row.path)+'</small>':'Unreported first page')+'</td><td>'+count(row.visits)+(m.arrivalReady?'':' · reported rows only')+'</td></tr>').join('')+'</tbody></table></div>':note(m.arrivalReady&&visits===0?'No website visits were attributed to this group in the selected dates.':'No first-page rows are available for this selection.');
+    }
+    if(m.arrivalReady)out+=note('Reconciled: '+Object.values(m.arrivals).map(g=>g.label+' '+count(g.visits)).join(' + ')+' = '+count(m.arrivalReport.totalVisits)+' website visits. The same page can be a first page for several groups, so distinct page counts are not added together.');
+    return out+note('Unclassified social visits lack a usable saved-post group. Direct and other visits stay in their own group; a radio page destination never changes the original arrival source.');
+  }
+  function promotionPanel(id){
+    const m=state.model,group=m.promotionGroups[id],arrivals=m.arrivals[id];
+    const platform=state.promotionPlatform==='all'?null:state.promotionPlatform;
+    const selected=platform?group?.platforms?.[platform]:group;
+    const incoming=platform?arrivals.platforms.find(row=>row.platform===platform):arrivals;
+    const arrivalVisits=m.arrivalReady?(platform?(incoming?.visits??0):arrivals.visits):null;
+    let out=note(id==='olr5150'?'Visits attributed to social posts explicitly labeled as promoting Outlaw Radio 5150.':'Visits attributed to social posts explicitly labeled as other Doc Jaks promotions. OLR5150 posts are excluded from this group.')+
+      '<div class="oc-drawer-selector">'+[['all','All platforms'],...Object.entries(platformLabels)].map(([key,label])=>'<button type="button" data-oc-group="'+id+'" data-oc-group-platform="'+key+'" aria-pressed="'+String(state.promotionPlatform===key)+'">'+label+'</button>').join('')+'</div>'+
+      sectionTitle(platform?platformLabels[platform]:arrivalLabels[id])+
+      line('Website visits',count(arrivalVisits),'Wix visits occurring during '+windowLabel(m.period)+'. Each visit has one first page.')+
+      '<button type="button" class="oc-brass-button" data-oc-arrival-group="'+id+'" data-oc-arrival-platform="'+(platform||'all')+'">First pages opened by these visits</button>';
+    for(const [key,label] of [['views','Post views'],['clicks','Link clicks']]){
+      const cell=selected?.totals?.[key];
+      out+=line(label,count(cell?.value),(cell?.status==='partial'?'PARTIAL · ':'')+(cell?.note||'No matching per-post measurement is available.'));
+    }
+    out+=note(group?.note||'Only explicitly classified posts belong to this group. Missing post measurements remain unavailable.')+
+      note('Post views and link clicks are current lifetime snapshots for posts published in the selected window. Website visits count arrivals during the selected dates, including visits from older tagged posts. These different measurements are not added together.');
+    const posts=Array.isArray(selected?.posts)?selected.posts:[];
+    out+=sectionTitle('Individual post measurements');
+    out+=posts.length?table(['Post / platform','Post views','Link clicks','Evidence'],posts.map(post=>[post.title+' · '+(platformLabels[post.platform]||post.platform),count(post.views),count(post.clicks),post.manual?'Owner entered · excluded from totals':post.source||'Measured platform snapshot'])):note('No classified post rows are available for this publishing window. Label saved posts in Content Library to separate OLR5150 from other Doc Jaks promotions.');
+    const tracked=arrivals.posts.filter(post=>!platform||post.platform===platform);
+    out+=sectionTitle('Website arrivals by tracked post');
+    out+=tracked.length?table(['Post / platform','Website visits','First pages opened'],tracked.map(post=>[post.title+' · '+(platformLabels[post.platform]||post.platform),m.arrivalReady?count(post.visits):'—',m.arrivalReady?((post.landingPages||[]).map(page=>pageName(page.path)+' ('+count(page.visits)+')').join('; ')||'—'):'—'])):note(m.arrivalReady&&arrivalVisits===0?'No website arrivals were attributed to this group for these dates.':'No matched tracked-post arrival rows are available. Untagged visits cannot be assigned from their later page views.');
+    out+='<div class="oc-drawer-selector"><button type="button" data-oc-section="socialMetrics">All social metrics &amp; coverage</button><button type="button" data-oc-arrival-group="social_unclassified">Unclassified social arrivals</button>'+(id==='olr5150'?'<button type="button" data-oc-section="radioListening">Radio listeners &amp; listening time</button>':'')+'</div>';
+    return out+note('Post labels and tracking links identify the promotion credited for a visit. A copied or reshared tagged link retains its label; the platform label identifies the tracked link, not proof of where someone physically clicked it.')+note('To label a saved post: Tools & reports → Content Library → Open the post → Website traffic group. The label does not change the published post or its shared link.');
   }
   function journeyPanel(){
     const m=state.model,p=selectedPage();
@@ -392,6 +483,12 @@
       out+=table(['Reported URL','Views','Time','Bounce'],p.variants.map(row=>[row.path,count(row.views),duration(row.avgTimeSeconds),percent(row.bounceRate)]));
     }
     if(!valid(p.avgTimeSeconds)||!valid(p.bounceRate)||p.bounceRate>1)out+=note('Unavailable time or bounce fields stay unreported. Other pages’ averages are not substituted.');
+    if(m.arrivalReady){
+      const first=m.arrivalReport.landingPages.find(row=>pathOf(row.path)===p.path);
+      out+=sectionTitle('Visits that started on this page')+line('First-page arrivals',count(first?.visits??0),'All recorded sources; later page views above are a separate measure.')+
+        table(['Where they came from','First-page arrivals'],Object.values(m.arrivals).map(group=>[group.label,count(group.landingPages.filter(row=>pathOf(row.path)===p.path).reduce((sum,row)=>sum+row.visits,0))]));
+    }
+    if(p.path==='/outlaw-radio-5150')out+='<button type="button" class="oc-brass-button" data-oc-section="radioListening">Radio listeners &amp; listening time</button>';
     out+=sectionTitle('Where they went next');
     const next=m.transitions.filter(r=>r.from===p.path).sort((a,b)=>b.views-a.views);
     out+=next.length?table(['Next page','Recorded page-view events'],next.map(r=>[pageName(r.to)+' · '+r.to,count(r.views)])):empty(m.transitionReady?'No matching internal-referrer page-view events were returned for this page. That does not establish an exit or a bounce.':'A matching GA4 internal-referrer report is unavailable.');
@@ -443,7 +540,7 @@
     if(!p.has)out+=empty(p.reason);
     out+=line('Posts in selected publishing window',count(p.currentPosts))+line('Post views',count(p.now.views))+line('Post clicks',count(p.now.clicks),'A post click is not necessarily a website click or arrival')+line('Reactions / likes',count(p.now.reactions))+line('Comments',count(p.now.comments))+line('Shares / reposts',count(p.now.shares));
     if(!p.manual)out+=note('These are current lifetime totals for posts published during the selected dates, not actions that happened only within that period. Older posts have had longer to collect activity. Missing metrics remain unreported.');
-    return out+note('Selecting a platform changes these details; the main instrument keeps the reported social totals. No campaign-caused sales are inferred.');
+    return out+note('This overview includes all reported social posts, including posts not assigned to a traffic group. The two main instruments show their own classified groups. No campaign-caused sales are inferred.');
   }
   function salesPanel(){
     const m=state.model;
@@ -489,7 +586,7 @@
   function actionsPanel(){
     const m=state.model,c=m.actionCounts;
     let out='<div class="oc-drawer-selector">'+[['read','Read'],['listen','Listen'],['join','Join']].map(([key,label])=>'<button type="button" data-oc-action="'+key+'" aria-pressed="'+String(state.action===key)+'">'+label+'</button>').join('')+'</div>';
-    if(state.action==='listen')return out+line('Imported listening time',duration(m.listeningSeconds.value),m.listeningSeconds.reason)+line('Imported connections',count(m.connections.value),m.connections.reason)+note('An engaged-listener count requires session-level playback evidence. Aggregate connections and a website page visit cannot establish it.')+'<button type="button" class="oc-brass-button" data-oc-section="radio">Open radio evidence</button>';
+    if(state.action==='listen')return out+line('Imported listening time',duration(m.listeningSeconds.value),m.listeningSeconds.reason)+line('Imported connections',count(m.connections.value),m.connections.reason)+note('An engaged-listener count requires session-level playback evidence. Aggregate connections and a website page visit cannot establish it.')+'<button type="button" class="oc-brass-button" data-oc-section="radioListening">Open radio evidence</button>';
     if(state.action==='read')out+=readingPanel();
     if(state.action==='join')out+=sectionTitle('Joining evidence')+note('Sign-up events are not independently verified Pit Krewe memberships.');
     if(!m.actionsReady)return out+empty('The matching GA4 action report is unavailable for the selected dates.');
@@ -514,6 +611,7 @@
     return line('Selected website dates',windowLabel(m.period))+table(['Source','Report coverage'],[
       ['Search engines',m.search?.status==='reported'?(m.search.scope||'Reported')+' · '+(m.search.currentRange?.start||'—')+' → '+(m.search.currentRange?.end||'—'):'Not available'],
       ['Wix website',m.site?'Matched selected dates':'Not available'],
+      ['First pages & arrival groups',m.arrivalReady?'Complete first-page report; all five source groups reconcile to the total':m.arrivalReport?.note||'No complete matched source-by-first-page report'],
       ['GA4 actions',m.actionsReady?'Matched selected dates':'Not available'],
       ['Chapter One active reading',m.reading?(m.reading.trackingSince&&m.reading.range.end<m.reading.trackingSince?'Tracking was not active during these dates':(m.reading.partialCoverage?'Partial tracking coverage · ':'Matched selected dates · ')+'anonymous on-page reader sessions'):'No matched reader report'],
       ['Chapter PDF-link clicks',m.chapter?(m.chapter.partial?'Partial Wix click evidence':m.chapter.status==='not-tracked'?'Tracking was not active':m.chapter.range.start!==m.period.start?'Tracking began within the selected window':'Matched selected dates'):'No matched Wix click report'],
@@ -525,7 +623,7 @@
   function paintDrawer(scroll=false){
     const root=state.root,drawer=root.querySelector('.oc-drawer');
     if(!state.drawer){drawer.hidden=true;return;}
-    const specs={search:['1. Search Engines',()=>searchPanel(false)],clicks:['2. Result Clicks',()=>searchPanel(true)],radio:['3. Outlaw Radio 5150',radioPanel],social:['4. Social Media',socialPanel],arrivals:['5. Website Arrivals',arrivalsPanel],journey:['6. Website Journey',journeyPanel],pages:['6. All Reported Pages',pageList],sales:['7. Paid Web Sales — Gross',salesPanel],actions:['8. Meaningful Actions',actionsPanel],bottom:['9. Bottom Line',bottomPanel],coverage:['Source Coverage & Dates',coveragePanel]};
+    const specs={search:['1. Search Engines',()=>searchPanel(false)],clicks:['2. Result Clicks',()=>searchPanel(true)],radio:['3. OLR5150 Social Posts',()=>promotionPanel('olr5150')],social:['4. Other Doc Jaks Social Posts',()=>promotionPanel('docjaks')],radioListening:['Outlaw Radio 5150 · Listening',radioPanel],socialMetrics:['All Social Post Metrics',socialPanel],arrivals:['5. Website Arrivals · First Pages',arrivalsPanel],journey:['6. Website Journey',journeyPanel],pages:['6. All Reported Pages',pageList],sales:['7. Paid Web Sales — Gross',salesPanel],actions:['8. Meaningful Actions',actionsPanel],bottom:['9. Bottom Line',bottomPanel],coverage:['Source Coverage & Dates',coveragePanel]};
     const selected=specs[state.drawer]||specs.coverage;
     const body=drawer.querySelector('.oc-drawer-body'),previousScroll=body.scrollTop;
     drawer.querySelector('#ocDrawerTitle').textContent=selected[0];
