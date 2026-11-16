@@ -7,6 +7,7 @@
   const CHAPTER_PDF='https://www.docjaks.com/_files/ugd/cf21c8_27ee63f049e5479b8d37c885f638bb2b.pdf';
   const WIDTH=1199,HEIGHT=1312;
   const state={root:null,slot:null,context:null,model:null,selectedPath:null,platform:'facebook',drawer:null,action:null,lastTrigger:null};
+  let fitFrame=0,fitObserver=null;
   const valid=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0;
   const count=n=>valid(n)?new Intl.NumberFormat('en-US',{maximumFractionDigits:0}).format(n):'—';
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -34,6 +35,10 @@
     if(names[clean])return names[clean];
     return safely(window.wName,clean)||clean.slice(1).replace(/[-_]/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
   }
+  // Keep the full page identity in details and accessibility labels. The
+  // instrument only needs the readable name, without a CMS category prefix.
+  const boardPageName=path=>pageName(path).replace(/^Category\s*\/\s*/i,'');
+  const boardEngineName=engine=>({google:'Google',bing:'Bing'}[String(engine.id||'').toLowerCase()]||String(engine.name||'Search engine').replace(/\s*\([^)]*\)\s*/g,'').trim());
   function duration(value){
     if(!valid(value))return '—';
     const seconds=Math.round(value),hours=Math.floor(seconds/3600),minutes=Math.floor(seconds%3600/60),rest=seconds%60;
@@ -214,6 +219,11 @@
       '<section class="oc-drawer" aria-labelledby="ocDrawerTitle" hidden><header class="oc-drawer-header"><div><p class="oc-drawer-kicker">DOC JAKS · REPORTED EVIDENCE</p><h2 id="ocDrawerTitle"></h2></div><div class="oc-drawer-actions"><button type="button" class="oc-brass-button" data-oc-export>Download CSV</button><button type="button" class="oc-close" data-oc-close aria-label="Close this instrument">Close ×</button></div></header><div class="oc-drawer-body"></div></section>'+
       '<div class="oc-sr" aria-live="polite" data-oc-announcement></div>';
     slot.replaceChildren(root);state.root=root;state.slot=slot;
+    fitObserver?.disconnect();
+    if(typeof ResizeObserver==='function'){
+      fitObserver=new ResizeObserver(scheduleFit);
+      fitObserver.observe(root.querySelector('.oc-board'));
+    }
     root.querySelector('.oc-art').addEventListener('error',()=>{root.classList.add('oc-no-art');root.querySelector('.oc-art-error').hidden=false;});
     root.addEventListener('click',event=>{
       const button=event.target.closest('button');if(!button||!root.contains(button))return;
@@ -262,21 +272,56 @@
   }
   function text(key,value){
     const el=state.root.querySelector('[data-oc-value="'+key+'"]');if(!el)return;
-    el.textContent=value;el.classList.toggle('oc-long',String(value).length>10);
-    const sizes={appearances:3.65,searchClicks:5.8,connections:3.1,averageListening:2.8,radioReferrals:3.5,socialViews:3,socialClicks:3,visits:4,entryPages:4,pageViews:4.6,pageTime:4.1,pageBounce:4.6,orders:3.1};
-    if(sizes[key]){
-      const field=fields.find(row=>row[0]===key),fit=field[3]/WIDTH*100/(Math.max(String(value).length,1)*.58);
-      el.style.fontSize=Math.min(sizes[key],fit).toFixed(3)+'cqw';
-    }
+    el.textContent=value;
   }
+  function scheduleFit(){
+    if(fitFrame)return;
+    fitFrame=requestAnimationFrame(()=>{fitFrame=0;fitBoardText();});
+  }
+  function fitBoardText(){
+    const board=state.root?.querySelector('.oc-board');
+    if(!board?.isConnected||!board.clientWidth)return;
+    const scale=board.getBoundingClientRect().width/WIDTH;
+    const cash=board.querySelector('.oc-odometer');
+    const cells=cash.classList.contains('oc-text-cash')?[cash]:[...cash.children];
+    const elements=[...board.querySelectorAll('.oc-readout:not(.oc-odometer),.oc-label-cover,.oc-selector-name,.oc-selector-count'),...cells];
+    // Start from the responsive CSS size on every pass, so shorter updates
+    // and larger screens can grow again. Measure actual glyphs, including
+    // wrapped lines, against all four edges of each reserved text area.
+    cash.style.removeProperty('font-size');
+    elements.forEach(el=>el.style.removeProperty('font-size'));
+    const range=document.createRange();
+    for(const el of elements){
+      const style=getComputedStyle(el),box=el.getBoundingClientRect();
+      const base=parseFloat(style.fontSize);
+      const left=box.left+parseFloat(style.paddingLeft)+2*scale;
+      const right=box.right-parseFloat(style.paddingRight)-2*scale;
+      const top=box.top+parseFloat(style.paddingTop)+scale;
+      const bottom=box.bottom-parseFloat(style.paddingBottom)-scale;
+      range.selectNodeContents(el);
+      const fits=()=>{const ink=range.getBoundingClientRect();return ink.left>=left-.1&&ink.right<=right+.1&&ink.top>=top-.1&&ink.bottom<=bottom+.1;};
+      if(fits())continue;
+      let low=0,high=base;
+      for(let i=0;i<11;i++){
+        const size=(low+high)/2;
+        el.style.setProperty('font-size',size.toFixed(3)+'px','important');
+        if(fits())low=size;else high=size;
+      }
+      el.style.setProperty('font-size',low.toFixed(3)+'px','important');
+    }
+    // Odometer digits share one size, chosen to fit the narrowest cell.
+    if(cells.length>1){const size=Math.min(...cells.map(el=>parseFloat(getComputedStyle(el).fontSize)));cells.forEach(el=>el.style.setProperty('font-size',size.toFixed(3)+'px','important'));}
+  }
+  document.fonts?.ready.then(scheduleFit);
+  document.fonts?.addEventListener('loadingdone',scheduleFit);
   function selectedPage(){return state.model.pages.find(p=>p.path===state.selectedPath)||null;}
   function updateBoard(){
     const m=state.model,root=state.root,selected=selectedPage();
     for(const key of ['appearances','searchClicks','visits','entryPages','connections','radioReferrals','orders'])text(key,count(m[key].value));
-    text('searchEngines',m.search?.status==='reported'?(m.search.engines||[]).map(e=>e.name).join(' · ')+' · Details':'Open search details');
+    text('searchEngines',m.search?.status==='reported'?(m.search.engines||[]).map(boardEngineName).join(' · ')+' · Details':'Open search details');
     text('averageListening',duration(m.averageListening.value));text('socialViews',count(m.socialTotals.views.value));text('socialClicks',count(m.socialTotals.clicks.value));
     text('socialCoverage',m.socialCoverage==='unavailable'?'TOTALS UNAVAILABLE · OPEN DETAILS':m.socialCoverage==='partial'?'PARTIAL TOTALS · OPEN FOR SOURCES':'REPORTED TOTALS · OPEN FOR SOURCES');
-    text('selectedName',state.selectedPath?'Selected: '+pageName(state.selectedPath):'No reported pages');
+    text('selectedName',state.selectedPath?'Selected: '+boardPageName(state.selectedPath):'No reported pages');
     text('pageViews',count(selected?.views));text('pageTime',duration(selected?.avgTimeSeconds));text('pageBounce',percent(selected?.bounceRate));
     const gross=money(m.gross.value,m.currency),cashNode=root.querySelector('[data-oc-value="gross"]');
     cashNode.classList.toggle('oc-text-cash',gross==='—'||m.currency!=='USD'||gross.length>7);
@@ -286,11 +331,12 @@
     text('working',m.improved.length?m.improved[0].name+' improving':m.score===100?'Measured activity holding':'No verified improvement');
     text('attention',m.declined.length?m.declined[0].name+' declining':m.gaps.length?'Missing '+m.gaps[0]+' data':'No measured decline');
     text('next',m.next);text('reportBadge','REPORTED DATA · VIEW COVERAGE');text('reportFooter',windowLabel(m.period));
-    root.querySelectorAll('[data-oc-page-index]').forEach((button,i)=>{const page=m.pages[i],name=page?pageName(page.path):'No reported page';button.disabled=!page;button.dataset.ocPath=page?.path||'';button.classList.toggle('oc-long-name',name.length>26);button.setAttribute('aria-pressed',String(!!page&&page.path===state.selectedPath));button.querySelector('.oc-selector-name').textContent=name;button.querySelector('.oc-selector-count').textContent=page?count(page.views)+(page.views===1?' view':' views'):'—';button.setAttribute('aria-label',page?name+', '+count(page.views)+' page views. Select to show page details.':'No reported page in this position');});
+    root.querySelectorAll('[data-oc-page-index]').forEach((button,i)=>{const page=m.pages[i],name=page?pageName(page.path):'No reported page';button.disabled=!page;button.dataset.ocPath=page?.path||'';button.setAttribute('aria-pressed',String(!!page&&page.path===state.selectedPath));button.querySelector('.oc-selector-name').textContent=page?boardPageName(page.path):name;button.querySelector('.oc-selector-count').textContent=page?count(page.views)+(page.views===1?' view':' views'):'—';button.setAttribute('title',page?name+' · '+page.path:name);button.setAttribute('aria-label',page?name+', '+count(page.views)+' page views. Select to show page details.':'No reported page in this position');});
     root.querySelectorAll('.oc-social-selector').forEach(button=>{const p=m.platforms[button.dataset.ocPlatform];button.setAttribute('aria-pressed',String(p.key===state.platform));button.dataset.signal=p.verified?'green':p.has?'yellow':'unknown';button.setAttribute('aria-label',p.name+': '+(p.has?count(p.now.views)+' post views, '+count(p.now.clicks)+' post clicks. ':'Data unavailable. ')+(p.manual?'Owner-entered records. ':'')+'Open source details.');});
     const sourceValues={search:count(m.appearances.value)+' search appearances',clicks:count(m.searchClicks.value)+' search clicks',radio:count(m.connections.value)+' imported stream connections; '+duration(m.averageListening.value)+' average listening',social:count(m.socialTotals.views.value)+' reported post views and '+count(m.socialTotals.clicks.value)+' reported post clicks across available measured platforms. '+(m.socialCoverage==='partial'?'Partial coverage. ':m.socialCoverage==='unavailable'?'Totals unavailable. ':'')+'Open platform coverage details.',arrivals:count(m.visits.value)+' Wix website sessions',sales:money(m.gross.value,m.currency)+' gross item sales on paid Wix orders',bottom:m.score===null?'Direction is unverified':'Online activity index '+m.score+'; baseline 100'};
     root.querySelectorAll('.oc-section').forEach(button=>{const key=button.dataset.ocSection,label=sections.find(s=>s[0]===key)?.[1]||key;button.setAttribute('aria-label',label+'. '+(sourceValues[key]||'Open detailed reported evidence.'));});
     root.querySelector('[data-oc-source-note]').textContent='Selected dates: '+windowLabel(m.period)+'. — means unreported, not zero. Radio figures are imported CSV evidence. Social totals sum available measured platform post snapshots; X owner-entered records are excluded. Click an instrument for its source and coverage.';
+    scheduleFit();
   }
 
   const line=(label,value,note)=>'<div class="oc-evidence-line"><span>'+esc(label)+(note?'<small>'+esc(note)+'</small>':'')+'</span><strong>'+esc(value)+'</strong></div>';

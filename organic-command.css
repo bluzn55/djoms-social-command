@@ -7,7 +7,7 @@
 #djOrganicCommand .oc-board{position:relative;container-type:inline-size;width:100%;aspect-ratio:1199/1312;background:#092e26;overflow:hidden}
 #djOrganicCommand .oc-art{display:block;width:100%;height:100%;object-fit:fill;margin:0;border:0;border-radius:0}
 #djOrganicCommand .oc-readout,#djOrganicCommand .oc-label-cover,#djOrganicCommand .oc-hotspot{position:absolute;box-sizing:border-box;margin:0;min-width:0;max-width:none}
-#djOrganicCommand .oc-readout{display:flex;align-items:center;justify-content:center;z-index:2;text-align:center;font-weight:800;color:#160f06;font-size:3.5cqw;line-height:1;white-space:nowrap;pointer-events:none;text-shadow:0 .06cqw #fff7d2}
+#djOrganicCommand .oc-readout{display:flex;align-items:center;justify-content:center;z-index:2;text-align:center;font-weight:800;color:#160f06;font-size:3.5cqw;line-height:1.05;white-space:nowrap;pointer-events:none;text-shadow:0 .06cqw #fff7d2}
 #djOrganicCommand .oc-readout.oc-search-value{font-size:3.65cqw;letter-spacing:-.12cqw}
 #djOrganicCommand .oc-readout.oc-search-clicks{font-size:5.8cqw}
 #djOrganicCommand .oc-readout.oc-radio-value{font-size:3.1cqw}
@@ -17,20 +17,18 @@
 #djOrganicCommand .oc-readout.oc-social-coverage{font:700 .94cqw/1 Arial,sans-serif;color:#fff1c8;background:#123d30;border-radius:.35cqw;letter-spacing:.02cqw;text-shadow:none}
 #djOrganicCommand .oc-readout.oc-engine-label{font-size:1.35cqw;font-style:italic}
 #djOrganicCommand .oc-readout.oc-arrival-value{font-size:4cqw}
-#djOrganicCommand .oc-readout.oc-selected-name{font-style:italic;font-size:2cqw;letter-spacing:-.04cqw;white-space:normal;line-height:.95}
-#djOrganicCommand .oc-readout.oc-selected-name.oc-long{font-size:1.7cqw}
+#djOrganicCommand .oc-readout.oc-selected-name{font-style:italic;font-size:1.85cqw;letter-spacing:-.02cqw;white-space:nowrap}
 #djOrganicCommand .oc-readout.oc-page-value{font-size:4.6cqw}
 #djOrganicCommand .oc-readout.oc-time-value{font-size:4.1cqw;letter-spacing:-.08cqw}
 #djOrganicCommand .oc-readout.oc-orders-value{font-size:3.1cqw}
 #djOrganicCommand .oc-readout.oc-odometer{font-size:4cqw;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));font-weight:800;line-height:1;letter-spacing:0}
-#djOrganicCommand .oc-odometer span{display:block;min-width:0;text-align:center}
+#djOrganicCommand .oc-odometer span{display:flex;align-items:center;justify-content:center;min-width:0;height:100%;text-align:center}
 #djOrganicCommand .oc-readout.oc-odometer.oc-text-cash{display:flex}
 #djOrganicCommand .oc-readout.oc-odometer.oc-long-cash{display:flex;font-size:2.65cqw;background:linear-gradient(90deg,#f4ce79,#fff5ce 45%,#e7bd64);border-radius:.3cqw;letter-spacing:-.05cqw}
-#djOrganicCommand .oc-readout.oc-verdict{font-size:1.65cqw;font-style:italic;line-height:1.02;white-space:normal;padding:0 .4cqw}
-#djOrganicCommand .oc-readout.oc-verdict.oc-long{font-size:1.4cqw}
+#djOrganicCommand .oc-readout.oc-verdict{font-size:1.65cqw;font-style:italic;line-height:1.08;white-space:normal;padding:0 .4cqw;overflow-wrap:anywhere}
 #djOrganicCommand .oc-readout.oc-report-badge{font-size:1.1cqw;color:#fff8de;letter-spacing:.025cqw;line-height:1.1;text-shadow:0 .1cqw #071a14}
 #djOrganicCommand .oc-readout.oc-report-footer{font-size:1.35cqw;color:#231707}
-#djOrganicCommand .oc-label-cover{z-index:3;display:flex;align-items:center;justify-content:center;text-align:center;color:#211305;background:transparent;font-size:2cqw;font-weight:800;font-style:italic;line-height:1;white-space:nowrap;pointer-events:none}
+#djOrganicCommand .oc-label-cover{z-index:3;display:flex;align-items:center;justify-content:center;text-align:center;color:#211305;background:transparent;font-size:2cqw;font-weight:800;font-style:italic;line-height:1.05;white-space:nowrap;pointer-events:none}
 #djOrganicCommand .oc-label-cover.oc-tiny{font:700 .92cqw/1 Georgia,serif;border-radius:0;background:#ffebbc}
 #djOrganicCommand .oc-label-cover.oc-compact-label{font-size:1.35cqw}
 #djOrganicCommand .oc-label-cover.oc-entry-label{font-size:1.7cqw}
@@ -40,10 +38,9 @@
 #djOrganicCommand button.oc-hotspot{display:block;z-index:5;border:0!important;background:transparent!important;border-radius:0;padding:0!important;box-shadow:none;color:inherit;cursor:pointer;appearance:none;font-family:Georgia,'Times New Roman',serif;font-size:2cqw!important;font-weight:800!important;line-height:1;min-height:0;outline-offset:.3cqw;transition:filter .15s ease,box-shadow .15s ease}
 #djOrganicCommand button.oc-hotspot:hover{box-shadow:inset 0 0 1cqw .15cqw #ffe28b88;border-radius:28%}
 #djOrganicCommand button.oc-hotspot:focus-visible{outline:.3cqw solid #fff1a1;box-shadow:0 0 0 .45cqw #0c7765;border-radius:18%}
-#djOrganicCommand .oc-page-selector{z-index:7!important;display:flex!important;flex-direction:column;justify-content:center;align-items:center;gap:.3cqw;border-radius:50%!important;padding:.9cqw 1.7cqw!important;line-height:1!important}
-#djOrganicCommand .oc-page-selector .oc-selector-name{font-size:2cqw;font-weight:800;line-height:.95;white-space:normal;color:#181006;text-shadow:0 .07cqw #fff9d6;display:flex;align-items:center;justify-content:center;min-height:4.2cqw;max-width:100%;overflow-wrap:normal}
-#djOrganicCommand .oc-page-selector .oc-selector-count{display:block;font-size:1.85cqw;font-style:italic;line-height:1;color:#211408;white-space:nowrap}
-#djOrganicCommand .oc-page-selector.oc-long-name .oc-selector-name{font-size:1.5cqw;overflow-wrap:anywhere}
+#djOrganicCommand button.oc-hotspot.oc-page-selector{z-index:7!important;display:grid!important;grid-template-rows:minmax(0,1fr) 1.9cqw;justify-items:stretch;align-items:stretch;gap:.25cqw;border-radius:50%!important;padding:1cqw 1.7cqw .95cqw!important;line-height:1.05!important}
+#djOrganicCommand .oc-page-selector .oc-selector-name{font-size:1.85cqw;font-weight:800;line-height:1.05;white-space:normal;text-wrap:balance;text-align:center;color:#181006;text-shadow:0 .07cqw #fff9d6;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;width:100%;height:100%;overflow-wrap:anywhere}
+#djOrganicCommand .oc-page-selector .oc-selector-count{display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;width:100%;height:100%;font-size:1.65cqw;font-style:italic;line-height:1.05;color:#211408;white-space:nowrap}
 #djOrganicCommand button.oc-page-selector[aria-pressed=true]{box-shadow:0 0 .7cqw .45cqw #ffe343,inset 0 0 .45cqw .16cqw #e6a829}
 #djOrganicCommand button.oc-page-selector:disabled{cursor:default;opacity:.72;box-shadow:none}
 #djOrganicCommand .oc-page-selector:disabled .oc-selector-name{font-size:1.55cqw}
