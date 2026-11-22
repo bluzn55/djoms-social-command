@@ -1,12 +1,12 @@
 {
   "version": 2,
-  "updatedAt": "2026-11-21T16:36:30.544Z",
+  "updatedAt": "2026-11-22T16:53:50.832Z",
   "latest": {
-    "id": "webscan-2026-11-21T16:36:30.544Z",
-    "checkedAt": "2026-11-21T16:36:30.544Z",
-    "startedAt": "2026-11-21T16:34:35.149Z",
-    "completedAt": "2026-11-21T16:36:30.544Z",
-    "durationSeconds": 115,
+    "id": "webscan-2026-11-22T16:53:50.832Z",
+    "checkedAt": "2026-11-22T16:53:50.832Z",
+    "startedAt": "2026-11-22T16:51:47.881Z",
+    "completedAt": "2026-11-22T16:53:50.832Z",
+    "durationSeconds": 123,
     "triggerEvent": "schedule",
     "source": "github-actions-technical-scan",
     "status": "yellow",
@@ -28,128 +28,128 @@
         "state": "pass",
         "detail": "Title: Doc Jaks | BBQ Sauces, Books &amp; Music",
         "url": "https://www.docjaks.com/",
-        "checkedAt": "2026-11-21T16:36:29.804Z"
+        "checkedAt": "2026-11-22T16:53:50.076Z"
       },
       {
         "label": "Meta description",
         "state": "pass",
         "detail": "Meta description present.",
         "url": "https://www.docjaks.com/",
-        "checkedAt": "2026-11-21T16:36:29.804Z"
+        "checkedAt": "2026-11-22T16:53:50.076Z"
       },
       {
         "label": "Canonical URL",
         "state": "pass",
         "detail": "Canonical: https://www.docjaks.com",
         "url": "https://www.docjaks.com/",
-        "checkedAt": "2026-11-21T16:36:29.804Z"
+        "checkedAt": "2026-11-22T16:53:50.076Z"
       },
       {
         "label": "Noindex check",
         "state": "pass",
         "detail": "No meta noindex detected; indexing itself not verified.",
         "url": "https://www.docjaks.com/",
-        "checkedAt": "2026-11-21T16:36:29.804Z"
+        "checkedAt": "2026-11-22T16:53:50.076Z"
       },
       {
         "label": "Page title",
         "state": "pass",
         "detail": "Title: SM Welcome | Doc Jaks",
         "url": "https://www.docjaks.com/sm-welcome",
-        "checkedAt": "2026-11-21T16:36:29.839Z"
+        "checkedAt": "2026-11-22T16:53:50.114Z"
       },
       {
         "label": "Meta description",
         "state": "pass",
         "detail": "Meta description present.",
         "url": "https://www.docjaks.com/sm-welcome",
-        "checkedAt": "2026-11-21T16:36:29.839Z"
+        "checkedAt": "2026-11-22T16:53:50.114Z"
       },
       {
         "label": "Canonical URL",
         "state": "pass",
         "detail": "Canonical: https://www.docjaks.com/sm-welcome",
         "url": "https://www.docjaks.com/sm-welcome",
-        "checkedAt": "2026-11-21T16:36:29.839Z"
+        "checkedAt": "2026-11-22T16:53:50.114Z"
       },
       {
         "label": "Noindex check",
         "state": "pass",
         "detail": "No meta noindex detected; indexing itself not verified.",
         "url": "https://www.docjaks.com/sm-welcome",
-        "checkedAt": "2026-11-21T16:36:29.839Z"
+        "checkedAt": "2026-11-22T16:53:50.114Z"
       },
       {
         "label": "Robots.txt",
         "state": "pass",
         "detail": "Robots file responded; crawling rules may still require review.",
         "url": "https://www.docjaks.com/robots.txt",
-        "checkedAt": "2026-11-21T16:36:29.893Z"
+        "checkedAt": "2026-11-22T16:53:50.185Z"
       },
       {
         "label": "Sitemap index",
         "state": "pass",
         "detail": "XML sitemap index has location entries.",
         "url": "https://www.docjaks.com/sitemap.xml",
-        "checkedAt": "2026-11-21T16:36:29.921Z"
+        "checkedAt": "2026-11-22T16:53:50.209Z"
       }
     ],
     "backendChecks": [
-      {
-        "label": "Bing Webmaster API route",
-        "state": "login-required",
-        "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
-        "url": "https://djoms-social-command.vercel.app/api/meta/bing-status",
-        "checkedAt": "2026-11-21T16:36:30.087Z"
-      },
-      {
-        "label": "Search Console API route",
-        "state": "login-required",
-        "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
-        "url": "https://djoms-social-command.vercel.app/api/meta/seo-status",
-        "checkedAt": "2026-11-21T16:36:30.097Z"
-      },
-      {
-        "label": "Owner Maintenance History service",
-        "state": "login-required",
-        "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
-        "url": "https://djoms-social-command.vercel.app/api/meta/maintenance-health",
-        "checkedAt": "2026-11-21T16:36:30.103Z"
-      },
       {
         "label": "DJOMS owner dashboard",
         "state": "pass",
         "detail": "Public site replied HTTP 200.",
         "url": "https://djoms-social-command.vercel.app/",
-        "checkedAt": "2026-11-21T16:36:30.134Z"
-      },
-      {
-        "label": "GA4 analytics API route",
-        "state": "login-required",
-        "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
-        "url": "https://djoms-social-command.vercel.app/api/meta/ga4-status",
-        "checkedAt": "2026-11-21T16:36:30.137Z"
+        "checkedAt": "2026-11-22T16:53:50.096Z"
       },
       {
         "label": "DJOMS Maintenance direct page",
         "state": "pass",
         "detail": "Public site replied HTTP 200.",
         "url": "https://djoms-social-command.vercel.app/maintenance",
-        "checkedAt": "2026-11-21T16:36:30.141Z"
+        "checkedAt": "2026-11-22T16:53:50.209Z"
+      },
+      {
+        "label": "Bing Webmaster API route",
+        "state": "login-required",
+        "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
+        "url": "https://djoms-social-command.vercel.app/api/meta/bing-status",
+        "checkedAt": "2026-11-22T16:53:50.293Z"
+      },
+      {
+        "label": "Search Console API route",
+        "state": "login-required",
+        "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
+        "url": "https://djoms-social-command.vercel.app/api/meta/seo-status",
+        "checkedAt": "2026-11-22T16:53:50.310Z"
+      },
+      {
+        "label": "GA4 analytics API route",
+        "state": "login-required",
+        "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
+        "url": "https://djoms-social-command.vercel.app/api/meta/ga4-status",
+        "checkedAt": "2026-11-22T16:53:50.316Z"
+      },
+      {
+        "label": "Owner Maintenance History service",
+        "state": "login-required",
+        "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
+        "url": "https://djoms-social-command.vercel.app/api/meta/maintenance-health",
+        "checkedAt": "2026-11-22T16:53:50.326Z"
       },
       {
         "label": "Outlaw Radio public website",
         "state": "pass",
         "detail": "Public site replied HTTP 200.",
         "url": "https://outlawradio5150.com/",
-        "checkedAt": "2026-11-21T16:36:30.148Z"
+        "checkedAt": "2026-11-22T16:53:50.463Z"
       },
       {
         "label": "DJOMS account authorization",
         "state": "login-required",
         "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
         "url": "https://djoms-social-command.vercel.app/api/meta/status",
-        "checkedAt": "2026-11-21T16:36:30.544Z"
+        "checkedAt": "2026-11-22T16:53:50.832Z"
       }
     ],
     "securityChecks": [
@@ -158,21 +158,21 @@
         "state": "pass",
         "detail": "Signed-out request rejected (HTTP 401). Access control was observed on this route, not a full penetration test.",
         "url": "https://djoms-meta-bridge.vercel.app/api/meta/security-watch?range=today",
-        "checkedAt": "2026-11-21T16:36:30.044Z"
+        "checkedAt": "2026-11-22T16:53:50.247Z"
       },
       {
         "label": "Owner-only visitor intelligence",
         "state": "pass",
         "detail": "Signed-out request rejected (HTTP 401). Access control was observed on this route, not a full penetration test.",
         "url": "https://djoms-meta-bridge.vercel.app/api/meta/visitor-intelligence?range=today",
-        "checkedAt": "2026-11-21T16:36:30.046Z"
+        "checkedAt": "2026-11-22T16:53:50.283Z"
       },
       {
         "label": "Foreign-origin browser preflight",
         "state": "pass",
         "detail": "Foreign Origin was not granted browser cross-origin access (HTTP 403). This does not stop scripted HTTP requests outside browsers.",
         "url": "https://djoms-meta-bridge.vercel.app/api/meta/visitor-event",
-        "checkedAt": "2026-11-21T16:36:30.154Z"
+        "checkedAt": "2026-11-22T16:53:50.401Z"
       }
     ],
     "pitKreweJourney": [
@@ -259,6 +259,263 @@
     ]
   },
   "history": [
+    {
+      "id": "webscan-2026-11-22T16:53:50.832Z",
+      "checkedAt": "2026-11-22T16:53:50.832Z",
+      "startedAt": "2026-11-22T16:51:47.881Z",
+      "completedAt": "2026-11-22T16:53:50.832Z",
+      "durationSeconds": 123,
+      "triggerEvent": "schedule",
+      "source": "github-actions-technical-scan",
+      "status": "yellow",
+      "summary": "Review flagged items or parts that could not be verified.",
+      "coverage": {
+        "pagesChecked": 125,
+        "linksChecked": 219,
+        "browserPagesChecked": 24,
+        "imagesChecked": 70,
+        "unverified": 1,
+        "publicExternalLinksAttempted": 95,
+        "publicExternalLinksDiscovered": 95,
+        "publicExternalLinksExcluded": 29
+      },
+      "issues": [],
+      "seoChecks": [
+        {
+          "label": "Page title",
+          "state": "pass",
+          "detail": "Title: Doc Jaks | BBQ Sauces, Books &amp; Music",
+          "url": "https://www.docjaks.com/",
+          "checkedAt": "2026-11-22T16:53:50.076Z"
+        },
+        {
+          "label": "Meta description",
+          "state": "pass",
+          "detail": "Meta description present.",
+          "url": "https://www.docjaks.com/",
+          "checkedAt": "2026-11-22T16:53:50.076Z"
+        },
+        {
+          "label": "Canonical URL",
+          "state": "pass",
+          "detail": "Canonical: https://www.docjaks.com",
+          "url": "https://www.docjaks.com/",
+          "checkedAt": "2026-11-22T16:53:50.076Z"
+        },
+        {
+          "label": "Noindex check",
+          "state": "pass",
+          "detail": "No meta noindex detected; indexing itself not verified.",
+          "url": "https://www.docjaks.com/",
+          "checkedAt": "2026-11-22T16:53:50.076Z"
+        },
+        {
+          "label": "Page title",
+          "state": "pass",
+          "detail": "Title: SM Welcome | Doc Jaks",
+          "url": "https://www.docjaks.com/sm-welcome",
+          "checkedAt": "2026-11-22T16:53:50.114Z"
+        },
+        {
+          "label": "Meta description",
+          "state": "pass",
+          "detail": "Meta description present.",
+          "url": "https://www.docjaks.com/sm-welcome",
+          "checkedAt": "2026-11-22T16:53:50.114Z"
+        },
+        {
+          "label": "Canonical URL",
+          "state": "pass",
+          "detail": "Canonical: https://www.docjaks.com/sm-welcome",
+          "url": "https://www.docjaks.com/sm-welcome",
+          "checkedAt": "2026-11-22T16:53:50.114Z"
+        },
+        {
+          "label": "Noindex check",
+          "state": "pass",
+          "detail": "No meta noindex detected; indexing itself not verified.",
+          "url": "https://www.docjaks.com/sm-welcome",
+          "checkedAt": "2026-11-22T16:53:50.114Z"
+        },
+        {
+          "label": "Robots.txt",
+          "state": "pass",
+          "detail": "Robots file responded; crawling rules may still require review.",
+          "url": "https://www.docjaks.com/robots.txt",
+          "checkedAt": "2026-11-22T16:53:50.185Z"
+        },
+        {
+          "label": "Sitemap index",
+          "state": "pass",
+          "detail": "XML sitemap index has location entries.",
+          "url": "https://www.docjaks.com/sitemap.xml",
+          "checkedAt": "2026-11-22T16:53:50.209Z"
+        }
+      ],
+      "backendChecks": [
+        {
+          "label": "DJOMS owner dashboard",
+          "state": "pass",
+          "detail": "Public site replied HTTP 200.",
+          "url": "https://djoms-social-command.vercel.app/",
+          "checkedAt": "2026-11-22T16:53:50.096Z"
+        },
+        {
+          "label": "DJOMS Maintenance direct page",
+          "state": "pass",
+          "detail": "Public site replied HTTP 200.",
+          "url": "https://djoms-social-command.vercel.app/maintenance",
+          "checkedAt": "2026-11-22T16:53:50.209Z"
+        },
+        {
+          "label": "Bing Webmaster API route",
+          "state": "login-required",
+          "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
+          "url": "https://djoms-social-command.vercel.app/api/meta/bing-status",
+          "checkedAt": "2026-11-22T16:53:50.293Z"
+        },
+        {
+          "label": "Search Console API route",
+          "state": "login-required",
+          "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
+          "url": "https://djoms-social-command.vercel.app/api/meta/seo-status",
+          "checkedAt": "2026-11-22T16:53:50.310Z"
+        },
+        {
+          "label": "GA4 analytics API route",
+          "state": "login-required",
+          "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
+          "url": "https://djoms-social-command.vercel.app/api/meta/ga4-status",
+          "checkedAt": "2026-11-22T16:53:50.316Z"
+        },
+        {
+          "label": "Owner Maintenance History service",
+          "state": "login-required",
+          "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
+          "url": "https://djoms-social-command.vercel.app/api/meta/maintenance-health",
+          "checkedAt": "2026-11-22T16:53:50.326Z"
+        },
+        {
+          "label": "Outlaw Radio public website",
+          "state": "pass",
+          "detail": "Public site replied HTTP 200.",
+          "url": "https://outlawradio5150.com/",
+          "checkedAt": "2026-11-22T16:53:50.463Z"
+        },
+        {
+          "label": "DJOMS account authorization",
+          "state": "login-required",
+          "detail": "HTTP 401: sign-in required. Underlying service authorization has not been tested.",
+          "url": "https://djoms-social-command.vercel.app/api/meta/status",
+          "checkedAt": "2026-11-22T16:53:50.832Z"
+        }
+      ],
+      "securityChecks": [
+        {
+          "label": "Owner-only security report",
+          "state": "pass",
+          "detail": "Signed-out request rejected (HTTP 401). Access control was observed on this route, not a full penetration test.",
+          "url": "https://djoms-meta-bridge.vercel.app/api/meta/security-watch?range=today",
+          "checkedAt": "2026-11-22T16:53:50.247Z"
+        },
+        {
+          "label": "Owner-only visitor intelligence",
+          "state": "pass",
+          "detail": "Signed-out request rejected (HTTP 401). Access control was observed on this route, not a full penetration test.",
+          "url": "https://djoms-meta-bridge.vercel.app/api/meta/visitor-intelligence?range=today",
+          "checkedAt": "2026-11-22T16:53:50.283Z"
+        },
+        {
+          "label": "Foreign-origin browser preflight",
+          "state": "pass",
+          "detail": "Foreign Origin was not granted browser cross-origin access (HTTP 403). This does not stop scripted HTTP requests outside browsers.",
+          "url": "https://djoms-meta-bridge.vercel.app/api/meta/visitor-event",
+          "checkedAt": "2026-11-22T16:53:50.401Z"
+        }
+      ],
+      "pitKreweJourney": [
+        {
+          "target": "Social welcome",
+          "device": "desktop",
+          "url": "https://www.docjaks.com/sm-welcome",
+          "http": 200,
+          "result": "requires-manual-visual-verification",
+          "actions": 19,
+          "relevant": [],
+          "forms": [],
+          "embeds": [],
+          "textLength": 29,
+          "bodyImages": 3,
+          "frameHosts": [
+            "www.docjaks.com"
+          ],
+          "warning": "Page loaded does not prove a completed registration or successful welcome automation."
+        },
+        {
+          "target": "Social welcome",
+          "device": "mobile",
+          "url": "https://www.docjaks.com/sm-welcome",
+          "http": 200,
+          "result": "requires-manual-visual-verification",
+          "actions": 19,
+          "relevant": [],
+          "forms": [],
+          "embeds": [],
+          "textLength": 29,
+          "bodyImages": 3,
+          "frameHosts": [
+            "www.docjaks.com"
+          ],
+          "warning": "Page loaded does not prove a completed registration or successful welcome automation."
+        },
+        {
+          "target": "Pit Krewe signup",
+          "device": "desktop",
+          "url": "https://www.docjaks.com/pit-krewe",
+          "http": 200,
+          "result": "requires-manual-visual-verification",
+          "actions": 13,
+          "relevant": [],
+          "forms": [],
+          "embeds": [],
+          "textLength": 22,
+          "bodyImages": 3,
+          "frameHosts": [
+            "www.docjaks.com"
+          ],
+          "warning": "Page loaded does not prove a completed registration or successful welcome automation."
+        },
+        {
+          "target": "Pit Krewe signup",
+          "device": "mobile",
+          "url": "https://www.docjaks.com/pit-krewe",
+          "http": 200,
+          "result": "requires-manual-visual-verification",
+          "actions": 13,
+          "relevant": [],
+          "forms": [],
+          "embeds": [],
+          "textLength": 22,
+          "bodyImages": 3,
+          "frameHosts": [
+            "www.docjaks.com"
+          ],
+          "warning": "Page loaded does not prove a completed registration or successful welcome automation."
+        }
+      ],
+      "autoRecovered": [],
+      "recurringAlerts": [],
+      "notes": [
+        "Image-led desktop page responded normally: https://www.docjaks.com/ (22 selectable characters, 3 loaded images). Full layout and user interactions are not verified by this check.",
+        "Image-led mobile page responded normally: https://www.docjaks.com/ (22 selectable characters, 3 loaded images). Full layout and user interactions are not verified by this check.",
+        "Image-led desktop page responded normally: https://www.docjaks.com/sm-welcome (29 selectable characters, 2 loaded images). Full layout and user interactions are not verified by this check.",
+        "Image-led mobile page responded normally: https://www.docjaks.com/sm-welcome (29 selectable characters, 2 loaded images). Full layout and user interactions are not verified by this check.",
+        "Image-led desktop page responded normally: https://www.docjaks.com/outlaw-radio-5150 (22 selectable characters, 2 loaded images). Full layout and user interactions are not verified by this check.",
+        "Image-led mobile page responded normally: https://www.docjaks.com/outlaw-radio-5150 (22 selectable characters, 2 loaded images). Full layout and user interactions are not verified by this check.",
+        "Unable to verify external link http://place.it",
+        "29 analytics/tracking/infrastructure URLs intentionally excluded from visitor-link testing."
+      ]
+    },
     {
       "id": "webscan-2026-11-21T16:36:30.544Z",
       "checkedAt": "2026-11-21T16:36:30.544Z",
