@@ -22,11 +22,11 @@
   function dueDays(r) { return /^\d{4}-\d{2}-\d{2}$/.test(r.dueDate || '') ? Math.round((Date.parse(r.dueDate + 'T12:00:00Z') - Date.parse(today() + 'T12:00:00Z')) / 86400000) : null; }
   function dueText(r) { const n = dueDays(r); return n === null ? 'Set a due date' : n < 0 ? Math.abs(n) + ' day' + (n === -1 ? '' : 's') + ' overdue' : n === 0 ? 'Due today' : n === 1 ? 'Due tomorrow' : 'Due in ' + n + ' days'; }
   function setDirty(value) { state.changed = value; if (typeof dirty !== 'undefined') dirty = value; }
-  function blank(section = state.section) { return { name: '', jurisdiction: Object.hasOwn(jurisdictions, section) ? section : 'unassigned', frequency: 'monthly', periodStart: '', periodEnd: '', dueDate: '', recipientName: '', deliveryMethod: 'unconfigured', recipientEmail: '', portalUrl: '', subject: '', notes: '', fields: [{ label: '', value: '', required: false }] }; }
+  function blank(section = state.section) { return { name: '', jurisdiction: Object.hasOwn(jurisdictions, section) ? section : 'unassigned', amountDue: '', frequency: 'monthly', periodStart: '', periodEnd: '', dueDate: '', recipientName: '', deliveryMethod: 'unconfigured', recipientEmail: '', portalUrl: '', subject: '', notes: '', fields: [{ label: '', value: '', required: false }] }; }
   function badge(r) { return '<span class="rf-status rf-status-' + e(r.status || 'draft') + '">' + e(statusNames[r.status] || 'Draft') + '</span>'; }
   function optionList(values, selected) { return Object.entries(values).map(([value, label]) => '<option value="' + e(value) + '"' + (value === selected ? ' selected' : '') + '>' + e(label) + '</option>').join(''); }
   function button(action, label, className = '', extra = '') { return '<button type="button" data-report-action="' + e(action) + '" class="rf-button ' + className + '" ' + extra + '>' + label + '</button>'; }
-  function heading() { const backLabel = state.section === 'all' ? 'All reports' : jurisdictions[state.section] ? 'Back to ' + jurisdictions[state.section].toLowerCase() + ' reports' : 'Reports to classify'; return '<div class="rf-heading"><div><span class="rf-eyebrow">DOC JAKS · OWNER REPORTS</span><h2>Reports &amp; Filing</h2><p>Enter the information. Review the report. Approve when it’s ready.</p></div><div class="rf-heading-actions">' + (state.mode === 'list' ? button('new', '+ Add report', 'rf-primary') : button('back', backLabel)) + '</div></div>'; }
+  function heading() { const backLabel = state.section === 'all' ? 'All reports' : jurisdictions[state.section] ? 'Back to ' + jurisdictions[state.section].toLowerCase() + ' reports' : 'Reports to classify'; return '<div class="rf-heading"><div class="rf-station-title"><span class="rf-eyebrow">DOC JAKS · REPORTING STATION</span><h2>Reports &amp; Filing</h2><p>Monthly · Every two months · Twice a month · Yearly</p></div><div class="rf-heading-actions">' + (state.mode === 'list' ? button('new', '+ Add report', 'rf-primary') : button('back', backLabel)) + '</div></div>'; }
   function setupNote() { return '<div class="rf-setup"><span class="rf-shield" aria-hidden="true">✓</span><div><strong>Your approval controls sending.</strong><p>Each report keeps its own dates, information, and history. Email reports send when you choose <b>Approve &amp; send</b>. Filing websites use their own submission process.</p></div></div>'; }
   function scopedReports() { return state.section === 'all' ? state.reports : state.reports.filter(r => jurisdictionOf(r) === state.section); }
   function reportCounts(list) {
@@ -39,18 +39,41 @@
       finished: list.filter(completed).length
     };
   }
-  function sectionControls() {
+  function amountText(report) {
+    const value = String(report.amountDue ?? '').trim();
+    if (!value || !/^\d+(?:\.\d{1,2})?$/.test(value)) return 'Not entered';
+    const number = Number(value);
+    return Number.isFinite(number) ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(number) : 'Not entered';
+  }
+  function sentState(report) {
+    return ({ sent: 'Email sent', filed: 'Filing recorded', sending: 'Sending', uncertain: 'Check submission' })[report.status] || 'Not sent';
+  }
+  function gaugeButton(key) {
+    const label = jurisdictions[key];
+    const counts = reportCounts(state.reports.filter(r => jurisdictionOf(r) === key));
+    return '<button type="button" class="rf-section-card" data-report-action="section" data-report-section="' + key + '" aria-label="' + label + ': view full history of ' + counts.total + ' reports"><span class="rf-gauge" aria-hidden="true"><img class="rf-gauge-art" src="/assets/reports-brass-gauge.png" alt="" width="1254" height="1254" decoding="async"><svg class="rf-gauge-label" viewBox="0 0 400 400" focusable="false"><defs><path id="rfGaugeArc-' + key + '" d="M 88,130 Q 200,56 312,130"></path></defs><text><textPath href="#rfGaugeArc-' + key + '" startOffset="50%" text-anchor="middle">' + label.toUpperCase() + '</textPath></text></svg><span class="rf-gauge-value"><strong>' + counts.total + '</strong><small>REPORT' + (counts.total === 1 ? '' : 'S') + '</small></span></span></button>';
+  }
+  function frontReports(key) {
+    return state.reports.filter(r => jurisdictionOf(r) === key).slice().sort((a, b) => {
+      const finishedOrder = Number(completed(a)) - Number(completed(b));
+      if (finishedOrder) return finishedOrder;
+      if (completed(a)) return String(b.periodEnd || b.updatedAt || '').localeCompare(String(a.periodEnd || a.updatedAt || '')) || String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''));
+      return String(a.dueDate || '9999').localeCompare(String(b.dueDate || '9999')) || String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''));
+    }).slice(0, 5);
+  }
+  function summaryRow(report) {
+    return '<article class="rf-summary-row">' + button('open', e(report.name || 'Untitled report'), 'rf-summary-report', 'data-report-id="' + e(report.id) + '"') + '<dl class="rf-summary-details"><div><dt>Due date</dt><dd' + (!completed(report) && dueDays(report) !== null && dueDays(report) < 0 ? ' class="rf-overdue-text"' : '') + '>' + e(displayDate(report.dueDate)) + '</dd></div><div><dt>Sent status</dt><dd><span class="rf-summary-status rf-summary-status-' + e(report.status) + '">' + e(sentState(report)) + '</span></dd></div><div class="rf-summary-amount"><dt>Amount due</dt><dd>' + e(amountText(report)) + '</dd></div></dl></article>';
+  }
+  function landingMarkup() {
     const unassigned = state.reports.filter(r => jurisdictionOf(r) === 'unassigned').length;
-    return '<section class="rf-sections" aria-label="Government report sections"><div class="rf-section-toolbar"><div><span class="rf-eyebrow">REPORTS BY GOVERNMENT LEVEL</span><p>Keep city, parish, state, and federal reports separate.</p></div><div>' +
-      button('section', 'All sections', 'rf-section-all' + (state.section === 'all' ? ' rf-selected' : ''), 'data-report-section="all" aria-pressed="' + (state.section === 'all') + '"') +
-      (unassigned ? button('section', 'To classify (' + unassigned + ')', 'rf-classify-button' + (state.section === 'unassigned' ? ' rf-selected' : ''), 'data-report-section="unassigned" aria-pressed="' + (state.section === 'unassigned') + '"') : '') +
-      '</div></div><div class="rf-section-cards">' + Object.entries(jurisdictions).map(([key, label]) => {
-        const counts = reportCounts(state.reports.filter(r => jurisdictionOf(r) === key));
-        return '<button type="button" class="rf-section-card' + (state.section === key ? ' rf-selected' : '') + '" data-report-action="section" data-report-section="' + key + '" aria-pressed="' + (state.section === key) + '"><span class="rf-section-name">' + label + '</span><span class="rf-section-total"><strong>' + counts.total + '</strong> report' + (counts.total === 1 ? '' : 's') + '</span><span class="rf-section-summary"><span' + (counts.review ? ' class="rf-section-pending"' : '') + '>' + counts.review + ' awaiting approval</span><span' + (counts.overdue ? ' class="rf-overdue-text"' : '') + '>' + counts.overdue + ' overdue</span></span></button>';
-      }).join('') + '</div></section>';
+    return '<section class="rf-sections rf-landing" aria-label="Government report sections"><div class="rf-section-toolbar"><div><span class="rf-eyebrow">FOUR REPORT SECTIONS</span><p>Click a gauge to open that section’s full reporting history.</p></div><div>' + button('refresh', 'Refresh', '', state.loading ? 'disabled' : '') + '</div></div><div class="rf-section-cards">' + Object.entries(jurisdictions).map(([key, label]) => {
+      const list = frontReports(key);
+      const total = state.reports.filter(r => jurisdictionOf(r) === key).length;
+      return '<section class="rf-landing-column" data-report-group="' + key + '" aria-label="' + label + ' reports">' + gaugeButton(key) + '<div class="rf-section-ledger"><div class="rf-ledger-heading"><h3 class="rf-section-name">' + label + ' reports</h3>' + button('new', '+ Add', 'rf-ledger-add', 'data-report-section="' + key + '" aria-label="Add ' + label.toLowerCase() + ' report"') + '</div>' + (list.length ? list.map(summaryRow).join('') : '<p class="rf-ledger-empty">No reports added yet.</p>') + '<div class="rf-ledger-footer">' + (total > list.length ? '<span>Showing ' + list.length + ' of ' + total + '</span>' : '') + button('section', 'View full history (' + total + ')', '', 'data-report-section="' + key + '"') + '</div></div></section>';
+    }).join('') + '</div>' + (unassigned ? '<div class="rf-classify-note"><span>' + unassigned + ' report' + (unassigned === 1 ? ' needs' : 's need') + ' a government level.</span>' + button('section', 'To classify (' + unassigned + ')', 'rf-classify-button', 'data-report-section="unassigned"') + '</div>' : '') + '</section>' + setupNote() + '<p class="rf-footnote">Each section shows up to five reports, with unfinished reports first. Open its full history for every saved period.</p>';
   }
   function reportTable(list, label) {
-    return '<div class="rf-table-wrap"><table class="rf-table" aria-label="' + e(label) + ' reports"><thead><tr><th scope="col">Report</th><th scope="col">Reporting period</th><th scope="col">Due date</th><th scope="col">Status</th><th scope="col"><span class="rf-sr">Open report</span></th></tr></thead><tbody>' + list.map(r => '<tr><td><strong>' + e(r.name || 'Untitled report') + '</strong><span class="rf-subline">' + e(frequencies[r.frequency] || 'Schedule not set') + (r.recipientName ? ' · ' + e(r.recipientName) : '') + '</span></td><td>' + e(displayDate(r.periodStart)) + '<span class="rf-subline">through ' + e(displayDate(r.periodEnd)) + '</span></td><td><strong>' + e(displayDate(r.dueDate)) + '</strong><span class="rf-subline ' + (!completed(r) && dueDays(r) < 0 && dueDays(r) !== null ? 'rf-overdue-text' : '') + '">' + (!completed(r) ? e(dueText(r)) : 'Completed period') + '</span></td><td>' + badge(r) + '</td><td>' + button('open', 'Open', '', 'data-report-id="' + e(r.id) + '"') + '</td></tr>').join('') + '</tbody></table></div>';
+    return '<div class="rf-table-wrap"><table class="rf-table" aria-label="' + e(label) + ' reports"><thead><tr><th scope="col">Report</th><th scope="col">Reporting period</th><th scope="col">Due date</th><th scope="col">Status</th><th scope="col">Amount due</th><th scope="col"><span class="rf-sr">Open report</span></th></tr></thead><tbody>' + list.map(r => '<tr><td><strong>' + e(r.name || 'Untitled report') + '</strong><span class="rf-subline">' + e(frequencies[r.frequency] || 'Schedule not set') + (r.recipientName ? ' · ' + e(r.recipientName) : '') + '</span></td><td>' + e(displayDate(r.periodStart)) + '<span class="rf-subline">through ' + e(displayDate(r.periodEnd)) + '</span></td><td><strong>' + e(displayDate(r.dueDate)) + '</strong><span class="rf-subline ' + (!completed(r) && dueDays(r) < 0 && dueDays(r) !== null ? 'rf-overdue-text' : '') + '">' + (!completed(r) ? e(dueText(r)) : 'Completed period') + '</span></td><td>' + badge(r) + '</td><td class="rf-amount-cell">' + e(amountText(r)) + '</td><td>' + button('open', 'Open', '', 'data-report-id="' + e(r.id) + '"') + '</td></tr>').join('') + '</tbody></table></div>';
   }
   function reportGroup(key, list) {
     const label = jurisdictions[key] || 'To classify';
@@ -61,18 +84,16 @@
       (selected.length ? reportTable(selected, label) : '<div class="rf-group-empty"><p>' + (total ? 'No reports match the current filters in this section.' : isClassify ? 'All reports have a government level.' : 'No ' + label.toLowerCase() + ' reports added yet.') + '</p></div>') + '</section>';
   }
   function listMarkup() {
+    if (state.section === 'all') return landingMarkup();
     const scoped = scopedReports();
-    const counts = reportCounts(scoped);
-    const metrics = [['Due in 30 days', counts.soon, 'soon'], ['Overdue', counts.overdue, 'overdue'], ['Awaiting approval', counts.review, 'review'], ['Sent / recorded', counts.finished, 'done']];
     let list = scoped.filter(r => state.filter === 'all' || (state.filter === 'attention' ? ['failed', 'uncertain'].includes(r.status) || (!completed(r) && dueDays(r) < 0 && dueDays(r) !== null) : state.filter === 'ready' ? r.status === 'ready' : r.frequency === state.filter));
     const search = state.search.trim().toLowerCase();
     if (search) list = list.filter(r => [r.name, r.recipientName, r.recipientEmail].join(' ').toLowerCase().includes(search));
-    list.sort((a, b) => Number(completed(a)) - Number(completed(b)) || String(a.dueDate || '9999').localeCompare(String(b.dueDate || '9999')) || String(a.name).localeCompare(String(b.name)));
-    const sectionTitle = state.section === 'all' ? 'All sections overview' : state.section === 'unassigned' ? 'Reports to classify' : jurisdictions[state.section] + ' reports';
-    const groups = state.section === 'all' ? [...Object.keys(jurisdictions), ...(state.reports.some(r => jurisdictionOf(r) === 'unassigned') ? ['unassigned'] : [])] : [state.section];
-    return sectionControls() + '<div class="rf-scope-heading"><h3>' + e(sectionTitle) + '</h3><span>' + scoped.length + ' report' + (scoped.length === 1 ? '' : 's') + '</span></div><div class="rf-metrics">' + metrics.map(([title, count, kind]) => '<div class="rf-metric rf-metric-' + kind + (count ? ' rf-has-count' : '') + '"><span>' + title + '</span><strong>' + count + '</strong></div>').join('') + '</div>' + setupNote() +
+    list.sort((a, b) => Number(completed(a)) - Number(completed(b)) || String(b.periodEnd || '').localeCompare(String(a.periodEnd || '')) || String(a.dueDate || '9999').localeCompare(String(b.dueDate || '9999')) || String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+    const sectionTitle = state.section === 'unassigned' ? 'Reports to classify' : jurisdictions[state.section] + ' · Full report history';
+    return '<div class="rf-history-navigation">' + button('section', 'All sections', 'rf-section-all', 'data-report-section="all"') + '<p>Every saved reporting period stays in this section.</p></div><div class="rf-scope-heading"><h3 id="rfHistoryTitle" tabindex="-1">' + e(sectionTitle) + '</h3><span>' + scoped.length + ' saved period' + (scoped.length === 1 ? '' : 's') + '</span></div>' +
       '<section class="rf-panel rf-filter-panel"><div class="rf-list-tools"><label>Find a report<input type="search" id="rfSearch" placeholder="Report or recipient" value="' + e(state.search) + '"></label><label>Show<select id="rfFilter">' + optionList({ all: 'All frequencies', ready: 'Awaiting approval', attention: 'Needs attention', ...frequencies }, state.filter) + '</select></label>' + button('refresh', 'Refresh', '', state.loading ? 'disabled' : '') + '</div></section>' +
-      groups.map(key => reportGroup(key, list)).join('') + '<p class="rf-footnote">Dates use Central Time. Due dates are entered from your reporting instructions.</p>';
+      reportGroup(state.section, list) + setupNote() + '<p class="rf-footnote">Amounts due are entered in US dollars. A blank amount stays unknown. Dates use Central Time.</p>';
   }
   function input(name, label, value, opts = '') { return '<label>' + label + '<input name="' + name + '" value="' + e(value) + '" ' + opts + '></label>'; }
   function fieldsMarkup(r) { return (r.fields || []).map((field, index) => '<div class="rf-field-row" data-report-field="' + index + '"><label>Field name<input data-rf-field-label maxlength="160" value="' + e(field.label) + '" placeholder="Name on your report"></label><label>Value<textarea data-rf-field-value rows="2" maxlength="4000" placeholder="Enter information">' + e(field.value) + '</textarea></label><label class="rf-check"><input type="checkbox" data-rf-field-required ' + (field.required ? 'checked' : '') + '> Required</label>' + button('remove-field', 'Remove', 'rf-text-button', 'data-field-index="' + index + '" aria-label="Remove field ' + (index + 1) + '"') + '</div>').join(''); }
@@ -84,7 +105,7 @@
       '<label>Government level<select name="jurisdiction">' + optionList({ unassigned: 'Choose city, parish, state, or federal', ...jurisdictions }, jurisdictionOf(r)) + '</select></label>' +
       '<label>How often<select name="frequency">' + optionList(frequencies, r.frequency) + '</select></label>' +
       input('periodStart', 'Period starts', r.periodStart, 'type="date"') + input('periodEnd', 'Period ends', r.periodEnd, 'type="date"') +
-      input('dueDate', 'Due date for this report', r.dueDate, 'type="date"') + input('recipientName', 'Recipient or organization', r.recipientName, 'maxlength="160" placeholder="Who receives this report"') + '</div><p class="rf-help">“Every two months” and “twice a month” are separate schedules. Enter the exact deadline for this reporting period.</p></section>' +
+      input('dueDate', 'Due date for this report', r.dueDate, 'type="date"') + input('amountDue', 'Amount due (USD)', r.amountDue, 'type="number" min="0" max="999999999.99" step="0.01" placeholder="Not entered"') + input('recipientName', 'Recipient or organization', r.recipientName, 'maxlength="160" placeholder="Who receives this report"') + '</div><p class="rf-help">“Every two months” and “twice a month” are separate schedules. Enter the exact deadline for this reporting period.</p></section>' +
       '<section class="rf-panel"><div class="rf-panel-heading"><div><h3>Report information</h3><p>Add the fields from your report. A blank value stays blank.</p></div>' + button('add-field', '+ Add field') + '</div><div class="rf-fields">' + fieldsMarkup(r) + '</div><label class="rf-notes">Report notes (included in the submission)<textarea name="notes" rows="4" maxlength="12000" placeholder="Additional information to include in this report">' + e(r.notes) + '</textarea></label></section>' +
       '<section class="rf-panel"><div class="rf-panel-heading"><div><h3>Delivery</h3><p>Choose how this report is submitted.</p></div></div><div class="rf-form-grid"><label>Submission method<select name="deliveryMethod" id="rfDeliveryMethod">' + optionList(methods, method) + '</select></label>' +
       (method === 'email' ? input('recipientEmail', 'Recipient email', r.recipientEmail, 'type="email" maxlength="254" placeholder="name@example.com"') + input('subject', 'Email subject', r.subject, 'maxlength="200" placeholder="Report name and period"') : method === 'portal' ? input('portalUrl', 'Filing website', r.portalUrl, 'type="url" maxlength="1000" placeholder="https://"') : '') + '</div>' +
@@ -93,7 +114,7 @@
   }
   function previewDetails(r) {
     const delivery = r.deliveryMethod === 'email' ? r.recipientEmail || 'Not entered' : r.deliveryMethod === 'portal' ? r.portalUrl || 'Not entered' : methods[r.deliveryMethod] || 'Not configured';
-    return '<div class="rf-preview-grid"><div><span>Government level</span><strong>' + e(jurisdictionLabel(r)) + '</strong></div><div><span>Reporting period</span><strong>' + e(displayDate(r.periodStart)) + ' – ' + e(displayDate(r.periodEnd)) + '</strong></div><div><span>Due date</span><strong>' + e(displayDate(r.dueDate)) + '</strong></div><div><span>Frequency</span><strong>' + e(frequencies[r.frequency] || 'Not set') + '</strong></div><div><span>Recipient</span><strong>' + e(r.recipientName || 'Not entered') + '</strong></div><div class="rf-wide"><span>' + (r.deliveryMethod === 'email' ? 'Send to' : 'Submission method') + '</span><strong>' + e(delivery) + '</strong></div></div><dl class="rf-values">' + (r.fields || []).map(field => '<div><dt>' + e(field.label || 'Unnamed field') + (field.required ? ' <span class="rf-required">Required</span>' : '') + '</dt><dd>' + (String(field.value ?? '').trim() ? e(field.value) : '<span class="rf-not-entered">Not entered</span>') + '</dd></div>').join('') + '</dl>' + (r.notes ? '<div class="rf-report-notes"><h4>Report notes</h4><p>' + e(r.notes) + '</p></div>' : '');
+    return '<div class="rf-preview-grid"><div><span>Government level</span><strong>' + e(jurisdictionLabel(r)) + '</strong></div><div><span>Reporting period</span><strong>' + e(displayDate(r.periodStart)) + ' – ' + e(displayDate(r.periodEnd)) + '</strong></div><div><span>Due date</span><strong>' + e(displayDate(r.dueDate)) + '</strong></div><div><span>Amount due</span><strong>' + e(amountText(r)) + '</strong></div><div><span>Frequency</span><strong>' + e(frequencies[r.frequency] || 'Not set') + '</strong></div><div><span>Recipient</span><strong>' + e(r.recipientName || 'Not entered') + '</strong></div><div class="rf-wide"><span>' + (r.deliveryMethod === 'email' ? 'Send to' : 'Submission method') + '</span><strong>' + e(delivery) + '</strong></div></div><dl class="rf-values">' + (r.fields || []).map(field => '<div><dt>' + e(field.label || 'Unnamed field') + (field.required ? ' <span class="rf-required">Required</span>' : '') + '</dt><dd>' + (String(field.value ?? '').trim() ? e(field.value) : '<span class="rf-not-entered">Not entered</span>') + '</dd></div>').join('') + '</dl>' + (r.notes ? '<div class="rf-report-notes"><h4>Report notes</h4><p>' + e(r.notes) + '</p></div>' : '');
   }
   function emailMarkup(r) {
     if (r.deliveryMethod !== 'email') return '';
@@ -138,10 +159,31 @@
     if (state.changed) setDirty(true);
     document.body.classList.add('report-filings-view');
     host().innerHTML = '<div id="reportFilingHub" class="rf-hub" aria-busy="' + String(state.loading || state.saving) + '">' + heading() + (state.error ? '<div class="rf-error" role="alert">' + e(state.error) + '</div>' : '') + (!state.loaded && state.loading ? '<div class="rf-panel rf-loading" role="status">Loading saved reports…</div>' : !state.loaded && state.error ? '<div class="rf-panel"><p>Saved reports could not be loaded. Refresh to try again.</p>' + button('refresh', 'Try again') + '</div>' : state.mode === 'edit' ? editMarkup() : state.mode === 'next' ? nextMarkup(state.current) : state.mode === 'preview' ? previewMarkup() : listMarkup()) + '</div>';
-    if (state.saving) host().querySelectorAll('#reportFilingHub input, #reportFilingHub select, #reportFilingHub textarea, #reportFilingHub button').forEach(control => { control.disabled = true; });
+    if (state.saving || state.loading) host().querySelectorAll('#reportFilingHub input, #reportFilingHub select, #reportFilingHub textarea, #reportFilingHub button').forEach(control => { control.disabled = true; });
+  }
+  async function readAllReports(requestGeneration) {
+    const byId = new Map();
+    const seen = new Set(['0']);
+    let cursor = null;
+    let delivery = null;
+    do {
+      const data = await api('report-filings' + (cursor === null ? '' : '?cursor=' + encodeURIComponent(cursor)));
+      if (requestGeneration !== generation) return null;
+      if (!Array.isArray(data.reports)) throw new Error('The report list could not be read.');
+      if (!delivery && data.delivery) delivery = data.delivery;
+      data.reports.forEach(report => { if (report && typeof report.id === 'string') byId.set(report.id, report); });
+      const next = data.nextCursor;
+      if (next === null || next === undefined) {
+        if (data.limited) throw new Error('Only part of the report history was returned. Refresh after the report service update finishes.');
+        return { reports: [...byId.values()], delivery: delivery || { emailConfigured: false } };
+      }
+      if (typeof next !== 'string' || !/^\d+$/.test(next) || seen.has(next)) throw new Error('The report history could not be loaded completely. Refresh to try again.');
+      seen.add(next);
+      cursor = next;
+    } while (true);
   }
   async function load(force = false) {
-    if (state.loading) return;
+    if (state.loading || state.saving) return;
     if (state.changed && !force) { redraw(); return; }
     if (state.changed && force) {
       if (!leaveDraft()) return;
@@ -152,8 +194,9 @@
     state.error = '';
     redraw();
     try {
-      const data = await api('report-filings');
+      const data = await readAllReports(requestGeneration);
       if (requestGeneration !== generation) return;
+      if (!data) return;
       if (!Array.isArray(data.reports)) throw new Error('The report list could not be read.');
       state.reports = data.reports;
       if (state.section === 'unassigned' && !state.reports.some(r => jurisdictionOf(r) === 'unassigned')) state.section = 'all';
@@ -177,11 +220,11 @@
     if (!form) return state.current;
     const values = new FormData(form);
     const next = { ...state.current };
-    ['name', 'jurisdiction', 'frequency', 'periodStart', 'periodEnd', 'dueDate', 'recipientName', 'deliveryMethod', 'recipientEmail', 'portalUrl', 'subject', 'notes'].forEach(key => { if (values.has(key)) next[key] = String(values.get(key)); });
+    ['name', 'jurisdiction', 'amountDue', 'frequency', 'periodStart', 'periodEnd', 'dueDate', 'recipientName', 'deliveryMethod', 'recipientEmail', 'portalUrl', 'subject', 'notes'].forEach(key => { if (values.has(key)) next[key] = String(values.get(key)); });
     next.fields = [...form.querySelectorAll('[data-report-field]')].map(row => ({ label: row.querySelector('[data-rf-field-label]').value, value: row.querySelector('[data-rf-field-value]').value, required: row.querySelector('[data-rf-field-required]').checked }));
     return next;
   }
-  function editableData(r) { const out = {}; ['name', 'jurisdiction', 'frequency', 'periodStart', 'periodEnd', 'dueDate', 'recipientName', 'deliveryMethod', 'recipientEmail', 'portalUrl', 'subject', 'notes', 'fields'].forEach(key => { out[key] = r[key] ?? (key === 'fields' ? [] : ''); }); return out; }
+  function editableData(r) { const out = {}; ['name', 'jurisdiction', 'amountDue', 'frequency', 'periodStart', 'periodEnd', 'dueDate', 'recipientName', 'deliveryMethod', 'recipientEmail', 'portalUrl', 'subject', 'notes', 'fields'].forEach(key => { out[key] = r[key] ?? (key === 'fields' ? [] : ''); }); return out; }
   function acceptResult(result) { if (result.report) { state.current = result.report; const i = state.reports.findIndex(r => r.id === result.report.id); if (i < 0) state.reports.unshift(result.report); else state.reports[i] = result.report; if (state.section !== 'all') state.section = jurisdictionOf(result.report); } if (result.delivery) state.delivery = result.delivery; setDirty(false); }
   async function mutate(action, extra = {}, opts = {}) {
     if (state.saving) return false;
@@ -199,7 +242,7 @@
       if (requestGeneration !== generation) return false;
       const message = error.message;
       if (requestId && ['approveSend', 'approve', 'review', 'recordReceipt'].includes(action)) {
-        try { const result = await api('report-filings'); if (requestGeneration !== generation) return false; if (Array.isArray(result.reports)) { state.reports = result.reports; const saved = result.reports.find(r => r.id === requestId); if (saved) state.current = copy(saved); state.delivery = result.delivery || state.delivery; state.mode = 'preview'; const pendingReceipt = action === 'recordReceipt' && state.current?.status !== 'filed'; state.receiptOpen = pendingReceipt; setDirty(pendingReceipt); } } catch { /* Keep the last confirmed state and the error. */ }
+        try { const result = await readAllReports(requestGeneration); if (requestGeneration !== generation || !result) return false; if (Array.isArray(result.reports)) { state.reports = result.reports; const saved = result.reports.find(r => r.id === requestId); if (saved) state.current = copy(saved); state.delivery = result.delivery || state.delivery; state.mode = 'preview'; const pendingReceipt = action === 'recordReceipt' && state.current?.status !== 'filed'; state.receiptOpen = pendingReceipt; setDirty(pendingReceipt); } } catch { /* Keep the last confirmed state and the error. */ }
       }
       if (requestGeneration === generation) state.error = message; return false;
     } finally { if (requestGeneration === generation) { state.saving = false; redraw(); } }
@@ -219,12 +262,12 @@
     const control = event.target.closest('[data-report-action]');
     if (!control || !control.closest('#reportFilingHub')) return;
     event.preventDefault();
-    if (state.saving || control.disabled) return;
+    if (state.saving || state.loading || control.disabled) return;
     const action = control.dataset.reportAction;
-    if (action === 'section') { if (!leaveDraft()) return; const section = control.dataset.reportSection; if (!['all', 'unassigned', ...Object.keys(jurisdictions)].includes(section)) return; state.section = section; state.mode = 'list'; state.current = null; state.error = ''; state.receiptOpen = false; state.receiptDraft = {}; state.nextDates = {}; setDirty(false); redraw(); }
+    if (action === 'section') { if (!leaveDraft()) return; const section = control.dataset.reportSection; if (!['all', 'unassigned', ...Object.keys(jurisdictions)].includes(section)) return; const previous = state.section; state.section = section; state.filter = 'all'; state.search = ''; state.mode = 'list'; state.current = null; state.error = ''; state.receiptOpen = false; state.receiptDraft = {}; state.nextDates = {}; setDirty(false); redraw(); const focusTarget = section === 'all' ? document.querySelector('.rf-section-card[data-report-section="' + (Object.hasOwn(jurisdictions, previous) ? previous : 'city') + '"]') : document.getElementById('rfHistoryTitle'); focusTarget?.focus({ preventScroll: true }); }
     else if (action === 'new') { if (!leaveDraft()) return; const section = control.dataset.reportSection || state.section; state.current = blank(section); state.mode = 'edit'; state.error = ''; setDirty(false); redraw(); document.querySelector('#rfEditForm [name="name"]')?.focus(); }
     else if (action === 'back') { if (!leaveDraft()) return; state.mode = 'list'; state.current = null; state.error = ''; state.receiptOpen = false; state.receiptDraft = {}; state.nextDates = {}; setDirty(false); redraw(); }
-    else if (action === 'open') { const found = state.reports.find(r => r.id === control.dataset.reportId); if (found) { state.current = copy(found); state.mode = 'preview'; state.error = ''; state.receiptOpen = false; setDirty(false); redraw(); } }
+    else if (action === 'open') { const found = state.reports.find(r => r.id === control.dataset.reportId); if (found) { state.section = jurisdictionOf(found); state.current = copy(found); state.mode = 'preview'; state.error = ''; state.receiptOpen = false; setDirty(false); redraw(); } }
     else if (action === 'edit') { if (!leaveDraft()) return; state.mode = 'edit'; state.error = ''; state.receiptOpen = false; state.receiptDraft = {}; setDirty(false); redraw(); }
     else if (action === 'add-field') { state.current = readForm(); state.current.fields.push({ label: '', value: '', required: false }); setDirty(true); redraw(); const rows = document.querySelectorAll('#rfEditForm [data-rf-field-label]'); rows[rows.length - 1]?.focus(); }
     else if (action === 'remove-field') { state.current = readForm(); state.current.fields.splice(Number(control.dataset.fieldIndex), 1); setDirty(true); redraw(); }

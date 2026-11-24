@@ -1,0 +1,19 @@
+REPORTS & FILING — ARTWORK SOURCES
+
+Created with the built-in image generator on 2026-11-24.
+Style reference: the user's approved Steampunk Pearl River Weather Observatory.png.
+Live labels, amounts, report counts, and status are rendered by the application, not baked into these images.
+
+ASSET: reports-brass-gauge.png
+Original output: exec-256dc706-7343-4760-b072-85bf2b228b1c.png
+1254 x 1254 RGBA; transparent outside the dial.
+
+FINAL PROMPT
+Use case: stylized-concept. Asset type: one reusable instrument dial artwork for a functioning report dashboard, matching the attached Doc Jak swamp observatory reference. The supplied image is a STYLE reference, not text to reproduce. Create a SINGLE front-on, perfectly round antique brass gauge, square composition, true transparent background outside the round casing. Gauge occupies 94% of square width, centered; no pipework extending outside the circle. Match the rich golden aged brass double bezel, hammered copper details, perimeter screws, ornamental engraving, cream parchment face and subtle Louisiana cypress/Spanish moss swamp scene inside the dial from the reference. Keep swamp illustration exposed in the central/lower dial face and visually subdued enough for black live HTML text. Reserve an unmarked light parchment upper arc band between 16% and 29% of the image height for a curved black title added by code. Add a small EMPTY engraved pale gold rectangular readout cartouche with rounded ornamental ends, centered at x50%, y70%, about 50% image width by 14% image height. A tiny decorative fleur-de-lis can sit at x50%, y38%, unobtrusive. Critical: absolutely NO letters, NO numerals, NO tick marks, NO needle, NO fixed reading, NO title, NO weather symbols. This is blank instrument artwork for live government report counts. Rich hand-painted detailed realism and glowing brass, crisp straight-on lighting; match reference craftsmanship. No square panel, no floor, no white backdrop, no artificial shadow rectangle. Keep the exterior genuinely transparent.
+
+ASSET: reports-swamp-background.png
+Original output: exec-952ec58b-37ec-44d8-926a-74c4ef608875.png
+2172 x 724 RGB; opaque scene.
+
+FINAL PROMPT
+Use case: stylized-concept. Asset type: wide illustrated background for Doc Jak's functioning reports dashboard, matching the supplied weather observatory. Use reference as STYLE only. Create a richly detailed antique steampunk observatory-workshop in Louisiana cypress swamp, very wide 3:1 landscape canvas. Side framing: cypress trunks, hanging Spanish moss, a glowing antique brass lantern at each outer edge, winding copper pipework and weathered timber on left and right margins. Background turquoise blue Louisiana sky, deep green swamp foliage, quiet blue-green river reflections. Leave the broad central 80% of the canvas visually open, calm and darker forest green with fine details, where real web components and four brass gauges will be overlaid. Highest detail concentrated in outer left and right 10% and top moss fringe; lower edge can include a narrow timber instrument shelf, never a broad overlay. Match the hand-painted rich warm golden brass/green/cypress aesthetic and joyful craft of the reference. NO gauges, NO dials, NO panels, NO signage, NO numerals, NO words, NO charts, NO human portraits, NO weather values or symbols. Pure environment art, no UI mockup. No blank white area, no futuristic screens. Natural vignette behind live content with visible swamp setting.
