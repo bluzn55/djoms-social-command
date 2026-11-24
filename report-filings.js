@@ -219,14 +219,17 @@
       if (await mutate('nextPeriod', { report }, { mode: 'edit', message: 'Next reporting period created. Enter the new information.' })) setDirty(false);
     }
   });
-  document.addEventListener('input', event => {
+  function rememberForm(event) {
     if (event.target.closest('#rfEditForm')) { state.current = readForm(); setDirty(true); }
     if (event.target.closest('#rfNextForm')) { const values = new FormData(event.target.form); state.nextDates = Object.fromEntries(['periodStart', 'periodEnd', 'dueDate'].map(key => [key, String(values.get(key) || '')])); setDirty(true); }
     if (event.target.closest('#rfReceiptForm')) { const values = new FormData(event.target.form); state.receiptDraft = { reference: String(values.get('reference') || ''), submittedAt: String(values.get('submittedAt') || ''), notes: String(values.get('receiptNotes') || '') }; setDirty(true); }
+  }
+  document.addEventListener('input', event => {
+    rememberForm(event);
     if (event.target.id === 'rfSearch') { state.search = event.target.value; const cursor = event.target.selectionStart; redraw(); const search = document.getElementById('rfSearch'); search?.focus(); if (search && typeof cursor === 'number') search.setSelectionRange(cursor, cursor); }
   });
   document.addEventListener('change', event => {
-    if (event.target.closest('#rfEditForm')) { state.current = readForm(); setDirty(true); }
+    rememberForm(event);
     if (event.target.id === 'rfFilter') { state.filter = event.target.value; redraw(); }
     if (event.target.id === 'rfDeliveryMethod') { state.current = readForm(); setDirty(true); redraw(); }
   });
