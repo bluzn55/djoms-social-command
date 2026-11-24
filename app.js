@@ -963,13 +963,32 @@ async function refreshConnection() {
 async function signedIn(s) {
   owner = s.user; csrf = s.csrf; $('loginDialog').close(); $('password').value = '';
   $('owner').textContent = owner.toUpperCase(); $('identity').textContent = 'Owner · Signed in'; $('live').textContent = '● Owner access'; $('logout').hidden = false;
-  await api('records', { action:'initialize' }); await loadRecords(); await loadAnalytics(true); await loadLocalStatus(); await refreshConnection(); render();
-  loadComments().then(() => renderConnectionStrip()).catch(() => {});
   const params = new URLSearchParams(location.search);
   const result = params.get('connection');
   const xresult = params.get('xconnection');
   const youtubeResult = params.get('youtubeconnection');
   const localGoogleResult = params.get('localgoogle');
+  const reportsRequested = !result && !xresult && !youtubeResult && !localGoogleResult &&
+    (location.pathname === '/reports' || params.get('view') === 'Reports & Filing');
+  const loadCommandWorkspace = async () => {
+    await api('records', { action:'initialize' }); await loadRecords();
+    await loadAnalytics(true); await loadLocalStatus(); await refreshConnection();
+    loadComments().then(() => renderConnectionStrip()).catch(() => {});
+  };
+  if (reportsRequested) {
+    // Reports have their own authenticated data. An unrelated analytics outage
+    // must not prevent filing work or overwrite a report being entered.
+    activeView = 'Reports & Filing';
+    render();
+    void loadCommandWorkspace().then(() => {
+      if (activeView !== 'Reports & Filing' && !dirty && !selected) render();
+    }).catch(error => {
+      if (activeView !== 'Reports & Filing')
+        notice('Some dashboard data could not load: ' + error.message + '. Use Refresh to retry.', true);
+    });
+    return;
+  }
+  await loadCommandWorkspace(); render();
   if (result || xresult || youtubeResult || localGoogleResult) {
     if (localGoogleResult) { await loadLocalStatus(); notice(localGoogleResult === 'saved' ? 'Google Business Profile connected.' : 'Google Business Profile connection was cancelled.'); }
     else if (youtubeResult) notice(youtubeResult === 'saved' ? 'YouTube authorization saved. Check the channel status below.' : 'YouTube connection was cancelled.');
@@ -1855,6 +1874,8 @@ function render() {
   if (['Mission Control','Platform Details'].includes(activeView)) renderConnectionStrip();
   else $('connectionStrip').hidden = true;
   $('viewTitle').textContent = activeView === 'Mission Control' ? 'Online Command' : activeView;
+  const newPostButton = document.querySelector('#workspace .top .toolbar [data-action="new"]');
+  if (newPostButton) newPostButton.hidden = activeView === 'Reports & Filing';
   document.querySelectorAll('nav [data-view]').forEach(b => b.classList.toggle('active',b.dataset.view === activeView));
   $('campaignCards').hidden = activeView !== 'Campaigns';
   $('campaignCards').innerHTML = campaigns.map(c => {
@@ -1863,6 +1884,11 @@ function render() {
   }).join('');
   if (activeView === 'Mission Control' || activeView === 'Platform Details') {
     $('content').innerHTML = '';
+    return;
+  }
+  if (activeView === 'Reports & Filing') {
+    if (window.djomsReportFilings) window.djomsReportFilings.render();
+    else $('content').innerHTML = '<div class="empty"><h3>Reports &amp; Filing is loading…</h3><p>Refresh the page if this message remains.</p></div>';
     return;
   }
   if (activeView === 'Comments') {
@@ -1980,6 +2006,8 @@ async function setView(view) {
     finally { inboxChangingView = false; }
   }
   if (dirty && !confirm('Leave without saving your changes?')) return;
+  if (activeView === 'Reports & Filing' && view !== 'Reports & Filing')
+    window.djomsReportFilings?.onLeave?.();
   activeView = view; campaignFilter = ''; searchTerm = ''; render();
 }
 // Exactly one tracked SM Welcome link in each posting preview, matching
@@ -2657,9 +2685,12 @@ document.addEventListener('click', event => {
     });
   }
   perform(async () => {
-    if (action === 'logout') { if (dirty && !confirm('Sign out without saving changes?')) return; await api('session',null,'DELETE'); location.reload(); }
+    if (action === 'logout') { if (dirty && !confirm('Sign out without saving changes?')) return; await api('session',null,'DELETE'); window.djomsReportFilings?.reset(); location.reload(); }
     else if (action === 'new') { const d=await api('records',{action:'create',campaign:campaignFilter || 'BBQ'}); updateRecord(d.record); openRecord(d.record); }
-    else if (action === 'refresh') { await loadRecords(); await loadAnalytics(true); await loadLocalStatus(); if (websiteRange !== '7d') await loadWebsiteRange(websiteRange); await refreshConnection(); await loadComments(); render(); renderConnectionStrip(); notice('Updated.'); }
+    else if (action === 'refresh') {
+      if (activeView === 'Reports & Filing' && window.djomsReportFilings) { await window.djomsReportFilings.load(true); return; }
+      await loadRecords(); await loadAnalytics(true); await loadLocalStatus(); if (websiteRange !== '7d') await loadWebsiteRange(websiteRange); await refreshConnection(); await loadComments(); render(); renderConnectionStrip(); notice('Updated.');
+    }
     else if (action === 'refreshRecord') { if (dirty && !confirm('Refresh and discard unsaved changes?')) return; const currentId=selected.id; await loadRecords(); openRecord(records.find(r=>r.id===currentId)); notice('Showing the latest saved result.'); }
     else if (action === 'checkWebsiteConnection') { const site=await loadWebsiteRange('7d'); render(); notice(site.connected ? 'Wix website connection checked.' : (site.message || 'Wix website reporting needs attention.'), !site.connected); }
     else if (action === 'checkConnection') { await Promise.all([refreshConnection(), loadLocalStatus()]); render(); notice('Platform and website connections checked.'); }
@@ -2796,3 +2827,4 @@ window.addEventListener('beforeunload',e=>{ if(dirty){e.preventDefault();e.retur
       error.message + '. Use Refresh to try again.', true);
   }
 })();
+

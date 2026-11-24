@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/reports",
+      "destination": "/index.html"
+    },
+    {
       "source": "/daily-maintenance-history.json",
       "destination": "https://raw.githubusercontent.com/bluzn55/djoms-social-command/maintenance-history/daily-maintenance-history.json"
     },
@@ -30,6 +34,15 @@
     }
   ],
   "headers": [
+    {
+      "source": "/reports",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
     {
       "source": "/(.*)",
       "headers": [
@@ -161,3 +174,4 @@
     }
   ]
 }
+
