@@ -89,14 +89,34 @@ function authScreen(screen) {
   if (!$('loginDialog').open) $('loginDialog').showModal();
   $(screen === 'login' ? 'password' : screen === 'reset' ? 'newPassword' : 'sendResetButton').focus();
 }
-function showLogin(message = '') { $('loginMessage').textContent = message; authScreen('login'); }
+function showLogin(message = '') {
+  owner = ''; csrf = '';
+  window.djomsReportFilings?.reset();
+  window.djomsSales?.reset();
+  if (['Reports & Filing', 'Sales'].includes(activeView)) {
+    dirty = false;
+    $('content').innerHTML = '<div class="empty"><h3>Owner sign-in required</h3><p>Sign in to open your saved records.</p></div>';
+  }
+  $('loginMessage').textContent = message;
+  authScreen('login');
+}
 async function api(path, body, method) {
   const options = { method: method || (body ? 'POST' : 'GET'), credentials:'same-origin', headers:{}, signal:AbortSignal.timeout(150000) };
   if (options.method !== 'GET') { options.headers['Content-Type'] = 'application/json'; options.headers['X-DJOMS-CSRF'] = csrf; if (body) options.body = JSON.stringify(body); }
   let response, data;
   try { response = await fetch('/api/meta/' + path, options); data = await response.json(); }
-  catch { throw new Error('The connection was interrupted. Refresh to check what was saved before retrying.'); }
-  if (!response.ok) { if (response.status === 401 && path !== 'session') showLogin('Sign in again to continue.'); throw new Error(data.error || 'The request could not be completed.'); }
+  catch {
+    const error = new Error('The connection was interrupted. Refresh to check what was saved before retrying.');
+    error.uncertain = true;
+    throw error;
+  }
+  if (!response.ok) {
+    if (response.status === 401 && path !== 'session') showLogin('Sign in again to continue.');
+    const error = new Error(data.error || 'The request could not be completed.');
+    error.status = response.status;
+    error.uncertain = data.uncertain === true || response.status >= 500;
+    throw error;
+  }
   return data;
 }
 function updateRecord(r) { const index = records.findIndex(x => x.id === r.id); if (index >= 0) records[index] = r; else records.unshift(r); selected = r; }
@@ -968,22 +988,23 @@ async function signedIn(s) {
   const xresult = params.get('xconnection');
   const youtubeResult = params.get('youtubeconnection');
   const localGoogleResult = params.get('localgoogle');
-  const reportsRequested = !result && !xresult && !youtubeResult && !localGoogleResult &&
-    (location.pathname === '/reports' || params.get('view') === 'Reports & Filing');
+  const moduleRequested = !result && !xresult && !youtubeResult && !localGoogleResult &&
+    (location.pathname === '/sales' || params.get('view') === 'Sales' ? 'Sales' :
+      location.pathname === '/reports' || params.get('view') === 'Reports & Filing' ? 'Reports & Filing' : null);
   const loadCommandWorkspace = async () => {
     await api('records', { action:'initialize' }); await loadRecords();
     await loadAnalytics(true); await loadLocalStatus(); await refreshConnection();
     loadComments().then(() => renderConnectionStrip()).catch(() => {});
   };
-  if (reportsRequested) {
-    // Reports have their own authenticated data. An unrelated analytics outage
-    // must not prevent filing work or overwrite a report being entered.
-    activeView = 'Reports & Filing';
+  if (moduleRequested) {
+    // Operational modules have their own authenticated data. Unrelated social
+    // analytics must not block these pages or redraw a record being entered.
+    activeView = moduleRequested;
     render();
     void loadCommandWorkspace().then(() => {
-      if (activeView !== 'Reports & Filing' && !dirty && !selected) render();
+      if (owner && !['Reports & Filing', 'Sales'].includes(activeView) && !dirty && !selected) render();
     }).catch(error => {
-      if (activeView !== 'Reports & Filing')
+      if (owner && !['Reports & Filing', 'Sales'].includes(activeView))
         notice('Some dashboard data could not load: ' + error.message + '. Use Refresh to retry.', true);
     });
     return;
@@ -1869,13 +1890,15 @@ function rotationPauseClick(){
 
 function render() {
   document.body.classList.toggle('organic-command-view', activeView === 'Mission Control' && !!window.djomsOrganicCommand);
+  if (activeView !== 'Reports & Filing') document.body.classList.remove('report-filings-view');
+  if (activeView !== 'Sales') document.body.classList.remove('sales-view');
   window.djomsOrganicShell?.closeTools?.();
   $('workspace').hidden = false; $('editor').hidden = true; selected = null; dirty = false;
   if (['Mission Control','Platform Details'].includes(activeView)) renderConnectionStrip();
   else $('connectionStrip').hidden = true;
   $('viewTitle').textContent = activeView === 'Mission Control' ? 'Online Command' : activeView;
   const newPostButton = document.querySelector('#workspace .top .toolbar [data-action="new"]');
-  if (newPostButton) newPostButton.hidden = activeView === 'Reports & Filing';
+  if (newPostButton) newPostButton.hidden = ['Reports & Filing', 'Sales'].includes(activeView);
   document.querySelectorAll('nav [data-view]').forEach(b => b.classList.toggle('active',b.dataset.view === activeView));
   $('campaignCards').hidden = activeView !== 'Campaigns';
   $('campaignCards').innerHTML = campaigns.map(c => {
@@ -1889,6 +1912,11 @@ function render() {
   if (activeView === 'Reports & Filing') {
     if (window.djomsReportFilings) window.djomsReportFilings.render();
     else $('content').innerHTML = '<div class="empty"><h3>Reports &amp; Filing is loading…</h3><p>Refresh the page if this message remains.</p></div>';
+    return;
+  }
+  if (activeView === 'Sales') {
+    if (window.djomsSales) window.djomsSales.render();
+    else $('content').innerHTML = '<div class="empty"><h3>Sales is loading…</h3><p>Refresh the page if this message remains.</p></div>';
     return;
   }
   if (activeView === 'Comments') {
@@ -1999,16 +2027,24 @@ function render() {
 }
 async function setView(view) {
   if (inboxChangingView) return;
+  if (view === activeView && ['Reports & Filing', 'Sales'].includes(view)) return;
   if (activeView === 'Media Inbox' && view !== 'Media Inbox' && inboxDirty.size) {
     inboxChangingView = true;
     try { await saveInboxFieldsAll(true); }
     catch(error) { notice('Could not save Media Inbox changes. Stay here and click Save again: ' + error.message,true); return; }
     finally { inboxChangingView = false; }
   }
-  if (dirty && !confirm('Leave without saving your changes?')) return;
+  if (activeView === 'Sales' && window.djomsSales) {
+    if (!window.djomsSales.leaveDraft()) return;
+  } else if (dirty && !confirm('Leave without saving your changes?')) return;
   if (activeView === 'Reports & Filing' && view !== 'Reports & Filing')
     window.djomsReportFilings?.onLeave?.();
-  activeView = view; campaignFilter = ''; searchTerm = ''; render();
+  if (activeView === 'Sales' && view !== 'Sales') window.djomsSales?.onLeave?.();
+  activeView = view; campaignFilter = ''; searchTerm = '';
+  if (view === 'Sales') history.replaceState({}, '', '/sales');
+  else if (view === 'Reports & Filing') history.replaceState({}, '', '/reports');
+  else if (['/sales', '/reports'].includes(location.pathname)) history.replaceState({}, '', '/');
+  render();
 }
 // Exactly one tracked SM Welcome link in each posting preview, matching
 // the backend's publishing-time caption cleanup. No older embedded URLs.
@@ -2685,10 +2721,18 @@ document.addEventListener('click', event => {
     });
   }
   perform(async () => {
-    if (action === 'logout') { if (dirty && !confirm('Sign out without saving changes?')) return; await api('session',null,'DELETE'); window.djomsReportFilings?.reset(); location.reload(); }
+    if (action === 'logout') {
+      if (dirty && !confirm('Sign out without saving changes?')) return;
+      window.djomsReportFilings?.reset();
+      window.djomsSales?.reset();
+      if (['Reports & Filing', 'Sales'].includes(activeView)) $('content').innerHTML = '';
+      await api('session',null,'DELETE');
+      location.reload();
+    }
     else if (action === 'new') { const d=await api('records',{action:'create',campaign:campaignFilter || 'BBQ'}); updateRecord(d.record); openRecord(d.record); }
     else if (action === 'refresh') {
       if (activeView === 'Reports & Filing' && window.djomsReportFilings) { await window.djomsReportFilings.load(true); return; }
+      if (activeView === 'Sales' && window.djomsSales) { await window.djomsSales.load(true); return; }
       await loadRecords(); await loadAnalytics(true); await loadLocalStatus(); if (websiteRange !== '7d') await loadWebsiteRange(websiteRange); await refreshConnection(); await loadComments(); render(); renderConnectionStrip(); notice('Updated.');
     }
     else if (action === 'refreshRecord') { if (dirty && !confirm('Refresh and discard unsaved changes?')) return; const currentId=selected.id; await loadRecords(); openRecord(records.find(r=>r.id===currentId)); notice('Showing the latest saved result.'); }

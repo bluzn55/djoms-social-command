@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Sales layout preview · DJOMS</title>
+  <link rel="stylesheet" href="/styles.css?v=20261028-verified-search-pairs-v94">
+  <link rel="stylesheet" href="/sales.css?v=20261124-sales-v1">
+  <style>
+    .sales-preview-banner{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 24px;border-bottom:2px solid #b78a45;background:#122d23;color:#f8e8be;font:14px/1.5 Arial,sans-serif}
+    .sales-preview-banner strong{display:block;font-size:15px;letter-spacing:.04em}
+    .sales-preview-banner p{margin:2px 0 0;color:#d7dfc6}
+    .sales-preview-banner a{flex:none;padding:10px 17px;border:1px solid #d4ae61;border-radius:7px;color:#fff0c6;text-decoration:none;font-weight:700}
+    .sales-preview-banner a:hover{background:#294d38}
+    body.sales-preview>main{min-height:calc(100vh - 85px)}
+    .sales-preview aside nav a{display:block;margin-top:5px;padding:11px 10px;text-decoration:none;color:#edcf91;border:1px solid #725734;border-radius:5px}
+    .sales-preview aside .ver{position:static;margin-top:25px;line-height:1.5}
+    .sales-preview .preview-caption{color:#9d8c70;font-size:12px;line-height:1.5}
+    @media(max-width:720px){.sales-preview-banner{padding:12px;align-items:flex-start;flex-direction:column;gap:10px}.sales-preview-banner a{align-self:stretch;text-align:center}}
+    @media print{.sales-preview-banner{display:block!important;color:#000;background:#fff;border:1px solid #000}.sales-preview-banner p{color:#000}.sales-preview-banner a{display:none}}
+  </style>
+  <script src="/sales-preview.js?v=20261124-sales-v1" defer></script>
+  <script src="/sales.js?v=20261124-sales-v1" defer></script>
+</head>
+<body class="sales-preview">
+  <div class="sales-preview-banner" role="note">
+    <div><strong>SALES · LAYOUT PREVIEW</strong><p>This preview has no business records. You can try the form; changes here are not saved.</p></div>
+    <a href="/sales">Open owner Sales page →</a>
+  </div>
+  <main>
+    <aside id="commandTools">
+      <b>⚜ DOC JAKS</b><span>DJOMS</span>
+      <div class="user"><strong>LAYOUT PREVIEW</strong><small>No account data loaded</small></div>
+      <nav aria-label="Preview navigation">
+        <button type="button" class="active" aria-current="page" data-sales-preview-home>Sales</button>
+        <a href="/sales">Owner Sales page</a>
+        <a href="/reports">Reports &amp; Filing</a>
+      </nav>
+      <p class="preview-caption">The owner workspace saves sales after sign-in. This separate preview only displays the page layout.</p>
+      <div class="ver">DOC JAKS OPERATIONS<br>MANAGEMENT SYSTEM</div>
+    </aside>
+    <section>
+      <header><div class="command-heading"><p class="ey">DOC JAKS OPERATIONS MANAGEMENT SYSTEM</p><h1>Sales</h1><p>One Fire. One Story. Everywhere.</p></div><div class="live">Layout preview</div></header>
+      <p id="notice" role="status" aria-live="polite" hidden></p>
+      <div id="workspace"><div id="content"><p>Loading the Sales layout…</p></div></div>
+    </section>
+  </main>
+</body>
+</html>
