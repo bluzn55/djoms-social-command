@@ -1001,6 +1001,9 @@ async function signedIn(s) {
     // analytics must not block these pages or redraw a record being entered.
     activeView = moduleRequested;
     render();
+    if (moduleRequested === 'Reports & Filing') {
+      void window.djomsReportFilings?.openForBusiness?.(params.get('business'), params.get('template'), params.get('month'));
+    }
     void loadCommandWorkspace().then(() => {
       if (owner && !['Reports & Filing', 'Sales'].includes(activeView) && !dirty && !selected) render();
     }).catch(error => {
@@ -1896,7 +1899,7 @@ function render() {
   $('workspace').hidden = false; $('editor').hidden = true; selected = null; dirty = false;
   if (['Mission Control','Platform Details'].includes(activeView)) renderConnectionStrip();
   else $('connectionStrip').hidden = true;
-  $('viewTitle').textContent = activeView === 'Mission Control' ? 'Online Command' : activeView;
+  $('viewTitle').textContent = activeView === 'Mission Control' ? 'Online Command' : activeView === 'Sales' ? 'Daily Sales Master' : activeView;
   const newPostButton = document.querySelector('#workspace .top .toolbar [data-action="new"]');
   if (newPostButton) newPostButton.hidden = ['Reports & Filing', 'Sales'].includes(activeView);
   document.querySelectorAll('nav [data-view]').forEach(b => b.classList.toggle('active',b.dataset.view === activeView));
@@ -2046,6 +2049,19 @@ async function setView(view) {
   else if (['/sales', '/reports'].includes(location.pathname)) history.replaceState({}, '', '/');
   render();
 }
+window.djomsOpenSalesReport = async function (businessId, templateId, month) {
+  if (!owner || !['conestoga', 'doc_jaks'].includes(businessId) ||
+      !['ttb_excise', 'ttb_production', 'ttb_storage', 'ttb_processing'].includes(templateId) ||
+      !/^\d{4}-(0[1-9]|1[0-2])$/.test(month || '')) return false;
+  await setView('Reports & Filing');
+  if (activeView !== 'Reports & Filing') return false;
+  const opened = await window.djomsReportFilings?.openForBusiness?.(businessId, templateId, month);
+  if (opened && activeView === 'Reports & Filing') {
+    const query = new URLSearchParams({business: businessId, template: templateId, month});
+    history.replaceState({}, '', '/reports?' + query);
+  }
+  return Boolean(opened);
+};
 // Exactly one tracked SM Welcome link in each posting preview, matching
 // the backend's publishing-time caption cleanup. No older embedded URLs.
 function preparePlacecardPreviewCopy(caption){

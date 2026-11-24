@@ -305,6 +305,13 @@ body.report-filings-view #workspace>.top{display:none}body.report-filings-view #
 .rf-hub .rf-profile-confirmation{padding:16px 18px;margin-bottom:18px;border:3px double #ba8b35;border-radius:8px;background:#ffedba;color:#392708}
 .rf-hub .rf-profile-confirmation label{display:flex;flex-direction:row;gap:12px;align-items:flex-start;color:#392708;line-height:1.5}
 .rf-hub .rf-profile-confirmation input{flex:0 0 auto;margin-top:4px}
+.rf-hub .rf-sales-context{display:flex;align-items:center;justify-content:space-between;gap:24px;border-left:5px solid #9b7134;background:#f5e6c5}
+.rf-hub .rf-sales-context>div:first-child{flex:1;min-width:0}
+.rf-hub .rf-sales-context h3{margin:5px 0 10px}
+.rf-hub .rf-sales-context p{max-width:75ch;margin:0;line-height:1.6}
+.rf-hub .rf-sales-context-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;max-width:400px}
+@media(max-width:850px){.rf-hub .rf-sales-context{align-items:stretch;flex-direction:column;gap:15px}.rf-hub .rf-sales-context-actions{max-width:none;justify-content:flex-start}}
+@media print{body.report-filings-view .rf-sales-context{display:none!important}}
 @media screen and (max-width:1250px){
   .rf-hub .rf-business-bar{flex-wrap:wrap;gap:12px}.rf-hub .rf-business-context{min-width:170px}.rf-hub .rf-business-bar>label{max-width:none}.rf-hub .rf-profile-button{margin-left:auto}.rf-hub .rf-template-intro .rf-panel-heading{flex-wrap:wrap}.rf-hub .rf-template-section>.rf-panel-heading{flex-wrap:wrap}.rf-hub .rf-zero-button{max-width:none}
 }

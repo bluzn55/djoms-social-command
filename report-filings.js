@@ -6,14 +6,14 @@
   const jurisdictionOf = report => Object.hasOwn(jurisdictions, report?.jurisdiction) ? report.jurisdiction : 'unassigned';
   const jurisdictionLabel = report => jurisdictions[jurisdictionOf(report)] || 'To classify';
   const frequencies = { unspecified: 'Schedule not set', monthly: 'Monthly', every_two_months: 'Every two months', twice_monthly: 'Twice a month', yearly: 'Yearly', one_time: 'One time' };
-  const businessDefinitions = [{ id: 'conestoga', name: 'Conestoga Distillery', stage: 'active' }, { id: 'doc_jaks', name: "Doc Jak’s", stage: 'setup' }];
+  const businessDefinitions = [{ id: 'conestoga', name: 'Colo Distillery LLC', stage: 'active' }, { id: 'doc_jaks', name: "Doc Jak’s", stage: 'setup' }];
   const profileKeys = ['legalName', 'displayName', 'address', 'ein', 'plantNumber'];
   const businessOf = report => businessDefinitions.some(b => b.id === report?.businessId) ? report.businessId : 'unassigned';
   const statusNames = { draft: 'Draft', ready: 'Awaiting approval', approved: 'Approved', sending: 'Sending', sent: 'Email sent', filed: 'Filing recorded', failed: 'Needs attention', uncertain: 'Check submission' };
   const methods = { unconfigured: 'Choose delivery method', email: 'Email after approval', portal: 'Filing website', manual: 'File manually' };
   const completed = r => ['sent', 'filed'].includes(r.status);
   const locked = r => ['sending', 'sent', 'filed', 'uncertain'].includes(r.status);
-  const state = { reports: [], templates: [], businessProfiles: [], business: 'conestoga', delivery: { emailConfigured: false }, loaded: false, loading: false, saving: false, error: '', mode: 'list', current: null, section: 'all', filter: 'all', search: '', changed: false, nextDates: {}, receiptDraft: {}, receiptOpen: false, profileDraft: null, profileImportText: '', profileImportNotes: [], profileRequiresConfirmation: false, profileConfirmed: false };
+  const state = { reports: [], templates: [], businessProfiles: [], business: 'conestoga', delivery: { emailConfigured: false }, loaded: false, loading: false, saving: false, error: '', mode: 'list', current: null, section: 'all', filter: 'all', search: '', changed: false, nextDates: {}, receiptDraft: {}, receiptOpen: false, profileDraft: null, profileImportText: '', profileImportNotes: [], profileRequiresConfirmation: false, profileConfirmed: false, salesContext: null };
   let generation = 0;
   let importGeneration = 0;
   const e = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -54,7 +54,25 @@
     return '<div class="rf-business-bar"><label for="rfBusinessSelect">Business<select id="rfBusinessSelect">' + optionList(options, state.business) + '</select></label><div class="rf-business-context"><strong>' + e(selected.name) + '</strong><span>' + (state.business === 'unassigned' ? 'Choose a business on each legacy report. Nothing is assigned automatically.' : (selected.stage === 'setup' ? 'Setup in progress' : 'Active distillery') + ' · Separate reports and history') + '</span></div>' + (state.business !== 'unassigned' ? button('business-profile', 'Business identity', 'rf-profile-button') : '') + '</div>';
   }
   function setupNote() { return '<div class="rf-setup"><span class="rf-shield" aria-hidden="true">✓</span><div><strong>Your approval controls sending.</strong><p>Each report keeps its own dates, information, and history. Email reports send when you choose <b>Approve &amp; send</b>. Filing websites use their own submission process.</p></div></div>'; }
-  function scopedReports() { const reports = businessReports(); return state.section === 'all' ? reports : reports.filter(r => jurisdictionOf(r) === state.section); }
+  function scopedReports() {
+    const reports = businessReports().filter(r => state.section === 'all' || jurisdictionOf(r) === state.section);
+    const context = state.salesContext;
+    if (!context) return reports;
+    const dates = monthDates(context.month);
+    return reports.filter(r => r.templateId === context.templateId && dates &&
+      /^\d{4}-\d{2}-\d{2}$/.test(r.periodStart || '') && /^\d{4}-\d{2}-\d{2}$/.test(r.periodEnd || '') &&
+      r.periodStart <= dates.periodEnd && r.periodEnd >= dates.periodStart);
+  }
+  function salesContextMarkup() {
+    const context = state.salesContext;
+    if (!context) return '';
+    const template = state.templates.find(item => item.id === context.templateId);
+    const month = new Date(context.month + '-01T12:00:00Z').toLocaleDateString('en-US', {month: 'long', year: 'numeric', timeZone: 'UTC'});
+    const actions = context.templateId === 'ttb_excise'
+      ? button('sales-period', 'Open 1st-half form', 'rf-primary', 'data-sales-half="first"') + button('sales-period', 'Open 2nd-half form', '', 'data-sales-half="second"')
+      : button('sales-period', 'Open ' + e(month) + ' form', 'rf-primary');
+    return '<section class="rf-panel rf-sales-context"><div><span class="rf-eyebrow">FROM SALES</span><h3>' + e(template?.shortName || template?.name || 'TTB reports') + ' · ' + e(month) + '</h3><p>' + e(businessName(state.business)) + ' · Saved reports and new forms for this period. Report values are entered and reviewed here; sales do not establish production, transfers, stock, or taxable removals.</p></div><div class="rf-sales-context-actions">' + actions + button('clear-sales-context', 'Show all federal history', 'rf-text-button') + '</div></section>';
+  }
   function reportCounts(list) {
     const outstanding = list.filter(r => !completed(r));
     return {
@@ -141,6 +159,7 @@
     return '<div class="rf-table-wrap"><table class="rf-table" aria-label="' + e(label) + ' reports"><thead><tr><th scope="col">Report</th><th scope="col">Reporting period</th><th scope="col">Due date</th><th scope="col">Sent date</th><th scope="col">Status</th><th scope="col">Amount due</th><th scope="col"><span class="rf-sr">Open report</span></th></tr></thead><tbody>' + list.map(r => '<tr><td><strong>' + e(r.name || 'Untitled report') + '</strong><span class="rf-subline">' + e(frequencies[r.frequency] || 'Schedule not set') + (r.recipientName ? ' · ' + e(r.recipientName) : '') + '</span></td><td>' + e(displayDate(r.periodStart)) + '<span class="rf-subline">through ' + e(displayDate(r.periodEnd)) + '</span></td><td><strong>' + e(displayDate(r.dueDate)) + '</strong><span class="rf-subline ' + (!completed(r) && dueDays(r) < 0 && dueDays(r) !== null ? 'rf-overdue-text' : '') + '">' + (!completed(r) ? e(dueText(r)) : 'Completed period') + '</span>' + (r.targetDate ? '<span class="rf-subline">Prepare by ' + e(displayDate(r.targetDate)) + '</span>' : '') + '</td><td>' + e(shortDate(sentDateValue(r))) + '</td><td>' + badge(r) + '</td><td class="rf-amount-cell">' + e(amountText(r)) + '</td><td>' + button('open', 'Open', '', 'data-report-id="' + e(r.id) + '"') + '</td></tr>').join('') + '</tbody></table></div>';
   }
   function templateShelf(key) {
+    if (state.salesContext) return '';
     const templates = sectionTemplates(key);
     if (!templates.length) return '';
     return '<section class="rf-panel rf-template-shelf"><h3>Reusable report forms</h3><p>Start a new period or continue an unfinished report for ' + e(businessName(state.business)) + '.</p><div>' + templates.map(template => {
@@ -163,8 +182,8 @@
     const search = state.search.trim().toLowerCase();
     if (search) list = list.filter(r => [r.name, r.recipientName, r.recipientEmail].join(' ').toLowerCase().includes(search));
     list.sort((a, b) => Number(completed(a)) - Number(completed(b)) || String(b.periodEnd || '').localeCompare(String(a.periodEnd || '')) || String(a.dueDate || '9999').localeCompare(String(b.dueDate || '9999')) || String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
-    const sectionTitle = state.section === 'unassigned' ? 'Reports to classify' : jurisdictions[state.section] + ' · Full report history';
-    return '<div class="rf-history-navigation">' + button('section', 'All sections', 'rf-section-all', 'data-report-section="all"') + '<p>Every saved reporting period stays in this section.</p></div><div class="rf-scope-heading"><h3 id="rfHistoryTitle" tabindex="-1">' + e(sectionTitle) + '</h3><span>' + scoped.length + ' saved period' + (scoped.length === 1 ? '' : 's') + '</span></div>' +
+    const sectionTitle = state.salesContext ? 'Saved reports for the selected month' : state.section === 'unassigned' ? 'Reports to classify' : jurisdictions[state.section] + ' · Full report history';
+    return salesContextMarkup() + '<div class="rf-history-navigation">' + button('section', 'All sections', 'rf-section-all', 'data-report-section="all"') + '<p>Every saved reporting period stays in this section.</p></div><div class="rf-scope-heading"><h3 id="rfHistoryTitle" tabindex="-1">' + e(sectionTitle) + '</h3><span>' + scoped.length + ' saved period' + (scoped.length === 1 ? '' : 's') + '</span></div>' +
       templateShelf(state.section) + '<section class="rf-panel rf-filter-panel"><div class="rf-list-tools"><label>Find a report<input type="search" id="rfSearch" placeholder="Report or recipient" value="' + e(state.search) + '"></label><label>Show<select id="rfFilter">' + optionList({ all: 'All frequencies', ready: 'Awaiting approval', attention: 'Needs attention', ...frequencies }, state.filter) + '</select></label>' + button('refresh', 'Refresh', '', state.loading ? 'disabled' : '') + '</div></section>' +
       reportGroup(state.section, list) + setupNote() + '<p class="rf-footnote">Amounts due are entered in US dollars. A blank amount stays unknown. Dates use Central Time.</p>';
   }
@@ -470,14 +489,46 @@
     finally { if (requestGeneration === generation) { state.loading = false; redraw(); } }
   }
   function render() { if (!state.loaded && !state.loading) void load(); else redraw(); }
-  function reset() { generation++; state.reports = []; state.templates = []; state.businessProfiles = []; state.business = 'conestoga'; state.current = null; state.delivery = { emailConfigured: false }; state.loaded = false; state.loading = false; state.saving = false; state.error = ''; state.mode = 'list'; state.receiptOpen = false; state.receiptDraft = {}; state.nextDates = {}; state.search = ''; state.section = 'all'; state.filter = 'all'; clearProfileDraft(); setDirty(false); document.body.classList.remove('report-filings-view'); }
+  function reset() { generation++; state.reports = []; state.templates = []; state.businessProfiles = []; state.business = 'conestoga'; state.current = null; state.delivery = { emailConfigured: false }; state.loaded = false; state.loading = false; state.saving = false; state.error = ''; state.mode = 'list'; state.receiptOpen = false; state.receiptDraft = {}; state.nextDates = {}; state.search = ''; state.section = 'all'; state.filter = 'all'; state.salesContext = null; clearProfileDraft(); setDirty(false); document.body.classList.remove('report-filings-view'); }
   function discardDraft() {
     const saved = state.current?.id && state.reports.find(r => r.id === state.current.id);
     state.current = saved ? copy(saved) : null;
     state.mode = saved ? 'preview' : 'list';
     state.error = ''; state.receiptOpen = false; state.receiptDraft = {}; state.nextDates = {}; clearProfileDraft(); setDirty(false);
   }
-  function onLeave() { if (state.changed || ['next', 'profile'].includes(state.mode)) discardDraft(); document.body.classList.remove('report-filings-view'); }
+  function onLeave() { if (state.changed || ['next', 'profile'].includes(state.mode)) discardDraft(); state.salesContext = null; document.body.classList.remove('report-filings-view'); }
+  async function openForBusiness(businessId, templateId, month) {
+    if (!visible() || state.saving || !businessDefinitions.some(item => item.id === businessId) ||
+        !['ttb_excise', 'ttb_production', 'ttb_storage', 'ttb_processing'].includes(templateId) || !monthDates(month)) return false;
+    if (!leaveDraft()) return false;
+    clearWork(); state.business = businessId; state.section = 'federal'; state.filter = 'all'; state.search = '';
+    state.salesContext = {businessId, templateId, month};
+    if (!state.loaded && !state.loading) await load(); else redraw();
+    return true;
+  }
+  function openSalesPeriod(half) {
+    const context = state.salesContext;
+    if (!context || state.business !== context.businessId || !leaveDraft()) return;
+    const template = state.templates.find(item => item.id === context.templateId);
+    const month = monthDates(context.month, template?.schedule || undefined);
+    if (!template || !month) return;
+    const excise = template.id === 'ttb_excise';
+    if (excise && !['first', 'second'].includes(half)) return;
+    const start = excise && half === 'second' ? context.month + '-16' : month.periodStart;
+    const end = excise && half === 'first' ? context.month + '-15' : month.periodEnd;
+    const matches = businessReports().filter(r => r.templateId === template.id && r.periodStart === start && r.periodEnd === end)
+      .sort((a, b) => Number(completed(a)) - Number(completed(b)) || String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+    clearWork();
+    if (matches.length) { state.current = copy(matches[0]); state.mode = 'preview'; }
+    else {
+      state.current = templateDraft(template);
+      Object.assign(state.current, {periodStart: start, periodEnd: end});
+      if (excise) state.current.frequency = 'twice_monthly';
+      else if (template.schedule?.type === 'monthly_following') Object.assign(state.current, month);
+      state.mode = 'edit'; calculateTemplate(state.current); setDirty(true);
+    }
+    redraw();
+  }
   function readForm() {
     const form = document.getElementById('rfEditForm');
     if (!form) return state.current;
@@ -525,6 +576,10 @@
   }
   function leaveDraft() { return !state.changed || confirm(state.mode === 'profile' ? 'Leave these business identity changes without saving?' : 'Leave this report without saving your changes?'); }
   function clearWork() { state.current = null; state.mode = 'list'; state.error = ''; state.receiptOpen = false; state.receiptDraft = {}; state.nextDates = {}; clearProfileDraft(); setDirty(false); }
+  function clearSalesContext() {
+    state.salesContext = null;
+    if (typeof location !== 'undefined' && location.pathname === '/reports' && typeof history !== 'undefined' && typeof history.replaceState === 'function') history.replaceState({}, '', '/reports');
+  }
   function refreshDerivedControls() {
     const form = document.getElementById('rfEditForm');
     if (!form || !state.current) return;
@@ -542,7 +597,9 @@
     event.preventDefault();
     if (state.saving || state.loading || control.disabled) return;
     const action = control.dataset.reportAction;
-    if (action === 'section') { if (!leaveDraft()) return; const section = control.dataset.reportSection; if (!['all', 'unassigned', ...Object.keys(jurisdictions)].includes(section)) return; const previous = state.section; state.section = section; state.filter = 'all'; state.search = ''; clearWork(); redraw(); const focusTarget = section === 'all' ? document.querySelector('.rf-section-header[data-report-section="' + (Object.hasOwn(jurisdictions, previous) ? previous : 'city') + '"]') : document.getElementById('rfHistoryTitle'); focusTarget?.focus({ preventScroll: true }); }
+    if (action === 'section') { if (!leaveDraft()) return; const section = control.dataset.reportSection; if (!['all', 'unassigned', ...Object.keys(jurisdictions)].includes(section)) return; const previous = state.section; clearSalesContext(); state.section = section; state.filter = 'all'; state.search = ''; clearWork(); redraw(); const focusTarget = section === 'all' ? document.querySelector('.rf-section-header[data-report-section="' + (Object.hasOwn(jurisdictions, previous) ? previous : 'city') + '"]') : document.getElementById('rfHistoryTitle'); focusTarget?.focus({ preventScroll: true }); }
+    else if (action === 'sales-period') openSalesPeriod(control.dataset.salesHalf);
+    else if (action === 'clear-sales-context') { if (!leaveDraft()) return; clearSalesContext(); clearWork(); redraw(); }
     else if (action === 'new') { if (!leaveDraft()) return; const section = control.dataset.reportSection || state.section; clearWork(); state.current = blank(section); state.business = state.current.businessId; state.mode = 'edit'; redraw(); document.querySelector('#rfEditForm [name="name"]')?.focus(); }
     else if (action === 'back') { if (!leaveDraft()) return; clearWork(); redraw(); }
     else if (action === 'open') { if (!leaveDraft()) return; const found = businessReports().find(r => r.id === control.dataset.reportId); if (found) { clearWork(); state.section = jurisdictionOf(found); state.current = copy(found); state.mode = 'preview'; redraw(); } }
@@ -622,7 +679,7 @@
     if (event.target.id === 'rfBusinessSelect') {
       const business = event.target.value;
       if (!['unassigned', ...businessDefinitions.map(profile => profile.id)].includes(business) || !leaveDraft()) { event.target.value = state.business; return; }
-      clearWork(); state.business = business; state.section = 'all'; state.filter = 'all'; state.search = ''; redraw(); document.getElementById('rfBusinessSelect')?.focus({ preventScroll: true });
+      clearWork(); clearSalesContext(); state.business = business; state.section = 'all'; state.filter = 'all'; state.search = ''; redraw(); document.getElementById('rfBusinessSelect')?.focus({ preventScroll: true });
     }
     if (event.target.id === 'rfProfileImportFile') {
       const file = event.target.files?.[0];
@@ -636,5 +693,5 @@
     }
   });
   window.addEventListener('beforeunload', event => { if (state.changed) { event.preventDefault(); event.returnValue = ''; } });
-  window.djomsReportFilings = { render, load, reset, onLeave, isDirty: () => state.changed, leaveDraft, clearDirty: () => setDirty(false) };
+  window.djomsReportFilings = { render, load, reset, onLeave, openForBusiness, isDirty: () => state.changed, leaveDraft, clearDirty: () => setDirty(false) };
 })();
